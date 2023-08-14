@@ -316,14 +316,14 @@ export async function editUser(
 
     const editUserDto: EditUserDto = {};
     if (name) {
-      editUserDto.name = name as unknown as string;
+      editUserDto.name = name[0];
     }
     if (bio) {
-      editUserDto.bio = bio as unknown as string;
+      editUserDto.bio = bio[0];
     }
     if (username) {
       const usernameRegex = /^[a-zA-Z0-9_]{5,20}$/;
-      if (!usernameRegex.test(username as unknown as string)) {
+      if (!usernameRegex.test(username[0])) {
         if (username.length < 5) {
           throw createError(
             strings.validations.invalidUsernameLength,
@@ -335,16 +335,13 @@ export async function editUser(
           StatusCodes.BAD_REQUEST
         );
       }
-      editUserDto.username = username as unknown as string;
+      editUserDto.username = username[0];
     }
     if (profileFilepath) {
       editUserDto.profileImage = profileFilepath;
     }
 
-    if (
-      removeProfileImage &&
-      (removeProfileImage as unknown as string) === "true"
-    ) {
+    if (removeProfileImage && removeProfileImage[0] === "true") {
       editUserDto.profileImage = "";
       s3.send(
         new DeleteObjectCommand({
@@ -384,8 +381,10 @@ export async function putUserSettings(
 ) {
   try {
     handleInputErrors(req);
+
     const { id } = req.params;
     const { id: authId, role: authRole } = req.user!;
+
     if (id !== authId && authRole !== "admin") {
       throw createError(
         strings.authorization.accessDenied,

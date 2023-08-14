@@ -60,8 +60,8 @@ export async function createMedia(
       const location = `https://${bucketName}.s3.${region}.amazonaws.com/${key}`;
       const createMediaDto: CreateMediaDto = {
         src: location,
-        caption: caption as unknown as string,
-        place: new mongoose.Types.ObjectId(place as unknown as string),
+        caption: caption[0],
+        place: new mongoose.Types.ObjectId(place[0]),
         user: new mongoose.Types.ObjectId(authId),
         type: MediaTypeEnum.image,
       };
@@ -82,8 +82,8 @@ export async function createMedia(
       const location = `https://${bucketName}.s3.${region}.amazonaws.com/${key}`;
       const createMediaDto: CreateMediaDto = {
         src: location,
-        caption: caption as unknown as string,
-        place: new mongoose.Types.ObjectId(place as unknown as string),
+        caption: caption[0],
+        place: new mongoose.Types.ObjectId(place[0]),
         user: new mongoose.Types.ObjectId(authId),
         type: MediaTypeEnum.video,
       };

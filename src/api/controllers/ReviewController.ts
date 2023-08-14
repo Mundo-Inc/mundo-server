@@ -22,8 +22,8 @@ import { openAiAnalyzeReview } from "../../utilities/openAi";
 export const getReviewsValidation: ValidationChain[] = [
   query("writer").optional().isMongoId(),
   query("sort").optional().isIn(["newest", "oldest"]),
-  validate.page(query("page"), 100),
-  validate.limit(query("limit"), 1, 50),
+  validate.page(query("page").optional(), 100),
+  validate.limit(query("limit").optional(), 1, 50),
 ];
 export async function getReviews(
   req: Request,

@@ -122,7 +122,17 @@ export const getPlacesValidation: ValidationChain[] = [
   validate.page(query("page").optional(), 50),
   query("images").optional().isInt({ min: 0, max: 5 }),
   query("order").optional().isIn(["asc", "desc"]),
-  query("radius").optional().isInt({ min: 0 }),
+  query("radius")
+    .optional()
+    .custom((value) => {
+      if (typeof value === "string" && value === "global") {
+        return true;
+      }
+      if (typeof Number(value) === "number") {
+        return true;
+      }
+      throw new Error("Invalid radius");
+    }),
   query("category").optional().isIn(categories),
   query("sort")
     .optional()
