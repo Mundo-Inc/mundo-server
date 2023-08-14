@@ -7,5 +7,5 @@ export const config = {
   DB_NAME: "genz",
 
   // JWT
-  JWT_SECRET: process.env.JWT_SECRET,
+  JWT_SECRET: process.env.JWT_SECRET!,
 };

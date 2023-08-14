@@ -1,9 +1,26 @@
 import express from "express";
 
-const router = express.Router();
+import {
+  createPlace,
+  createPlaceValidation,
+  getPlace,
+  getPlaceValidation,
+  getPlaces,
+  getPlacesValidation,
+} from "../controllers/PlaceController";
+import {
+  authMiddleware,
+  optionalAuthMiddleware,
+} from "../middlewares/authMiddleWare";
 
-router.get("/", (req, res) => {
-  res.send("GET /places");
-});
+const router = express.Router();
+router.use(express.json());
+
+router
+  .route("/")
+  .get(getPlacesValidation, getPlaces)
+  .post(authMiddleware, createPlaceValidation, createPlace);
+
+router.route("/:id").get(optionalAuthMiddleware, getPlaceValidation, getPlace);
 
 export default router;
