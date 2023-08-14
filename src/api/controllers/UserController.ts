@@ -2,7 +2,7 @@ import { DeleteObjectCommand, PutObjectCommand } from "@aws-sdk/client-s3";
 import bcrypt from "bcryptjs";
 import type { NextFunction, Request, Response } from "express";
 import { body, param, query, type ValidationChain } from "express-validator";
-import { readFileSync } from "fs";
+import { readFileSync, unlinkSync } from "fs";
 import { StatusCodes } from "http-status-codes";
 import jwt from "jsonwebtoken";
 
@@ -312,6 +312,8 @@ export async function editUser(
         })
       );
       profileFilepath = `https://${bucketName}.s3.${region}.amazonaws.com/${key}`;
+
+      unlinkSync(filepath);
     }
 
     const editUserDto: EditUserDto = {};
