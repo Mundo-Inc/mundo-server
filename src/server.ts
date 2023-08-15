@@ -30,11 +30,21 @@ async function main() {
 
   app.use("/api/v1", router);
 
+  // apple-app-site-association
+  app.get("/apple-app-site-association", (req, res) => {
+    res.setHeader("Content-Type", "application/json");
+    res.sendFile(process.cwd() + "/apple-app-site-association");
+  });
+
   app.use(errorHanlder);
 
   app.listen(config.APP_PORT, () => {
     console.log(`Server listening on port ${config.APP_PORT}`);
   });
+
+  if (process.env.NODE_ENV === "production") {
+    await import("./cronjobs/notification");
+  }
 }
 
 main();

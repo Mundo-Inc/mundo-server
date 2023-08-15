@@ -1,4 +1,5 @@
 import mongoose, { Schema, type Document } from "mongoose";
+import Notification, { NotificationType, ResourceTypes } from "./Notification";
 
 export interface IFollow extends Document {
   user: mongoose.Types.ObjectId;
@@ -29,6 +30,20 @@ const FollowSchema = new Schema<IFollow>(
 );
 
 FollowSchema.index({ user: 1, target: 1 });
+
+FollowSchema.post("save", async function (doc, next) {
+  // create notification
+  await Notification.create({
+    user: doc.target,
+    type: NotificationType.FOLLOW,
+    resources: [
+      { _id: doc._id, type: ResourceTypes.FOLLOW, date: doc.createdAt },
+    ],
+    importance: 2,
+  });
+
+  next();
+});
 
 export default mongoose.models.Follow ||
   mongoose.model<IFollow>("Follow", FollowSchema);

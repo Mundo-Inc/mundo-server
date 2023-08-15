@@ -21,6 +21,7 @@
   "dependencies": {
     "@aws-sdk/client-s3": "^3.388.0",
     "@ffmpeg-installer/ffmpeg": "^1.1.0",
+    "@parse/node-apn": "^5.2.3",
     "@sendinblue/client": "^3.3.1",
     "bcryptjs": "^2.4.3",
     "cookie-parser": "^1.4.6",
@@ -36,6 +37,7 @@
     "http-status-codes": "^2.2.0",
     "jsonwebtoken": "^9.0.1",
     "mongoose": "^7.4.3",
+    "node-cron": "^3.0.2",
     "openai": "^3.3.0",
     "passport": "^0.6.0",
     "passport-apple": "^2.0.2",
@@ -53,6 +55,7 @@
     "@types/formidable": "^3.4.1",
     "@types/jsonwebtoken": "^9.0.2",
     "@types/node": "^20.4.10",
+    "@types/node-cron": "^3.0.8",
     "@types/passport": "^1.0.12",
     "@types/passport-apple": "^1.1.1",
     "@types/passport-facebook": "^3.0.0",

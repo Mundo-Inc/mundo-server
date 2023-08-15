@@ -39,6 +39,7 @@ import UserActivity, {
   ResourceTypeEnum,
 } from "../../models/UserActivity";
 import mongoose from "mongoose";
+import Notification, { ResourceTypes } from "../../models/Notification";
 
 export const getUsersValidation: ValidationChain[] = [
   validate.q(query("q").optional()),
@@ -520,13 +521,23 @@ export async function deleteUserConnection(
     const { id } = req.params;
     const { id: authId } = req.user!;
 
-    await Follow.deleteOne({ user: authId, target: id });
+    const deletedDoc = await Follow.findOneAndRemove({
+      user: authId,
+      target: id,
+    });
+
     try {
       await UserActivity.findOneAndRemove({
         userId: new mongoose.Types.ObjectId(authId),
         resourceId: new mongoose.Types.ObjectId(id as string),
         activityType: ActivityTypeEnum.FOLLOWING,
         resourceType: ResourceTypeEnum.USER,
+      });
+
+      await Notification.findOneAndRemove({
+        resources: {
+          $elemMatch: { _id: deletedDoc._id, type: ResourceTypes.FOLLOW },
+        },
       });
     } catch (e) {
       console.log(`Error deleting "Follow": ${e}`);

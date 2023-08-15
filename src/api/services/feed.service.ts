@@ -579,6 +579,7 @@ export const getUserFeed = async (
             createdAt: 1,
             updatedAt: 1,
             content: 1,
+            mentions: 1,
             author: { $arrayElemAt: ["$author", 0] },
           },
         },

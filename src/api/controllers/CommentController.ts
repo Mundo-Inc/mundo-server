@@ -41,11 +41,49 @@ export async function createComment(
       }
     });
 
-    const comment = await Comment.create({
+    const body: {
+      [key: string]: any;
+    } = {
       author: authId,
       userActivity: activity,
       content,
-    });
+    };
+
+    // extract mentions
+    const mentions = content.match(/@(\w+)/g);
+
+    if (mentions) {
+      const toAdd: {
+        user: string;
+        username: string;
+      }[] = [];
+
+      for (const mention of mentions) {
+        if (toAdd.find((a) => a.user === mention)) {
+          continue;
+        }
+
+        const user = await User.findOne(
+          {
+            username: new RegExp(`^${mention.slice(1)}$`, "i"),
+          },
+          ["_id", "username"]
+        );
+
+        if (user) {
+          toAdd.push({
+            user: user._id,
+            username: user.username,
+          });
+        }
+      }
+
+      if (toAdd.length > 0) {
+        body.mentions = toAdd;
+      }
+    }
+
+    const comment = await Comment.create(body);
 
     comment.author = user;
     comment.status = undefined;

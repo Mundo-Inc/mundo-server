@@ -1,5 +1,5 @@
 import type { NextFunction, Request, Response } from "express";
-import { query, type ValidationChain } from "express-validator";
+import { param, query, type ValidationChain } from "express-validator";
 import { StatusCodes } from "http-status-codes";
 
 import Category from "../../models/Category";
@@ -41,4 +41,52 @@ export async function getCategories(
   } catch (err) {
     next(err);
   }
+}
+
+export const getVersionInfoValidation: ValidationChain[] = [
+  param("version").isString().notEmpty(),
+];
+export async function getVersionInfo(
+  req: Request,
+  res: Response,
+  next: NextFunction
+) {
+  try {
+    handleInputErrors(req);
+    const { version } = req.params;
+
+    const latestVersion = "0.8.2";
+    const minOperationalVersion = "0.8.2";
+    const isLatest = version === latestVersion;
+
+    const compare = compareVersion(version, minOperationalVersion);
+
+    const isOperational = compare >= 0;
+
+    return res.status(StatusCodes.OK).json({
+      isLatest,
+      latestVersion,
+      isOperational,
+      minOperationalVersion,
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
+function compareVersion(v1: string, v2: string) {
+  const parts1 = v1.split(".").map(Number);
+  const parts2 = v2.split(".").map(Number);
+
+  const maxLength = Math.max(parts1.length, parts2.length);
+
+  for (let i = 0; i < maxLength; i++) {
+    const part1 = parts1[i] || 0; // default to 0 if no part exists
+    const part2 = parts2[i] || 0; // default to 0 if no part exists
+
+    if (part1 > part2) return 1;
+    if (part1 < part2) return -1;
+  }
+
+  return 0; // versions are equal
 }

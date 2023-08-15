@@ -1,4 +1,6 @@
 import mongoose, { Schema, type Document } from "mongoose";
+import Notification, { NotificationType, ResourceTypes } from "./Notification";
+import UserActivity from "./UserActivity";
 
 export interface IReaction extends Document {
   user: mongoose.Types.ObjectId;
@@ -39,6 +41,23 @@ const ReactionSchema = new Schema<IReaction>({
     type: String,
     enum: ["yelp", "google"],
   },
+});
+
+ReactionSchema.post("save", async function (doc, next) {
+  // create notification
+  const activity = await UserActivity.findById(doc.target);
+  if (activity) {
+    await Notification.create({
+      user: activity.userId,
+      type: NotificationType.REACTION,
+      resources: [
+        { _id: doc._id, type: ResourceTypes.REACTION, date: doc.createdAt },
+      ],
+      importance: 1,
+    });
+  }
+
+  next();
 });
 
 export default mongoose.models.Reaction ||

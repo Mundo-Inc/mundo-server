@@ -134,3 +134,6 @@ dist
 
 # keys
 /keys
+
+# mac
+.DS_Store

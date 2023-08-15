@@ -16,6 +16,7 @@ export enum ResourceTypes {
   USER = "User",
   REVIEW = "Review",
   CHECKIN = "CheckIn",
+  FOLLOW = "Follow",
 }
 
 interface Resources {
@@ -34,6 +35,7 @@ export interface INotification extends Document {
   type: NotificationType;
   readAt: Date | null;
   sent: boolean;
+  failReason?: string;
   importance: 0 | 1 | 2 | 3;
   resources?: Resources[];
   batchCount: number;
@@ -66,6 +68,10 @@ const NotificationSchema: Schema = new Schema<INotification>(
       required: true,
       default: false,
       index: true,
+    },
+    failReason: {
+      type: String,
+      default: null,
     },
     importance: {
       type: Number,

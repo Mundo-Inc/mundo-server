@@ -6,6 +6,10 @@ import Reaction from "../../models/Reaction";
 import strings, { dStrings as ds, dynamicMessage } from "../../strings";
 import { createError, handleInputErrors } from "../../utilities/errorHandlers";
 import { addCreateReactionXP } from "../services/ranking.service";
+import Notification, {
+  NotificationType,
+  ResourceTypes,
+} from "../../models/Notification";
 
 export const createReactionValidation: ValidationChain[] = [
   body("target").isMongoId(),
@@ -93,6 +97,19 @@ export async function deleteReaction(
         strings.general.deleteFailed,
         StatusCodes.INTERNAL_SERVER_ERROR
       );
+    }
+
+    try {
+      await Notification.deleteMany({
+        resources: {
+          $elemMatch: {
+            type: ResourceTypes.REACTION,
+            _id: id,
+          },
+        },
+      });
+    } catch (e) {
+      console.log(`Something happened during delete reaction: ${e}`);
     }
 
     res.sendStatus(StatusCodes.NO_CONTENT);
