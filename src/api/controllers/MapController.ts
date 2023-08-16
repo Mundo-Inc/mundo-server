@@ -1,10 +1,11 @@
+import axios from "axios";
 import type { NextFunction, Request, Response } from "express";
 import { query, type ValidationChain } from "express-validator";
 import { StatusCodes } from "http-status-codes";
 
+import strings from "../../strings";
 import { createError, handleInputErrors } from "../../utilities/errorHandlers";
 import validate from "./validators";
-import strings from "../../strings";
 
 const API_KEY = process.env.GOOGLE_GEO_API_KEY!;
 
@@ -32,8 +33,8 @@ export async function getGeoLocation(
       throw createError(strings.validations.invalidType, 400);
     }
 
-    const response = await fetch(url);
-    const data = await response.json();
+    const response = await axios(url);
+    const data = await response.data;
 
     if (!data.results[0]) {
       throw createError(strings.data.noResult, 404);

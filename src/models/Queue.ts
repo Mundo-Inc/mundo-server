@@ -1,4 +1,5 @@
 import { PutObjectCommand } from "@aws-sdk/client-s3";
+import axios from "axios";
 import mongoose, { Document, Schema } from "mongoose";
 
 import type { IGPPlaceDetails } from "../types/googleplaces.interface";
@@ -98,12 +99,10 @@ const QueueSchema = new Schema<IQueue>(
         let p_r, p_d;
         try {
           if (this.isProcessing) return;
-          const placeRes = await fetch(
+          const placeRes = await axios(
             `https://maps.googleapis.com/maps/api/place/details/json?place_id=${this.googlePlaceId}&key=${API_KEY}`
           );
-          const placeDetails: IGPPlaceDetails["result"] = (
-            await placeRes.json()
-          ).result;
+          const placeDetails = (placeRes.data as IGPPlaceDetails).result;
 
           const body: {
             [key: string]: any;
@@ -169,9 +168,10 @@ const QueueSchema = new Schema<IQueue>(
                 ? `places/${place._id}/thumbnail.jpg`
                 : `devplaces/${place._id}/thumbnail.jpg`;
             place.thumbnail = `https://${bucketName}.s3.${region}.amazonaws.com/${key}`;
-            fetch(thumbnailUrl)
-              .then(async (r) => Buffer.from(await r.arrayBuffer()))
-              .then((buffer) => {
+            axios
+              .get(thumbnailUrl, { responseType: "arraybuffer" })
+              .then((response) => {
+                const buffer = Buffer.from(response.data);
                 s3.send(
                   new PutObjectCommand({
                     Bucket: bucketName,
@@ -180,6 +180,9 @@ const QueueSchema = new Schema<IQueue>(
                     ContentType: "image/jpeg",
                   })
                 );
+              })
+              .catch((error) => {
+                console.error("There was an error:", error);
               });
           }
 
@@ -197,8 +200,8 @@ const QueueSchema = new Schema<IQueue>(
               `https://maps.googleapis.com/maps/api/place/details/json?place_id=${this.googlePlaceId}&reviews_sort=newest&key=${process.env.GOOGLE_PLACES_API_KEY}`
             )
               .then(async (placeRes) => {
-                const placeDetails: IGPPlaceDetails["result"] = (
-                  await placeRes.json()
+                const placeDetails = (
+                  (await placeRes.json()) as IGPPlaceDetails
                 ).result;
                 addReviews(placeDetails, place, reviewsArray);
               })

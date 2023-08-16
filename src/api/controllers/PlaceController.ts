@@ -1,17 +1,18 @@
+import axios from "axios";
 import type { NextFunction, Request, Response } from "express";
 import { body, param, query, type ValidationChain } from "express-validator";
 import { StatusCodes } from "http-status-codes";
+import mongoose from "mongoose";
 
 import Place, { type IPlace } from "../../models/Place";
+import Queue from "../../models/Queue";
 import { dStrings, dynamicMessage } from "../../strings";
+import type { IGPNearbySearch } from "../../types/googleplaces.interface";
 import { createError, handleInputErrors } from "../../utilities/errorHandlers";
 import { placeEarning } from "../services/earning.service";
 import { addCreatePlaceXP } from "../services/ranking.service";
 import { addNewPlaceActivity } from "../services/user.activity.service";
 import validate from "./validators";
-import Queue from "../../models/Queue";
-import type { IGPNearbySearch } from "../../types/googleplaces.interface";
-import mongoose from "mongoose";
 
 export const createPlaceValidation: ValidationChain[] = [
   validate.name(body("name")),
@@ -322,23 +323,23 @@ export async function getPlaces(
 
     if (lng && lat) {
       // if (places.length === limit) return;
-      let googleRes = await fetch(
+      let googleRes = await axios(
         `https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${lat}%2C${lng}&radius=${
           radius ? (radius === "global" ? 100000 : Number(radius)) : 1000
         }${q ? `&keyword=${q}` : ""}&type=${
           category ? category : "restaurant"
         }&key=${process.env.GOOGLE_PLACES_API_KEY}`
       );
-      let googlePlaces: IGPNearbySearch = await googleRes.json();
+      let googlePlaces = googleRes.data as IGPNearbySearch;
 
       if (googlePlaces.status === "OK") {
         if (q && (q as string).length >= 2) {
           if (googlePlaces.results.length === 0) {
-            googleRes = await fetch(
+            googleRes = await axios(
               `https://maps.googleapis.com/maps/api/place/findplacefromtext/json?input=${q}&inputtype=textquery&locationbias=circle%3A2000%${lat}%2C${lng}&fields=name%2Cplace_id%2Crating&key=${process.env.GOOGLE_PLACES_API_KEY}`
             );
 
-            googlePlaces.results = (await googleRes.json()).candidates;
+            googlePlaces.results = googleRes.data.candidates;
           }
         }
 
