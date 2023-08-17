@@ -1,5 +1,5 @@
 import type { NextFunction, Request, Response } from "express";
-import { query, type ValidationChain } from "express-validator";
+import { body, query, type ValidationChain } from "express-validator";
 import { StatusCodes } from "http-status-codes";
 import bcrypt from "bcryptjs";
 import crypto from "crypto";
@@ -11,8 +11,8 @@ import User, { SignupMethodEnum } from "../../models/User";
 import { BrevoService } from "../services/brevo.service";
 
 export const resetPasswordValidation: ValidationChain[] = [
-  validate.email(query("email")),
-  query("action")
+  validate.email(body("email")),
+  body("action")
     .isIn(["generate", "reset"])
     .withMessage(strings.server.invalidAction),
 ];
