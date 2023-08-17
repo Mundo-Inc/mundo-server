@@ -20,8 +20,8 @@ const validate = {
   username: (start: ValidationChain) =>
     start
       .trim()
-      .isLength({ min: 5 })
-      .withMessage("Username must be at least 5 characters long")
+      .isLength({ min: 5, max: 20 })
+      .withMessage("Username must be between 5 and 20 characters long")
       .matches(/^[a-zA-Z0-9_]*$/)
       .withMessage("Username must be alphanumeric")
       .escape(),
