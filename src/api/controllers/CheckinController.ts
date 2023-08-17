@@ -1,16 +1,16 @@
 import type { NextFunction, Request, Response } from "express";
-import { query, type ValidationChain } from "express-validator";
+import { body, query, type ValidationChain } from "express-validator";
 import { StatusCodes } from "http-status-codes";
-
-import { createError, handleInputErrors } from "../../utilities/errorHandlers";
-import validate from "./validators";
-import CheckIn from "../../models/CheckIn";
 import mongoose from "mongoose";
-import { checkinEarning } from "../services/earning.service";
-import { addCheckinActivity } from "../services/user.activity.service";
-import { ActivityPrivacyTypeEnum } from "../../models/UserActivity";
-import { addCreateCheckinXP } from "../services/ranking.service";
+
+import CheckIn from "../../models/CheckIn";
 import User from "../../models/User";
+import { ActivityPrivacyTypeEnum } from "../../models/UserActivity";
+import { createError, handleInputErrors } from "../../utilities/errorHandlers";
+import { checkinEarning } from "../services/earning.service";
+import { addCreateCheckinXP } from "../services/ranking.service";
+import { addCheckinActivity } from "../services/user.activity.service";
+import validate from "./validators";
 
 const checkinWaitTime = 5; // minutes
 
@@ -165,8 +165,8 @@ export async function getCheckins(
 }
 
 export const createCheckinValidation: ValidationChain[] = [
-  query("place").exists().isMongoId().withMessage("Invalid place id"),
-  query("privacyType").optional().isIn(Object.values(ActivityPrivacyTypeEnum)),
+  body("place").exists().isMongoId().withMessage("Invalid place id"),
+  body("privacyType").optional().isIn(Object.values(ActivityPrivacyTypeEnum)),
 ];
 export async function createCheckin(
   req: Request,
@@ -217,6 +217,7 @@ export async function createCheckin(
     }
     res.status(StatusCodes.OK).json({ success: true, data: checkin });
   } catch (err) {
+    console.log(err);
     next(err);
   }
 }
