@@ -73,9 +73,9 @@ export async function resetPassword(
       );
 
       const receivers = [{ email: user.email.address }];
-      const sender = { email: "admin@phantomphood.com", name: "admin" };
+      const sender = { email: "admin@phantomphood.com", name: "Phantom Phood" };
       const subject = "PhantomPhood - Reset Password";
-      const url = `${process.env.NEXT_PUBLIC_PLATFORM_ENDPOINT}/reset-password/newPassword/${user.email.address}/${resetPasswordToken}`;
+      const url = `${process.env.URL}/reset-password/newPassword/${user.email.address}/${resetPasswordToken}`;
       const brevoService = new BrevoService();
       await brevoService.sendTemplateEmail(
         receivers,

@@ -6,7 +6,7 @@ import {
   sendEmailVerification,
   verifyEmail,
   verifyEmailValidation,
-} from "../controllers/MaiController";
+} from "../controllers/MailController";
 import { authMiddleware } from "../middlewares/authMiddleWare";
 
 const router = express.Router();
