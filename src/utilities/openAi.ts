@@ -1,10 +1,9 @@
-import { Configuration, OpenAIApi } from "openai";
+import OpenAI from "openai";
 import { predefinedTags } from "../models/Review";
 
-const configuration = new Configuration({
+const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
-const openai = new OpenAIApi(configuration);
 
 export async function openAiAnalyzeReview(
   text: string,
@@ -31,7 +30,7 @@ export async function openAiAnalyzeReview(
   }
 
   try {
-    const response = await openai.createChatCompletion({
+    const response = await openai.chat.completions.create({
       model: "gpt-3.5-turbo",
       messages: [
         {
@@ -56,13 +55,13 @@ export async function openAiAnalyzeReview(
     });
 
     let tokensUsed = 0;
-    if (response.data.usage?.total_tokens) {
-      tokensUsed = response.data.usage?.total_tokens!;
+    if (response.usage?.total_tokens) {
+      tokensUsed = response.usage?.total_tokens!;
     }
 
     let rewrite = "";
     if (options.rewrite) {
-      const response = await openai.createChatCompletion({
+      const response = await openai.chat.completions.create({
         model: "gpt-3.5-turbo",
         messages: [
           {
@@ -77,18 +76,18 @@ export async function openAiAnalyzeReview(
           },
         ],
       });
-      rewrite = response.data.choices[0]?.message?.content!;
-      if (response.data.usage?.total_tokens) {
-        tokensUsed += response.data.usage?.total_tokens;
+      rewrite = response.choices[0]?.message?.content!;
+      if (response.usage?.total_tokens) {
+        tokensUsed += response.usage?.total_tokens;
       }
     }
 
     try {
-      if (!response.data?.choices) {
+      if (!response.choices) {
         throw new Error("notValidResponse");
       }
 
-      const responseText = response.data.choices[0].message?.content!;
+      const responseText = response.choices[0].message?.content!;
 
       let { scores, hashtags } = formatOpenAiResponse(
         responseText,

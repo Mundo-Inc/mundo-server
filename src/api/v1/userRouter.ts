@@ -30,15 +30,15 @@ import {
 } from "../middlewares/authMiddleWare";
 
 const router = express.Router();
+router.use(express.json());
 
 router
   .route("/")
-  .get(express.json(), authMiddleware, getUsersValidation, getUsers)
-  .post(express.json(), createUserValidation, createUser);
+  .get(authMiddleware, getUsersValidation, getUsers)
+  .post(createUserValidation, createUser);
 
 router.get(
   "/leaderboard",
-  express.json(),
   authMiddleware,
   leaderBoardValidation,
   getLeaderBoard
@@ -46,7 +46,6 @@ router.get(
 
 router.get(
   "/username-availability/:username",
-  express.json(),
   optionalAuthMiddleware,
   usernameAvailabilityValidation,
   usernameAvailability
@@ -55,10 +54,7 @@ router.get(
 router
   .route("/:id")
   .put(authMiddleware, editUserValidation, editUser)
-  .get(express.json(), authMiddleware, getUserValidation, getUser);
-
-// ! JSON parser middleware:
-router.use(express.json());
+  .get(authMiddleware, getUserValidation, getUser);
 
 router.put(
   "/:id/settings",

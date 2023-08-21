@@ -14,13 +14,14 @@ import {
 } from "../middlewares/authMiddleWare";
 
 const router = express.Router();
-router.use(express.json());
 
 router
   .route("/")
-  .get(getPlacesValidation, getPlaces)
+  .get(express.json(), getPlacesValidation, getPlaces)
   .post(authMiddleware, createPlaceValidation, createPlace);
 
-router.route("/:id").get(optionalAuthMiddleware, getPlaceValidation, getPlace);
+router
+  .route("/:id")
+  .get(express.json(), optionalAuthMiddleware, getPlaceValidation, getPlace);
 
 export default router;

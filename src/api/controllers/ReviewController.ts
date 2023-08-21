@@ -18,6 +18,8 @@ import {
   addCreateReviewXP,
 } from "../services/ranking.service";
 import { openAiAnalyzeReview } from "../../utilities/openAi";
+import Upload from "../../models/Upload";
+import Media, { MediaTypeEnum } from "../../models/Media";
 
 export const getReviewsValidation: ValidationChain[] = [
   query("writer").optional().isMongoId(),
@@ -256,22 +258,39 @@ export const createReviewValidation: ValidationChain[] = [
     }
     for (const key in scores) {
       if (!allowedScoreKeys.includes(key)) {
-        throw createError(strings.review.invalidScore, StatusCodes.BAD_REQUEST);
+        throw createError(
+          strings.review.invalidScoreKey,
+          StatusCodes.BAD_REQUEST
+        );
       }
     }
     return true;
   }),
-  body("scores.overall").optional().isInt({ min: 1, max: 5 }),
-  body("scores.drinkQuality").optional().isInt({ min: 1, max: 5 }),
-  body("scores.foodQuality").optional().isInt({ min: 1, max: 5 }),
-  body("scores.service").optional().isInt({ min: 1, max: 5 }),
-  body("scores.atmosphere").optional().isInt({ min: 1, max: 5 }),
-  body("scores.value").optional().isInt({ min: 1, max: 5 }),
+  body("scores.*")
+    .optional()
+    .custom((score) => {
+      if (score === null) {
+        return true;
+      } else {
+        const scoreNum = parseInt(score);
+        if (isNaN(scoreNum) || scoreNum < 0 || scoreNum > 5) {
+          throw createError(
+            strings.review.invalidScoreValue,
+            StatusCodes.BAD_REQUEST
+          );
+        } else {
+          return true;
+        }
+      }
+    }),
+
   body("content").optional().isString(),
   body("images").optional().isArray(),
-  body("images.*").optional().isMongoId(),
+  body("images.*.uploadId").optional().isMongoId(),
+  body("images.*.caption").optional().isString(),
   body("videos").optional().isArray(),
-  body("videos.*").optional().isMongoId(),
+  body("videos.*.uploadId").optional().isMongoId(),
+  body("videos.*.caption").optional().isString(),
   body("language").optional().isString(),
   body("recommend").optional().isBoolean(),
 ];
@@ -316,13 +335,87 @@ export async function createReview(
       }
     }
 
+    const uploadIds: string[] = [];
+    const imageMediaIds: string[] = [];
+    const videoMediaIds: string[] = [];
+    if (images && images.length > 0) {
+      for (const image of images) {
+        const upload = await Upload.findById(image.uploadId);
+        if (!upload) {
+          throw createError(
+            dynamicMessage(ds.notFound, "Uploaded image"),
+            StatusCodes.NOT_FOUND
+          );
+        }
+        if (upload.user.toString() !== authId) {
+          throw createError(
+            strings.authorization.otherUser,
+            StatusCodes.FORBIDDEN
+          );
+        }
+        if (upload.type !== "image") {
+          throw createError(
+            strings.upload.invalidType,
+            StatusCodes.BAD_REQUEST
+          );
+        }
+        uploadIds.push(image.uploadId);
+
+        await Media.create({
+          type: MediaTypeEnum.image,
+          user: authId,
+          place,
+          caption: image.caption,
+          src: upload.src,
+        }).then(async (media) => {
+          imageMediaIds.push(media._id);
+          await Upload.findByIdAndDelete(image.uploadId);
+        });
+      }
+    }
+    if (videos && videos.length > 0) {
+      for (const video of videos) {
+        const upload = await Upload.findById(video.uploadId);
+        if (!upload) {
+          throw createError(
+            dynamicMessage(ds.notFound, "Uploaded video"),
+            StatusCodes.NOT_FOUND
+          );
+        }
+        if (upload.user.toString() !== authId) {
+          throw createError(
+            strings.authorization.otherUser,
+            StatusCodes.FORBIDDEN
+          );
+        }
+        if (upload.type !== "video") {
+          throw createError(
+            strings.upload.invalidType,
+            StatusCodes.BAD_REQUEST
+          );
+        }
+        uploadIds.push(video.uploadId);
+
+        await Media.create({
+          type: MediaTypeEnum.video,
+          user: authId,
+          place,
+          caption: video.caption,
+          src: upload.src,
+        }).then(async (media) => {
+          videoMediaIds.push(media._id);
+          await Upload.findByIdAndDelete(video.uploadId);
+        });
+      }
+    }
+
     const review = await Review.create({
       writer,
       place,
       scores,
       content: content || "",
-      images,
-      videos,
+      images: imageMediaIds,
+      videos: videoMediaIds,
       language: language || "en",
       recommend: recommend
         ? recommend === "false"
@@ -330,6 +423,16 @@ export async function createReview(
           : Boolean(recommend)
         : undefined,
     });
+
+    res.status(StatusCodes.CREATED).json({ success: true, data: review });
+
+    try {
+      // delete uploads
+      await Upload.deleteMany({ _id: { $in: uploadIds } });
+    } catch (e) {
+      console.log(`Something happened during delete upload: ${e}`);
+    }
+
     try {
       await reviewEarning(authId, review);
       let _act;
@@ -347,7 +450,7 @@ export async function createReview(
     } catch (e) {
       console.log(`Something happened during create review: ${e}`);
     }
-    res.status(StatusCodes.CREATED).json({ success: true, data: review });
+
     if (content && content.length > 8) {
       openAiAnalyzeReview(content).then(async ({ error, scores, tags }) => {
         if (error) {
@@ -363,6 +466,8 @@ export async function createReview(
         await review.save();
         thePlace.processReviews();
       });
+    } else {
+      thePlace.processReviews();
     }
   } catch (err) {
     next(err);

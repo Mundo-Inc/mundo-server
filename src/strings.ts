@@ -74,9 +74,15 @@ const strings = {
     notFound: "Reaction not found",
     alreadyExists: "Reaction already exists",
   },
+  upload: {
+    invalidFile: "Invalid file",
+    invalidType: "Invalid file type",
+  },
   review: {
     notFound: "Review not found",
-    invalidScore: "Invalid score key provided",
+    invalidScore: "Invalid score provided",
+    invalidScoreKey: "Invalid score key provided",
+    invalidScoreValue: "Invalid score value",
     cantReviewSamePlaceWithin24Hours:
       "You can't review the same place within 24 hours",
     missingType: "Missing type",

@@ -1,4 +1,5 @@
 import { type ValidationChain } from "express-validator";
+import strings from "../../strings";
 
 const validate = {
   email: (start: ValidationChain) =>
@@ -17,13 +18,15 @@ const validate = {
   name: (start: ValidationChain) =>
     start.trim().isLength({ min: 1 }).withMessage("Name is required").escape(),
 
+  bio: (start: ValidationChain) => start.trim().escape(),
+
   username: (start: ValidationChain) =>
     start
       .trim()
       .isLength({ min: 5, max: 20 })
-      .withMessage("Username must be between 5 and 20 characters long")
+      .withMessage(strings.validations.invalidUsernameLength)
       .matches(/^[a-zA-Z0-9_]*$/)
-      .withMessage("Username must be alphanumeric")
+      .withMessage(strings.validations.invalidUsername)
       .escape(),
 
   q: (start: ValidationChain) =>

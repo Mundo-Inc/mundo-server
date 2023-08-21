@@ -277,7 +277,13 @@ export async function getUser(req: Request, res: Response, next: NextFunction) {
   }
 }
 
-export const editUserValidation: ValidationChain[] = [param("id").isMongoId()];
+export const editUserValidation: ValidationChain[] = [
+  param("id").isMongoId(),
+  validate.name(body("name").optional()),
+  validate.bio(body("bio").optional()),
+  validate.username(body("username").optional()),
+  body("removeProfileImage").optional().isBoolean(),
+];
 export async function editUser(
   req: Request,
   res: Response,
@@ -293,58 +299,21 @@ export async function editUser(
         StatusCodes.FORBIDDEN
       );
     }
-    const { fields, files } = await parseForm(req);
-    const { name, bio, username, removeProfileImage } = fields; // TODO: phone need to be verified
 
-    let profileFilepath = "";
-    if (!removeProfileImage && files?.profileImage) {
-      const { filepath, originalFilename, newFilename, size, mimetype } =
-        files.profileImage[0];
-      const fileBuffer = readFileSync(filepath);
-      // const resizedImageBuffer = await resizeImage(fileBuffer);
-      const key = `${id}/profile.jpg`;
-      await s3.send(
-        new PutObjectCommand({
-          Bucket: bucketName,
-          Key: key,
-          Body: fileBuffer,
-          // ACL: "public-read",
-          ContentType: "image/jpeg",
-        })
-      );
-      profileFilepath = `https://${bucketName}.s3.${region}.amazonaws.com/${key}`;
-
-      unlinkSync(filepath);
-    }
+    const { name, bio, username, removeProfileImage } = req.body; // TODO: phone need to be verified
 
     const editUserDto: EditUserDto = {};
     if (name) {
-      editUserDto.name = name[0];
+      editUserDto.name = name;
     }
     if (bio) {
-      editUserDto.bio = bio[0];
+      editUserDto.bio = bio;
     }
     if (username) {
-      const usernameRegex = /^[a-zA-Z0-9_]{5,20}$/;
-      if (!usernameRegex.test(username[0])) {
-        if (username.length < 5) {
-          throw createError(
-            strings.validations.invalidUsernameLength,
-            StatusCodes.BAD_REQUEST
-          );
-        }
-        throw createError(
-          strings.validations.invalidUsername,
-          StatusCodes.BAD_REQUEST
-        );
-      }
-      editUserDto.username = username[0];
-    }
-    if (profileFilepath) {
-      editUserDto.profileImage = profileFilepath;
+      editUserDto.username = username;
     }
 
-    if (removeProfileImage && removeProfileImage[0] === "true") {
+    if (removeProfileImage === true) {
       editUserDto.profileImage = "";
       s3.send(
         new DeleteObjectCommand({

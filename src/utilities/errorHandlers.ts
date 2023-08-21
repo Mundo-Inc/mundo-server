@@ -19,6 +19,8 @@ export function errorHanlder(
   res: Response,
   next: NextFunction
 ) {
+  console.log(err);
+
   const body: {
     message?: string;
     validation?: ValidationError[];

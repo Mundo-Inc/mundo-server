@@ -1,36 +1,52 @@
 import axios from "axios";
 import type { NextFunction, Request, Response } from "express";
-import { body, param, query, type ValidationChain } from "express-validator";
+import { param, query, type ValidationChain } from "express-validator";
+import { type File } from "formidable";
+import { readFileSync, unlinkSync } from "fs";
 import { StatusCodes } from "http-status-codes";
 import mongoose from "mongoose";
 
+import { PutObjectCommand } from "@aws-sdk/client-s3";
 import Place, { type IPlace } from "../../models/Place";
 import Queue from "../../models/Queue";
 import { dStrings, dynamicMessage } from "../../strings";
 import type { IGPNearbySearch } from "../../types/googleplaces.interface";
 import { createError, handleInputErrors } from "../../utilities/errorHandlers";
+import { bucketName, parseForm, region, s3 } from "../../utilities/storage";
 import { placeEarning } from "../services/earning.service";
 import { addCreatePlaceXP } from "../services/ranking.service";
 import { addNewPlaceActivity } from "../services/user.activity.service";
 import validate from "./validators";
 
 export const createPlaceValidation: ValidationChain[] = [
-  validate.name(body("name")),
-  validate.place.description(body("description").optional()),
-  validate.place.priceRange(body("priceRange").optional()),
-  validate.place.categories(body("categories").optional()),
+  // validate.name(body("name")),
+  // validate.place.description(body("description").optional()),
+  // validate.place.priceRange(body("priceRange").optional()),
+  // validate.place.categories(body("categories").optional()),
 ];
 export async function createPlace(
   req: Request,
   res: Response,
   next: NextFunction
 ) {
+  // NO PARSER
   try {
     handleInputErrors(req);
 
     const { id: authId } = req.user!;
 
-    const placeInfo: IPlace = req.body;
+    const { fields, files } = await parseForm(req);
+    console.log(files);
+
+    const placeInfo = {
+      name: fields.name[0],
+      location: JSON.parse(fields.location[0]),
+      description: fields.description?.[0],
+      priceRange: fields.priceRange?.[0] ? parseInt(fields.priceRange[0]) : 0,
+      categories: fields.categories?.[0]
+        ? fields.categories[0].split(",")
+        : undefined,
+    } as IPlace;
 
     let place = await Place.findOne({
       name: placeInfo.name,
@@ -70,7 +86,28 @@ export async function createPlace(
       body.categories = placeInfo.categories;
     }
 
-    place = await Place.create(body);
+    place = new Place(body);
+
+    if (files.image && files.image.length > 0) {
+      const { filepath } = files.image[0] as File;
+      let fileBuffer = readFileSync(filepath);
+      const key = `${
+        process.env.NODE_ENV === "production" ? "places" : "devplaces"
+      }/${place._id}/thumbnail.jpg`;
+      await s3.send(
+        new PutObjectCommand({
+          Bucket: bucketName,
+          Key: key,
+          Body: fileBuffer,
+          ContentType: "image/jpeg",
+        })
+      );
+      place.thumbnail = `https://${bucketName}.s3.${region}.amazonaws.com/${key}`;
+
+      unlinkSync(filepath);
+    }
+
+    await place.save();
     try {
       await placeEarning(authId, place);
       const _act = await addNewPlaceActivity(authId, place._id);

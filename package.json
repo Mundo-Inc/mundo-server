@@ -19,7 +19,7 @@
   },
   "homepage": "https://github.com/PhantomPhood-Inc/genz-server#readme",
   "dependencies": {
-    "@aws-sdk/client-s3": "^3.388.0",
+    "@aws-sdk/client-s3": "^3.395.0",
     "@ffmpeg-installer/ffmpeg": "^1.1.0",
     "@parse/node-apn": "^5.2.3",
     "@sendinblue/client": "^3.3.1",
@@ -39,7 +39,7 @@
     "jsonwebtoken": "^9.0.1",
     "mongoose": "^7.4.3",
     "node-cron": "^3.0.2",
-    "openai": "^3.3.0",
+    "openai": "^4.0.1",
     "passport": "^0.6.0",
     "passport-apple": "^2.0.2",
     "passport-facebook": "^3.0.0",
