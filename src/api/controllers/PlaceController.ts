@@ -478,6 +478,7 @@ export async function getPlace(
   try {
     handleInputErrors(req);
 
+    const authId = req.user?.id;
     const { id } = req.params;
 
     const reviewSort = req.query.reviewSort as "newest" | "oldest";
@@ -659,10 +660,20 @@ export async function getPlace(
                   {
                     $project: {
                       _id: 1,
-                      content: 1,
                       createdAt: 1,
                       updatedAt: 1,
+                      content: 1,
+                      mentions: 1,
                       author: { $arrayElemAt: ["$author", 0] },
+                      likes: { $size: "$likes" },
+                      liked: authId
+                        ? {
+                            $in: [
+                              new mongoose.Types.ObjectId(authId),
+                              "$likes",
+                            ],
+                          }
+                        : false,
                     },
                   },
                 ],

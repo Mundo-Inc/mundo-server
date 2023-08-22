@@ -14,7 +14,7 @@ import { errorHanlder } from "./utilities/errorHandlers";
 const app: Express = express();
 
 const limiter = rateLimit({
-  windowMs: 5 * 60 * 1000, // 5 minutes
+  windowMs: 3 * 60 * 1000, // 3 minutes
   max: 100,
   message: "Too many requests.",
 });
