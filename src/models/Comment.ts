@@ -1,4 +1,5 @@
 import mongoose, { Schema, type Document } from "mongoose";
+
 import Notification, { NotificationType, ResourceTypes } from "./Notification";
 import UserActivity, { type IUserActivity } from "./UserActivity";
 
@@ -6,6 +7,7 @@ export interface IComment extends Document {
   author: mongoose.Types.ObjectId;
   userActivity: mongoose.Types.ObjectId;
   content: string;
+  likes: mongoose.Types.ObjectId[];
   mentions?: {
     user: mongoose.Types.ObjectId;
     username: string;
@@ -33,6 +35,15 @@ const CommentSchema = new Schema<IComment>(
       required: [true, "Content is required"],
       minlength: [1, "Content must be at least 1 character"],
       maxlength: [250, "Content must be at most 250 characters"],
+    },
+    likes: {
+      type: [
+        {
+          type: Schema.Types.ObjectId,
+          ref: "User",
+        },
+      ],
+      default: [],
     },
     mentions: [
       {

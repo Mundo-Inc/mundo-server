@@ -581,6 +581,10 @@ export const getUserFeed = async (
             content: 1,
             mentions: 1,
             author: { $arrayElemAt: ["$author", 0] },
+            likes: { $size: "$likes" },
+            liked: {
+              $in: [new mongoose.Types.ObjectId(userId), "$likes"],
+            },
           },
         },
       ]);

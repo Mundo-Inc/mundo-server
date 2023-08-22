@@ -1,13 +1,14 @@
 import type { NextFunction, Request, Response } from "express";
-import { body, type ValidationChain } from "express-validator";
+import { body, param, type ValidationChain } from "express-validator";
 import { StatusCodes } from "http-status-codes";
 
-import Comment from "../../models/Comment";
+import Comment, { type IComment } from "../../models/Comment";
 import User from "../../models/User";
 import UserActivity from "../../models/UserActivity";
-import { dStrings as ds, dynamicMessage } from "../../strings";
+import strings, { dStrings as ds, dynamicMessage } from "../../strings";
 import { createError, handleInputErrors } from "../../utilities/errorHandlers";
 import { publicReadUserProjection } from "../dto/user/read-user-public.dto";
+import mongoose from "mongoose";
 
 export const createCommentValidation: ValidationChain[] = [
   body("content").isString().isLength({ min: 1, max: 250 }),
@@ -89,6 +90,104 @@ export async function createComment(
     comment.status = undefined;
 
     res.status(StatusCodes.CREATED).json({ success: true, data: comment });
+  } catch (err) {
+    next(err);
+  }
+}
+
+export const likeCommentValidation: ValidationChain[] = [
+  param("id").isMongoId().withMessage("Invalid comment id"),
+];
+export async function likeComment(
+  req: Request,
+  res: Response,
+  next: NextFunction
+) {
+  try {
+    handleInputErrors(req);
+
+    const { id: authId } = req.user!;
+    const { id } = req.params;
+
+    const comment: IComment | null = await Comment.findById(id);
+    if (!comment) {
+      throw createError(
+        dynamicMessage(ds.notFound, "Comment"),
+        StatusCodes.NOT_FOUND
+      );
+    }
+
+    if (comment.likes.find((l: any) => l.toString() === authId)) {
+      throw createError(strings.comments.alreadyLiked, StatusCodes.CONFLICT);
+    }
+
+    comment.likes.push(new mongoose.Types.ObjectId(authId));
+    await comment.save();
+
+    await comment.populate("author", publicReadUserProjection);
+
+    res.status(StatusCodes.OK).json({
+      success: true,
+      data: {
+        _id: comment._id,
+        createdAt: comment.createdAt,
+        updatedAt: comment.updatedAt,
+        content: comment.content,
+        mentions: comment.mentions,
+        author: comment.author,
+        likes: comment.likes.length,
+        liked: true,
+      },
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
+export const deleteCommentLikeValidation: ValidationChain[] = [
+  param("id").isMongoId().withMessage("Invalid comment id"),
+];
+export async function deleteCommentLike(
+  req: Request,
+  res: Response,
+  next: NextFunction
+) {
+  try {
+    handleInputErrors(req);
+
+    const { id: authId } = req.user!;
+    const { id } = req.params;
+
+    const comment: IComment | null = await Comment.findById(id);
+    if (!comment) {
+      throw createError(
+        dynamicMessage(ds.notFound, "Comment"),
+        StatusCodes.NOT_FOUND
+      );
+    }
+
+    if (!comment.likes.find((l: any) => l.toString() === authId)) {
+      throw createError(strings.comments.notLiked, StatusCodes.BAD_REQUEST);
+    }
+
+    comment.likes = comment.likes.filter((l: any) => l.toString() !== authId);
+    await comment.save();
+
+    await comment.populate("author", publicReadUserProjection);
+
+    res.status(StatusCodes.OK).json({
+      success: true,
+      data: {
+        _id: comment._id,
+        createdAt: comment.createdAt,
+        updatedAt: comment.updatedAt,
+        content: comment.content,
+        mentions: comment.mentions,
+        author: comment.author,
+        likes: comment.likes.length,
+        liked: false,
+      },
+    });
   } catch (err) {
     next(err);
   }

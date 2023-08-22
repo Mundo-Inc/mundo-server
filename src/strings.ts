@@ -25,6 +25,10 @@ const strings = {
     accessDenied: "Access denied",
     invalidCredentials: "Invalid credentials",
   },
+  comments: {
+    alreadyLiked: "You have already liked this comment",
+    notLiked: "You have not liked this comment",
+  },
   general: {
     itemNotExists: "Item does not exist",
     updateSuccess: "Update successful",
