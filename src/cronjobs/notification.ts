@@ -21,8 +21,6 @@ cron.schedule("*/30 * * * * *", async () => {
     updatedAt: { $gt: new Date(Date.now() - 1000 * 60 * 60) },
   });
 
-  console.log(notifications.length);
-
   if (notifications.length > 0) {
     console.log(`Sending ${notifications.length} notifications.`);
 

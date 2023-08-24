@@ -364,7 +364,8 @@ export async function getPlaces(
       if (places.length === limit) return;
       let results: IGPNearbySearch["results"] = [];
       await Promise.all(
-        types.map(async (type) => {
+        types.map(async (type, index) => {
+          console.log("Starting", index);
           return axios(
             `https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${lat}%2C${lng}&radius=${
               radius ? (radius === "global" ? 100000 : Number(radius)) : 1000
@@ -373,8 +374,10 @@ export async function getPlaces(
             }`
           ).then((res) => {
             if (res.data.status === "OK") {
+              console.log(index, res.data.results.length);
               for (const result of res.data.results) {
                 if (!results.find((r) => r.place_id === result.place_id)) {
+                  console.log(result);
                   results.push(result);
                 }
               }
@@ -382,6 +385,8 @@ export async function getPlaces(
           });
         })
       );
+
+      console.log("done", results.length);
 
       if (q && (q as string).length >= 2) {
         if (results.length === 0) {
@@ -395,6 +400,7 @@ export async function getPlaces(
         }
       }
 
+      console.log("Starting loop");
       for (const result of results) {
         const found = places.find(
           (p) => p.otherSources?.googlePlaces?._id === result.place_id
@@ -453,6 +459,7 @@ export async function getPlaces(
           }
         }
       }
+      console.log("Loop ended");
     }
 
     places = await Place.aggregate([
