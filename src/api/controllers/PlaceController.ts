@@ -186,6 +186,8 @@ export async function getPlaces(
   try {
     handleInputErrors(req);
 
+    console.log(0);
+
     const { lat, lng, q, images, order, radius, category } = req.query;
     const sort = req.query.sort || "distance";
     const limit = Number(req.query.limit) || 50;
@@ -363,6 +365,7 @@ export async function getPlaces(
     if (lng && lat) {
       if (places.length === limit) return;
       let results: IGPNearbySearch["results"] = [];
+      console.log("Starting google search");
       await Promise.all(
         types.map(async (type, index) => {
           console.log("Starting", index);
