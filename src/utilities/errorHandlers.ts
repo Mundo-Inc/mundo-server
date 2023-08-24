@@ -19,6 +19,11 @@ export function errorHanlder(
   res: Response,
   next: NextFunction
 ) {
+  if (!err.statusCode) {
+    err.statusCode = 500;
+    console.log(err);
+  }
+
   const body: {
     message?: string;
     validation?: ValidationError[];
@@ -30,9 +35,7 @@ export function errorHanlder(
   }
   if (err.data) body.data = err.data;
 
-  return res
-    .status(err.statusCode || 500)
-    .json({ success: false, error: body });
+  return res.status(err.statusCode).json({ success: false, error: body });
 }
 
 export function createError(

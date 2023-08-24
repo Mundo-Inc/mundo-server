@@ -23,68 +23,70 @@ cron.schedule("*/30 * * * * *", async () => {
 
   console.log(notifications.length);
 
-  for (const notification of notifications) {
-    let failReason: string | null = null;
-    let hasFailedDevice = false;
-    const { title, content, subtitle } = await getNotificationContent(
-      notification
-    );
+  if (notifications.length > 0) {
+    console.log(`Sending ${notifications.length} notifications.`);
 
-    const user = await User.findById(notification.user, "devices");
+    for (const notification of notifications) {
+      let failReason: string | null = null;
+      let hasFailedDevice = false;
+      const { title, content, subtitle } = await getNotificationContent(
+        notification
+      );
 
-    if (user.devices.length > 0) {
-      const note = new apn.Notification();
-      note.alert = {
-        title: title,
-        body: content,
-        subtitle: subtitle,
-      };
-      note.priority = 5;
+      const user = await User.findById(notification.user, "devices");
 
-      note.topic = "ai.phantomphood.app";
-      note.badge = 1;
-      note.sound = "default";
+      if (user.devices.length > 0) {
+        const note = new apn.Notification();
+        note.alert = {
+          title: title,
+          body: content,
+          subtitle: subtitle,
+        };
+        note.priority = 5;
 
-      await apnProvider
-        .send(
-          note,
-          user.devices.map((d: device) => d.token)
-        )
-        .then((result) => {
-          if (result.sent.length === 0) {
-            failReason = "Unknown";
-          }
-          if (result.failed.length > 0) {
-            for (const failure of result.failed) {
-              if (failReason === "Unknown" && failure.response?.reason) {
-                failReason = failure.response.reason;
-              }
-              if (failure.response?.reason === "BadDeviceToken") {
-                hasFailedDevice = true;
-                user.devices = user.devices.filter(
-                  (d: device) => d.token !== failure.device
-                );
+        note.topic = "ai.phantomphood.app";
+        note.badge = 1;
+        note.sound = "default";
+
+        await apnProvider
+          .send(
+            note,
+            user.devices.map((d: device) => d.token)
+          )
+          .then((result) => {
+            if (result.sent.length === 0) {
+              failReason = "Unknown";
+            }
+            if (result.failed.length > 0) {
+              for (const failure of result.failed) {
+                if (failReason === "Unknown" && failure.response?.reason) {
+                  failReason = failure.response.reason;
+                }
+                if (failure.response?.reason === "BadDeviceToken") {
+                  hasFailedDevice = true;
+                  user.devices = user.devices.filter(
+                    (d: device) => d.token !== failure.device
+                  );
+                }
               }
             }
-          }
-        })
-        .catch((err) => {
-          console.log("ERROR", err);
-        });
-    } else {
-      failReason = "NoDevices";
-    }
-    if (failReason) {
-      notification.failReason = failReason;
-    }
-    notification.sent = true;
-    await notification.save();
-    if (hasFailedDevice) {
-      await user.save();
+          })
+          .catch((err) => {
+            console.log("ERROR", err);
+          });
+      } else {
+        failReason = "NoDevices";
+      }
+      if (failReason) {
+        notification.failReason = failReason;
+      }
+      notification.sent = true;
+      await notification.save();
+      if (hasFailedDevice) {
+        await user.save();
+      }
     }
   }
-
-  console.log("Done");
 
   // let note = new apn.Notification();
   // note.alert = "Hello, world!";

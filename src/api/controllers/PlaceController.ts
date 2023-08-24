@@ -373,7 +373,11 @@ export async function getPlaces(
             }`
           ).then((res) => {
             if (res.data.status === "OK") {
-              results.push(...res.data.results);
+              for (const result of res.data.results) {
+                if (!results.find((r) => r.place_id === result.place_id)) {
+                  results.push(result);
+                }
+              }
             }
           });
         })
