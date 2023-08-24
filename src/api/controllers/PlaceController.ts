@@ -360,10 +360,13 @@ export async function getPlaces(
       ...projectPipeline,
     ]);
 
+    console.log(1);
+
     const types = ["restaurant", "cafe", "bar"];
 
-    if (lng && lat) {
-      if (places.length === limit) return;
+    console.log(2);
+
+    if (lng && lat && places.length !== limit) {
       let results: IGPNearbySearch["results"] = [];
       console.log("Starting google search");
       await Promise.all(
