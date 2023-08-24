@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
 import { config } from "../../config";
 import { StatusCodes } from "http-status-codes";
+import User, { type IUser } from "../../models/User";
 
 interface DecodedUser {
   userId: string;
@@ -61,6 +62,48 @@ export function optionalAuthMiddleware(
     next();
   } catch (err) {
     next();
+  }
+}
+
+export async function adminAuthMiddleware(
+  req: Request,
+  res: Response,
+  next: NextFunction
+) {
+  const token = req.header("Authorization") || req.cookies?.token;
+
+  if (!token) {
+    return res
+      .status(StatusCodes.UNAUTHORIZED)
+      .json({ error: "No authentication token provided." });
+  }
+
+  try {
+    const decodedUser = jwt.verify(token, config.JWT_SECRET) as DecodedUser;
+
+    if (decodedUser.role !== "admin") {
+      return res
+        .status(StatusCodes.UNAUTHORIZED)
+        .json({ error: "Admins only." });
+    }
+
+    const user: IUser | null = await User.findById(decodedUser.userId).lean();
+    if (!user || user.role !== "admin") {
+      return res
+        .status(StatusCodes.UNAUTHORIZED)
+        .json({ error: "Nice try :)" });
+    }
+
+    req.user = {
+      id: decodedUser.userId,
+      role: decodedUser.role,
+    };
+
+    next();
+  } catch (err) {
+    return res
+      .status(StatusCodes.UNAUTHORIZED)
+      .json({ error: "Invalid or expired authentication token." });
   }
 }
 

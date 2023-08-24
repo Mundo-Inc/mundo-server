@@ -14,6 +14,7 @@ import reviewRouter from "./api/v1/reviewRouter";
 import userRouter from "./api/v1/userRouter";
 import feedRouter from "./api/v1/feedRouter";
 import notificationRouter from "./api/v1/notificationRouter";
+import devRouter from "./api/v1/devRouter";
 
 const router = express.Router();
 
@@ -31,5 +32,6 @@ router.use("/comments", commentRouter);
 router.use("/map", mapRouter);
 router.use("/feeds", feedRouter);
 router.use("/notifications", notificationRouter);
+router.use("/dev", devRouter);
 
 export default router;

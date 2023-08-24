@@ -1,6 +1,8 @@
 import mongoose, { Schema, type Document } from "mongoose";
 import Review from "./Review";
 
+const GOOGLE_PLACES_PERCENTAGE = 0.3;
+
 type Categories =
   | "bar"
   | "restaurant"
@@ -280,6 +282,29 @@ const PlaceSchema: Schema = new Schema<IPlace>(
             },
           },
         ]);
+
+        let scoreCount = 5;
+        for (const key in scores[0]) {
+          if (!scores[0][key]) {
+            scoreCount--;
+          }
+        }
+
+        if (scoreCount < 5) {
+          scores[0].phantom = (scores[0].phantom * 5) / scoreCount;
+        }
+
+        if (scores[0]) {
+          if (this.otherSources.googlePlaces.rating) {
+            scores[0].overall = this.otherSources.googlePlaces.rating;
+
+            scores[0].phantom =
+              this.otherSources.googlePlaces.rating *
+                20 *
+                GOOGLE_PLACES_PERCENTAGE +
+              scores[0].phantom * (1 - GOOGLE_PLACES_PERCENTAGE);
+          }
+        }
 
         if (scores[0]) {
           this.reviewCount = scores[0].count;

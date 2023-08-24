@@ -358,88 +358,96 @@ export async function getPlaces(
       ...projectPipeline,
     ]);
 
+    const types = ["restaurant", "cafe", "bar"];
+
     if (lng && lat) {
-      // if (places.length === limit) return;
-      let googleRes = await axios(
-        `https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${lat}%2C${lng}&radius=${
-          radius ? (radius === "global" ? 100000 : Number(radius)) : 1000
-        }${q ? `&keyword=${q}` : ""}&type=${
-          category ? category : "restaurant"
-        }&key=${process.env.GOOGLE_PLACES_API_KEY}`
+      if (places.length === limit) return;
+      let results: IGPNearbySearch["results"] = [];
+      await Promise.all(
+        types.map(async (type) => {
+          return axios(
+            `https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${lat}%2C${lng}&radius=${
+              radius ? (radius === "global" ? 100000 : Number(radius)) : 1000
+            }${q ? `&keyword=${q}` : ""}&type=${type}&key=${
+              process.env.GOOGLE_PLACES_API_KEY
+            }`
+          ).then((res) => {
+            if (res.data.status === "OK") {
+              results.push(...res.data.results);
+            }
+          });
+        })
       );
-      let googlePlaces = googleRes.data as IGPNearbySearch;
 
-      if (googlePlaces.status === "OK") {
-        if (q && (q as string).length >= 2) {
-          if (googlePlaces.results.length === 0) {
-            googleRes = await axios(
-              `https://maps.googleapis.com/maps/api/place/findplacefromtext/json?input=${q}&inputtype=textquery&locationbias=circle%3A2000%${lat}%2C${lng}&fields=name%2Cplace_id%2Crating&key=${process.env.GOOGLE_PLACES_API_KEY}`
-            );
-
-            googlePlaces.results = googleRes.data.candidates;
-          }
-        }
-
-        for (const result of googlePlaces.results) {
-          const found = places.find(
-            (p) => p.otherSources?.googlePlaces?._id === result.place_id
-          );
-          if (found) {
-            if (found.otherSources?.googlePlaces) {
-              await Place.updateOne(
-                { _id: found._id },
-                {
-                  otherSources: {
-                    googlePlaces: {
-                      rating: result.rating,
-                      updatedAt: new Date(),
-                    },
-                  },
-                }
-              );
-            } else {
-              await Place.updateOne(
-                { _id: found._id },
-                {
-                  otherSources: {
-                    googlePlaces: {
-                      _id: result.place_id,
-                      rating: result.rating,
-                      updatedAt: new Date(),
-                    },
-                  },
-                }
-              );
+      if (q && (q as string).length >= 2) {
+        if (results.length === 0) {
+          await axios(
+            `https://maps.googleapis.com/maps/api/place/findplacefromtext/json?input=${q}&inputtype=textquery&locationbias=circle%3A2000%${lat}%2C${lng}&fields=name%2Cplace_id%2Crating&key=${process.env.GOOGLE_PLACES_API_KEY}`
+          ).then((res) => {
+            if (res.data.status === "OK") {
+              results.push(...res.data.candidates);
             }
-          } else {
-            // search db for place
-            const found = await Place.findOne({
-              "otherSources.googlePlaces._id": result.place_id,
-            });
-            if (found) {
-              if (found.name !== result.name) {
-                found.otherNames.push(found.name);
-                found.name = result.name;
+          });
+        }
+      }
+
+      for (const result of results) {
+        const found = places.find(
+          (p) => p.otherSources?.googlePlaces?._id === result.place_id
+        );
+        if (found) {
+          if (found.otherSources?.googlePlaces) {
+            await Place.updateOne(
+              { _id: found._id },
+              {
+                otherSources: {
+                  googlePlaces: {
+                    rating: result.rating,
+                    updatedAt: new Date(),
+                  },
+                },
               }
-              found.otherSources.googlePlaces.rating = result.rating;
-              // found.otherSources.googlePlaces.updatedAt = new Date();
-              found.save();
-              continue;
+            );
+          } else {
+            await Place.updateOne(
+              { _id: found._id },
+              {
+                otherSources: {
+                  googlePlaces: {
+                    _id: result.place_id,
+                    rating: result.rating,
+                    updatedAt: new Date(),
+                  },
+                },
+              }
+            );
+          }
+        } else {
+          // search db for place
+          const found = await Place.findOne({
+            "otherSources.googlePlaces._id": result.place_id,
+          });
+          if (found) {
+            if (found.name !== result.name) {
+              found.otherNames.push(found.name);
+              found.name = result.name;
             }
+            found.otherSources.googlePlaces.rating = result.rating;
+            // found.otherSources.googlePlaces.updatedAt = new Date();
+            found.save();
+            continue;
+          }
 
-            try {
-              const queue = await Queue.create({
-                googlePlaceId: result.place_id,
-                type: "new",
-              });
-              await queue.process();
-            } catch (e: any) {
-              continue;
-            }
+          try {
+            const queue = await Queue.create({
+              googlePlaceId: result.place_id,
+              type: "new",
+            });
+            await queue.process();
+          } catch (e: any) {
+            continue;
           }
         }
-      } else {
-        console.log(googlePlaces.status);
       }
     }
 
