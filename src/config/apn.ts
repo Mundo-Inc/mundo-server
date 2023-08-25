@@ -14,7 +14,7 @@ const options = {
     keyId: process.env.APPLE_APN_KEY_ID!,
     teamId: process.env.APPLE_TEAM_ID!,
   },
-  production: true || process.env.NODE_ENV === "production",
+  production: process.env.NODE_ENV === "production",
 };
 
 const apnProvider = new apn.Provider(options);

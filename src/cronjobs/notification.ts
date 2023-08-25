@@ -17,6 +17,7 @@ type device = {
 
 cron.schedule("*/30 * * * * *", async () => {
   const notifications = await Notification.find({
+    readAt: null,
     sent: false,
     updatedAt: { $gt: new Date(Date.now() - 1000 * 60 * 60) },
   });

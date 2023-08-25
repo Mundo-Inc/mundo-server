@@ -1,18 +1,118 @@
 import type { NextFunction, Request, Response } from "express";
-import { query, type ValidationChain } from "express-validator";
+import { body, query, type ValidationChain } from "express-validator";
 import { StatusCodes } from "http-status-codes";
-
-import { createError, handleInputErrors } from "../../utilities/errorHandlers";
-import validate from "./validators";
-import CheckIn from "../../models/CheckIn";
 import mongoose from "mongoose";
-import { checkinEarning } from "../services/earning.service";
-import { addCheckinActivity } from "../services/user.activity.service";
-import { ActivityPrivacyTypeEnum } from "../../models/UserActivity";
-import { addCreateCheckinXP } from "../services/ranking.service";
-import User from "../../models/User";
-import { getUserFeed } from "../services/feed.service";
-import Notification from "../../models/Notification";
+
+import Comment from "../../models/Comment";
+import Follow from "../../models/Follow";
+import Notification, {
+  NotificationType,
+  type INotification,
+} from "../../models/Notification";
+import Reaction from "../../models/Reaction";
+import { handleInputErrors } from "../../utilities/errorHandlers";
+import { publicReadUserProjection } from "../dto/user/read-user-public.dto";
+import validate from "./validators";
+
+async function handleResourceNotFound(notification: INotification) {
+  await Notification.findByIdAndDelete(notification._id);
+}
+
+async function getNotificationContent(notification: INotification) {
+  let user = undefined;
+  let title = "Phantom Phood";
+  let subtitle = undefined;
+  let content = undefined;
+  let image = undefined;
+  let activity = undefined;
+  let error = false;
+
+  switch (notification.type) {
+    case NotificationType.COMMENT:
+      await Comment.findById(notification.resources![0]._id)
+        .populate("author", publicReadUserProjection)
+        .then((comment) => {
+          if (!comment) {
+            handleResourceNotFound(notification);
+            error = true;
+          } else {
+            user = comment.author;
+            image = comment.author.profileImage;
+            title = comment.author.name;
+            subtitle = "Commented on your activity";
+            content = comment.content;
+            activity = comment.userActivity;
+          }
+        });
+      break;
+    case NotificationType.FOLLOW:
+      await Follow.findById(notification.resources![0]._id)
+        .populate("user", publicReadUserProjection)
+        .then((follow) => {
+          if (!follow) {
+            handleResourceNotFound(notification);
+            error = true;
+          } else {
+            user = follow.user;
+            image = follow.user.profileImage;
+            title = follow.user.name;
+            content = "Started following you.";
+          }
+        });
+      break;
+    case NotificationType.COMMENT_MENTION:
+      await Comment.findById(notification.resources![0]._id)
+        .populate("author", publicReadUserProjection)
+        .then((comment) => {
+          if (!comment) {
+            handleResourceNotFound(notification);
+            error = true;
+          } else {
+            user = comment.author;
+            title = comment.author.name;
+            image = comment.author.profileImage;
+            subtitle = "Mentioned you in a comment.";
+            content = comment.content;
+            activity = comment.userActivity;
+          }
+        });
+      break;
+    case NotificationType.REACTION:
+      await Reaction.findById(notification.resources![0]._id)
+        .populate("user", publicReadUserProjection)
+        .then((reaction) => {
+          if (!reaction) {
+            handleResourceNotFound(notification);
+            error = true;
+          } else {
+            user = reaction.user;
+            title = reaction.user.name;
+            activity = reaction.target;
+            if (reaction.type === "emoji") {
+              content = `Reacted with ${reaction.reaction} to your activity.`;
+            } else {
+              content = "Added an special reaction to your activity.";
+            }
+          }
+        });
+      break;
+    case NotificationType.XP:
+      title = "XP Gain!";
+      content = `You gained ${notification.content} XP.`;
+      image = "XPGain";
+      user = null;
+      break;
+    case NotificationType.LEVEL_UP:
+      title = "Level Up!";
+      content = `You reached level ${notification.content}!`;
+      image = "LevelUp";
+      user = null;
+      break;
+    default:
+      break;
+  }
+  return { title, content, subtitle, image, user, activity, error };
+}
 
 export const getNotificationsValidation: ValidationChain[] = [
   validate.page(query("page").optional()),
@@ -84,11 +184,81 @@ export async function getNotifications(
       },
     ]);
 
+    for (const notification of notifications[0].notifications) {
+      const { content, title, subtitle, user, image, activity, error } =
+        await getNotificationContent(notification);
+      if (error) {
+        notification.error = true;
+        continue;
+      }
+      if (user) {
+        notification.user = user;
+      } else {
+        delete notification.user;
+      }
+      if (image) {
+        notification.image = image;
+      }
+      if (content) {
+        notification.content = content;
+      }
+      if (subtitle) {
+        notification.subtitle = subtitle;
+      }
+      if (title) {
+        notification.title = title;
+      }
+      if (activity) {
+        notification.activity = activity;
+      }
+    }
+
+    notifications[0].notifications = notifications[0].notifications.filter(
+      (
+        n: INotification & {
+          error?: boolean;
+        }
+      ) => !n.error
+    );
+
     res.status(StatusCodes.OK).json({
       success: true,
       data: notifications[0],
       hasMore: notifications[0].total > page * limit,
     });
+  } catch (err) {
+    next(err);
+  }
+}
+
+export const readNotificationsValidation: ValidationChain[] = [
+  body("date").exists().isNumeric(),
+];
+export async function readNotifications(
+  req: Request,
+  res: Response,
+  next: NextFunction
+) {
+  try {
+    handleInputErrors(req);
+
+    const { id: authId } = req.user!;
+    const { date } = req.body;
+
+    await Notification.updateMany(
+      {
+        user: authId,
+        readAt: null,
+        createdAt: {
+          $lte: new Date(date),
+        },
+      },
+      {
+        readAt: new Date(date),
+      }
+    );
+
+    res.sendStatus(StatusCodes.NO_CONTENT);
   } catch (err) {
     next(err);
   }

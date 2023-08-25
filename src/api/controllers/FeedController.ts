@@ -2,14 +2,16 @@ import type { NextFunction, Request, Response } from "express";
 import { param, query, type ValidationChain } from "express-validator";
 import { StatusCodes } from "http-status-codes";
 
-import ActivitySeen from "../../models/ActivitySeen";
-import UserActivity from "../../models/UserActivity";
-import { handleInputErrors } from "../../utilities/errorHandlers";
-import { getUserFeed } from "../services/feed.service";
-import validate from "./validators";
-import Comment from "../../models/Comment";
-import { publicReadUserProjection } from "../dto/user/read-user-public.dto";
 import mongoose from "mongoose";
+import ActivitySeen from "../../models/ActivitySeen";
+import Comment from "../../models/Comment";
+import Follow, { IFollow } from "../../models/Follow";
+import Reaction from "../../models/Reaction";
+import UserActivity from "../../models/UserActivity";
+import { dStrings, dynamicMessage } from "../../strings";
+import { createError, handleInputErrors } from "../../utilities/errorHandlers";
+import { getResourceInfo, getUserFeed } from "../services/feed.service";
+import validate from "./validators";
 
 export const getFeedValidation: ValidationChain[] = [
   validate.page(query("page").optional()),
@@ -37,6 +39,164 @@ export async function getFeed(req: Request, res: Response, next: NextFunction) {
     );
 
     res.status(StatusCodes.OK).json({ success: true, result: result || [] });
+  } catch (err) {
+    next(err);
+  }
+}
+
+export const getActivityValidation: ValidationChain[] = [
+  param("id").isMongoId(),
+];
+export async function getActivity(
+  req: Request,
+  res: Response,
+  next: NextFunction
+) {
+  try {
+    handleInputErrors(req);
+
+    const { id: authId } = req.user!;
+    const { id } = req.params;
+
+    const followings: IFollow[] = await Follow.find(
+      {
+        user: authId,
+      },
+      {
+        target: 1,
+      }
+    ).lean();
+
+    const activity = await UserActivity.findOne({
+      _id: id,
+      userId: {
+        $in: [
+          ...followings.map((f: IFollow) => f.target),
+          new mongoose.Types.ObjectId(authId),
+        ],
+      },
+    });
+
+    if (!activity) {
+      throw createError(
+        dynamicMessage(dStrings.notFound, "Activity"),
+        StatusCodes.NOT_FOUND
+      );
+    }
+
+    const [resourceInfo, placeInfo, userInfo] = await getResourceInfo(activity);
+    if (!resourceInfo) {
+      throw createError(
+        dynamicMessage(dStrings.notFound, "Resource"),
+        StatusCodes.NOT_FOUND
+      );
+    }
+
+    const reactions = await Reaction.aggregate([
+      {
+        $match: {
+          target: activity._id,
+        },
+      },
+      {
+        $facet: {
+          total: [
+            {
+              $group: {
+                _id: "$reaction",
+                count: { $sum: 1 },
+                type: { $first: "$type" },
+              },
+            },
+            {
+              $project: {
+                _id: 0,
+                reaction: "$_id",
+                type: 1,
+                count: 1,
+              },
+            },
+          ],
+          user: [
+            {
+              $match: {
+                user: new mongoose.Types.ObjectId(authId),
+              },
+            },
+            {
+              $project: {
+                _id: 1,
+                type: 1,
+                reaction: 1,
+                createdAt: 1,
+              },
+            },
+          ],
+        },
+      },
+    ]);
+
+    const comments = await Comment.aggregate([
+      {
+        $match: {
+          userActivity: activity._id,
+        },
+      },
+      {
+        $limit: 3,
+      },
+      {
+        $lookup: {
+          from: "users",
+          localField: "author",
+          foreignField: "_id",
+          as: "author",
+          pipeline: [
+            {
+              $project: {
+                _id: 1,
+                name: 1,
+                username: 1,
+                level: 1,
+                profileImage: 1,
+                verified: 1,
+              },
+            },
+          ],
+        },
+      },
+      {
+        $project: {
+          _id: 1,
+          createdAt: 1,
+          updatedAt: 1,
+          content: 1,
+          mentions: 1,
+          author: { $arrayElemAt: ["$author", 0] },
+          likes: { $size: "$likes" },
+          liked: {
+            $in: [new mongoose.Types.ObjectId(authId), "$likes"],
+          },
+        },
+      },
+    ]);
+
+    res.status(StatusCodes.OK).json({
+      success: true,
+      data: {
+        id: activity._id,
+        user: userInfo,
+        place: placeInfo,
+        activityType: activity.activityType,
+        resourceType: activity.resourceType,
+        resource: resourceInfo,
+        privacyType: activity.privacyType,
+        createdAt: activity.createdAt,
+        updatedAt: activity.updatedAt,
+        reactions: reactions[0],
+        comments: comments,
+      },
+    });
   } catch (err) {
     next(err);
   }

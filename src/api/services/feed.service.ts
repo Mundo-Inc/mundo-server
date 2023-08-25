@@ -98,7 +98,7 @@ function shuffleArray(array: any) {
   }
 }
 
-const getResourceInfo = async (activity: IUserActivity) => {
+export const getResourceInfo = async (activity: IUserActivity) => {
   let resourceInfo: any;
   let placeInfo;
   const userInfo = await User.findOne(
