@@ -36,7 +36,6 @@ export async function createPlace(
     const { id: authId } = req.user!;
 
     const { fields, files } = await parseForm(req);
-    console.log(files);
 
     const placeInfo = {
       name: fields.name[0],
@@ -185,8 +184,6 @@ export async function getPlaces(
 ) {
   try {
     handleInputErrors(req);
-
-    console.log(0);
 
     const { lat, lng, q, images, order, radius, category } = req.query;
     const sort = req.query.sort || "distance";
@@ -360,18 +357,12 @@ export async function getPlaces(
       ...projectPipeline,
     ]);
 
-    console.log(1);
-
     const types = ["restaurant", "cafe", "bar"];
-
-    console.log(2);
 
     if (lng && lat && places.length !== limit) {
       let results: IGPNearbySearch["results"] = [];
-      console.log("Starting google search");
       await Promise.all(
         types.map(async (type, index) => {
-          console.log("Starting", index);
           return axios(
             `https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${lat}%2C${lng}&radius=${
               radius ? (radius === "global" ? 100000 : Number(radius)) : 1000
@@ -380,10 +371,8 @@ export async function getPlaces(
             }`
           ).then((res) => {
             if (res.data.status === "OK") {
-              console.log(index, res.data.results.length);
               for (const result of res.data.results) {
                 if (!results.find((r) => r.place_id === result.place_id)) {
-                  console.log(result);
                   results.push(result);
                 }
               }
@@ -391,8 +380,6 @@ export async function getPlaces(
           });
         })
       );
-
-      console.log("done", results.length);
 
       if (q && (q as string).length >= 2) {
         if (results.length === 0) {
@@ -406,7 +393,6 @@ export async function getPlaces(
         }
       }
 
-      console.log("Starting loop");
       for (const result of results) {
         const found = places.find(
           (p) => p.otherSources?.googlePlaces?._id === result.place_id
@@ -465,7 +451,6 @@ export async function getPlaces(
           }
         }
       }
-      console.log("Loop ended");
     }
 
     places = await Place.aggregate([
