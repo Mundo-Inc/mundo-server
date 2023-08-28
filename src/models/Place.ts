@@ -15,7 +15,7 @@ export interface IPlace extends Document {
   name: string;
   otherNames: string[];
   description: string;
-  thumbnail: string;
+  thumbnail?: string;
   priceRange?: number;
   reviewCount: number;
   location: {
