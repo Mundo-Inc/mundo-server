@@ -39,7 +39,7 @@
     "jsonwebtoken": "^9.0.1",
     "mongoose": "^7.4.5",
     "node-cron": "^3.0.2",
-    "openai": "^4.3.0",
+    "openai": "^4.3.1",
     "passport": "^0.6.0",
     "passport-apple": "^2.0.2",
     "passport-facebook": "^3.0.0",

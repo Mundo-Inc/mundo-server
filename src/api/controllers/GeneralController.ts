@@ -55,7 +55,7 @@ export async function getVersionInfo(
     handleInputErrors(req);
     const { version } = req.params;
 
-    const latestVersion = "0.12.1";
+    const latestVersion = "0.13.0";
     const minOperationalVersion = "0.11.0";
     const isLatest = version === latestVersion;
 
