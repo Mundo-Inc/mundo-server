@@ -59,7 +59,7 @@ export async function uploadFile(
     const { isConverted } = req.query;
     const { fields, files } = await parseForm(req);
 
-    const usecase = fields.usecase[0] as UploadUsecase;
+    const usecase = fields.usecase![0] as UploadUsecase;
 
     if (files.image) {
       const { filepath, originalFilename, newFilename, size, mimetype } =

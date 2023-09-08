@@ -38,8 +38,8 @@ export async function createPlace(
     const { fields, files } = await parseForm(req);
 
     const placeInfo = {
-      name: fields.name[0],
-      location: JSON.parse(fields.location[0]),
+      name: fields.name![0],
+      location: JSON.parse(fields.location![0]),
       description: fields.description?.[0],
       priceRange: fields.priceRange?.[0] ? parseInt(fields.priceRange[0]) : 0,
       categories: fields.categories?.[0]
