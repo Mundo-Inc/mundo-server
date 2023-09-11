@@ -17,6 +17,7 @@ import { placeEarning } from "../services/earning.service";
 import { addCreatePlaceXP } from "../services/ranking.service";
 import { addNewPlaceActivity } from "../services/user.activity.service";
 import validate from "./validators";
+import { findYelpId, getYelpRating } from "../services/provider.service";
 
 export const createPlaceValidation: ValidationChain[] = [
   // validate.name(body("name")),
@@ -775,6 +776,52 @@ export async function getPlace(
     res.status(StatusCodes.OK).json({
       success: true,
       data: response[0],
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
+export const getThirdPartyRatingValidation: ValidationChain[] = [
+  param("id").isMongoId().withMessage("Invalid place id"),
+  param("provider")
+    .isIn(["googlePlaces", "tripAdvisor", "yelp", "foursquare", "phantomphood"])
+    .withMessage("Invalid Third Party Provider"),
+];
+
+export async function getThirdPartyRating(
+  req: Request,
+  res: Response,
+  next: NextFunction
+) {
+  try {
+    handleInputErrors(req);
+    const authId = req.user?.id;
+    const { id, provider } = req.params;
+    let place = await Place.findById(id);
+    let rating = -1;
+    switch (provider) {
+      case "yelp":
+        const yelpId = place.otherSources?.yelp?._id;
+        if (typeof yelpId === "string" && yelpId !== "") {
+          console.log("here");
+          rating = await getYelpRating(yelpId);
+        } else {
+          // Getting the yelpId
+          const yelpId = await findYelpId(place);
+          // Storing the yelpId
+          place.otherSources.yelp._id = yelpId;
+          await place.save();
+          // Returning the yelpRating
+          rating = await getYelpRating(yelpId);
+        }
+        break;
+      default:
+        break;
+    }
+    res.status(StatusCodes.OK).json({
+      success: true,
+      data: { rating: rating },
     });
   } catch (err) {
     next(err);

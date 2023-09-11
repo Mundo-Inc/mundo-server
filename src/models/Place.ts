@@ -64,6 +64,22 @@ export interface IPlace extends Document {
       rating?: number;
       updatedAt?: Date;
     };
+    tripadvisor: {
+      _id?: {
+        type: string;
+        unique: true;
+      };
+      rating?: number;
+      updatedAt?: Date;
+    };
+    foursquare: {
+      _id?: {
+        type: string;
+        unique: true;
+      };
+      rating?: number;
+      updatedAt?: Date;
+    };
   };
 }
 
