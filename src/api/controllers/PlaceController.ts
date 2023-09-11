@@ -17,7 +17,12 @@ import { placeEarning } from "../services/earning.service";
 import { addCreatePlaceXP } from "../services/ranking.service";
 import { addNewPlaceActivity } from "../services/user.activity.service";
 import validate from "./validators";
-import { findYelpId, getYelpRating } from "../services/provider.service";
+import {
+  findTripAdvisorId,
+  findYelpId,
+  getTripAdvisorRating,
+  getYelpRating,
+} from "../services/provider.service";
 
 export const createPlaceValidation: ValidationChain[] = [
   // validate.name(body("name")),
@@ -804,7 +809,6 @@ export async function getThirdPartyRating(
       case "yelp":
         const yelpId = place.otherSources?.yelp?._id;
         if (typeof yelpId === "string" && yelpId !== "") {
-          console.log("here");
           rating = await getYelpRating(yelpId);
         } else {
           // Getting the yelpId
@@ -816,6 +820,21 @@ export async function getThirdPartyRating(
           rating = await getYelpRating(yelpId);
         }
         break;
+      case "tripAdvisor":
+        const tripAdvisorId = place.otherSources?.tripAdvisor?._id;
+        if (typeof tripAdvisorId === "string" && tripAdvisorId !== "") {
+          rating = await getTripAdvisorRating(tripAdvisorId);
+        } else {
+          // Getting the tripAdvisorId
+          const tripAdvisorId = await findTripAdvisorId(place);
+          // Storing the tripAdvisorId
+          place.otherSources.tripAdvisorId._id = tripAdvisorId;
+          await place.save();
+          // Returning the tripAdvisorRating
+          rating = await getTripAdvisorRating(tripAdvisorId);
+        }
+        break;
+
       default:
         break;
     }

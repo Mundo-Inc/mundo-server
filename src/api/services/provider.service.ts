@@ -51,3 +51,11 @@ export const getYelpRating = async (yelpId: string) => {
     throw error; // or return a default/fallback value if preferred
   }
 };
+
+
+export const findTripAdvisorId = async (place: IPlace) => {
+  return "";
+};
+export const getTripAdvisorRating = async (tripAdvisorId: string) => {
+  return -1;
+};
