@@ -18,8 +18,10 @@ import { addCreatePlaceXP } from "../services/ranking.service";
 import { addNewPlaceActivity } from "../services/user.activity.service";
 import validate from "./validators";
 import {
+  findFoursquareId,
   findTripAdvisorId,
   findYelpId,
+  getFoursquareRating,
   getTripAdvisorRating,
   getYelpRating,
 } from "../services/provider.service";
@@ -814,7 +816,7 @@ export async function getThirdPartyRating(
           // Getting the yelpId
           const yelpId = await findYelpId(place);
           // Storing the yelpId
-          place.otherSources.yelp._id = yelpId;
+          place.otherSources.yelp = { _id: yelpId };
           await place.save();
           // Returning the yelpRating
           rating = await getYelpRating(yelpId);
@@ -828,13 +830,26 @@ export async function getThirdPartyRating(
           // Getting the tripAdvisorId
           const tripAdvisorId = await findTripAdvisorId(place);
           // Storing the tripAdvisorId
-          place.otherSources.tripAdvisorId._id = tripAdvisorId;
+          place.otherSources.tripAdvisor = { _id: tripAdvisorId };
           await place.save();
           // Returning the tripAdvisorRating
           rating = await getTripAdvisorRating(tripAdvisorId);
         }
         break;
-
+      case "foursquare":
+        const foursquareId = place.otherSources?.foursquare?._id;
+        if (typeof foursquareId === "string" && foursquareId !== "") {
+          rating = await getFoursquareRating(foursquareId);
+        } else {
+          // Getting the id
+          const foursquareId = await findFoursquareId(place);
+          // Storing the id
+          place.otherSources.foursquare = { _id: foursquareId };
+          await place.save();
+          // Returning the rating
+          rating = await getFoursquareRating(foursquareId);
+        }
+        break;
       default:
         break;
     }

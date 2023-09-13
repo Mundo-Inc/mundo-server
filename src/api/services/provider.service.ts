@@ -3,6 +3,7 @@ import { IPlace } from "../../models/Place";
 import { createError } from "../../utilities/errorHandlers";
 
 const YELP_FUSION_API_KEY = process.env.YELP_FUSION_API_KEY;
+const FOURSQUARE_API_KEY = process.env.FOURSQUARE_API_KEY;
 
 export const findYelpId = async (place: IPlace) => {
   try {
@@ -52,10 +53,39 @@ export const getYelpRating = async (yelpId: string) => {
   }
 };
 
-
 export const findTripAdvisorId = async (place: IPlace) => {
   return "";
 };
 export const getTripAdvisorRating = async (tripAdvisorId: string) => {
+  return -1;
+};
+
+export const findFoursquareId = async (place: IPlace) => {
+  try {
+    const resault = await axios({
+      method: "get",
+      url: `https://api.foursquare.com/v3/places/match?name=${place.name}&address=${place.location.address}&city=${place.location.city}&state=${place.location.state}&postalCode=${place.location.zip}&cc=${place.location.country}`,
+      headers: {
+        Authorization: `${FOURSQUARE_API_KEY}`,
+        Accept: "application/json",
+      },
+    });
+
+    if (resault.status === 200 && resault.data.place) {
+      return resault.data.place.fsq_id;
+    } else {
+      throw createError(
+        `Unexpected response. Status: ${resault.status}`,
+        resault.status
+      );
+    }
+  } catch (error) {
+    console.error("Error:", error);
+    throw error; // or return a default/fallback value if preferred
+  }
+};
+export const getFoursquareRating = async (foursquareId: string) => {
+  console.log(foursquareId);
+
   return -1;
 };
