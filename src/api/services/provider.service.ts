@@ -30,7 +30,7 @@ export const findYelpId = async (place: IPlace) => {
   }
 };
 
-export const getYelpRating = async (yelpId: string) => {
+export const getYelpData = async (yelpId: string) => {
   try {
     const yelpResult = await axios({
       method: "get",
@@ -42,7 +42,10 @@ export const getYelpRating = async (yelpId: string) => {
     });
 
     if (yelpResult.status === 200) {
-      return yelpResult.data.rating;
+      return {
+        rating: yelpResult.data.rating,
+        reviewCount: yelpResult.data.review_count,
+      };
     } else {
       console.log(yelpResult);
       throw new Error(`Unexpected response. Status: ${yelpResult.status}`);

@@ -23,7 +23,7 @@ import {
   findYelpId,
   getFoursquareRating,
   getTripAdvisorRating,
-  getYelpRating,
+  getYelpData,
 } from "../services/provider.service";
 
 export const createPlaceValidation: ValidationChain[] = [
@@ -807,11 +807,14 @@ export async function getThirdPartyRating(
     const { id, provider } = req.params;
     let place = await Place.findById(id);
     let rating = -1;
+    let reviewCount = 0;
     switch (provider) {
       case "yelp":
         const yelpId = place.otherSources?.yelp?._id;
         if (typeof yelpId === "string" && yelpId !== "") {
-          rating = await getYelpRating(yelpId);
+          const yelpData = await getYelpData(yelpId);
+          rating = yelpData.rating;
+          reviewCount = yelpData.reviewCount;
         } else {
           // Getting the yelpId
           const yelpId = await findYelpId(place);
@@ -819,7 +822,9 @@ export async function getThirdPartyRating(
           place.otherSources.yelp = { _id: yelpId };
           await place.save();
           // Returning the yelpRating
-          rating = await getYelpRating(yelpId);
+          const yelpData = await getYelpData(yelpId);
+          rating = yelpData.rating;
+          reviewCount = yelpData.reviewCount;
         }
         break;
       case "tripAdvisor":
@@ -855,7 +860,10 @@ export async function getThirdPartyRating(
     }
     res.status(StatusCodes.OK).json({
       success: true,
-      data: { rating: rating },
+      data: {
+        rating,
+        reviewCount,
+      },
     });
   } catch (err) {
     next(err);
