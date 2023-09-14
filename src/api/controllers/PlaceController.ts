@@ -25,6 +25,7 @@ import {
   getTripAdvisorRating,
   getYelpData,
 } from "../services/provider.service";
+import { stateMapping } from "../services/place.service";
 
 export const createPlaceValidation: ValidationChain[] = [
   // validate.name(body("name")),
@@ -806,6 +807,7 @@ export async function getThirdPartyRating(
     const authId = req.user?.id;
     const { id, provider } = req.params;
     let place = await Place.findById(id);
+
     let rating = -1;
     let reviewCount = 0;
     switch (provider) {

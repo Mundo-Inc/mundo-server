@@ -7,14 +7,23 @@ const FOURSQUARE_API_KEY = process.env.FOURSQUARE_API_KEY;
 
 export const findYelpId = async (place: IPlace) => {
   try {
+    let url = `https://api.yelp.com/v3/businesses/matches?name=${place.name}&address1=${place.location.address}&city=${place.location.city}&state=${place.location.state}&country=${place.location.country}&latitude=${place.location.geoLocation.coordinates[1]}&longitude=${place.location.geoLocation.coordinates[0]}`;
+    url = url.replaceAll("#", "");
     const yelpResult = await axios({
       method: "get",
-      url: `https://api.yelp.com/v3/businesses/matches?name=${place.name}&address1=${place.location.address}&city=${place.location.city}&state=${place.location.state}&country=${place.location.country}&latitude=${place.location.geoLocation.coordinates[1]}&longitude=${place.location.geoLocation.coordinates[0]}`,
+      url: url,
       headers: {
         Authorization: `Bearer ${YELP_FUSION_API_KEY}`,
         Accept: "application/json",
       },
     });
+
+    // console.log(
+    //   "after getting yelpId" +
+    //     yelpResult.status +
+    //     " " +
+    //     yelpResult.data.businesses.length
+    // );
 
     if (yelpResult.status === 200 && yelpResult.data.businesses.length === 1) {
       return yelpResult.data.businesses[0].id;

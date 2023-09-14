@@ -2,10 +2,11 @@ import type { NextFunction, Request, Response } from "express";
 import { StatusCodes } from "http-status-codes";
 import mongoose from "mongoose";
 
-import Place from "../../models/Place";
+import Place, { type IPlace } from "../../models/Place";
 import Review from "../../models/Review";
 import { handleInputErrors } from "../../utilities/errorHandlers";
 import CheckIn from "../../models/CheckIn";
+import { stateMapping } from "../services/place.service";
 
 export async function devTests(
   req: Request,
@@ -102,5 +103,31 @@ export async function devTests(
     next(err);
   }
 }
+
+export async function fixPlaces(
+  req: Request,
+  res: Response,
+  next: NextFunction
+) {
+  try {
+    handleInputErrors(req);
+    let places = await Place.find();
+    for (const pp of places) {
+      let p = pp as IPlace;
+      if (p.location.country === "United States") p.location.country = "US";
+      if (stateMapping[p.location.state.toLowerCase()]) {
+        p.location.state = stateMapping[p.location.state.toLowerCase()];
+      }
+      await p.save();
+    }
+    res.status(StatusCodes.OK).json({
+      success: true,
+      data: {},
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
 
 const categories: string[] = ["restaurant", "bar", "cafe"];
