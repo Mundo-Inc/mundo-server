@@ -9,8 +9,10 @@ import {
   getPlacesValidation,
   getThirdPartyRatingValidation,
   getThirdPartyRating,
+  importPlaces,
 } from "../controllers/PlaceController";
 import {
+  adminAuthMiddleware,
   authMiddleware,
   optionalAuthMiddleware,
 } from "../middlewares/authMiddleWare";
@@ -29,5 +31,7 @@ router
 router
   .route("/:id")
   .get(express.json(), optionalAuthMiddleware, getPlaceValidation, getPlace);
+
+router.route("/import").post(express.json(), adminAuthMiddleware, importPlaces);
 
 export default router;
