@@ -48,6 +48,13 @@ export interface IPlace extends Document {
   updatedAt: Date;
   addedBy?: mongoose.Types.ObjectId;
   otherSources: {
+    OSM: {
+      _id?: {
+        type: string;
+        unique: true;
+      };
+      updatedAt?: Date;
+    };
     googlePlaces: {
       _id?: {
         type: string;

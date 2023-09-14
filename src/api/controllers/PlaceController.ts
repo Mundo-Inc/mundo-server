@@ -869,3 +869,21 @@ export async function getThirdPartyRating(
     next(err);
   }
 }
+
+export async function importPlaces(
+  req: Request,
+  res: Response,
+  next: NextFunction
+) {
+  try {
+    handleInputErrors(req);
+    const places = require("../data/osm_places.json");
+    places.forEach((p: any) => {});
+    res.status(StatusCodes.OK).json({
+      success: true,
+      data: {},
+    });
+  } catch (err) {
+    next(err);
+  }
+}
