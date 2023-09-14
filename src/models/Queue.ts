@@ -147,16 +147,16 @@ const QueueSchema = new Schema<IQueue>(
               (c) =>
                 c.types.includes("locality") ||
                 c.types.includes("administrative_area_level_1")
-            )?.long_name;
+            )?.short_name;
             body.location.state = placeDetails.address_components.find((c) =>
               c.types.includes("administrative_area_level_1")
-            )?.long_name;
+            )?.short_name;
             body.location.country = placeDetails.address_components.find((c) =>
               c.types.includes("country")
-            )?.long_name;
+            )?.short_name;
             body.location.zip = placeDetails.address_components.find((c) =>
               c.types.includes("postal_code")
-            )?.long_name;
+            )?.short_name;
           }
 
           const place = new Place(body);
