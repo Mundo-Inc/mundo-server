@@ -12,8 +12,9 @@ const router = express.Router();
 router.use(express.json());
 router.use(adminAuthMiddleware);
 
+router.route("/fixPlaces").get(fixPlaces);
+
 router.route("/:action").get(devTests);
 
-router.route("/fixPlaces").get(fixPlaces);
 
 export default router;

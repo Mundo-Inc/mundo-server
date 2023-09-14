@@ -110,16 +110,18 @@ export async function fixPlaces(
   next: NextFunction
 ) {
   try {
-    handleInputErrors(req);
-    let places = await Place.find();
-    for (const pp of places) {
-      let p = pp as IPlace;
-      if (p.location.country === "United States") p.location.country = "US";
-      if (stateMapping[p.location.state.toLowerCase()]) {
-        p.location.state = stateMapping[p.location.state.toLowerCase()];
-      }
-      await p.save();
-    }
+        handleInputErrors(req);
+        let places = await Place.find();
+        for (const pp of places) {
+          let p = pp as IPlace;
+          console.log("Fixing " + p._id);
+          if (p.location.country === "United States") p.location.country = "US";
+          if (stateMapping[p.location.state.toLowerCase()]) {
+            p.location.state = stateMapping[p.location.state.toLowerCase()];
+          }
+          await p.save();
+        }
+        console.log("Fixing Finished");
     res.status(StatusCodes.OK).json({
       success: true,
       data: {},
