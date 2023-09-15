@@ -883,28 +883,63 @@ export async function importPlaces(
     const places = require("../data/osm_places.json");
     places.forEach(async (p: any) => {
       // Fetch nearby places within 100 meters
-      if (!p.tags.name) return;
+      const lat = p.lat;
+      const lon = p.lon;
+      const name = p.tags["name"];
+      const air_conditioning = p.tags["name"];
+      const amenity = p.tags["amenity"];
+      const brand = p.tags["brand"];
+      const instagram = p.tags["contact:instagram"];
+      const phone = p.tags["contact:phone"] || p.tags["phone"];
+      const email = p.tags["contact:email"];
+      const website = p.tags["contact:website"] || p.tags["website"];
+      const cuisine = p.tags["cuisine"];
+      const delivery = p.tags["delivery"];
+      const drive_through = p.tags["drive_through"];
+      const internet_access = p.tags["internet_access"];
+      const opening_hours = p.tags["opening_hours"];
+      const takeaway = p.tags["takeaway"];
+      const wheelchair = p.tags["wheelchair"];
+
+      // air_conditioning?: boolean;
+      // amenity?: string;
+      // brand?: string;
+      // instagram?: string;
+      // phone?: string;
+      // website?: string;
+      // cuisine?: string;
+      // delivery?: boolean;
+      // vegetarian?: boolean;
+      // internet_access?: boolean;
+      // opening_hours?: string;
+      // outdoor_seating?: boolean;
+      // takeaway?: boolean;
+      // wheelchair?: boolean;
+      if (!name) return;
       const nearbyPlaces = await Place.find({
         "location.geoLocation": {
           $nearSphere: {
             $geometry: {
               type: "Point",
-              coordinates: [p.lon, p.lat],
+              coordinates: [lon, lat],
             },
-            $maxDistance: 100, // in meters
+            $maxDistance: 50, // in meters
           },
         },
       });
 
       // Check each nearby place for name similarity
       nearbyPlaces.forEach((place: any) => {
-        const distance = levenshtein.get(p.tags.name, place.name);
+        const distance = levenshtein.get(name, place.name);
         // Assuming a threshold of 2 for the name to be considered "similar"
         // Adjust this threshold as needed
         if (distance <= 2) {
-          console.log(
-            `Match found for ${p.tags.name}! It's similar to ${place.name}`
-          );
+          // found -> update
+        } else {
+          // not found -> insert
+          if (p.tags.name && p.tags.cuisine) {
+            // Convert Lat, Lon to address to import!
+          }
         }
       });
     });

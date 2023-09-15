@@ -53,6 +53,20 @@ export interface IPlace extends Document {
         type: string;
         unique: true;
       };
+      tags: {
+        air_conditioning?: boolean;
+        amenity?: string;
+        brand?: string;
+        instagram?: string;
+        phone?: string;
+        website?: string;
+        cuisine?: string;
+        delivery?: boolean;
+        internet_access?: boolean;
+        opening_hours?: string;
+        takeaway?: boolean;
+        wheelchair?: boolean;
+      };
       updatedAt?: Date;
     };
     googlePlaces: {
@@ -204,6 +218,24 @@ const PlaceSchema: Schema = new Schema<IPlace>(
       ref: "User",
     },
     otherSources: {
+      OSM: {
+        _id: String,
+        tags: {
+          air_conditioning: Boolean,
+          amenity: String,
+          brand: String,
+          instagram: String,
+          phone: String,
+          website: String,
+          cuisine: String,
+          delivery: Boolean,
+          internet_access: Boolean,
+          opening_hours: String,
+          takeaway: Boolean,
+          wheelchair: Boolean,
+        },
+        updatedAt: Date,
+      },
       googlePlaces: {
         _id: {
           type: String,
