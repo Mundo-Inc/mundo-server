@@ -17,6 +17,7 @@ import { placeEarning } from "../services/earning.service";
 import { addCreatePlaceXP } from "../services/ranking.service";
 import { addNewPlaceActivity } from "../services/user.activity.service";
 import validate from "./validators";
+var levenshtein = require("fast-levenshtein");
 import {
   findFoursquareId,
   findTripAdvisorId,
@@ -880,7 +881,33 @@ export async function importPlaces(
   try {
     handleInputErrors(req);
     const places = require("../data/osm_places.json");
-    places.forEach((p: any) => {});
+    places.forEach(async (p: any) => {
+      // Fetch nearby places within 100 meters
+      if (!p.tags.name) return;
+      const nearbyPlaces = await Place.find({
+        "location.geoLocation": {
+          $nearSphere: {
+            $geometry: {
+              type: "Point",
+              coordinates: [p.lon, p.lat],
+            },
+            $maxDistance: 100, // in meters
+          },
+        },
+      });
+
+      // Check each nearby place for name similarity
+      nearbyPlaces.forEach((place: any) => {
+        const distance = levenshtein.get(p.tags.name, place.name);
+        // Assuming a threshold of 2 for the name to be considered "similar"
+        // Adjust this threshold as needed
+        if (distance <= 2) {
+          console.log(
+            `Match found for ${p.tags.name}! It's similar to ${place.name}`
+          );
+        }
+      });
+    });
     res.status(StatusCodes.OK).json({
       success: true,
       data: {},
