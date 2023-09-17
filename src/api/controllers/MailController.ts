@@ -13,7 +13,7 @@ import { BrevoService } from "../services/brevo.service";
 export const resetPasswordValidation: ValidationChain[] = [
   validate.email(body("email")),
   body("action")
-    .isIn(["generate", "reset"])
+    .isIn(["generate", "update"])
     .withMessage(strings.server.invalidAction),
 ];
 export async function resetPassword(
