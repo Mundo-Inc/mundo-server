@@ -10,6 +10,8 @@ import {
   getThirdPartyRatingValidation,
   getThirdPartyRating,
   importPlaces,
+  getPlacesWithinBoundaries,
+  getPlacesWithinBoundariesValidation,
 } from "../controllers/PlaceController";
 import {
   adminAuthMiddleware,
@@ -23,6 +25,14 @@ router
   .route("/")
   .get(express.json(), getPlacesValidation, getPlaces)
   .post(authMiddleware, createPlaceValidation, createPlace);
+
+router
+  .route("/map")
+  .get(
+    express.json(),
+    getPlacesWithinBoundariesValidation,
+    getPlacesWithinBoundaries
+  );
 
 router
   .route("/:id/rating/:provider")

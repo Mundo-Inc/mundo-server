@@ -1039,3 +1039,254 @@ export async function importPlaces(
     next(err);
   }
 }
+
+
+function getDistance(cluster1: any, cluster2: any) {
+  const latDiff = cluster1.latitude - cluster2.latitude;
+  const lngDiff = cluster1.longitude - cluster2.longitude;
+  return Math.sqrt(latDiff * latDiff + lngDiff * lngDiff);
+}
+
+function mergeClusters(clusters: any) {
+  while (clusters.length > 8) {
+    let minDistance = Infinity;
+    let pair = [0, 1];
+
+    // Find the closest pair of clusters
+    for (let i = 0; i < clusters.length; i++) {
+      for (let j = i + 1; j < clusters.length; j++) {
+        const distance = getDistance(clusters[i], clusters[j]);
+        if (distance < minDistance) {
+          minDistance = distance;
+          pair = [i, j];
+        }
+      }
+    }
+
+    // Merge clusters
+    const [a, b] = pair;
+    const totalCount = clusters[a].count + clusters[b].count;
+    clusters[a].latitude =
+      (clusters[a].latitude * clusters[a].count +
+        clusters[b].latitude * clusters[b].count) /
+      totalCount;
+    clusters[a].longitude =
+      (clusters[a].longitude * clusters[a].count +
+        clusters[b].longitude * clusters[b].count) /
+      totalCount;
+    clusters[a].count = totalCount;
+    clusters[a].places = (clusters[a].places || []).concat(
+      clusters[b].places || []
+    );
+
+    // Remove the merged cluster
+    clusters.splice(b, 1);
+  }
+
+  return clusters;
+}
+
+async function getClusteredPlaces(
+  northEast: { lat: number; lng: number },
+  southWest: { lat: number; lng: number },
+  zoom: number
+) {
+  const PRECISION = Math.max(1, Math.pow(2, 18 - zoom));
+  const TOP_PLACES_LIMIT = 40;
+  const THRESHOLD = 30;
+  const ZOOM_THRESHOLD = 12;
+
+  // Step 1: Get top 40 relevant places
+  const topPlacesPipeline: any = [
+    {
+      $match: {
+        "location.geoLocation": {
+          $geoWithin: {
+            $geometry: {
+              type: "Polygon",
+              coordinates: [
+                [
+                  [southWest.lng, southWest.lat],
+                  [northEast.lng, southWest.lat],
+                  [northEast.lng, northEast.lat],
+                  [southWest.lng, northEast.lat],
+                  [southWest.lng, southWest.lat],
+                ],
+              ],
+            },
+          },
+        },
+      },
+    },
+    {
+      $sort: {
+        "scores.phantom": -1, // sort by phantom first
+        "scores.overall": -1, // then by overall score
+      },
+    },
+    {
+      $limit: TOP_PLACES_LIMIT,
+    },
+    {
+      $project: {
+        name: 1,
+        description: 1,
+        longitude: { $arrayElemAt: ["$location.geoLocation.coordinates", 0] },
+        latitude: { $arrayElemAt: ["$location.geoLocation.coordinates", 1] },
+        overallScore: "$scores.overall",
+        phantomScore: "$scores.phantom", // Projecting phantom score
+      },
+    },
+  ];
+
+  const clustersPipeline = [
+    {
+      $match: {
+        "location.geoLocation": {
+          $geoWithin: {
+            $geometry: {
+              type: "Polygon",
+              coordinates: [
+                [
+                  [southWest.lng, southWest.lat],
+                  [northEast.lng, southWest.lat],
+                  [northEast.lng, northEast.lat],
+                  [southWest.lng, northEast.lat],
+                  [southWest.lng, southWest.lat],
+                ],
+              ],
+            },
+          },
+        },
+      },
+    },
+    {
+      $group: {
+        _id: {
+          lat: {
+            $floor: {
+              $multiply: [
+                { $arrayElemAt: ["$location.geoLocation.coordinates", 1] },
+                PRECISION,
+              ],
+            },
+          },
+          lng: {
+            $floor: {
+              $multiply: [
+                { $arrayElemAt: ["$location.geoLocation.coordinates", 0] },
+                PRECISION,
+              ],
+            },
+          },
+        },
+        count: { $sum: 1 },
+        longitude: {
+          $avg: { $arrayElemAt: ["$location.geoLocation.coordinates", 0] },
+        },
+        latitude: {
+          $avg: { $arrayElemAt: ["$location.geoLocation.coordinates", 1] },
+        },
+        topPlaces: {
+          $push: {
+            _id: "$_id",
+            name: "$name",
+            description: "$description",
+            overallScore: "$scores.overall",
+          },
+        },
+      },
+    },
+    {
+      $project: {
+        count: 1,
+        longitude: 1,
+        latitude: 1,
+        places: {
+          $cond: {
+            if: { $lt: ["$count", THRESHOLD] },
+            then: { $slice: ["$topPlaces", THRESHOLD] },
+            else: [],
+          },
+        },
+      },
+    },
+  ];
+
+  const topPlaces = await mongoose.models.Place.aggregate(topPlacesPipeline);
+  let clusters = [];
+  if (zoom > ZOOM_THRESHOLD) {
+    clusters = await mongoose.models.Place.aggregate(clustersPipeline);
+    clusters = mergeClusters(clusters);
+  }
+
+  return {
+    places: topPlaces,
+    clusters: clusters.map((cluster: any) => ({
+      count: cluster.count,
+      longitude: cluster.longitude,
+      latitude: cluster.latitude,
+    })),
+  };
+}
+
+export const getPlacesWithinBoundariesValidation: ValidationChain[] = [
+  query("zoom").optional().isNumeric().withMessage("Invalid zoom"),
+
+  query("northEastLat")
+    .isNumeric()
+    .withMessage("Invalid northEastLat")
+    .bail() // proceed to next validator only if the previous one passes
+    .custom((value) => value >= -90 && value <= 90)
+    .withMessage("northEastLat should be between -90 and 90"),
+
+  query("northEastLng")
+    .isNumeric()
+    .withMessage("Invalid northEastLng")
+    .bail()
+    .custom((value) => value >= -180 && value <= 180)
+    .withMessage("northEastLng should be between -180 and 180"),
+
+  query("southWestLat")
+    .isNumeric()
+    .withMessage("Invalid southWestLat")
+    .bail()
+    .custom((value) => value >= -90 && value <= 90)
+    .withMessage("southWestLat should be between -90 and 90"),
+
+  query("southWestLng")
+    .isNumeric()
+    .withMessage("Invalid southWestLng")
+    .bail()
+    .custom((value) => value >= -180 && value <= 180)
+    .withMessage("southWestLng should be between -180 and 180"),
+];
+
+export async function getPlacesWithinBoundaries(
+  req: Request,
+  res: Response,
+  next: NextFunction
+) {
+  try {
+    handleInputErrors(req);
+    const { northEastLat, northEastLng, southWestLat, southWestLng, zoom } =
+      req.query;
+    const northEast = {
+      lat: Number(northEastLat),
+      lng: Number(northEastLng),
+    };
+    const southWest = {
+      lat: Number(southWestLat),
+      lng: Number(southWestLng),
+    };
+
+    const result = await getClusteredPlaces(northEast, southWest, Number(zoom));
+
+    res.status(StatusCodes.OK).json({
+      success: true,
+      data: result,
+    });
+  } catch (err) {
+    next(err);
+  }
+}
