@@ -34,6 +34,9 @@ router
     getPlacesWithinBoundaries
   );
 
+router.route("/import").post(express.json(), adminAuthMiddleware, importPlaces);
+
+
 router
   .route("/:id/rating/:provider")
   .get(express.json(), getThirdPartyRatingValidation, getThirdPartyRating);
@@ -42,6 +45,5 @@ router
   .route("/:id")
   .get(express.json(), optionalAuthMiddleware, getPlaceValidation, getPlace);
 
-router.route("/import").post(express.json(), adminAuthMiddleware, importPlaces);
 
 export default router;
