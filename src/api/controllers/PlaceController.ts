@@ -5,7 +5,6 @@ import { type File } from "formidable";
 import { readFileSync, unlinkSync } from "fs";
 import { StatusCodes } from "http-status-codes";
 import mongoose from "mongoose";
-
 import { PutObjectCommand } from "@aws-sdk/client-s3";
 import Place, { type IPlace } from "../../models/Place";
 import Queue from "../../models/Queue";
@@ -18,6 +17,9 @@ import { addCreatePlaceXP } from "../services/ranking.service";
 import { addNewPlaceActivity } from "../services/user.activity.service";
 import validate from "./validators";
 var levenshtein = require("fast-levenshtein");
+var country = require("countrystatesjs");
+var iso3311a2 = require("iso-3166-1-alpha-2");
+
 import {
   findFoursquareId,
   findTripAdvisorId,
@@ -873,6 +875,10 @@ export async function getThirdPartyRating(
   }
 }
 
+function sleep(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 export async function importPlaces(
   req: Request,
   res: Response,
@@ -881,41 +887,44 @@ export async function importPlaces(
   try {
     handleInputErrors(req);
     const places = require("../data/osm_places.json");
-    places.forEach(async (p: any) => {
-      // Fetch nearby places within 100 meters
+
+    for (const p of places) {
+      const id = p.id;
       const lat = p.lat;
       const lon = p.lon;
       const name = p.tags["name"];
-      const air_conditioning = p.tags["name"];
-      const amenity = p.tags["amenity"];
-      const brand = p.tags["brand"];
-      const instagram = p.tags["contact:instagram"];
-      const phone = p.tags["contact:phone"] || p.tags["phone"];
-      const email = p.tags["contact:email"];
-      const website = p.tags["contact:website"] || p.tags["website"];
-      const cuisine = p.tags["cuisine"];
-      const delivery = p.tags["delivery"];
-      const drive_through = p.tags["drive_through"];
-      const internet_access = p.tags["internet_access"];
-      const opening_hours = p.tags["opening_hours"];
-      const takeaway = p.tags["takeaway"];
-      const wheelchair = p.tags["wheelchair"];
+      const tags = {
+        ...(p.tags["air_conditioning"] && {
+          air_conditioning: p.tags["air_conditioning"],
+        }),
+        ...(p.tags["amenity"] && { amenity: p.tags["amenity"] }),
+        ...(p.tags["brand"] && { brand: p.tags["brand"] }),
+        ...(p.tags["contact:instagram"] && {
+          instagram: p.tags["contact:instagram"],
+        }),
+        ...((p.tags["contact:phone"] || p.tags["phone"]) && {
+          phone: p.tags["contact:phone"] || p.tags["phone"],
+        }),
+        ...(p.tags["contact:email"] && { email: p.tags["contact:email"] }),
+        ...((p.tags["contact:website"] || p.tags["website"]) && {
+          website: p.tags["contact:website"] || p.tags["website"],
+        }),
+        ...(p.tags["cuisine"] && { cuisine: p.tags["cuisine"] }),
+        ...(p.tags["delivery"] && { delivery: p.tags["delivery"] }),
+        ...(p.tags["drive_through"] && {
+          drive_through: p.tags["drive_through"],
+        }),
+        ...(p.tags["internet_access"] && {
+          internet_access: p.tags["internet_access"],
+        }),
+        ...(p.tags["opening_hours"] && {
+          opening_hours: p.tags["opening_hours"],
+        }),
+        ...(p.tags["takeaway"] && { takeaway: p.tags["takeaway"] }),
+        ...(p.tags["wheelchair"] && { wheelchair: p.tags["wheelchair"] }),
+      };
+      if (!name) continue;
 
-      // air_conditioning?: boolean;
-      // amenity?: string;
-      // brand?: string;
-      // instagram?: string;
-      // phone?: string;
-      // website?: string;
-      // cuisine?: string;
-      // delivery?: boolean;
-      // vegetarian?: boolean;
-      // internet_access?: boolean;
-      // opening_hours?: string;
-      // outdoor_seating?: boolean;
-      // takeaway?: boolean;
-      // wheelchair?: boolean;
-      if (!name) return;
       const nearbyPlaces = await Place.find({
         "location.geoLocation": {
           $nearSphere: {
@@ -928,21 +937,100 @@ export async function importPlaces(
         },
       });
 
-      // Check each nearby place for name similarity
-      nearbyPlaces.forEach((place: any) => {
+      let placeExists = false;
+
+      for (const place of nearbyPlaces) {
         const distance = levenshtein.get(name, place.name);
-        // Assuming a threshold of 2 for the name to be considered "similar"
-        // Adjust this threshold as needed
+
         if (distance <= 2) {
           // found -> update
-        } else {
-          // not found -> insert
-          if (p.tags.name && p.tags.cuisine) {
-            // Convert Lat, Lon to address to import!
+          place.otherSources.OSM = {
+            OSM: {
+              _id: id,
+              tags: tags,
+            },
+          };
+          await place.save();
+          placeExists = true;
+          break; // Break the loop if found
+        }
+      }
+
+      if (!placeExists && p.tags.name && p.tags.cuisine) {
+        // not found -> insert
+        // Check if the amenity has a name at least and is valid
+        await sleep(25);
+        const MAX_RETRIES = 12; // Adjust as needed
+        let retries = 0;
+
+        while (retries < MAX_RETRIES) {
+          try {
+            const geoResponse = await axios(
+              `https://geocode.maps.co/reverse?lat=${lat}&lon=${lon}`
+            );
+            const addressData = geoResponse.data.address;
+            if (p.tags.name && p.tags.cuisine) {
+              console.log(p.tags.name);
+              if (
+                country.state(
+                  iso3311a2.getCode(addressData.country),
+                  addressData.state
+                )
+              ) {
+                let location = {
+                  geoLocation: {
+                    type: "Point",
+                    coordinates: [Number(lon), Number(lat)],
+                  },
+                  address: addressData.road,
+                  city:
+                    addressData.city ||
+                    addressData.town ||
+                    addressData.suburb ||
+                    addressData.village ||
+                    addressData.county,
+                  country: iso3311a2.getCode(addressData.country),
+                  state: country.state(
+                    iso3311a2.getCode(addressData.country),
+                    addressData.state
+                  ).abbreviation,
+                  house_number: addressData.house_number,
+                  zip: addressData.postcode,
+                };
+                if (!location.city) break;
+                let newPlace = new Place({
+                  name: name,
+                  location: location,
+                });
+                newPlace.otherSources = {
+                  OSM: {
+                    _id: id,
+                    tags: tags,
+                  },
+                };
+                await newPlace.save();
+              }
+            }
+            break;
+          } catch (error: any) {
+            retries++;
+            console.error(
+              "Error fetching geolocation data, attempt:",
+              retries,
+              error.message
+            );
+
+            if (retries >= MAX_RETRIES) {
+              console.error("Max retries reached, moving to the next place.");
+              break;
+            }
+
+            await sleep(3000); // Sleep for 60 seconds before retrying
           }
         }
-      });
-    });
+      }
+    }
+
     res.status(StatusCodes.OK).json({
       success: true,
       data: {},

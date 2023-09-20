@@ -27,6 +27,7 @@ export interface IPlace extends Document {
     city: string;
     state: string;
     country: string;
+    house_number: string;
     zip: string;
   };
   scores: {
@@ -155,6 +156,10 @@ const PlaceSchema: Schema = new Schema<IPlace>(
         trim: true,
         // required: true,
       },
+      house_number: {
+        type: String,
+        trim: true,
+      },
     },
     reviewCount: {
       type: Number,
@@ -221,18 +226,18 @@ const PlaceSchema: Schema = new Schema<IPlace>(
       OSM: {
         _id: String,
         tags: {
-          air_conditioning: Boolean,
+          air_conditioning: String,
           amenity: String,
           brand: String,
           instagram: String,
           phone: String,
           website: String,
           cuisine: String,
-          delivery: Boolean,
-          internet_access: Boolean,
+          delivery: String,
+          internet_access: String,
           opening_hours: String,
-          takeaway: Boolean,
-          wheelchair: Boolean,
+          takeaway: String,
+          wheelchair: String,
         },
         updatedAt: Date,
       },
