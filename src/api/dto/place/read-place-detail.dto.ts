@@ -35,7 +35,7 @@ export type ReadPlaceDetailDto = {
 };
 
 type ReadPlaceDetailProjection = {
-  [Property in keyof ReadPlaceDetailDto]?: boolean;
+  [Property in keyof ReadPlaceDetailDto]?: boolean | 0 | 1;
 };
 
 export const readPlaceDetailProjection: ReadPlaceDetailProjection = {
@@ -52,4 +52,20 @@ export const readPlaceDetailProjection: ReadPlaceDetailProjection = {
   priceRange: true,
   scores: true,
   reviewCount: true,
+};
+
+export const readPlaceDetailProjectionAG: ReadPlaceDetailProjection = {
+  _id: 1,
+  name: 1,
+  otherNames: 1,
+  description: 1,
+  location: 1,
+  phone: 1,
+  website: 1,
+  categories: 1,
+  owner: 1,
+  thumbnail: 1,
+  priceRange: 1,
+  scores: 1,
+  reviewCount: 1,
 };

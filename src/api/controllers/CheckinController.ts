@@ -11,6 +11,9 @@ import { checkinEarning } from "../services/earning.service";
 import { addCreateCheckinXP } from "../services/ranking.service";
 import { addCheckinActivity } from "../services/user.activity.service";
 import validate from "./validators";
+import { publicReadUserProjectionAG } from "../dto/user/read-user-public.dto";
+import { readPlaceBriefProjectionAG } from "../dto/place/read-place-brief.dto";
+import { getFormattedPlaceLocationAG } from "../dto/place/place-dto";
 
 const checkinWaitTime = 5; // minutes
 
@@ -62,101 +65,72 @@ export async function getCheckins(
     const checkins = await CheckIn.aggregate([
       ...matchPipeline,
       {
-        $sort: { createdAt: -1 },
-      },
-      {
-        $skip: skip,
-      },
-      {
-        $limit: limit,
-      },
-      {
-        $lookup: {
-          from: "users",
-          localField: "user",
-          foreignField: "_id",
-          as: "user",
-        },
-      },
-      {
-        $lookup: {
-          from: "places",
-          localField: "place",
-          foreignField: "_id",
-          as: "place",
-          pipeline: [
+        $facet: {
+          total: [
+            {
+              $count: "total",
+            },
+          ],
+          checkins: [
+            {
+              $sort: { createdAt: -1 },
+            },
+            {
+              $skip: skip,
+            },
+            {
+              $limit: limit,
+            },
+            {
+              $lookup: {
+                from: "users",
+                localField: "user",
+                foreignField: "_id",
+                as: "user",
+              },
+            },
+            {
+              $lookup: {
+                from: "places",
+                localField: "place",
+                foreignField: "_id",
+                as: "place",
+                pipeline: [
+                  {
+                    $project: {
+                      ...readPlaceBriefProjectionAG,
+                      location: getFormattedPlaceLocationAG,
+                    },
+                  },
+                ],
+              },
+            },
+            {
+              $unwind: "$user",
+            },
+            {
+              $unwind: "$place",
+            },
             {
               $project: {
                 _id: 1,
-                name: 1,
-                location: {
-                  geoLocation: {
-                    lng: {
-                      $arrayElemAt: ["$location.geoLocation.coordinates", 0],
-                    },
-                    lat: {
-                      $arrayElemAt: ["$location.geoLocation.coordinates", 1],
-                    },
-                  },
-                  address: 1,
-                  city: 1,
-                  state: 1,
-                  country: 1,
-                  zip: 1,
-                },
-                thumbnail: 1,
+                createdAt: 1,
+                user: publicReadUserProjectionAG,
+                place: readPlaceBriefProjectionAG,
               },
             },
           ],
         },
       },
-      {
-        $unwind: "$user",
-      },
-      {
-        $unwind: "$place",
-      },
-      {
-        $project: {
-          _id: 1,
-          createdAt: 1,
-          user: {
-            _id: 1,
-            name: 1,
-            username: 1,
-            profileImage: 1,
-          },
-          place: {
-            _id: 1,
-            name: 1,
-            location: 1,
-            thumbnail: 1,
-          },
-        },
-      },
     ]);
-
-    let totalCount: number | null = null;
-    if (count === "true") {
-      const total = await CheckIn.aggregate([
-        ...matchPipeline,
-        {
-          $count: "total",
-        },
-      ]);
-      totalCount = total[0]?.total || 0;
-    }
 
     const resData: {
       data: any;
       total?: number;
     } = {
-      data: checkins,
+      data: checkins[0].checkins,
+      total: checkins[0].total[0]?.total || 0,
     };
-
-    if (totalCount !== null) {
-      resData["total"] = totalCount;
-    }
 
     res.status(StatusCodes.OK).json({ success: true, ...resData });
   } catch (err) {

@@ -14,9 +14,17 @@ import UserActivity, {
   ResourceTypeEnum,
   type IUserActivity,
 } from "../../models/UserActivity";
-import { readPlaceDetailProjection } from "../dto/place/read-place-detail.dto";
-import { publicReadUserProjection } from "../dto/user/read-user-public.dto";
+import {
+  readPlaceDetailProjection,
+  readPlaceDetailProjectionAG,
+} from "../dto/place/read-place-detail.dto";
+import {
+  publicReadUserProjection,
+  publicReadUserProjectionAG,
+} from "../dto/user/read-user-public.dto";
 import { createLogger } from "./logger.service";
+import { getFormattedPlaceLocationAG } from "../dto/place/place-dto";
+import { readPlaceBriefProjectionAG } from "../dto/place/read-place-brief.dto";
 
 export type IMedia = {
   _id: string;
@@ -126,14 +134,7 @@ export const getResourceInfo = async (activity: IUserActivity) => {
           as: "writer",
           pipeline: [
             {
-              $project: {
-                _id: 1,
-                name: 1,
-                username: 1,
-                level: 1,
-                profileImage: 1,
-                verified: 1,
-              },
+              $project: publicReadUserProjectionAG,
             },
           ],
         },
@@ -183,25 +184,8 @@ export const getResourceInfo = async (activity: IUserActivity) => {
           pipeline: [
             {
               $project: {
-                _id: 1,
-                name: 1,
-                thumbnail: 1,
-                description: 1,
-                location: {
-                  geoLocation: {
-                    lng: {
-                      $arrayElemAt: ["$location.geoLocation.coordinates", 0],
-                    },
-                    lat: {
-                      $arrayElemAt: ["$location.geoLocation.coordinates", 1],
-                    },
-                  },
-                  address: 1,
-                  city: 1,
-                  state: 1,
-                  country: 1,
-                  zip: 1,
-                },
+                ...readPlaceDetailProjectionAG,
+                location: getFormattedPlaceLocationAG,
                 scores: {
                   overall: 1,
                   drinkQuality: 1,
@@ -211,13 +195,12 @@ export const getResourceInfo = async (activity: IUserActivity) => {
                   value: 1,
                   phantom: {
                     $cond: {
-                      if: { $lt: ["$reviewCount", 9] },
+                      if: { $lt: ["$reviewCount", 4] },
                       then: "$$REMOVE",
                       else: "$scores.phantom",
                     },
                   },
                 },
-                reviewCount: 1,
               },
             },
           ],
@@ -289,23 +272,75 @@ export const getResourceInfo = async (activity: IUserActivity) => {
       readPlaceDetailProjection
     ).lean();
   } else if (activity.resourceType === ResourceTypeEnum.CHECKIN) {
-    resourceInfo = (await CheckIn.findById(activity.resourceId).lean()) as any;
-    if (!resourceInfo) return [null, null, userInfo];
-    const total = await CheckIn.aggregate([
+    const checkins = await CheckIn.aggregate([
       {
         $match: {
-          user: new mongoose.Types.ObjectId(resourceInfo.user as string),
+          user: activity.userId,
         },
       },
       {
-        $count: "total",
+        $facet: {
+          total: [
+            {
+              $count: "total",
+            },
+          ],
+          checkin: [
+            {
+              $match: {
+                _id: new mongoose.Types.ObjectId(activity.resourceId),
+              },
+            },
+            {
+              $lookup: {
+                from: "users",
+                localField: "user",
+                foreignField: "_id",
+                as: "user",
+              },
+            },
+            {
+              $lookup: {
+                from: "places",
+                localField: "place",
+                foreignField: "_id",
+                as: "place",
+                pipeline: [
+                  {
+                    $project: {
+                      ...readPlaceDetailProjectionAG,
+                      location: getFormattedPlaceLocationAG,
+                    },
+                  },
+                ],
+              },
+            },
+            {
+              $unwind: "$user",
+            },
+            {
+              $unwind: "$place",
+            },
+            {
+              $project: {
+                _id: 1,
+                createdAt: 1,
+                user: publicReadUserProjectionAG,
+                place: readPlaceDetailProjectionAG,
+              },
+            },
+          ],
+        },
       },
     ]);
-    resourceInfo.totalCheckins = total[0]?.total || 0;
-    placeInfo = await Place.findById(
-      resourceInfo.place,
-      readPlaceDetailProjection
-    ).lean();
+
+    if (!checkins[0]) return [null, null, userInfo];
+
+    resourceInfo = {
+      totalCheckins: checkins[0].total[0]?.total || 0,
+      ...checkins[0].checkin[0],
+    };
+    placeInfo = resourceInfo.place;
   } else if (activity.resourceType === ResourceTypeEnum.USER) {
     resourceInfo = await User.findById(
       activity.resourceId,
@@ -327,6 +362,7 @@ export const getResourceInfo = async (activity: IUserActivity) => {
     }
   }
 
+  // Fix place location format
   if (placeInfo) {
     if (placeInfo.location?.geoLocation?.coordinates) {
       placeInfo.location.geoLocation = {

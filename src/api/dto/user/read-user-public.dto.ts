@@ -14,7 +14,7 @@ export type PublicReadUserDto = {
 };
 
 type PublicReadUserProjection = {
-  [Property in keyof PublicReadUserDto]?: boolean;
+  [Property in keyof PublicReadUserDto]?: boolean | 0 | 1;
 };
 
 export const publicReadUserProjection: PublicReadUserProjection = {
@@ -30,4 +30,20 @@ export const publicReadUserProjection: PublicReadUserProjection = {
   xp: true,
   level: true,
   coins: true,
+};
+
+// For aggregate
+export const publicReadUserProjectionAG: PublicReadUserProjection = {
+  _id: 1,
+  name: 1,
+  profileImage: 1,
+  username: 1,
+  bio: 1,
+  followersCount: 1,
+  followingCount: 1,
+  reviewsCount: 1,
+  verified: 1,
+  xp: 1,
+  level: 1,
+  coins: 1,
 };

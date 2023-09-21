@@ -29,6 +29,7 @@ import {
   getYelpData,
 } from "../services/provider.service";
 import { stateMapping } from "../services/place.service";
+import { publicReadUserProjectionAG } from "../dto/user/read-user-public.dto";
 
 export const createPlaceValidation: ValidationChain[] = [
   // validate.name(body("name")),
@@ -560,12 +561,7 @@ export async function getPlace(
                 as: "writer",
                 pipeline: [
                   {
-                    $project: {
-                      name: 1,
-                      username: 1,
-                      profileImage: 1,
-                      level: 1,
-                    },
+                    $project: publicReadUserProjectionAG,
                   },
                 ],
               },
@@ -709,6 +705,7 @@ export async function getPlace(
                 videos: 1,
                 tags: 1,
                 language: 1,
+                recommend: 1,
                 createdAt: 1,
                 updatedAt: 1,
                 userActivityId: 1,
@@ -745,11 +742,13 @@ export async function getPlace(
       {
         $project: {
           name: 1,
+          otherNames: 1,
           thumbnail: 1,
           images: 1,
           scores: 1,
           reviews: 1,
           reviewCount: 1,
+          priceRange: 1,
           description: 1,
           location: {
             geoLocation: {
@@ -1039,7 +1038,6 @@ export async function importPlaces(
     next(err);
   }
 }
-
 
 function getDistance(cluster1: any, cluster2: any) {
   const latDiff = cluster1.latitude - cluster2.latitude;
