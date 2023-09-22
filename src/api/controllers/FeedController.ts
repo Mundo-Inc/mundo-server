@@ -12,6 +12,7 @@ import { dStrings, dynamicMessage } from "../../strings";
 import { createError, handleInputErrors } from "../../utilities/errorHandlers";
 import { getResourceInfo, getUserFeed } from "../services/feed.service";
 import validate from "./validators";
+import { publicReadUserProjectionAG } from "../dto/user/read-user-public.dto";
 
 export const getFeedValidation: ValidationChain[] = [
   validate.page(query("page").optional()),
@@ -284,14 +285,7 @@ export async function getComments(
           as: "author",
           pipeline: [
             {
-              $project: {
-                _id: 1,
-                name: 1,
-                username: 1,
-                level: 1,
-                profileImage: 1,
-                verified: 1,
-              },
+              $project: publicReadUserProjectionAG,
             },
           ],
         },

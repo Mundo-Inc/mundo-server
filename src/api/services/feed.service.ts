@@ -597,14 +597,7 @@ export const getUserFeed = async (
             as: "author",
             pipeline: [
               {
-                $project: {
-                  _id: 1,
-                  name: 1,
-                  username: 1,
-                  level: 1,
-                  profileImage: 1,
-                  verified: 1,
-                },
+                $project: publicReadUserProjectionAG,
               },
             ],
           },
