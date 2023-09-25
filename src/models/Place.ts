@@ -42,6 +42,8 @@ export interface IPlace extends Document {
   phone: string;
   website?: string;
   categories: Categories[];
+  amenity: string;
+  cuisine: string[];
   owner?: mongoose.Types.ObjectId;
   isActive: boolean;
   yelpId?: string;
@@ -125,6 +127,11 @@ const PlaceSchema: Schema = new Schema<IPlace>(
     },
     priceRange: {
       type: Number,
+    },
+    amenity: String,
+    cuisine: {
+      type: [String],
+      default: [],
     },
     location: {
       geoLocation: {

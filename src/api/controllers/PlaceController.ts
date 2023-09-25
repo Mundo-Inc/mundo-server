@@ -922,6 +922,7 @@ export async function importPlaces(
         ...(p.tags["takeaway"] && { takeaway: p.tags["takeaway"] }),
         ...(p.tags["wheelchair"] && { wheelchair: p.tags["wheelchair"] }),
       };
+
       if (!name) continue;
 
       const nearbyPlaces = await Place.find({
@@ -944,11 +945,11 @@ export async function importPlaces(
         if (distance <= 2) {
           // found -> update
           place.otherSources.OSM = {
-            OSM: {
-              _id: id,
-              tags: tags,
-            },
+            _id: id,
+            tags: tags,
           };
+          place.amenity = p.tags["amenity"];
+          if (p.tags["cuisine"]) place.cuisine = p.tags["cuisine"].split(";");
           await place.save();
           placeExists = true;
           break; // Break the loop if found
@@ -1001,12 +1002,13 @@ export async function importPlaces(
                   name: name,
                   location: location,
                 });
-                newPlace.otherSources = {
-                  OSM: {
-                    _id: id,
-                    tags: tags,
-                  },
+                newPlace.otherSources.OSM = {
+                  _id: id,
+                  tags: tags,
                 };
+                newPlace.amenity = p.tags["amenity"];
+                if (p.tags["cuisine"])
+                  newPlace.cuisine = p.tags["cuisine"].split(";");
                 await newPlace.save();
               }
             }
