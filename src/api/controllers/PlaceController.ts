@@ -885,7 +885,7 @@ export async function importPlaces(
 ) {
   try {
     handleInputErrors(req);
-    const places = require("../data/osm_places.json");
+    const places = require("../data/osm_places_2.json");
 
     for (const p of places) {
       const id = p.id;
@@ -923,7 +923,7 @@ export async function importPlaces(
         ...(p.tags["wheelchair"] && { wheelchair: p.tags["wheelchair"] }),
       };
 
-      if (!name) continue;
+      if (!name || !lat || !lon) continue;
 
       const nearbyPlaces = await Place.find({
         "location.geoLocation": {
@@ -952,6 +952,7 @@ export async function importPlaces(
           if (p.tags["cuisine"]) place.cuisine = p.tags["cuisine"].split(";");
           await place.save();
           placeExists = true;
+          console.log(place.name);
           break; // Break the loop if found
         }
       }
