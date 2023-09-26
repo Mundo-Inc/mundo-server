@@ -888,6 +888,7 @@ export async function importPlaces(
     const places = require("../data/osm_places_2.json");
 
     for (const p of places) {
+      if (!p.tags) continue;
       const id = p.id;
       const lat = p.lat;
       const lon = p.lon;
