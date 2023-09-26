@@ -1,10 +1,12 @@
 import axios from "axios";
 import { IPlace } from "../../models/Place";
 import { createError } from "../../utilities/errorHandlers";
+import { IGPPlaceDetails } from "../../types/googleplaces.interface";
 
 const YELP_FUSION_API_KEY = process.env.YELP_FUSION_API_KEY;
 const FOURSQUARE_API_KEY = process.env.FOURSQUARE_API_KEY;
 
+const GOOGLE_PLACES_API_KEY = process.env.GOOGLE_PLACES_API_KEY;
 export const findYelpId = async (place: IPlace) => {
   try {
     let url = `https://api.yelp.com/v3/businesses/matches?name=${place.name}&address1=${place.location.address}&city=${place.location.city}&state=${place.location.state}&country=${place.location.country}&latitude=${place.location.geoLocation.coordinates[1]}&longitude=${place.location.geoLocation.coordinates[0]}`;
@@ -18,16 +20,11 @@ export const findYelpId = async (place: IPlace) => {
       },
     });
 
-    // console.log(
-    //   "after getting yelpId" +
-    //     yelpResult.status +
-    //     " " +
-    //     yelpResult.data.businesses.length
-    // );
 
-    if (yelpResult.status === 200 && yelpResult.data.businesses.length === 1) {
+    if (yelpResult.status === 200 && yelpResult.data.businesses.length >= 1) {
       return yelpResult.data.businesses[0].id;
     } else {
+      console.log(yelpResult);
       throw createError(
         `Unexpected response. Status: ${yelpResult.status}`,
         yelpResult.status
@@ -64,6 +61,103 @@ export const getYelpData = async (yelpId: string) => {
     throw error; // or return a default/fallback value if preferred
   }
 };
+
+export const getYelpReviews = async (yelpId: string) => {
+  try {
+    const yelpResult = await axios({
+      method: "get",
+      url: `https://api.yelp.com/v3/businesses/${yelpId}/reviews?limit=20&sort_by=yelp_sort`, // fixed extra }
+      headers: {
+        Authorization: `Bearer ${YELP_FUSION_API_KEY}`,
+        Accept: "application/json",
+      },
+    });
+
+    if (yelpResult.status === 200) {
+      return {
+        reviews: yelpResult.data.reviews,
+      };
+    } else {
+      console.log(yelpResult);
+      throw new Error(`Unexpected response. Status: ${yelpResult.status}`);
+    }
+  } catch (error) {
+    console.error("Error fetching Yelp rating:", error);
+    throw error; // or return a default/fallback value if preferred
+  }
+};
+
+export const findGooglePlacesId = async (
+  place: IPlace
+): Promise<string | null> => {
+  try {
+    const radiusToSearch = 50; // meters
+    const response = await axios.get(
+      `https://maps.googleapis.com/maps/api/place/nearbysearch/json`,
+      {
+        params: {
+          location: `${place.location.geoLocation.coordinates[1]},${place.location.geoLocation.coordinates[0]}`,
+          radius: radiusToSearch,
+          keyword: place.name,
+          key: GOOGLE_PLACES_API_KEY,
+        },
+      }
+    );
+
+    if (
+      response.status === 200 &&
+      response.data.results &&
+      response.data.results.length > 0
+    ) {
+      const placeId = response.data.results[0].place_id;
+      return placeId; // returning the Google Place ID as a string.
+    } else if (response.data.results && response.data.results.length === 0) {
+      console.error("No matching places found");
+      return null;
+    } else {
+      throw new Error(`Unexpected response. Status: ${response.status}`);
+    }
+  } catch (error) {
+    console.error("Error fetching Google id:", error);
+    throw error;
+  }
+};
+
+export const getGooglePlacesData = async (googlePlacesId: string) => {
+  try {
+    const placeRes = await axios(
+      `https://maps.googleapis.com/maps/api/place/details/json?place_id=${googlePlacesId}&key=${GOOGLE_PLACES_API_KEY}`
+    );
+    if (placeRes.status === 200) {
+      const res =  (placeRes.data as IGPPlaceDetails).result;
+      // TODO: FIX THUMBNAIL
+      // fetch the thumbnail url here
+      // add it to the res object
+      return res
+    } else {
+      throw new Error(`Unexpected response. Status: ${placeRes.status}`);
+    }
+  } catch (error) {
+    console.error("Error fetching Google rating:", error);
+    throw error; // or return a default/fallback value if preferred
+  }
+};
+
+// export const getGooglePlacesReviews = async (googlePlacesId: string) => {
+//   try {
+//     const placeRes = await axios(
+//       `https://maps.googleapis.com/maps/api/place/details/json?place_id=${googlePlacesId}&key=${GOOGLE_PLACES_API_KEY}`
+//     );
+//     if (placeRes.status === 200) {
+//       return (placeRes.data as IGPPlaceDetails).result;
+//     } else {
+//       throw new Error(`Unexpected response. Status: ${placeRes.status}`);
+//     }
+//   } catch (error) {
+//     console.error("Error fetching Google rating:", error);
+//     throw error; // or return a default/fallback value if preferred
+//   }
+// };
 
 export const findTripAdvisorId = async (place: IPlace) => {
   return "";

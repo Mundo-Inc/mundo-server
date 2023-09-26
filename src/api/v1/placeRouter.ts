@@ -3,8 +3,6 @@ import express from "express";
 import {
   createPlace,
   createPlaceValidation,
-  getPlace,
-  getPlaceValidation,
   getPlaces,
   getPlacesValidation,
   getThirdPartyRatingValidation,
@@ -12,7 +10,12 @@ import {
   importPlaces,
   getPlacesWithinBoundaries,
   getPlacesWithinBoundariesValidation,
+  getPlace,
+  getPlaceValidation,
 } from "../controllers/PlaceController";
+
+import {} from "../controllers/SinglePlaceController";
+
 import {
   adminAuthMiddleware,
   authMiddleware,

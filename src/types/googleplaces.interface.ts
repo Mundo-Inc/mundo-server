@@ -114,7 +114,7 @@ export interface IGPPlaceDetailsResult {
   wheelchair_accessible_entrance?: boolean;
 }
 
-interface IGPReview {
+export interface IGPReview {
   author_name: string;
   author_url: string;
   language: string;
