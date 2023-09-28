@@ -344,6 +344,11 @@ async function fetchThirdPartiesData(id: string) {
       fetchGoogle(place, true),
       fetchYelp(place, true),
     ]);
+    if (results[0].google?.reviewCount)
+      place.popularity.googlePlacesReviewCount = results[0].google?.reviewCount;
+    if (results[1].yelp?.reviewCount)
+      place.popularity.yelpReviewCount = results[1].yelp?.reviewCount;
+    await place.save();
     return { ...results[0], ...results[1] };
   } catch (error) {
     console.error("An error occurred:", error);

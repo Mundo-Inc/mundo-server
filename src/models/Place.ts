@@ -39,6 +39,10 @@ export interface IPlace extends Document {
     value: number;
     phantom: number;
   };
+  popularity: {
+    googlePlacesReviewCount?: number;
+    yelpReviewCount?: number;
+  };
   phone: string;
   website?: string;
   categories: Categories[];
@@ -132,6 +136,10 @@ const PlaceSchema: Schema = new Schema<IPlace>(
     cuisine: {
       type: [String],
       default: [],
+    },
+    popularity: {
+      googlePlacesReviewCount: { type: Number },
+      yelpReviewCount: { type: Number },
     },
     location: {
       geoLocation: {
