@@ -1159,94 +1159,95 @@ async function getClusteredPlaces(
     },
   ];
 
-  const clustersPipeline = [
-    {
-      $match: {
-        "location.geoLocation": {
-          $geoWithin: {
-            $geometry: {
-              type: "Polygon",
-              coordinates: [
-                [
-                  [southWest.lng, southWest.lat],
-                  [northEast.lng, southWest.lat],
-                  [northEast.lng, northEast.lat],
-                  [southWest.lng, northEast.lat],
-                  [southWest.lng, southWest.lat],
-                ],
-              ],
-            },
-          },
-        },
-      },
-    },
-    {
-      $group: {
-        _id: {
-          lat: {
-            $floor: {
-              $multiply: [
-                { $arrayElemAt: ["$location.geoLocation.coordinates", 1] },
-                PRECISION,
-              ],
-            },
-          },
-          lng: {
-            $floor: {
-              $multiply: [
-                { $arrayElemAt: ["$location.geoLocation.coordinates", 0] },
-                PRECISION,
-              ],
-            },
-          },
-        },
-        count: { $sum: 1 },
-        longitude: {
-          $avg: { $arrayElemAt: ["$location.geoLocation.coordinates", 0] },
-        },
-        latitude: {
-          $avg: { $arrayElemAt: ["$location.geoLocation.coordinates", 1] },
-        },
-        topPlaces: {
-          $push: {
-            _id: "$_id",
-            name: "$name",
-            description: "$description",
-            overallScore: "$scores.overall",
-          },
-        },
-      },
-    },
-    {
-      $project: {
-        count: 1,
-        longitude: 1,
-        latitude: 1,
-        places: {
-          $cond: {
-            if: { $lt: ["$count", THRESHOLD] },
-            then: { $slice: ["$topPlaces", THRESHOLD] },
-            else: [],
-          },
-        },
-      },
-    },
-  ];
+  // const clustersPipeline = [
+  //   {
+  //     $match: {
+  //       "location.geoLocation": {
+  //         $geoWithin: {
+  //           $geometry: {
+  //             type: "Polygon",
+  //             coordinates: [
+  //               [
+  //                 [southWest.lng, southWest.lat],
+  //                 [northEast.lng, southWest.lat],
+  //                 [northEast.lng, northEast.lat],
+  //                 [southWest.lng, northEast.lat],
+  //                 [southWest.lng, southWest.lat],
+  //               ],
+  //             ],
+  //           },
+  //         },
+  //       },
+  //     },
+  //   },
+  //   {
+  //     $group: {
+  //       _id: {
+  //         lat: {
+  //           $floor: {
+  //             $multiply: [
+  //               { $arrayElemAt: ["$location.geoLocation.coordinates", 1] },
+  //               PRECISION,
+  //             ],
+  //           },
+  //         },
+  //         lng: {
+  //           $floor: {
+  //             $multiply: [
+  //               { $arrayElemAt: ["$location.geoLocation.coordinates", 0] },
+  //               PRECISION,
+  //             ],
+  //           },
+  //         },
+  //       },
+  //       count: { $sum: 1 },
+  //       longitude: {
+  //         $avg: { $arrayElemAt: ["$location.geoLocation.coordinates", 0] },
+  //       },
+  //       latitude: {
+  //         $avg: { $arrayElemAt: ["$location.geoLocation.coordinates", 1] },
+  //       },
+  //       topPlaces: {
+  //         $push: {
+  //           _id: "$_id",
+  //           name: "$name",
+  //           description: "$description",
+  //           overallScore: "$scores.overall",
+  //         },
+  //       },
+  //     },
+  //   },
+  //   {
+  //     $project: {
+  //       count: 1,
+  //       longitude: 1,
+  //       latitude: 1,
+  //       places: {
+  //         $cond: {
+  //           if: { $lt: ["$count", THRESHOLD] },
+  //           then: { $slice: ["$topPlaces", THRESHOLD] },
+  //           else: [],
+  //         },
+  //       },
+  //     },
+  //   },
+  // ];
 
   const topPlaces = await mongoose.models.Place.aggregate(topPlacesPipeline);
-  let clusters = [];
-  if (zoom > ZOOM_THRESHOLD) {
-    clusters = await mongoose.models.Place.aggregate(clustersPipeline);
-    clusters = mergeClusters(clusters);
-  }
+  // let clusters = [];
+  // if (zoom > ZOOM_THRESHOLD) {
+  //   clusters = await mongoose.models.Place.aggregate(clustersPipeline);
+  //   clusters = mergeClusters(clusters);
+  // }
 
   return {
     places: topPlaces,
-    clusters: clusters.map((cluster: any) => ({
-      count: cluster.count,
-      longitude: cluster.longitude,
-      latitude: cluster.latitude,
-    })),
+    clusters: [],
+    // clusters: clusters.map((cluster: any) => ({
+    //   count: cluster.count,
+    //   longitude: cluster.longitude,
+    //   latitude: cluster.latitude,
+    // })),
   };
 }
 
