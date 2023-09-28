@@ -84,6 +84,7 @@ export interface IGPPlaceDetailsResult {
   icon_mask_base_uri?: string;
   international_phone_number?: string;
   name?: string;
+  thumbnail?: string;
   opening_hours?: {
     open_now: boolean;
     periods: {

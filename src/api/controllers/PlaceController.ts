@@ -885,14 +885,26 @@ export async function importPlaces(
 ) {
   try {
     handleInputErrors(req);
-    const places = require("../data/osm_places_2.json");
-
+    const places = require("../data/osm_places_3.json");
+    let count = 1;
     for (const p of places) {
       if (!p.tags) continue;
       const id = p.id;
       const lat = p.lat;
       const lon = p.lon;
-      const name = p.tags["name"];
+      const amenity = p.tags["amenity"];
+      const name =
+        p.tags["name"] ||
+        p.tags["name:en"] ||
+        p.tags["old_name"] ||
+        p.tags["short_name"];
+      console.log(name);
+
+      if (count % 20 === 0) {
+        console.log(" >" + count + "/" + places.length);
+      }
+
+      count++;
       const tags = {
         ...(p.tags["air_conditioning"] && {
           air_conditioning: p.tags["air_conditioning"],
@@ -924,7 +936,10 @@ export async function importPlaces(
         ...(p.tags["wheelchair"] && { wheelchair: p.tags["wheelchair"] }),
       };
 
-      if (!name || !lat || !lon) continue;
+      if (!name || !lat || !lon) {
+        console.log("missing crusial info skipping");
+        continue;
+      }
 
       const nearbyPlaces = await Place.find({
         "location.geoLocation": {
@@ -942,37 +957,35 @@ export async function importPlaces(
 
       for (const place of nearbyPlaces) {
         const distance = levenshtein.get(name, place.name);
-
         if (distance <= 2) {
           // found -> update
           place.otherSources.OSM = {
             _id: id,
             tags: tags,
           };
-          place.amenity = p.tags["amenity"];
+          place.amenity = amenity;
           if (p.tags["cuisine"]) place.cuisine = p.tags["cuisine"].split(";");
           await place.save();
           placeExists = true;
-          console.log(place.name);
           break; // Break the loop if found
         }
       }
 
-      if (!placeExists && p.tags.name && p.tags.cuisine) {
+      if (!placeExists && name && amenity) {
         // not found -> insert
         // Check if the amenity has a name at least and is valid
-        await sleep(25);
-        const MAX_RETRIES = 12; // Adjust as needed
+        await sleep(100);
+        const MAX_RETRIES = 6; // Adjust as needed
         let retries = 0;
 
         while (retries < MAX_RETRIES) {
           try {
+            console.log("fetching");
             const geoResponse = await axios(
               `https://geocode.maps.co/reverse?lat=${lat}&lon=${lon}`
             );
             const addressData = geoResponse.data.address;
-            if (p.tags.name && p.tags.cuisine) {
-              console.log(p.tags.name);
+            if (name && amenity) {
               if (
                 country.state(
                   iso3311a2.getCode(addressData.country),
@@ -999,7 +1012,11 @@ export async function importPlaces(
                   house_number: addressData.house_number,
                   zip: addressData.postcode,
                 };
-                if (!location.city) break;
+
+                if (!location.city) {
+                  console.log("no city");
+                  break;
+                }
                 let newPlace = new Place({
                   name: name,
                   location: location,
@@ -1011,6 +1028,7 @@ export async function importPlaces(
                 newPlace.amenity = p.tags["amenity"];
                 if (p.tags["cuisine"])
                   newPlace.cuisine = p.tags["cuisine"].split(";");
+                console.log("saving");
                 await newPlace.save();
               }
             }
@@ -1028,7 +1046,7 @@ export async function importPlaces(
               break;
             }
 
-            await sleep(3000); // Sleep for 60 seconds before retrying
+            await sleep(3000); // Sleep for dynamic seconds based on retries
           }
         }
       }

@@ -325,6 +325,9 @@ export async function getPlace(
 
     response[0].thirdParty = thirdPartyData;
 
+    response[0].thumbnail =
+      thirdPartyData.google?.thumbnail || thirdPartyData.yelp?.thumbnail;
+
     res.status(StatusCodes.OK).json({
       success: true,
       data: response[0],
@@ -354,10 +357,13 @@ async function fetchYelp(place: IPlace, getReviews: boolean) {
     let reviews = [];
     let rating = -1;
     let reviewCount = 0;
+    let thumbnail = "";
+
     if (typeof yelpId === "string" && yelpId !== "") {
       const yelpData = await getYelpData(yelpId);
       rating = yelpData.rating;
       reviewCount = yelpData.reviewCount;
+      thumbnail = yelpData.thumbnail;
     } else {
       // Getting the yelpId
       yelpId = await findYelpId(place);
@@ -369,8 +375,10 @@ async function fetchYelp(place: IPlace, getReviews: boolean) {
         const yelpData = await getYelpData(yelpId);
         rating = yelpData.rating;
         reviewCount = yelpData.reviewCount;
+        thumbnail = yelpData.thumbnail;
       }
     }
+
     if (getReviews && typeof yelpId === "string" && yelpId !== "") {
       reviews = (await getYelpReviews(yelpId)).reviews;
     }
@@ -379,6 +387,7 @@ async function fetchYelp(place: IPlace, getReviews: boolean) {
         rating,
         reviewCount,
         reviews,
+        thumbnail,
       },
     };
   } catch (error) {
@@ -414,6 +423,7 @@ async function fetchGoogle(place: IPlace, getReviews: boolean) {
           (reviewCount = googlePlacesData.user_ratings_total);
       }
     }
+    const thumbnail = googlePlacesData?.thumbnail;
     if (getReviews) {
       reviews = googlePlacesData?.reviews;
     }
@@ -422,6 +432,7 @@ async function fetchGoogle(place: IPlace, getReviews: boolean) {
         rating,
         reviewCount,
         reviews,
+        thumbnail,
       },
     };
   } catch (error) {

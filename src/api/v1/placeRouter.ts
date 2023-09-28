@@ -10,11 +10,13 @@ import {
   importPlaces,
   getPlacesWithinBoundaries,
   getPlacesWithinBoundariesValidation,
-  getPlace,
-  getPlaceValidation,
+
 } from "../controllers/PlaceController";
 
-import {} from "../controllers/SinglePlaceController";
+import {
+  getPlace,
+  getPlaceValidation,
+} from "../controllers/SinglePlaceController";
 
 import {
   adminAuthMiddleware,

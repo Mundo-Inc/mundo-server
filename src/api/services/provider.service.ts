@@ -51,6 +51,7 @@ export const getYelpData = async (yelpId: string) => {
       return {
         rating: yelpResult.data.rating,
         reviewCount: yelpResult.data.review_count,
+        thumbnail: yelpResult.data.image_url,
       };
     } else {
       console.log(yelpResult);
@@ -128,12 +129,17 @@ export const getGooglePlacesData = async (googlePlacesId: string) => {
     const placeRes = await axios(
       `https://maps.googleapis.com/maps/api/place/details/json?place_id=${googlePlacesId}&key=${GOOGLE_PLACES_API_KEY}`
     );
+
     if (placeRes.status === 200) {
-      const res =  (placeRes.data as IGPPlaceDetails).result;
-      // TODO: FIX THUMBNAIL
-      // fetch the thumbnail url here
-      // add it to the res object
-      return res
+      const res = (placeRes.data as IGPPlaceDetails).result;
+      // Check if there are any photos available for the place
+      if (res.photos && res.photos.length > 0) {
+        // Use the photo_reference of the first photo to construct the URL of the image
+        const photoReference = res.photos[0].photo_reference;
+        const maxWidth = 1024; // Set the desired maximum width of the image
+        res.thumbnail = `https://maps.googleapis.com/maps/api/place/photo?maxwidth=${maxWidth}&photoreference=${photoReference}&key=${GOOGLE_PLACES_API_KEY}`;
+      }
+      return res;
     } else {
       throw new Error(`Unexpected response. Status: ${placeRes.status}`);
     }
@@ -143,21 +149,6 @@ export const getGooglePlacesData = async (googlePlacesId: string) => {
   }
 };
 
-// export const getGooglePlacesReviews = async (googlePlacesId: string) => {
-//   try {
-//     const placeRes = await axios(
-//       `https://maps.googleapis.com/maps/api/place/details/json?place_id=${googlePlacesId}&key=${GOOGLE_PLACES_API_KEY}`
-//     );
-//     if (placeRes.status === 200) {
-//       return (placeRes.data as IGPPlaceDetails).result;
-//     } else {
-//       throw new Error(`Unexpected response. Status: ${placeRes.status}`);
-//     }
-//   } catch (error) {
-//     console.error("Error fetching Google rating:", error);
-//     throw error; // or return a default/fallback value if preferred
-//   }
-// };
 
 export const findTripAdvisorId = async (place: IPlace) => {
   return "";
