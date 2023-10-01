@@ -17,9 +17,9 @@ export interface IUser extends Document {
   };
   role?: string;
   isActive?: boolean;
-  name?: string;
+  name: string;
   phone?: string;
-  bio?: string;
+  bio: string;
   profileImage?: string;
   password: string;
   token?: {
@@ -40,7 +40,7 @@ export interface IUser extends Document {
   createdAt: Date;
   updatedAt: Date;
   verified?: boolean;
-  coins?: number;
+  coins: number;
   latestPlace?: mongoose.Types.ObjectId;
 }
 
@@ -149,14 +149,6 @@ const UserSchema = new Schema<IUser>(
       resetPasswordTokenExpiry: {
         type: Date,
       },
-    },
-    createdAt: {
-      type: Date,
-      default: Date.now,
-    },
-    updatedAt: {
-      type: Date,
-      default: Date.now,
     },
     verified: {
       type: Boolean,
