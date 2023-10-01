@@ -1,3 +1,4 @@
+import { PutObjectCommand } from "@aws-sdk/client-s3";
 import axios from "axios";
 import type { NextFunction, Request, Response } from "express";
 import { param, query, type ValidationChain } from "express-validator";
@@ -5,21 +6,15 @@ import { type File } from "formidable";
 import { readFileSync, unlinkSync } from "fs";
 import { StatusCodes } from "http-status-codes";
 import mongoose from "mongoose";
-import { PutObjectCommand } from "@aws-sdk/client-s3";
+
 import Place, { type IPlace } from "../../models/Place";
 import Queue from "../../models/Queue";
 import { dStrings, dynamicMessage } from "../../strings";
 import type { IGPNearbySearch } from "../../types/googleplaces.interface";
 import { createError, handleInputErrors } from "../../utilities/errorHandlers";
 import { bucketName, parseForm, region, s3 } from "../../utilities/storage";
+import { publicReadUserProjectionAG } from "../dto/user/read-user-public.dto";
 import { placeEarning } from "../services/earning.service";
-import { addCreatePlaceXP } from "../services/ranking.service";
-import { addNewPlaceActivity } from "../services/user.activity.service";
-import validate from "./validators";
-var levenshtein = require("fast-levenshtein");
-var country = require("countrystatesjs");
-var iso3311a2 = require("iso-3166-1-alpha-2");
-
 import {
   findFoursquareId,
   findTripAdvisorId,
@@ -28,8 +23,13 @@ import {
   getTripAdvisorRating,
   getYelpData,
 } from "../services/provider.service";
-import { stateMapping } from "../services/place.service";
-import { publicReadUserProjectionAG } from "../dto/user/read-user-public.dto";
+import { addCreatePlaceXP } from "../services/ranking.service";
+import { addNewPlaceActivity } from "../services/user.activity.service";
+import validate from "./validators";
+
+var levenshtein = require("fast-levenshtein");
+var country = require("countrystatesjs");
+var iso3311a2 = require("iso-3166-1-alpha-2");
 
 export const createPlaceValidation: ValidationChain[] = [
   // validate.name(body("name")),
@@ -663,14 +663,7 @@ export async function getPlace(
                       as: "author",
                       pipeline: [
                         {
-                          $project: {
-                            _id: 1,
-                            name: 1,
-                            username: 1,
-                            level: 1,
-                            profileImage: 1,
-                            verified: 1,
-                          },
+                          $project: publicReadUserProjectionAG,
                         },
                       ],
                     },
