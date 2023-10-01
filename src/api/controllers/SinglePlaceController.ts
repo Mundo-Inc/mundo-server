@@ -217,14 +217,16 @@ export async function getPlace(
                       mentions: 1,
                       author: { $arrayElemAt: ["$author", 0] },
                       likes: { $size: "$likes" },
-                      liked: authId
+                      ...(authId
                         ? {
-                            $in: [
-                              new mongoose.Types.ObjectId(authId),
-                              "$likes",
-                            ],
+                            liked: {
+                              $in: [
+                                new mongoose.Types.ObjectId(authId),
+                                "$likes",
+                              ],
+                            },
                           }
-                        : false,
+                        : {}),
                     },
                   },
                 ],

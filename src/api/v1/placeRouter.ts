@@ -10,7 +10,6 @@ import {
   importPlaces,
   getPlacesWithinBoundaries,
   getPlacesWithinBoundariesValidation,
-
 } from "../controllers/PlaceController";
 
 import {
@@ -41,7 +40,6 @@ router
 
 router.route("/import").post(express.json(), adminAuthMiddleware, importPlaces);
 
-
 router
   .route("/:id/rating/:provider")
   .get(express.json(), getThirdPartyRatingValidation, getThirdPartyRating);
@@ -49,6 +47,5 @@ router
 router
   .route("/:id")
   .get(express.json(), optionalAuthMiddleware, getPlaceValidation, getPlace);
-
 
 export default router;
