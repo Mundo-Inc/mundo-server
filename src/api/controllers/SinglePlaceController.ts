@@ -252,13 +252,14 @@ export async function getPlace(
           from: "media",
           localField: "_id",
           foreignField: "place",
-          as: "images",
+          as: "media",
           pipeline: [
             {
               $limit: 5,
             },
             {
               $project: {
+                _id: 1,
                 src: 1,
                 caption: 1,
                 type: 1,
@@ -272,7 +273,7 @@ export async function getPlace(
           name: 1,
           otherNames: 1,
           thumbnail: 1,
-          images: 1,
+          media: 1,
           scores: 1,
           reviews: 1,
           reviewCount: 1,
