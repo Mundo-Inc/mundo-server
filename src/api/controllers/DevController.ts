@@ -1,7 +1,6 @@
 import type { NextFunction, Request, Response } from "express";
 import { StatusCodes } from "http-status-codes";
 import mongoose from "mongoose";
-var levenshtein = require("fast-levenshtein");
 import Place, { type IPlace } from "../../models/Place";
 import Review from "../../models/Review";
 import { handleInputErrors } from "../../utilities/errorHandlers";
@@ -12,6 +11,7 @@ import PlaceFeature from "../../models/PlaceFeature";
 import SystemRecommendation from "../../models/SystemRecommendation";
 import User from "../../models/User";
 import UserFeature from "../../models/UserFeature";
+import { areSimilar } from "../../utilities/stringHelper";
 
 export async function devTests(
   req: Request,
@@ -109,21 +109,7 @@ export async function devTests(
   }
 }
 
-function cleanAndSort(str: string) {
-  return str.split(" ").sort().join(" ").toLowerCase();
-}
 
-function areSimilar(str1: string, str2: string) {
-  const cleanedStr1 = cleanAndSort(str1);
-  const cleanedStr2 = cleanAndSort(str2);
-
-  return (
-    cleanedStr1 === cleanedStr2 ||
-    levenshtein.get(cleanedStr1, cleanedStr2) <= 2 ||
-    cleanedStr1.includes(cleanedStr2) ||
-    cleanedStr2.includes(cleanedStr1)
-  );
-}
 
 export async function fixPlaces(
   req: Request,

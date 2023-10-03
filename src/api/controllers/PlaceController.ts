@@ -25,6 +25,7 @@ import {
 import { addCreatePlaceXP } from "../services/ranking.service";
 import { addNewPlaceActivity } from "../services/user.activity.service";
 import validate from "./validators";
+import { areSimilar } from "../../utilities/stringHelper";
 
 var levenshtein = require("fast-levenshtein");
 var country = require("countrystatesjs");
@@ -578,6 +579,8 @@ export async function importPlaces(
 ) {
   try {
     handleInputErrors(req);
+    const onlyUpdate = req.query.onlyUpdate === "true" ? true : false;
+
     const places = require("../data/osm_places_3.json");
     let count = 1;
     for (const p of places) {
@@ -641,7 +644,7 @@ export async function importPlaces(
               type: "Point",
               coordinates: [lon, lat],
             },
-            $maxDistance: 50, // in meters
+            $maxDistance: 30, // in meters
           },
         },
       });
@@ -649,8 +652,7 @@ export async function importPlaces(
       let placeExists = false;
 
       for (const place of nearbyPlaces) {
-        const distance = levenshtein.get(name, place.name);
-        if (distance <= 2) {
+        if (areSimilar(name, place.name)) {
           // found -> update
           place.otherSources.OSM = {
             _id: id,
@@ -664,7 +666,7 @@ export async function importPlaces(
         }
       }
 
-      if (!placeExists && name && amenity) {
+      if (!placeExists && name && amenity && !onlyUpdate) {
         // not found -> insert
         // Check if the amenity has a name at least and is valid
         await sleep(100);
