@@ -257,21 +257,27 @@ const PlaceSchema: Schema = new Schema<IPlace>(
         updatedAt: Date,
       },
       googlePlaces: {
-        _id: {
-          type: String,
-          default: "",
-          index: true,
+        type: {
+          _id: {
+            type: String,
+            default: "",
+            index: true,
+          },
+          rating: Number,
+          updatedAt: Date,
         },
-        rating: Number,
-        updatedAt: Date,
+        default: {},
       },
       yelp: {
-        _id: {
-          type: String,
-          default: "",
+        type: {
+          _id: {
+            type: String,
+            default: "",
+          },
+          rating: Number,
+          updatedAt: Date,
         },
-        rating: Number,
-        updatedAt: Date,
+        default: {},
       },
     },
   },
@@ -391,6 +397,35 @@ const PlaceSchema: Schema = new Schema<IPlace>(
     },
   }
 );
+
+PlaceSchema.pre("save", function (next) {
+  // Check if OSM subdocument exists and _id is empty, undefined, or null
+  if (
+    this.otherSources.OSM &&
+    (!this.otherSources.OSM._id || this.otherSources.OSM._id.trim() === "")
+  ) {
+    this.otherSources.OSM._id = "";
+  }
+
+  // Check if googlePlaces subdocument exists and _id is empty, undefined, or null
+  if (
+    this.otherSources.googlePlaces &&
+    (!this.otherSources.googlePlaces._id ||
+      this.otherSources.googlePlaces._id.trim() === "")
+  ) {
+    this.otherSources.googlePlaces._id = "";
+  }
+
+  // Check if yelp subdocument exists and _id is empty, undefined, or null
+  if (
+    this.otherSources.yelp &&
+    (!this.otherSources.yelp._id || this.otherSources.yelp._id.trim() === "")
+  ) {
+    this.otherSources.yelp._id = "";
+  }
+
+  next();
+});
 
 PlaceSchema.index({ "location.geoLocation": "2dsphere" });
 PlaceSchema.index({ "scores.overall": -1 });
