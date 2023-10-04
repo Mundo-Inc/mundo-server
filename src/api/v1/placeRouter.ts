@@ -5,17 +5,19 @@ import {
   createPlaceValidation,
   getPlaces,
   getPlacesValidation,
-  getThirdPartyRatingValidation,
-  getThirdPartyRating,
-  importPlaces,
   getPlacesWithinBoundaries,
   getPlacesWithinBoundariesValidation,
+  getThirdPartyRating,
+  getThirdPartyRatingValidation,
+  importPlaces,
 } from "../controllers/PlaceController";
 
 import {
   getPlace,
   getPlaceMedia,
   getPlaceMediaValidation,
+  getPlaceReviews,
+  getPlaceReviewsValidation,
   getPlaceValidation,
 } from "../controllers/SinglePlaceController";
 
@@ -43,12 +45,21 @@ router
 router.route("/import").post(express.json(), adminAuthMiddleware, importPlaces);
 
 router
-  .route("/:id/rating/:provider")
-  .get(express.json(), getThirdPartyRatingValidation, getThirdPartyRating);
-
-router
   .route("/:id/media")
   .get(express.json(), getPlaceMediaValidation, getPlaceMedia);
+
+router
+  .route("/:id/reviews")
+  .get(
+    express.json(),
+    optionalAuthMiddleware,
+    getPlaceReviewsValidation,
+    getPlaceReviews
+  );
+
+router
+  .route("/:id/rating/:provider")
+  .get(express.json(), getThirdPartyRatingValidation, getThirdPartyRating);
 
 router
   .route("/:id")

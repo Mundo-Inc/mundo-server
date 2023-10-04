@@ -3,11 +3,11 @@ import { param, query, type ValidationChain } from "express-validator";
 import { StatusCodes } from "http-status-codes";
 import mongoose from "mongoose";
 
+import Media from "../../models/Media";
 import Place, { IPlace } from "../../models/Place";
+import Review from "../../models/Review";
 import { dStrings, dynamicMessage } from "../../strings";
 import { createError, handleInputErrors } from "../../utilities/errorHandlers";
-import { IGPReview } from "./../../types/googleplaces.interface";
-import Media from "../../models/Media";
 import { publicReadUserProjectionAG } from "../dto/user/read-user-public.dto";
 import {
   findGooglePlacesId,
@@ -16,6 +16,7 @@ import {
   getYelpData,
   getYelpReviews,
 } from "../services/provider.service";
+import { IGPReview } from "./../../types/googleplaces.interface";
 import validate from "./validators";
 
 // var levenshtein = require("fast-levenshtein");
@@ -70,6 +71,7 @@ export async function getPlace(
         },
       },
       {
+        // ! Reviews can be removed when we switch to the new app. Get reviews from it's own API
         $lookup: {
           from: "reviews",
           localField: "_id",
@@ -77,13 +79,13 @@ export async function getPlace(
           as: "reviews",
           pipeline: [
             {
-              $sort: {
-                createdAt: reviewSort === "oldest" ? 1 : -1,
+              $match: {
+                content: { $exists: true, $ne: "" },
               },
             },
             {
-              $match: {
-                content: { $exists: true, $ne: "" },
+              $sort: {
+                createdAt: reviewSort === "oldest" ? 1 : -1,
               },
             },
             {
@@ -280,6 +282,7 @@ export async function getPlace(
       {
         $project: {
           name: 1,
+          amenity: 1,
           otherNames: 1,
           thumbnail: 1,
           media: 1,
@@ -447,6 +450,240 @@ export async function getPlaceMedia(
       success: true,
       total: media[0].total[0]?.count || 0,
       data: media[0].media || [],
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
+export const getPlaceReviewsValidation: ValidationChain[] = [
+  param("id").isMongoId().withMessage("Invalid place id"),
+  validate.limit(query("limit").optional(), 1, 30),
+  validate.page(query("page").optional(), 50),
+];
+export async function getPlaceReviews(
+  req: Request,
+  res: Response,
+  next: NextFunction
+) {
+  try {
+    handleInputErrors(req);
+
+    const authId = req.user?.id;
+    const { id } = req.params;
+
+    const limit = Number(req.query.limit) || 20;
+    const page = Number(req.query.page) || 1;
+    const skip = (page - 1) * limit;
+
+    let userReactionPipeline: any = {};
+    if (authId) {
+      userReactionPipeline = {
+        user: [
+          {
+            $match: {
+              user: new mongoose.Types.ObjectId(authId),
+            },
+          },
+          {
+            $project: {
+              _id: 1,
+              type: 1,
+              reaction: 1,
+              createdAt: 1,
+            },
+          },
+        ],
+      };
+    }
+
+    const total = await Review.countDocuments({
+      place: new mongoose.Types.ObjectId(id as string),
+    });
+
+    const results = await Review.aggregate([
+      {
+        $match: {
+          place: new mongoose.Types.ObjectId(id as string),
+        },
+      },
+      {
+        $match: {
+          content: { $exists: true, $ne: "" },
+        },
+      },
+      {
+        $sort: {
+          createdAt: -1,
+        },
+      },
+      {
+        $skip: skip,
+      },
+      {
+        $limit: limit,
+      },
+      {
+        $lookup: {
+          from: "users",
+          localField: "writer",
+          foreignField: "_id",
+          as: "writer",
+          pipeline: [
+            {
+              $project: publicReadUserProjectionAG,
+            },
+          ],
+        },
+      },
+      {
+        $lookup: {
+          from: "media",
+          localField: "images",
+          foreignField: "_id",
+          as: "images",
+          pipeline: [
+            {
+              $project: {
+                _id: 1,
+                src: 1,
+                caption: 1,
+                type: 1,
+              },
+            },
+          ],
+        },
+      },
+      {
+        $lookup: {
+          from: "media",
+          localField: "videos",
+          foreignField: "_id",
+          as: "videos",
+          pipeline: [
+            {
+              $project: {
+                _id: 1,
+                src: 1,
+                caption: 1,
+                type: 1,
+              },
+            },
+          ],
+        },
+      },
+      {
+        $lookup: {
+          from: "reactions",
+          let: {
+            userActivityId: "$userActivityId",
+          },
+          as: "reactions",
+          pipeline: [
+            {
+              $match: {
+                $expr: { $eq: ["$target", "$$userActivityId"] },
+              },
+            },
+            {
+              $facet: {
+                total: [
+                  {
+                    $group: {
+                      _id: "$reaction",
+                      count: { $sum: 1 },
+                      type: { $first: "$type" },
+                    },
+                  },
+                  {
+                    $project: {
+                      _id: 0,
+                      reaction: "$_id",
+                      type: 1,
+                      count: 1,
+                    },
+                  },
+                ],
+                ...userReactionPipeline,
+              },
+            },
+          ],
+        },
+      },
+      {
+        $lookup: {
+          from: "comments",
+          localField: "userActivityId",
+          foreignField: "userActivity",
+          as: "comments",
+          pipeline: [
+            {
+              $match: {
+                status: "active",
+              },
+            },
+            {
+              $limit: 3,
+            },
+            {
+              $lookup: {
+                from: "users",
+                localField: "author",
+                foreignField: "_id",
+                as: "author",
+                pipeline: [
+                  {
+                    $project: publicReadUserProjectionAG,
+                  },
+                ],
+              },
+            },
+            {
+              $project: {
+                _id: 1,
+                createdAt: 1,
+                updatedAt: 1,
+                content: 1,
+                mentions: 1,
+                author: { $arrayElemAt: ["$author", 0] },
+                likes: { $size: "$likes" },
+                ...(authId
+                  ? {
+                      liked: {
+                        $in: [new mongoose.Types.ObjectId(authId), "$likes"],
+                      },
+                    }
+                  : {}),
+              },
+            },
+          ],
+        },
+      },
+      {
+        $project: {
+          scores: 1,
+          content: 1,
+          images: 1,
+          videos: 1,
+          tags: 1,
+          language: 1,
+          recommend: 1,
+          createdAt: 1,
+          updatedAt: 1,
+          userActivityId: 1,
+          writer: { $arrayElemAt: ["$writer", 0] },
+          reactions: {
+            $arrayElemAt: ["$reactions", 0],
+          },
+          comments: 1,
+        },
+      },
+    ]);
+
+    res.status(StatusCodes.OK).json({
+      success: true,
+      total: total,
+      data: results || [],
     });
   } catch (err) {
     next(err);
