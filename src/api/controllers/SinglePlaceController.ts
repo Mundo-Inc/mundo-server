@@ -1,15 +1,13 @@
-import { IGPReview } from "./../../types/googleplaces.interface";
 import type { NextFunction, Request, Response } from "express";
 import { param, query, type ValidationChain } from "express-validator";
 import { StatusCodes } from "http-status-codes";
-import mongoose, { Mongoose } from "mongoose";
+import mongoose from "mongoose";
+
 import Place, { IPlace } from "../../models/Place";
 import { dStrings, dynamicMessage } from "../../strings";
 import { createError, handleInputErrors } from "../../utilities/errorHandlers";
-var levenshtein = require("fast-levenshtein");
-var country = require("countrystatesjs");
-var iso3311a2 = require("iso-3166-1-alpha-2");
-
+import { IGPReview } from "./../../types/googleplaces.interface";
+import Media from "../../models/Media";
 import { publicReadUserProjectionAG } from "../dto/user/read-user-public.dto";
 import {
   findGooglePlacesId,
@@ -18,6 +16,11 @@ import {
   getYelpData,
   getYelpReviews,
 } from "../services/provider.service";
+import validate from "./validators";
+
+// var levenshtein = require("fast-levenshtein");
+// var country = require("countrystatesjs");
+// var iso3311a2 = require("iso-3166-1-alpha-2");
 
 export const getPlaceValidation: ValidationChain[] = [
   param("id").isMongoId().withMessage("Invalid place id"),
@@ -255,6 +258,12 @@ export async function getPlace(
           as: "media",
           pipeline: [
             {
+              // Prioritizing videos over images
+              $sort: {
+                type: -1,
+              },
+            },
+            {
               $limit: 5,
             },
             {
@@ -349,6 +358,98 @@ async function fetchThirdPartiesData(id: string) {
   } catch (error) {
     console.error("An error occurred:", error);
     throw error; // Re-throw the error after logging it
+  }
+}
+
+export const getPlaceMediaValidation: ValidationChain[] = [
+  param("id").isMongoId().withMessage("Invalid place id"),
+  query("type")
+    .optional()
+    .isIn(["image", "video"])
+    .withMessage("Invalid media type"),
+  query("priority")
+    .optional()
+    .custom((_, { req }) => {
+      // error if type is specified too
+      if (req.query?.type) {
+        throw new Error("Cannot specify both type and priority");
+      }
+      return true;
+    })
+    .withMessage("Cannot specify both type and priority")
+    .isIn(["image", "video"])
+    .withMessage("Invalid media type"),
+  validate.limit(query("limit").optional(), 1, 30),
+  validate.page(query("page").optional(), 50),
+];
+export async function getPlaceMedia(
+  req: Request,
+  res: Response,
+  next: NextFunction
+) {
+  try {
+    handleInputErrors(req);
+
+    const { id } = req.params;
+
+    const limit = Number(req.query.limit) || 50;
+    const page = Number(req.query.page) || 1;
+    const skip = (page - 1) * limit;
+    const type = req.query.type as "image" | "video" | undefined;
+    const priority = req.query.priority as "image" | "video" | undefined;
+
+    const priorityPipeline: any = [];
+
+    if (priority) {
+      priorityPipeline.push({
+        $sort: {
+          type: priority === "image" ? 1 : -1,
+        },
+      });
+    }
+
+    const media = await Media.aggregate([
+      {
+        $match: {
+          place: new mongoose.Types.ObjectId(id as string),
+          ...(type ? { type } : {}),
+        },
+      },
+      ...priorityPipeline,
+      {
+        $facet: {
+          total: [
+            {
+              $count: "count",
+            },
+          ],
+          media: [
+            {
+              $skip: skip,
+            },
+            {
+              $limit: limit,
+            },
+            {
+              $project: {
+                _id: 1,
+                src: 1,
+                caption: 1,
+                type: 1,
+              },
+            },
+          ],
+        },
+      },
+    ]);
+
+    res.status(StatusCodes.OK).json({
+      success: true,
+      total: media[0].total[0]?.count || 0,
+      data: media[0].media || [],
+    });
+  } catch (err) {
+    next(err);
   }
 }
 

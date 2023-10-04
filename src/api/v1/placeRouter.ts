@@ -14,6 +14,8 @@ import {
 
 import {
   getPlace,
+  getPlaceMedia,
+  getPlaceMediaValidation,
   getPlaceValidation,
 } from "../controllers/SinglePlaceController";
 
@@ -43,6 +45,10 @@ router.route("/import").post(express.json(), adminAuthMiddleware, importPlaces);
 router
   .route("/:id/rating/:provider")
   .get(express.json(), getThirdPartyRatingValidation, getThirdPartyRating);
+
+router
+  .route("/:id/media")
+  .get(express.json(), getPlaceMediaValidation, getPlaceMedia);
 
 router
   .route("/:id")
