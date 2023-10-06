@@ -21,8 +21,12 @@ export const findYelpId = async (place: IPlace) => {
     });
 
 
-    if (yelpResult.status === 200 && yelpResult.data.businesses.length >= 1) {
-      return yelpResult.data.businesses[0].id;
+    if (yelpResult.status === 200) {
+      if (yelpResult.data.businesses.length >= 1) {
+        return yelpResult.data.businesses[0].id;
+      } else {
+        throw createError(`Yelp place not found!`);
+      }
     } else {
       console.log(yelpResult);
       throw createError(

@@ -740,12 +740,15 @@ async function fetchGoogle(place: IPlace, getReviews: boolean) {
     let googlePlacesData;
     let reviews: IGPReview[] | undefined = [];
     let rating = -1;
+    let opening_hours = {};
     let reviewCount = 0;
     if (typeof googlePlacesId === "string" && googlePlacesId !== "") {
       googlePlacesData = await getGooglePlacesData(googlePlacesId);
       googlePlacesData.rating && (rating = googlePlacesData.rating);
       googlePlacesData.user_ratings_total &&
         (reviewCount = googlePlacesData.user_ratings_total);
+      googlePlacesData.opening_hours &&
+        (opening_hours = googlePlacesData.opening_hours);
     } else {
       // Getting the googlePlacesId
       //@ts-ignore
@@ -757,6 +760,8 @@ async function fetchGoogle(place: IPlace, getReviews: boolean) {
         await place.save();
         // Returning the googlePlacesRating
         googlePlacesData = await getGooglePlacesData(googlePlacesId);
+        googlePlacesData.opening_hours &&
+          (opening_hours = googlePlacesData.opening_hours);
         googlePlacesData.rating && (rating = googlePlacesData.rating);
         googlePlacesData.user_ratings_total &&
           (reviewCount = googlePlacesData.user_ratings_total);
@@ -771,6 +776,7 @@ async function fetchGoogle(place: IPlace, getReviews: boolean) {
         rating,
         reviewCount,
         reviews,
+        opening_hours,
         thumbnail,
       },
     };
