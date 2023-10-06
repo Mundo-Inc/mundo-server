@@ -191,20 +191,14 @@ export async function findPlaceByNameAndLocation(
     // Check if there is a single result
     if (res.elements.length === 1) {
       const tagName = res.elements[0].tags?.["name"];
-      console.log(
-        res.elements[0].tags?.["name"] + " ? " + name,
-        areSimilar(tagName, name)
-      );
+      console.log(res.elements[0].tags?.["name"], areSimilar(tagName, name));
       return areSimilar(tagName, name) ? res.elements[0] : undefined;
     }
 
     // Handle multiple results
     const results = res.elements.filter((e: any) => e.tags?.["name"]);
     return results.find((element: any) => {
-      console.log(
-        element.tags["name"] + " ? " + name,
-        areSimilar(element.tags["name"], name)
-      );
+      console.log(element.tags["name"], areSimilar(element.tags["name"], name));
       return areSimilar(element.tags["name"], name);
     });
   } catch (error) {
@@ -286,7 +280,7 @@ export async function fixPlaces(
     for await (const p of placesWithoutOSM) {
       if (!p.amenity || !p.otherSources || !p.otherSources.OSM) {
         try {
-          console.log("adding OSM to: " + p.name);
+          console.log("->" + p.name);
           // Assuming you have some kind of ID or name to search for in the OSM API
           const response = await findPlaceByNameAndLocation(
             p.name,

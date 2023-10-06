@@ -17,16 +17,26 @@ export function windowedLevenshtein(
   const len1 = str1.length;
   const len2 = str2.length;
 
-  // Loop through each window in the larger string
   for (let i = 0; i <= len1 - len2; i++) {
     const window = str1.slice(i, i + len2);
-
-    // Check if the Levenshtein distance is below the threshold
     if (levenshtein.get(window, str2) <= maxDist) {
       return true;
     }
   }
   return false;
+}
+
+export function getLevenshteinThreshold(length: number): number {
+  if (length <= 3) {
+    return 0; // strict for short strings
+  } else if (length <= 5) {
+    return 1; // moderately strict for medium strings
+  } else {
+    return 2; // more lenient for longer strings
+  }
+}
+function trimLC(str: string) {
+  return str.trim().toLowerCase();
 }
 
 export function areSimilar(str1: string, str2: string) {
@@ -40,9 +50,12 @@ export function areSimilar(str1: string, str2: string) {
   const longer =
     cleanedStr1.length >= cleanedStr2.length ? cleanedStr1 : cleanedStr2;
 
+  const levThreshold = getLevenshteinThreshold(shorter.length);
   return (
+    trimLC(str1).includes(trimLC(str2)) ||
+    trimLC(str2).includes(trimLC(str1)) ||
     cleanedStr1 === cleanedStr2 ||
-    levenshtein.get(cleanedStr1, cleanedStr2) <= 2 ||
-    windowedLevenshtein(longer, shorter, 2)
+    levenshtein.get(trimLC(str1), trimLC(str2)) <= levThreshold
+    // windowedLevenshtein(longer, shorter, levThreshold)
   );
 }
