@@ -434,11 +434,25 @@ export async function getPlaceMedia(
               $limit: limit,
             },
             {
+              $lookup: {
+                from: "users",
+                localField: "user",
+                foreignField: "_id",
+                as: "user",
+                pipeline: [
+                  {
+                    $project: publicReadUserProjectionAG,
+                  },
+                ],
+              },
+            },
+            {
               $project: {
                 _id: 1,
                 src: 1,
                 caption: 1,
                 type: 1,
+                user: { $arrayElemAt: ["$user", 0] },
               },
             },
           ],

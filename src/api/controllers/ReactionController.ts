@@ -51,6 +51,10 @@ export async function createReaction(
       await addCreateReactionXP(authId);
     } catch (e) {
       console.log(`Something happened during create reaction: ${e}`);
+      throw createError(
+        "Something went wrong",
+        StatusCodes.INTERNAL_SERVER_ERROR
+      );
     }
 
     res.status(StatusCodes.CREATED).json({ success: true, data: newReaction });
