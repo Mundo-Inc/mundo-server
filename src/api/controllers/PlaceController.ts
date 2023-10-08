@@ -224,9 +224,9 @@ export async function getPlaces(
     if (minScore) {
       matchObject["scores.overall"] = { $gte: minScore };
     }
-    if (sort === "score" || sort === "phantomScore") {
-      matchObject["reviewCount"] = { $gte: 9 };
-    }
+    // if (sort === "score" || sort === "phantomScore") {
+    //   matchObject["reviewCount"] = { $gte: 9 };
+    // }
     if (sort === "priceRange") {
       if (!matchObject["priceRange"]) {
         matchObject["priceRange"] = { $exists: true };
@@ -364,6 +364,7 @@ export async function getPlaces(
       },
     ];
 
+    console.log(matchPipeline);
     let places = await Place.aggregate([
       ...distancePipeline,
       ...matchPipeline,
