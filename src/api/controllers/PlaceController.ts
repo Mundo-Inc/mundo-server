@@ -26,6 +26,7 @@ import { addCreatePlaceXP } from "../services/ranking.service";
 import { addNewPlaceActivity } from "../services/user.activity.service";
 import validate from "./validators";
 import { areSimilar } from "../../utilities/stringHelper";
+import { publicReadUserProjectionAG } from "../dto/user/read-user-public.dto";
 
 var levenshtein = require("fast-levenshtein");
 var country = require("countrystatesjs");
@@ -307,12 +308,7 @@ export async function getPlaces(
                 as: "user",
                 pipeline: [
                   {
-                    $project: {
-                      _id: 0,
-                      username: 1,
-                      name: 1,
-                      profileImage: 1,
-                    },
+                    $project: publicReadUserProjectionAG,
                   },
                 ],
               },
@@ -322,6 +318,7 @@ export async function getPlaces(
                 _id: 0,
                 src: 1,
                 caption: 1,
+                type: 1,
                 user: {
                   $arrayElemAt: ["$user", 0],
                 },
@@ -364,7 +361,6 @@ export async function getPlaces(
       },
     ];
 
-    console.log(matchPipeline);
     let places = await Place.aggregate([
       ...distancePipeline,
       ...matchPipeline,
@@ -379,115 +375,112 @@ export async function getPlaces(
       ...projectPipeline,
     ]);
 
-    const types = ["restaurant", "cafe", "bar"];
+    // const types = ["restaurant", "cafe", "bar"];
+    // if (lng && lat && places.length !== limit) {
+    //   let results: IGPNearbySearch["results"] = [];
+    //   await Promise.all(
+    //     types.map(async (type, index) => {
+    //       return axios(
+    //         `https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${lat}%2C${lng}&radius=${
+    //           radius ? (radius === "global" ? 100000 : Number(radius)) : 1000
+    //         }${q ? `&keyword=${q}` : ""}&type=${type}&key=${
+    //           process.env.GOOGLE_PLACES_API_KEY
+    //         }`
+    //       ).then((res) => {
+    //         if (res.data.status === "OK") {
+    //           for (const result of res.data.results) {
+    //             if (!results.find((r) => r.place_id === result.place_id)) {
+    //               results.push(result);
+    //             }
+    //           }
+    //         }
+    //       });
+    //     })
+    //   );
 
-    if (lng && lat && places.length !== limit) {
-      let results: IGPNearbySearch["results"] = [];
-      await Promise.all(
-        types.map(async (type, index) => {
-          return axios(
-            `https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${lat}%2C${lng}&radius=${
-              radius ? (radius === "global" ? 100000 : Number(radius)) : 1000
-            }${q ? `&keyword=${q}` : ""}&type=${type}&key=${
-              process.env.GOOGLE_PLACES_API_KEY
-            }`
-          ).then((res) => {
-            if (res.data.status === "OK") {
-              for (const result of res.data.results) {
-                if (!results.find((r) => r.place_id === result.place_id)) {
-                  results.push(result);
-                }
-              }
-            }
-          });
-        })
-      );
+    //   if (q && (q as string).length >= 2 && results.length === 0) {
+    //     await axios(
+    //       `https://maps.googleapis.com/maps/api/place/findplacefromtext/json?input=${q}&inputtype=textquery&locationbias=circle%3A2000%${lat}%2C${lng}&fields=name%2Cplace_id%2Crating&key=${process.env.GOOGLE_PLACES_API_KEY}`
+    //     ).then((res) => {
+    //       if (res.data.status === "OK") {
+    //         results.push(...res.data.candidates);
+    //       }
+    //     });
+    //   }
 
-      if (q && (q as string).length >= 2) {
-        if (results.length === 0) {
-          await axios(
-            `https://maps.googleapis.com/maps/api/place/findplacefromtext/json?input=${q}&inputtype=textquery&locationbias=circle%3A2000%${lat}%2C${lng}&fields=name%2Cplace_id%2Crating&key=${process.env.GOOGLE_PLACES_API_KEY}`
-          ).then((res) => {
-            if (res.data.status === "OK") {
-              results.push(...res.data.candidates);
-            }
-          });
-        }
-      }
+    //   for (const result of results) {
+    //     const found = places.find(
+    //       (p) => p.otherSources?.googlePlaces?._id === result.place_id
+    //     );
+    //     if (found) {
+    //       if (found.otherSources?.googlePlaces) {
+    //         await Place.updateOne(
+    //           { _id: found._id },
+    //           {
+    //             otherSources: {
+    //               googlePlaces: {
+    //                 rating: result.rating,
+    //                 updatedAt: new Date(),
+    //               },
+    //             },
+    //           }
+    //         );
+    //       } else {
+    //         await Place.updateOne(
+    //           { _id: found._id },
+    //           {
+    //             otherSources: {
+    //               googlePlaces: {
+    //                 _id: result.place_id,
+    //                 rating: result.rating,
+    //                 updatedAt: new Date(),
+    //               },
+    //             },
+    //           }
+    //         );
+    //       }
+    //     } else {
+    //       // search db for place
+    //       const found = await Place.findOne({
+    //         "otherSources.googlePlaces._id": result.place_id,
+    //       });
+    //       if (found) {
+    //         if (found.name !== result.name) {
+    //           found.otherNames.push(found.name);
+    //           found.name = result.name;
+    //         }
+    //         found.otherSources.googlePlaces.rating = result.rating;
+    //         // found.otherSources.googlePlaces.updatedAt = new Date();
+    //         found.save();
+    //         continue;
+    //       }
 
-      for (const result of results) {
-        const found = places.find(
-          (p) => p.otherSources?.googlePlaces?._id === result.place_id
-        );
-        if (found) {
-          if (found.otherSources?.googlePlaces) {
-            await Place.updateOne(
-              { _id: found._id },
-              {
-                otherSources: {
-                  googlePlaces: {
-                    rating: result.rating,
-                    updatedAt: new Date(),
-                  },
-                },
-              }
-            );
-          } else {
-            await Place.updateOne(
-              { _id: found._id },
-              {
-                otherSources: {
-                  googlePlaces: {
-                    _id: result.place_id,
-                    rating: result.rating,
-                    updatedAt: new Date(),
-                  },
-                },
-              }
-            );
-          }
-        } else {
-          // search db for place
-          const found = await Place.findOne({
-            "otherSources.googlePlaces._id": result.place_id,
-          });
-          if (found) {
-            if (found.name !== result.name) {
-              found.otherNames.push(found.name);
-              found.name = result.name;
-            }
-            found.otherSources.googlePlaces.rating = result.rating;
-            // found.otherSources.googlePlaces.updatedAt = new Date();
-            found.save();
-            continue;
-          }
+    //       try {
+    //         const queue = await Queue.create({
+    //           googlePlaceId: result.place_id,
+    //           type: "new",
+    //         });
+    //         await queue.process();
+    //       } catch (e: any) {
+    //         continue;
+    //       }
+    //     }
+    //   }
 
-          try {
-            const queue = await Queue.create({
-              googlePlaceId: result.place_id,
-              type: "new",
-            });
-            await queue.process();
-          } catch (e: any) {
-            continue;
-          }
-        }
-      }
-
-      places = await Place.aggregate([
-        ...distancePipeline,
-        ...matchPipeline,
-        ...sortPipeline,
-        {
-          $skip: skip,
-        },
-        {
-          $limit: limit,
-        },
-        ...lookupPipeline,
-        ...projectPipeline,
-      ]);
-    }
+    //   places = await Place.aggregate([
+    //     ...distancePipeline,
+    //     ...matchPipeline,
+    //     ...sortPipeline,
+    //     {
+    //       $skip: skip,
+    //     },
+    //     {
+    //       $limit: limit,
+    //     },
+    //     ...lookupPipeline,
+    //     ...projectPipeline,
+    //   ]);
+    // }
 
     res.status(StatusCodes.OK).json({ success: true, places: places });
   } catch (err) {
