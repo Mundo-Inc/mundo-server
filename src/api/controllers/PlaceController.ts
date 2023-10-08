@@ -199,7 +199,15 @@ export async function getPlaces(
     handleInputErrors(req);
 
     const { lat, lng, q, images, order, radius, category } = req.query;
-    const sort = req.query.sort || "distance";
+    const sort = req.query.sort
+      ? req.query.sort === "distance"
+        ? lat && lng
+          ? "distance"
+          : "score"
+        : req.query.sort
+      : lat && lng
+      ? "distance"
+      : "score";
     const limit = Number(req.query.limit) || 50;
     const page = Number(req.query.page) || 1;
     const skip = (page - 1) * limit;
@@ -246,13 +254,13 @@ export async function getPlaces(
       priceRange: "priceRange",
     };
     if (sort && Object.keys(sortItems).includes(sort as string)) {
-      if (sort === "distance") {
+      if (sort === "distance" && lat && lng) {
         const body: {
           [key: string]: any;
         } = {
           near: {
             type: "Point",
-            coordinates: [Number(lng) || -73.9804897, Number(lat) || 40.763117],
+            coordinates: [Number(lng), Number(lat)],
           },
           distanceField: "dist.calculated",
           spherical: true,
@@ -464,21 +472,21 @@ export async function getPlaces(
           }
         }
       }
-    }
 
-    places = await Place.aggregate([
-      ...distancePipeline,
-      ...matchPipeline,
-      ...sortPipeline,
-      {
-        $skip: skip,
-      },
-      {
-        $limit: limit,
-      },
-      ...lookupPipeline,
-      ...projectPipeline,
-    ]);
+      places = await Place.aggregate([
+        ...distancePipeline,
+        ...matchPipeline,
+        ...sortPipeline,
+        {
+          $skip: skip,
+        },
+        {
+          $limit: limit,
+        },
+        ...lookupPipeline,
+        ...projectPipeline,
+      ]);
+    }
 
     res.status(StatusCodes.OK).json({ success: true, places: places });
   } catch (err) {
