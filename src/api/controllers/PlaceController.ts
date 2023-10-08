@@ -328,6 +328,7 @@ export async function getPlaces(
         },
       });
     }
+
     const projectPipeline: any = [
       {
         $project: {
