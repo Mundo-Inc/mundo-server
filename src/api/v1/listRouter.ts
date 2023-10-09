@@ -10,6 +10,8 @@ import {
   createListValidation,
   deleteList,
   deleteListValidation,
+  editCollaboratorAccess,
+  editCollaboratorAccessValidation,
   removeFromCollaborators,
   removeFromCollaboratorsValidation,
   removeFromList,
@@ -24,6 +26,7 @@ router.route("/").post(authMiddleware, createListValidation, createList);
 router.route("/:id").delete(authMiddleware, deleteListValidation, deleteList);
 
 router.route("/:id/place").post(authMiddleware, addToListValidation, addToList);
+
 router
   .route("/:id/place/:placeId")
   .delete(authMiddleware, removeFromListValidation, removeFromList);
@@ -38,6 +41,11 @@ router
     authMiddleware,
     removeFromCollaboratorsValidation,
     removeFromCollaborators
+  )
+  .put(
+    authMiddleware,
+    editCollaboratorAccessValidation,
+    editCollaboratorAccess
   );
 
 export default router;

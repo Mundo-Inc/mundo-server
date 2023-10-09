@@ -297,4 +297,56 @@ export async function removeFromCollaborators(
 
 //TODO: edit list
 
-//TODO: edit collaborator access
+export const editCollaboratorAccessValidation: ValidationChain[] = [
+  param("id").isMongoId(),
+  param("userId").isMongoId(),
+  body("access").isIn(Object.values(AccessEnum)),
+];
+
+export async function editCollaboratorAccess(
+  req: Request,
+  res: Response,
+  next: NextFunction
+) {
+  try {
+    handleInputErrors(req);
+    const { id, userId } = req.params;
+    const { id: authId } = req.user!;
+    const { access } = req.body;
+
+    const list = (await List.findById(id)) as IList;
+    if (!list) return res.status(StatusCodes.NOT_FOUND).json({ id: id });
+
+    // checking user's access level
+    if (!list.collaborators || list.collaborators.length === 0) {
+      return res.status(StatusCodes.UNAUTHORIZED).json({
+        error: "The list has no collaborator!",
+      });
+    }
+
+    if (list.owner.toString() !== authId) {
+      return res.status(StatusCodes.UNAUTHORIZED).json({
+        error:
+          "You don't have edit permissions to modify collaborators on this list.",
+      });
+    }
+
+    const collaboratorIndex = list.collaborators.findIndex(
+      (c) => c.user.toString() === userId
+    );
+
+    if (collaboratorIndex === -1) {
+      return res
+        .status(StatusCodes.BAD_REQUEST)
+        .json({ error: "User does not exist in the list" });
+    }
+
+    // Edit the access of the collaborator
+    list.collaborators[collaboratorIndex].access = access;
+
+    await list.save();
+    return res.sendStatus(StatusCodes.NO_CONTENT);
+  } catch (err) {
+    next(err);
+  }
+}
