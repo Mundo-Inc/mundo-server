@@ -26,6 +26,10 @@ import {
   authMiddleware,
   optionalAuthMiddleware,
 } from "../middlewares/authMiddleWare";
+import {
+  searchPlaces,
+  searchPlacesValidation,
+} from "../controllers/PlaceSearchController";
 
 const router = express.Router();
 
@@ -41,6 +45,10 @@ router
     getPlacesWithinBoundariesValidation,
     getPlacesWithinBoundaries
   );
+
+router
+  .route("/search")
+  .get(express.json(), searchPlacesValidation, searchPlaces);
 
 router.route("/import").post(express.json(), adminAuthMiddleware, importPlaces);
 
@@ -64,5 +72,7 @@ router
 router
   .route("/:id")
   .get(express.json(), optionalAuthMiddleware, getPlaceValidation, getPlace);
+
+
 
 export default router;

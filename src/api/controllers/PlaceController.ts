@@ -809,10 +809,7 @@ async function getClusteredPlaces(
   southWest: { lat: number; lng: number },
   zoom: number
 ) {
-  const PRECISION = Math.max(1, Math.pow(2, 18 - zoom));
   const TOP_PLACES_LIMIT = 40;
-  const THRESHOLD = 30;
-  const ZOOM_THRESHOLD = 12;
 
   // Step 1: Get top 40 relevant places
   const topPlacesPipeline: any = [
@@ -840,6 +837,8 @@ async function getClusteredPlaces(
       $sort: {
         "scores.phantom": -1, // sort by phantom first
         "scores.overall": -1, // then by overall score
+        "popularity.googlePlacesReviewCount": -1, // then by google review count
+        "popularity.yelpReviewCount": -1, // then by yelp review count
       },
     },
     {
@@ -857,95 +856,11 @@ async function getClusteredPlaces(
     },
   ];
 
-  // const clustersPipeline = [
-  //   {
-  //     $match: {
-  //       "location.geoLocation": {
-  //         $geoWithin: {
-  //           $geometry: {
-  //             type: "Polygon",
-  //             coordinates: [
-  //               [
-  //                 [southWest.lng, southWest.lat],
-  //                 [northEast.lng, southWest.lat],
-  //                 [northEast.lng, northEast.lat],
-  //                 [southWest.lng, northEast.lat],
-  //                 [southWest.lng, southWest.lat],
-  //               ],
-  //             ],
-  //           },
-  //         },
-  //       },
-  //     },
-  //   },
-  //   {
-  //     $group: {
-  //       _id: {
-  //         lat: {
-  //           $floor: {
-  //             $multiply: [
-  //               { $arrayElemAt: ["$location.geoLocation.coordinates", 1] },
-  //               PRECISION,
-  //             ],
-  //           },
-  //         },
-  //         lng: {
-  //           $floor: {
-  //             $multiply: [
-  //               { $arrayElemAt: ["$location.geoLocation.coordinates", 0] },
-  //               PRECISION,
-  //             ],
-  //           },
-  //         },
-  //       },
-  //       count: { $sum: 1 },
-  //       longitude: {
-  //         $avg: { $arrayElemAt: ["$location.geoLocation.coordinates", 0] },
-  //       },
-  //       latitude: {
-  //         $avg: { $arrayElemAt: ["$location.geoLocation.coordinates", 1] },
-  //       },
-  //       topPlaces: {
-  //         $push: {
-  //           _id: "$_id",
-  //           name: "$name",
-  //           description: "$description",
-  //           overallScore: "$scores.overall",
-  //         },
-  //       },
-  //     },
-  //   },
-  //   {
-  //     $project: {
-  //       count: 1,
-  //       longitude: 1,
-  //       latitude: 1,
-  //       places: {
-  //         $cond: {
-  //           if: { $lt: ["$count", THRESHOLD] },
-  //           then: { $slice: ["$topPlaces", THRESHOLD] },
-  //           else: [],
-  //         },
-  //       },
-  //     },
-  //   },
-  // ];
-
   const topPlaces = await mongoose.models.Place.aggregate(topPlacesPipeline);
-  // let clusters = [];
-  // if (zoom > ZOOM_THRESHOLD) {
-  //   clusters = await mongoose.models.Place.aggregate(clustersPipeline);
-  //   clusters = mergeClusters(clusters);
-  // }
 
   return {
     places: topPlaces,
     clusters: [],
-    // clusters: clusters.map((cluster: any) => ({
-    //   count: cluster.count,
-    //   longitude: cluster.longitude,
-    //   latitude: cluster.latitude,
-    // })),
   };
 }
 
