@@ -847,7 +847,7 @@ async function getClusteredPlaces(
     {
       $project: {
         name: 1,
-        description: 1,
+        amenity: 1,
         longitude: { $arrayElemAt: ["$location.geoLocation.coordinates", 0] },
         latitude: { $arrayElemAt: ["$location.geoLocation.coordinates", 1] },
         overallScore: "$scores.overall",
