@@ -86,10 +86,14 @@ export async function createComment(
 
     const comment = await Comment.create(body);
 
-    comment.author = user;
-    comment.status = undefined;
+    let commentObj = comment.toObject();
 
-    res.status(StatusCodes.CREATED).json({ success: true, data: comment });
+    commentObj.author = user;
+    commentObj.likes = 0;
+    commentObj.liked = false;
+    commentObj.status = undefined;
+
+    res.status(StatusCodes.CREATED).json({ success: true, data: commentObj });
   } catch (err) {
     next(err);
   }
