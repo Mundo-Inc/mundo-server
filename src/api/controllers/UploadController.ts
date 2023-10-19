@@ -56,7 +56,7 @@ export async function uploadFile(
 
     const { id: authId } = req.user!;
 
-    const { isConverted } = req.query;
+    const { convert } = req.query;
     const { fields, files } = await parseForm(req);
 
     const usecase = fields.usecase![0] as UploadUsecase;
@@ -120,7 +120,7 @@ export async function uploadFile(
       );
       const outputPath = `./tmp/${tempFileName}`;
 
-      if (!isConverted) {
+      if (convert) {
         const upload = await Upload.create({
           user: authId,
           key,
@@ -137,7 +137,7 @@ export async function uploadFile(
           new PutObjectCommand({
             Bucket: bucketName,
             Key: key,
-            Body: fs.createReadStream(isConverted ? filepath : outputPath),
+            Body: fs.createReadStream(outputPath),
             ContentType: "video/mp4",
           })
         );
@@ -146,7 +146,7 @@ export async function uploadFile(
           new PutObjectCommand({
             Bucket: bucketName,
             Key: key,
-            Body: fs.createReadStream(isConverted ? filepath : outputPath),
+            Body: fs.createReadStream(filepath),
             ContentType: "video/mp4",
           })
         );
@@ -179,7 +179,7 @@ export async function uploadFile(
 
       fs.unlinkSync(path.resolve(imageOutputPath));
       fs.unlinkSync(path.resolve(filepath));
-      if (!isConverted) {
+      if (convert) {
         fs.unlinkSync(path.resolve(outputPath));
       }
     } else {
