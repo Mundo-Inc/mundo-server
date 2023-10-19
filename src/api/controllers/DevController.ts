@@ -402,4 +402,19 @@ async function updateReferences(placeToRemove: IPlace, placeToKeep: IPlace) {
   );
 }
 
+async function updateExistingUsersProgress() {
+  // TODO: add this to route
+  await User.updateMany(
+    { progress: { $exists: false } },
+    {
+      $set: {
+        "progress.xp": 0,
+        "progress.level": 1,
+        "progress.achievements": [],
+      },
+    }
+  );
+  console.log("All users updated!");
+}
+
 const categories: string[] = ["restaurant", "bar", "cafe"];

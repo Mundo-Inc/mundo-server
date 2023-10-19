@@ -1,4 +1,5 @@
 import mongoose, { Schema, type Document } from "mongoose";
+import { IAchievement } from "./Achievement";
 
 export enum UserRoleEnum {
   admin = "admin",
@@ -36,6 +37,11 @@ export interface IUser extends Document {
     token: string;
     platform: string;
   }[];
+  progress: {
+    level: number;
+    xp: number;
+    achievements: mongoose.Types.ObjectId[];
+  };
   source?: "yelp" | "google";
   createdAt: Date;
   updatedAt: Date;
@@ -161,6 +167,22 @@ const UserSchema = new Schema<IUser>(
     latestPlace: {
       type: Schema.Types.ObjectId,
       ref: "Place",
+    },
+    progress: {
+      xp: {
+        type: Number,
+        default: 0,
+      },
+      level: {
+        type: Number,
+        default: 1,
+      },
+      achievements: [
+        {
+          type: Schema.Types.ObjectId,
+          ref: "Achievement",
+        },
+      ],
     },
   },
   { timestamps: true }
