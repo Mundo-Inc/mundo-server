@@ -9,6 +9,7 @@ import strings, { dStrings as ds, dynamicMessage } from "../../strings";
 import { createError, handleInputErrors } from "../../utilities/errorHandlers";
 import { publicReadUserProjection } from "../dto/user/read-user-public.dto";
 import mongoose from "mongoose";
+import { addReward } from "../services/reward/reward.service";
 
 export const createCommentValidation: ValidationChain[] = [
   body("content").isString().isLength({ min: 1, max: 250 }),
@@ -88,12 +89,19 @@ export async function createComment(
 
     let commentObj = comment.toObject();
 
+    // adding reward
+    const reward = await addReward(user._id, {
+      refType: "Comment",
+      refId: comment._id,
+      userActivityId: activity,
+    });
     commentObj.author = user;
     commentObj.likes = 0;
     commentObj.liked = false;
     commentObj.status = undefined;
-
-    res.status(StatusCodes.CREATED).json({ success: true, data: commentObj });
+    res
+      .status(StatusCodes.CREATED)
+      .json({ success: true, data: commentObj, reward: reward });
   } catch (err) {
     next(err);
   }

@@ -10,6 +10,7 @@ import Notification, {
   NotificationType,
   ResourceTypes,
 } from "../../models/Notification";
+import { addReward } from "../services/reward/reward.service";
 
 export const createReactionValidation: ValidationChain[] = [
   body("target").isMongoId(),
@@ -57,7 +58,17 @@ export async function createReaction(
       );
     }
 
-    res.status(StatusCodes.CREATED).json({ success: true, data: newReaction });
+    // adding reward
+    const reward = await addReward(authId, {
+      refType: "Reaction",
+      refId: newReaction._id,
+      userActivityId: target,
+    });
+    console.log(reward);
+
+    res
+      .status(StatusCodes.CREATED)
+      .json({ success: true, data: newReaction, reward: reward });
   } catch (err) {
     next(err);
   }

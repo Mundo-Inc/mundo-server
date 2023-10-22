@@ -1,5 +1,6 @@
 export const rewards_amounts = {
   REACTION: 1,
+  COMMENT: 2,
   REVIEW: {
     HAS_RECOMMENDATION: 15,
     HAS_RATING: 15,

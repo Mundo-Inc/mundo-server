@@ -1,4 +1,6 @@
-import Reaction, { IReaction } from "../../../../models/Reaction";
+import { ActivityPrivacyTypeEnum } from "./../../../../models/UserActivity";
+import Comment, { IComment } from "../../../../models/Comment";
+import { IReaction } from "../../../../models/Reaction";
 import Review, { IReview } from "../../../../models/Review";
 import Reward from "../../../../models/Reward";
 import { IUser } from "../../../../models/User";
@@ -34,19 +36,29 @@ export const validateReactionReward = async (
   reaction: IReaction
 ) => {
   try {
-    // check how many time the user has reviewed the place
-    const userReactionCount = await Reaction.countDocuments({
-      user: user._id,
-      target: reaction.target,
-    });
-    if (thresholds.MAX_REACTION_PER_POST <= userReactionCount) return false;
     // check if the user has already been rewarded for the review
     const reward = await Reward.findOne({
       userId: user._id,
-      reason: {
-        refType: "Reaction",
-        refId: reaction._id,
-      },
+      "reason.refType": "Reaction",
+      "reason.userActivityId": reaction.target,
+    });
+    console.log("is reward exists :", reward);
+
+    if (reward) return false;
+    return true;
+  } catch (error) {
+    console.log(error);
+    return false;
+  }
+};
+
+export const validateCommentReward = async (user: IUser, comment: IComment) => {
+  try {
+    // check if the user has already been rewarded for the comment
+    const reward = await Reward.findOne({
+      userId: user._id,
+      "reason.refType": "Comment",
+      "reason.userActivityId": comment.userActivity,
     });
     if (reward) return false;
     return true;

@@ -6,10 +6,12 @@ import User, { IUser } from "../../../models/User";
 import { checkNewLevelupAchivements } from "./helpers/achivements";
 import { calcLevel, calcReviewReward } from "./helpers/levelCalculations";
 import {
+  validateCommentReward,
   validateReactionReward,
   validateReviewReward,
 } from "./helpers/validations";
 import { rewards_amounts } from "./utils/rewardsAmounts";
+import Comment from "../../../models/Comment";
 
 const getValidatedEntity = async (
   refType: string,
@@ -17,6 +19,14 @@ const getValidatedEntity = async (
   user: IUser
 ) => {
   switch (refType) {
+    case "Comment":
+      const comment = await Comment.findById(refId);
+
+      if (!comment || !(await validateCommentReward(user, comment)))
+        return null;
+
+      return { entity: comment, rewardAmount: rewards_amounts.COMMENT };
+
     case "Review":
       const review = await Review.findById(refId);
       if (!review || !(await validateReviewReward(user, review))) return null;
@@ -37,11 +47,12 @@ const saveRewardAndUpdateUser = async (
   user: IUser,
   refType: string,
   refId: mongoose.Types.ObjectId,
-  amount: number
+  amount: number,
+  userActivityId?: mongoose.Types.ObjectId
 ) => {
   const reward = await Reward.create({
     userId: user._id,
-    reason: { refType, refId },
+    reason: { refType, refId, userActivityId },
     amount,
   });
   await reward.save();
@@ -73,9 +84,11 @@ export const addReward = async (
   reason: {
     refType: string;
     refId: mongoose.Types.ObjectId | undefined;
+    userActivityId?: mongoose.Types.ObjectId;
   }
 ) => {
   try {
+    console.log("checking validation for reward", reason);
     const user = await User.findById(userId);
     if (!reason.refId) return;
 
@@ -84,13 +97,14 @@ export const addReward = async (
       reason.refId,
       user
     );
-    if (!validatedEntity) return;
 
+    if (!validatedEntity) return;
     return await saveRewardAndUpdateUser(
       user,
       reason.refType,
       reason.refId,
-      validatedEntity.rewardAmount
+      validatedEntity.rewardAmount,
+      reason.userActivityId
     );
   } catch (error) {
     console.log(error);
