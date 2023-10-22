@@ -43,7 +43,8 @@ export const checkNewLevelupAchivements = async (
     // If any new achievements were unlocked, add them to the user's achievements and save
     if (newAchievements.length > 0) {
       if (!user.progress.achievements) user.progress.achievements = [];
-      user.progress.achievements.push();
+      user.progress.achievements.push(...newAchievements.map((a) => a._id));
+
       // Assuming the IUser has a save method or you can replace this with your database save/update method
       await user.save();
     }
