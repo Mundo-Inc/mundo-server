@@ -20,6 +20,7 @@ import {
 import { openAiAnalyzeReview } from "../../utilities/openAi";
 import Upload from "../../models/Upload";
 import Media, { MediaTypeEnum } from "../../models/Media";
+import { addReward } from "../services/reward/reward.service";
 
 export const getReviewsValidation: ValidationChain[] = [
   query("writer").optional().isMongoId(),
@@ -424,7 +425,15 @@ export async function createReview(
         : undefined,
     });
 
-    res.status(StatusCodes.CREATED).json({ success: true, data: review });
+    const reward = await addReward(authId, {
+      refType: "Review",
+      refId: review._id,
+      placeId: place,
+    });
+
+    res
+      .status(StatusCodes.CREATED)
+      .json({ success: true, data: review, reward });
 
     try {
       // delete uploads

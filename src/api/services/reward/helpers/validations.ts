@@ -9,22 +9,14 @@ import { ICheckIn } from "../../../../models/CheckIn";
 
 export const validateReviewReward = async (user: IUser, review: IReview) => {
   try {
-    // check how many time the user has reviewed the place
-    const userReviewsCount = await Review.countDocuments({
-      writer: user._id,
-      place: review.place,
-    });
-    if (thresholds.MAX_REVIEW_REWARD_PER_PLACE <= userReviewsCount)
-      return false;
-    // check if the user has already been rewarded for the review
-    const reward = await Reward.findOne({
+    // check if the user has already been rewarded for the comment
+    const existingRewards = await Reward.find({
       userId: user._id,
-      reason: {
-        refType: "Review",
-        refId: review._id,
-      },
+      "reason.refType": "Review",
+      "reason.placeId": review.place,
     });
-    if (reward) return false;
+
+    if (existingRewards.length >= thresholds.MAX_REVIEW_PER_PLACE) return false;
     return true;
   } catch (error) {
     console.log(error);
