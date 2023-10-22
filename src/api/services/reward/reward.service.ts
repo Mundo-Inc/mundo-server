@@ -14,6 +14,8 @@ import {
 import { rewards_amounts } from "./utils/rewardsAmounts";
 import Comment from "../../../models/Comment";
 import CheckIn from "../../../models/CheckIn";
+import { AchievementTypeEnum } from "../../../models/Achievement";
+import { eligibleForAchivement } from "./helpers/achivementEligibility";
 
 const getValidatedEntity = async (
   refType: string,
@@ -54,6 +56,7 @@ const saveRewardAndUpdateUser = async (
   refType: string,
   refId: mongoose.Types.ObjectId,
   amount: number,
+  customAchivements: mongoose.Types.ObjectId[],
   userActivityId?: mongoose.Types.ObjectId,
   placeId?: mongoose.Types.ObjectId
 ) => {
@@ -82,7 +85,7 @@ const saveRewardAndUpdateUser = async (
     currentXP: user.progress.xp,
     oldLevel,
     currentLevel: user.progress.level,
-    newLevelupAchivements,
+    newAchivements: [...newLevelupAchivements, ...customAchivements],
   };
 };
 
@@ -96,7 +99,6 @@ export const addReward = async (
   }
 ) => {
   try {
-    console.log("checking validation for reward", reason);
     const user = await User.findById(userId);
     if (!reason.refId) return;
 
@@ -106,17 +108,66 @@ export const addReward = async (
       user
     );
 
-    if (!validatedEntity) return;
-    return await saveRewardAndUpdateUser(
-      user,
-      reason.refType,
-      reason.refId,
-      validatedEntity.rewardAmount,
-      reason.userActivityId,
-      reason.placeId
-    );
+    let customAchivements = [];
+    if (reason.refType === "Checkin") {
+      const achivements = await checkForCustomAchivements(user._id, "Checkin");
+      if (achivements && achivements.length > 0)
+        customAchivements.push(...achivements);
+    }
+
+    if (validatedEntity) {
+      return await saveRewardAndUpdateUser(
+        user,
+        reason.refType,
+        reason.refId,
+        validatedEntity.rewardAmount,
+        customAchivements,
+        reason.userActivityId,
+        reason.placeId
+      );
+    } else {
+      return {
+        newAchivements: [...customAchivements],
+      };
+    }
   } catch (error) {
     console.log(error);
     throw new Error("Error adding reward");
   }
+};
+
+export const checkForCustomAchivements = async (
+  userId: string,
+  activityType:
+    | "Checkin"
+    | "Comment"
+    | "Review"
+    | "Reaction"
+    | "Poll"
+    | "Follow"
+    | "AddPlace"
+) => {
+  try {
+    const user = await User.findById(userId);
+    let newAchivements = [];
+    switch (activityType) {
+      case "Review":
+        break;
+
+      case "Checkin":
+        const achivement = await eligibleForAchivement(
+          userId,
+          AchievementTypeEnum.CHECK_CHECK
+        );
+        if (achivement) {
+          user.progress.achievements.push(achivement._id);
+          await user.save();
+          newAchivements.push(achivement._id);
+        }
+        break;
+      default:
+        break;
+    }
+    return newAchivements;
+  } catch (error) {}
 };

@@ -14,7 +14,10 @@ import validate from "./validators";
 import { publicReadUserProjectionAG } from "../dto/user/read-user-public.dto";
 import { readPlaceBriefProjectionAG } from "../dto/place/read-place-brief.dto";
 import { getFormattedPlaceLocationAG } from "../dto/place/place-dto";
-import { addReward } from "../services/reward/reward.service";
+import {
+  addReward,
+  checkForCustomAchivements,
+} from "../services/reward/reward.service";
 
 const checkinWaitTime = 5; // minutes
 
