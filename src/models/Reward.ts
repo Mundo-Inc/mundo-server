@@ -6,6 +6,7 @@ export interface IReward extends Document {
     refType: string;
     refId: mongoose.Types.ObjectId;
     userActivityId?: mongoose.Types.ObjectId;
+    placeId?: mongoose.Types.ObjectId;
   };
   amount: number;
   date: Date;
@@ -23,6 +24,11 @@ const RewardSchema: Schema = new Schema<IReward>({
     userActivityId: {
       type: Schema.Types.ObjectId,
       ref: "UserActivity",
+      required: false,
+    },
+    placeId: {
+      type: Schema.Types.ObjectId,
+      ref: "Place",
       required: false,
     },
   },

@@ -5,6 +5,7 @@ import Review, { IReview } from "../../../../models/Review";
 import Reward from "../../../../models/Reward";
 import { IUser } from "../../../../models/User";
 import { thresholds } from "../utils/threshold";
+import { ICheckIn } from "../../../../models/CheckIn";
 
 export const validateReviewReward = async (user: IUser, review: IReview) => {
   try {
@@ -61,6 +62,24 @@ export const validateCommentReward = async (user: IUser, comment: IComment) => {
       "reason.userActivityId": comment.userActivity,
     });
     if (reward) return false;
+    return true;
+  } catch (error) {
+    console.log(error);
+    return false;
+  }
+};
+
+export const validateCheckinReward = async (user: IUser, checkin: ICheckIn) => {
+  try {
+    // check if the user has already been rewarded for the comment
+    const existingRewards = await Reward.find({
+      userId: user._id,
+      "reason.refType": "Checkin",
+      "reason.placeId": checkin.place,
+    });
+
+    if (existingRewards.length >= thresholds.MAX_CHECKIN_PER_PLACE)
+      return false;
     return true;
   } catch (error) {
     console.log(error);

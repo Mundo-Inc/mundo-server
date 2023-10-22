@@ -14,6 +14,7 @@ import validate from "./validators";
 import { publicReadUserProjectionAG } from "../dto/user/read-user-public.dto";
 import { readPlaceBriefProjectionAG } from "../dto/place/read-place-brief.dto";
 import { getFormattedPlaceLocationAG } from "../dto/place/place-dto";
+import { addReward } from "../services/reward/reward.service";
 
 const checkinWaitTime = 5; // minutes
 
@@ -189,7 +190,14 @@ export async function createCheckin(
     } catch (e) {
       console.log(`Something happened during checkin: ${e}`);
     }
-    res.status(StatusCodes.OK).json({ success: true, data: checkin });
+    const reward = await addReward(authId, {
+      refType: "Checkin",
+      refId: checkin._id,
+      placeId: checkin.place,
+    });
+    res
+      .status(StatusCodes.OK)
+      .json({ success: true, data: checkin, reward: reward });
   } catch (err) {
     console.log(err);
     next(err);

@@ -6,12 +6,14 @@ import User, { IUser } from "../../../models/User";
 import { checkNewLevelupAchivements } from "./helpers/achivements";
 import { calcLevel, calcReviewReward } from "./helpers/levelCalculations";
 import {
+  validateCheckinReward,
   validateCommentReward,
   validateReactionReward,
   validateReviewReward,
 } from "./helpers/validations";
 import { rewards_amounts } from "./utils/rewardsAmounts";
 import Comment from "../../../models/Comment";
+import CheckIn from "../../../models/CheckIn";
 
 const getValidatedEntity = async (
   refType: string,
@@ -19,12 +21,16 @@ const getValidatedEntity = async (
   user: IUser
 ) => {
   switch (refType) {
+    case "Checkin":
+      const checkin = await CheckIn.findById(refId);
+      if (!checkin || !(await validateCheckinReward(user, checkin)))
+        return null;
+      return { entity: checkin, rewardAmount: rewards_amounts.CHECKIN };
+
     case "Comment":
       const comment = await Comment.findById(refId);
-
       if (!comment || !(await validateCommentReward(user, comment)))
         return null;
-
       return { entity: comment, rewardAmount: rewards_amounts.COMMENT };
 
     case "Review":
@@ -48,11 +54,12 @@ const saveRewardAndUpdateUser = async (
   refType: string,
   refId: mongoose.Types.ObjectId,
   amount: number,
-  userActivityId?: mongoose.Types.ObjectId
+  userActivityId?: mongoose.Types.ObjectId,
+  placeId?: mongoose.Types.ObjectId
 ) => {
   const reward = await Reward.create({
     userId: user._id,
-    reason: { refType, refId, userActivityId },
+    reason: { refType, refId, userActivityId, placeId },
     amount,
   });
   await reward.save();
@@ -85,6 +92,7 @@ export const addReward = async (
     refType: string;
     refId: mongoose.Types.ObjectId | undefined;
     userActivityId?: mongoose.Types.ObjectId;
+    placeId?: mongoose.Types.ObjectId;
   }
 ) => {
   try {
@@ -104,7 +112,8 @@ export const addReward = async (
       reason.refType,
       reason.refId,
       validatedEntity.rewardAmount,
-      reason.userActivityId
+      reason.userActivityId,
+      reason.placeId
     );
   } catch (error) {
     console.log(error);
