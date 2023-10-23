@@ -109,8 +109,12 @@ export const addReward = async (
     );
 
     let customAchivements = [];
-    if (reason.refType === "Checkin") {
-      const achivements = await checkForCustomAchivements(user._id, "Checkin");
+
+    if (["Review", "Reaction", "Checkin"].includes(reason.refType)) {
+      const achivements = await checkForCustomAchivements(
+        user._id,
+        reason.refType
+      );
       if (achivements && achivements.length > 0)
         customAchivements.push(...achivements);
     }
@@ -138,33 +142,67 @@ export const addReward = async (
 
 export const checkForCustomAchivements = async (
   userId: string,
-  activityType:
-    | "Checkin"
-    | "Comment"
-    | "Review"
-    | "Reaction"
-    | "Poll"
-    | "Follow"
-    | "AddPlace"
+  activityType: string
 ) => {
   try {
     const user = await User.findById(userId);
     let newAchivements = [];
     switch (activityType) {
       case "Review":
+        for (let reviewAchivementType of [
+          "ROOKIE_REVIEWER",
+          "CRITIC_ON_THE_RISE",
+          "PAPARAZZI_PRO",
+        ]) {
+          const reviewAchivement = await eligibleForAchivement(
+            userId,
+            reviewAchivementType
+          );
+          console.log(
+            "is eligibile for " + reviewAchivementType,
+            reviewAchivement
+          );
+
+          if (reviewAchivement) {
+            user.progress.achievements.push(reviewAchivement._id);
+            await user.save();
+            newAchivements.push(reviewAchivement._id);
+          }
+        }
         break;
 
       case "Checkin":
-        const achivement = await eligibleForAchivement(
-          userId,
-          AchievementTypeEnum.CHECK_CHECK
-        );
-        if (achivement) {
-          user.progress.achievements.push(achivement._id);
-          await user.save();
-          newAchivements.push(achivement._id);
+        for (let checkinAchivementType of [
+          "CHECK_CHECK",
+          "EARLY_BIRD",
+          "NIGHT_OWL",
+        ]) {
+          const checkinAchivement = await eligibleForAchivement(
+            userId,
+            checkinAchivementType
+          );
+          if (checkinAchivement) {
+            user.progress.achievements.push(checkinAchivement._id);
+            await user.save();
+            newAchivements.push(checkinAchivement._id);
+          }
         }
         break;
+
+      case "Reaction":
+        for (let reactionAchivementType of ["REACT_ROLL"]) {
+          const reactionAchivement = await eligibleForAchivement(
+            userId,
+            reactionAchivementType
+          );
+          if (reactionAchivement) {
+            user.progress.achievements.push(reactionAchivement._id);
+            await user.save();
+            newAchivements.push(reactionAchivement._id);
+          }
+        }
+        break;
+
       default:
         break;
     }

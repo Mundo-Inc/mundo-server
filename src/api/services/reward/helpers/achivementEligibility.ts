@@ -3,17 +3,20 @@ import Achievement, {
   IAchievement,
 } from "../../../../models/Achievement";
 import CheckIn from "../../../../models/CheckIn";
+import Reaction from "../../../../models/Reaction";
 import Review from "../../../../models/Review";
 import User from "../../../../models/User";
-
+import { thresholds } from "../utils/threshold";
+const tzlookup = require("tz-lookup");
+const moment = require("moment-timezone");
 export const eligibleForAchivement = async (
   userId: string,
-  AchievementType: AchievementTypeEnum
+  AchievementType: string
 ) => {
   try {
     const user = await User.findById(userId).populate("progress.achievements");
     if (!user.progress.achievements) user.progress.achievements = [];
-
+    console.log(AchievementType);
     switch (AchievementType) {
       case AchievementTypeEnum.ROOKIE_REVIEWER:
         if (
@@ -79,7 +82,6 @@ export const eligibleForAchivement = async (
 
       case AchievementTypeEnum.CHECK_CHECK:
         //check how many achivements user has with type CHECK_CHECK in the last week (createdAt)
-
         const checkCheckAchivementInLastWeek =
           user.progress.achievements.filter(
             (a: IAchievement) =>
@@ -94,22 +96,101 @@ export const eligibleForAchivement = async (
           createdAt: { $gt: new Date().getTime() - 7 * 24 * 60 * 60 * 1000 },
         });
 
-        console.log(userCheckinsCountInLastWeek);
-
         if (
           checkCheckAchivementInLastWeek === 0 &&
           userCheckinsCountInLastWeek >= 5
         ) {
-          console.log("eligibleForAchivement");
-
           const newAchivement = await Achievement.create({
             userId: userId,
             type: AchievementTypeEnum.CHECK_CHECK,
           });
-          console.log("xxxxx");
-
-          console.log(newAchivement);
           return await newAchivement.save();
+        }
+        break;
+
+      case AchievementTypeEnum.REACT_ROLL:
+        console.log("checking react roll eligibility");
+
+        //check how many achivements user has with type CHECK_CHECK in the last week (createdAt)
+        const reactRollAchivementsCount = user.progress.achievements.filter(
+          (a: IAchievement) => a.type === AchievementTypeEnum.REACT_ROLL
+        ).length;
+
+        const userReactsCount = await Reaction.countDocuments({
+          user: userId,
+        });
+
+        if (
+          Math.floor(userReactsCount / thresholds.REACT_ROLL_THRESHOLD) >=
+          reactRollAchivementsCount
+        ) {
+          const newAchivement = await Achievement.create({
+            userId: userId,
+            type: AchievementTypeEnum.REACT_ROLL,
+          });
+          return await newAchivement.save();
+        }
+        break;
+
+      case AchievementTypeEnum.EARLY_BIRD:
+        //check how many achivements user has with type CHECK_CHECK in the last week (createdAt)
+        const earlyBirdAchivementInLast12hrs =
+          user.progress.achievements.filter(
+            (a: IAchievement) =>
+              a.type === AchievementTypeEnum.EARLY_BIRD &&
+              a.createdAt &&
+              a.createdAt.getTime() > new Date().getTime() - 12 * 60 * 60 * 1000
+          ).length;
+
+        const usersLatestCheckin = await CheckIn.findOne({
+          user: userId,
+        })
+          .sort({ createdAt: -1 })
+          .populate("place");
+        if (earlyBirdAchivementInLast12hrs === 0 && usersLatestCheckin) {
+          const placeTimezone = tzlookup(
+            usersLatestCheckin.place.location.geoLocation.coordinates[1],
+            usersLatestCheckin.place.location.geoLocation.coordinates[0]
+          );
+          const currentTimeInPlace = moment().tz(placeTimezone);
+
+          if (currentTimeInPlace.hour() < 9 && currentTimeInPlace.hour() > 4) {
+            const newAchivement = await Achievement.create({
+              userId: userId,
+              type: AchievementTypeEnum.EARLY_BIRD,
+            });
+            return await newAchivement.save();
+          }
+        }
+        break;
+
+      case AchievementTypeEnum.NIGHT_OWL:
+        //check how many achivements user has with type CHECK_CHECK in the last week (createdAt)
+        const nightOwlAchivementInLast12hrs = user.progress.achievements.filter(
+          (a: IAchievement) =>
+            a.type === AchievementTypeEnum.NIGHT_OWL &&
+            a.createdAt &&
+            a.createdAt.getTime() > new Date().getTime() - 12 * 60 * 60 * 1000
+        ).length;
+
+        const usersLatestCheckin_ = await CheckIn.findOne({
+          user: userId,
+        })
+          .sort({ createdAt: -1 })
+          .populate("place");
+        if (nightOwlAchivementInLast12hrs === 0 && usersLatestCheckin_) {
+          const placeTimezone = tzlookup(
+            usersLatestCheckin_.place.location.geoLocation.coordinates[1],
+            usersLatestCheckin_.place.location.geoLocation.coordinates[0]
+          );
+          const currentTimeInPlace = moment().tz(placeTimezone);
+          if (currentTimeInPlace.hour() > 21 && currentTimeInPlace.hour() < 3) {
+            const newAchivement = await Achievement.create({
+              userId: userId,
+              type: AchievementTypeEnum.NIGHT_OWL,
+            });
+            return await newAchivement.save();
+          }
         }
         break;
 
