@@ -63,11 +63,15 @@ export const validateCommentReward = async (user: IUser, comment: IComment) => {
 
 export const validateCheckinReward = async (user: IUser, checkin: ICheckIn) => {
   try {
-    // check if the user has already been rewarded for the comment
+    // check if the user has already been rewarded for the
     const existingRewards = await Reward.find({
       userId: user._id,
       "reason.refType": "Checkin",
       "reason.placeId": checkin.place,
+      createdAt: {
+        // checkin for last day
+        $gte: new Date(new Date().getTime() - 24 * 60 * 60 * 1000),
+      },
     });
 
     if (existingRewards.length >= thresholds.MAX_CHECKIN_PER_PLACE)

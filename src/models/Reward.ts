@@ -9,7 +9,7 @@ export interface IReward extends Document {
     placeId?: mongoose.Types.ObjectId;
   };
   amount: number;
-  date: Date;
+  createdAt: Date;
 }
 
 const RewardSchema: Schema = new Schema<IReward>({
@@ -33,7 +33,7 @@ const RewardSchema: Schema = new Schema<IReward>({
     },
   },
   amount: { type: Number, required: true },
-  date: { type: Date, default: Date.now },
+  createdAt: { type: Date, default: Date.now },
 });
 
 export default mongoose.models.Reward ||

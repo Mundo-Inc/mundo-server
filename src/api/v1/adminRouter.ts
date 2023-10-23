@@ -1,6 +1,11 @@
 import express from "express";
 
-import { getUsers, getUsersValidation } from "../controllers/AdminController";
+import {
+  getFlags,
+  getFlagsValidation,
+  getUsers,
+  getUsersValidation,
+} from "../controllers/AdminController";
 import { adminAuthMiddleware } from "../middlewares/authMiddleWare";
 
 // Admin Only
@@ -9,5 +14,7 @@ router.use(express.json());
 router.use(adminAuthMiddleware);
 
 router.route("/users").get(getUsersValidation, getUsers);
+
+router.route("/flags").get(getFlagsValidation, getFlags);
 
 export default router;

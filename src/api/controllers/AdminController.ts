@@ -8,6 +8,8 @@ import { adminReadUserProjection } from "../dto/user/read-user-admin.dto";
 import { type PublicReadUserDto } from "../dto/user/read-user-public.dto";
 import { getRemainingXpToNextLevel } from "../services/ranking.service";
 import validate from "./validators";
+import Flag from "../../models/Flag";
+import Review from "../../models/Review";
 
 export const getUsersValidation: ValidationChain[] = [
   validate.q(query("q").optional()),
@@ -79,6 +81,48 @@ export async function getUsers(
     res
       .status(StatusCodes.OK)
       .json({ success: true, data: results.users, total: results.total });
+  } catch (err) {
+    next(err);
+  }
+}
+
+export const getFlagsValidation: ValidationChain[] = [
+  validate.q(query("review").optional().isMongoId()),
+  validate.page(query("page").optional()),
+  validate.limit(query("limit").optional(), 1, 50),
+];
+
+export async function getFlags(
+  req: Request,
+  res: Response,
+  next: NextFunction
+) {
+  try {
+    handleInputErrors(req);
+
+    const { review } = req.query;
+    const page = Number(req.query.page) || 1;
+    const limit = Number(req.query.limit) || 20;
+    const skip = (page - 1) * limit;
+
+    //check if review exists
+    if (review) {
+      const reviewExists = await Review.exists({ _id: review });
+      if (!reviewExists) {
+        throw createError("Review not found", StatusCodes.NOT_FOUND);
+      }
+    }
+    // Create a query object to filter the results based on the "review" query parameter if it's set
+    const queryObj = review ? { target: review } : {};
+
+    // Query the database to fetch the flags
+    const result = await Flag.find(queryObj)
+      .sort("-createdAt")
+      .populate("target")
+      .skip(skip)
+      .limit(limit);
+
+    res.status(StatusCodes.OK).json({ success: true, data: result });
   } catch (err) {
     next(err);
   }
