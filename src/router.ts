@@ -16,6 +16,7 @@ import feedRouter from "./api/v1/feedRouter";
 import notificationRouter from "./api/v1/notificationRouter";
 import listRouter from "./api/v1/listRouter";
 import devRouter from "./api/v1/devRouter";
+import adminRouter from "./api/v1/adminRouter";
 
 const router = express.Router();
 
@@ -35,5 +36,6 @@ router.use("/feeds", feedRouter);
 router.use("/notifications", notificationRouter);
 router.use("/list", listRouter);
 router.use("/dev", devRouter);
+router.use("/admin", adminRouter);
 
 export default router;
