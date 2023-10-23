@@ -4,14 +4,15 @@ import Flag, { FlagTypeEnum, IFlag } from "../../models/Flag";
 import { createError, handleInputErrors } from "../../utilities/errorHandlers";
 import { StatusCodes } from "http-status-codes";
 import Review from "../../models/Review";
+import Comment from "../../models/Comment";
 
-export const createFlagValidation: ValidationChain[] = [
+export const createFlagReviewValidation: ValidationChain[] = [
   param("id").isMongoId(),
   body("flagType").isIn(Object.keys(FlagTypeEnum)),
   body("note").optional().isString(),
 ];
 
-export async function createFlag(
+export async function createFlagReview(
   req: Request,
   res: Response,
   next: NextFunction
@@ -31,6 +32,44 @@ export async function createFlag(
     const newFlag: IFlag = new Flag({
       user: authId,
       target: id,
+      targetType: "Review",
+      flagType,
+      note,
+    });
+    await newFlag.save();
+    res.status(StatusCodes.CREATED).json({ flag: newFlag }); // Send the ID of the created list as response
+  } catch (err) {
+    next(err);
+  }
+}
+
+export const createFlagCommentValidation: ValidationChain[] = [
+  param("id").isMongoId(),
+  body("flagType").isIn(Object.keys(FlagTypeEnum)),
+  body("note").optional().isString(),
+];
+
+export async function createFlagComment(
+  req: Request,
+  res: Response,
+  next: NextFunction
+) {
+  try {
+    handleInputErrors(req);
+    const { id: authId } = req.user!;
+    const { id } = req.params;
+    const { flagType, note } = req.body;
+
+    //check if review exists
+    const commentExists = await Comment.exists({ _id: id });
+    if (!commentExists) {
+      throw createError("Comment not found", StatusCodes.NOT_FOUND);
+    }
+
+    const newFlag: IFlag = new Flag({
+      user: authId,
+      target: id,
+      targetType: "Comment",
       flagType,
       note,
     });

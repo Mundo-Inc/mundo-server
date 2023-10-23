@@ -13,9 +13,15 @@ export enum FlagTypeEnum {
   OTHER = "Other",
 }
 
+export enum TargetTypeEnum {
+  REVIEW = "Review",
+  COMMENT = "Comment",
+}
+
 export interface IFlag extends Document {
   user: mongoose.Types.ObjectId;
   target: mongoose.Types.ObjectId;
+  targetType: TargetTypeEnum;
   flagType: FlagTypeEnum;
   note: string;
   createdAt: Date;
@@ -31,9 +37,14 @@ const FlagSchema = new Schema<IFlag>(
     },
     target: {
       type: Schema.Types.ObjectId,
-      ref: "Review",
+      refPath: "targetType",
       required: true,
       index: true,
+    },
+    targetType: {
+      type: String,
+      enum: Object.values(TargetTypeEnum),
+      required: true,
     },
     flagType: {
       type: String,

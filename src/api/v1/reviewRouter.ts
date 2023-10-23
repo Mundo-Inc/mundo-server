@@ -9,7 +9,10 @@ import {
   getReviewsValidation,
 } from "../controllers/ReviewController";
 import { authMiddleware } from "../middlewares/authMiddleWare";
-import { createFlag, createFlagValidation } from "../controllers/FlagReview";
+import {
+  createFlagReview,
+  createFlagReviewValidation,
+} from "../controllers/FlagController";
 
 const router = express.Router();
 router.use(express.json());
@@ -23,6 +26,6 @@ router.route("/:id").get(authMiddleware, getReviewValidation, getReview);
 
 router
   .route("/:id/flag")
-  .post(authMiddleware, createFlagValidation, createFlag);
+  .post(authMiddleware, createFlagReviewValidation, createFlagReview);
 
 export default router;
