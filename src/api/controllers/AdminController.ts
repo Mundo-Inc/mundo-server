@@ -1,5 +1,6 @@
+import { ResourceTypes } from "./../../models/Notification";
 import type { NextFunction, Request, Response } from "express";
-import { query, type ValidationChain } from "express-validator";
+import { body, param, query, type ValidationChain } from "express-validator";
 import { StatusCodes } from "http-status-codes";
 
 import Flag from "../../models/Flag";
@@ -9,6 +10,11 @@ import { createError, handleInputErrors } from "../../utilities/errorHandlers";
 import { adminReadUserProjection } from "../dto/user/read-user-admin.dto";
 import { privateReadUserProjection } from "../dto/user/read-user-private.dto";
 import validate from "./validators";
+import mongoose from "mongoose";
+import Notification from "../../models/Notification";
+import Comment from "../../models/Comment";
+import UserActivity, { ActivityTypeEnum } from "../../models/UserActivity";
+import Reaction from "../../models/Reaction";
 
 export const getUsersValidation: ValidationChain[] = [
   validate.q(query("q").optional()),
@@ -136,6 +142,103 @@ export async function getFlags(
     }
 
     res.status(StatusCodes.OK).json({ success: true, data: result });
+  } catch (err) {
+    next(err);
+  }
+}
+
+export const resolveFlagValidation: ValidationChain[] = [
+  param("id").isMongoId(),
+  body("action").isIn(["DELETE", "IGNORE"]),
+  body("note").optional().isString(),
+];
+
+export async function resolveFlag(
+  req: Request,
+  res: Response,
+  next: NextFunction
+) {
+  try {
+    handleInputErrors(req);
+    const { id: userId } = req.user!;
+    const { action } = req.body;
+    const { id } = req.params;
+
+    const flag = await Flag.findById(id).populate("target");
+    if (!flag) {
+      throw createError("Flag not found", StatusCodes.NOT_FOUND);
+    }
+
+    if (flag.adminAction) {
+      throw createError("Flag already resolved", StatusCodes.BAD_REQUEST);
+    }
+
+    // do the action
+
+    if (action === "DELETE") {
+      if (flag.targetType === "Comment") {
+        //remove all notifications that assigned to the comment
+        await Notification.deleteMany({
+          resources: {
+            $elemMatch: {
+              type: ResourceTypes.COMMENT,
+              _id: flag.target,
+            },
+          },
+        });
+      } else if (flag.targetType === "Review") {
+        const userActivity = await UserActivity.findOne({
+          resourceId: flag.target,
+          resourceType: ResourceTypes.REVIEW,
+        });
+
+        if (!userActivity) {
+          console.error("User activity not found for the given review.");
+          return;
+        }
+
+        const userActivityId = userActivity._id;
+
+        // Using Promise.all to run the deletions in parallel
+        const [relatedComments, relatedReactions] = await Promise.all([
+          Comment.find({ userActivity: userActivityId }),
+          Reaction.find({ target: userActivityId }),
+        ]);
+
+        const relatedCommentsIds = relatedComments.map((c) => c._id);
+        const relatedReactionsIds = relatedReactions.map((r) => r._id);
+
+        const allRelatedResourcesIds = [
+          ...relatedCommentsIds,
+          ...relatedReactionsIds,
+        ];
+
+        // Using Promise.all to run the deletions in parallel
+        await Promise.all([
+          Notification.deleteMany({
+            "resources._id": { $in: allRelatedResourcesIds },
+          }),
+          Reaction.deleteMany({ target: userActivityId }),
+          Comment.deleteMany({ userActivity: userActivityId }),
+          userActivity.remove(),
+          Review.findByIdAndDelete(flag.target),
+        ]);
+
+        console.log(
+          "Review and related resources have been deleted successfully."
+        );
+      }
+    }
+
+    // save the action
+    flag.adminAction = {
+      type: action,
+      note: req.body.note,
+      admin: new mongoose.Types.ObjectId(userId),
+      createdAt: new Date(),
+    };
+
+    await flag.save();
   } catch (err) {
     next(err);
   }
