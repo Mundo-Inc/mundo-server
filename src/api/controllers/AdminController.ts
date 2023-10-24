@@ -2,14 +2,13 @@ import type { NextFunction, Request, Response } from "express";
 import { query, type ValidationChain } from "express-validator";
 import { StatusCodes } from "http-status-codes";
 
+import Flag from "../../models/Flag";
+import Review from "../../models/Review";
 import User from "../../models/User";
 import { createError, handleInputErrors } from "../../utilities/errorHandlers";
 import { adminReadUserProjection } from "../dto/user/read-user-admin.dto";
-import { type PublicReadUserDto } from "../dto/user/read-user-public.dto";
-import { getRemainingXpToNextLevel } from "../services/ranking.service";
+import { privateReadUserProjection } from "../dto/user/read-user-private.dto";
 import validate from "./validators";
-import Flag from "../../models/Flag";
-import Review from "../../models/Review";
 
 export const getUsersValidation: ValidationChain[] = [
   validate.q(query("q").optional()),
@@ -118,9 +117,23 @@ export async function getFlags(
     // Query the database to fetch the flags
     const result = await Flag.find(queryObj)
       .sort("-createdAt")
-      .populate("target")
       .skip(skip)
-      .limit(limit);
+      .limit(limit)
+      .populate("target")
+      .populate("user", adminReadUserProjection);
+
+    for (const flag of result) {
+      switch (flag.targetType) {
+        case "Review":
+          await flag.populate("target.videos", "src caption type");
+          await flag.populate("target.images", "src caption type");
+          await flag.populate("target.writer", privateReadUserProjection);
+        case "Comment":
+          await flag.populate("target.author", privateReadUserProjection);
+        default:
+          break;
+      }
+    }
 
     res.status(StatusCodes.OK).json({ success: true, data: result });
   } catch (err) {
