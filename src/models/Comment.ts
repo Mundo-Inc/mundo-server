@@ -1,4 +1,4 @@
-import mongoose, { Schema, type Document } from "mongoose";
+import mongoose, { Schema, type Document, CallbackError } from "mongoose";
 
 import Notification, { NotificationType, ResourceTypes } from "./Notification";
 import UserActivity, { type IUserActivity } from "./UserActivity";
@@ -105,6 +105,48 @@ CommentSchema.post("save", async function (doc, next) {
   }
 
   next();
+});
+
+async function removeCommentDependencies(comment: IComment) {
+  const notifications = await Notification.find({
+    resources: {
+      $elemMatch: {
+        _id: comment._id,
+        type: ResourceTypes.COMMENT,
+      },
+    },
+  });
+  // Delete each notification one by one to trigger any associated middleware
+  await Promise.all(
+    notifications.map((notification) => notification.deleteOne())
+  );
+}
+
+CommentSchema.pre<IComment>(
+  "deleteOne",
+  { document: true, query: false },
+  async function (next) {
+    console.log("deleteOne comment");
+    try {
+      const comment = this;
+      // Find all notifications related to the comment
+      await removeCommentDependencies(comment);
+      next();
+    } catch (error) {
+      next(error as CallbackError);
+    }
+  }
+);
+
+CommentSchema.pre("deleteOne", async function (next) {
+  try {
+    console.log("deleteOne comment");
+    const comment = await this.model.findOne(this.getQuery());
+    await removeCommentDependencies(comment);
+    next();
+  } catch (error) {
+    next(error as CallbackError);
+  }
 });
 
 export default mongoose.models.Comment ||

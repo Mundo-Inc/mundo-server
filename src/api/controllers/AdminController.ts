@@ -164,81 +164,37 @@ export async function resolveFlag(
     const { action } = req.body;
     const { id } = req.params;
 
-    const flag = await Flag.findById(id).populate("target");
-    if (!flag) {
-      throw createError("Flag not found", StatusCodes.NOT_FOUND);
-    }
+      await Review.findById(id).deleteOne();
 
-    if (flag.adminAction) {
-      throw createError("Flag already resolved", StatusCodes.BAD_REQUEST);
-    }
-
-    // do the action
-
-    if (action === "DELETE") {
-      if (flag.targetType === "Comment") {
-        //remove all notifications that assigned to the comment
-        await Notification.deleteMany({
-          resources: {
-            $elemMatch: {
-              type: ResourceTypes.COMMENT,
-              _id: flag.target,
-            },
-          },
-        });
-      } else if (flag.targetType === "Review") {
-        const userActivity = await UserActivity.findOne({
-          resourceId: flag.target,
-          resourceType: ResourceTypes.REVIEW,
-        });
-
-        if (!userActivity) {
-          console.error("User activity not found for the given review.");
-          return;
-        }
-
-        const userActivityId = userActivity._id;
-
-        // Using Promise.all to run the deletions in parallel
-        const [relatedComments, relatedReactions] = await Promise.all([
-          Comment.find({ userActivity: userActivityId }),
-          Reaction.find({ target: userActivityId }),
-        ]);
-
-        const relatedCommentsIds = relatedComments.map((c) => c._id);
-        const relatedReactionsIds = relatedReactions.map((r) => r._id);
-
-        const allRelatedResourcesIds = [
-          ...relatedCommentsIds,
-          ...relatedReactionsIds,
-        ];
-
-        // Using Promise.all to run the deletions in parallel
-        await Promise.all([
-          Notification.deleteMany({
-            "resources._id": { $in: allRelatedResourcesIds },
-          }),
-          Reaction.deleteMany({ target: userActivityId }),
-          Comment.deleteMany({ userActivity: userActivityId }),
-          userActivity.remove(),
-          Review.findByIdAndDelete(flag.target),
-        ]);
-
-        console.log(
-          "Review and related resources have been deleted successfully."
-        );
+      const flag = await Flag.findById(id).populate("target");
+      if (!flag) {
+        throw createError("Flag not found", StatusCodes.NOT_FOUND);
       }
-    }
 
-    // save the action
-    flag.adminAction = {
-      type: action,
-      note: req.body.note,
-      admin: new mongoose.Types.ObjectId(userId),
-      createdAt: new Date(),
-    };
+      if (flag.adminAction) {
+        throw createError("Flag already resolved", StatusCodes.BAD_REQUEST);
+      }
 
-    await flag.save();
+      if (action === "DELETE") {
+        if (flag.targetType === "Comment") {
+          const comment = await Comment.findById(flag.target);
+          await comment.deleteOne();
+        } else if (flag.targetType === "Review") {
+          const review = await Review.findById(flag.target);
+          await review.deleteOne();
+        }
+      }
+
+      // save the action
+      flag.adminAction = {
+        type: action,
+        note: req.body.note,
+        admin: new mongoose.Types.ObjectId(userId),
+        createdAt: new Date(),
+      };
+
+      await flag.save();
+      res.status(StatusCodes.OK).json({ success: true, data: flag });
   } catch (err) {
     next(err);
   }

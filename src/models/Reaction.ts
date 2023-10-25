@@ -1,4 +1,4 @@
-import mongoose, { Schema, type Document } from "mongoose";
+import mongoose, { Schema, type Document, CallbackError } from "mongoose";
 import Notification, { NotificationType, ResourceTypes } from "./Notification";
 import UserActivity from "./UserActivity";
 
@@ -41,6 +41,48 @@ const ReactionSchema = new Schema<IReaction>({
     type: String,
     enum: ["yelp", "google"],
   },
+});
+
+// dependency removal function
+async function removeDependencies(reaction: IReaction) {
+  // Find all notifications related to the comment
+  const notifications = await Notification.find({
+    resources: {
+      $elemMatch: {
+        _id: reaction._id,
+        type: ResourceTypes.REACTION,
+      },
+    },
+  });
+  // Delete each notification one by one to trigger any associated middleware
+  await Promise.all(
+    notifications.map((notification) => notification.deleteOne())
+  );
+}
+
+ReactionSchema.pre<IReaction>(
+  "deleteOne",
+  { document: true, query: false },
+  async function (next) {
+    try {
+      const reaction = this;
+      removeDependencies(reaction);
+      next();
+    } catch (error) {
+      next(error as CallbackError);
+    }
+  }
+);
+
+ReactionSchema.pre("deleteOne", async function (next) {
+  try {
+    console.log("deleteOne reaction");
+    const reaction = await this.model.findOne(this.getQuery());
+    await removeDependencies(reaction);
+    next();
+  } catch (error) {
+    next(error as CallbackError);
+  }
 });
 
 ReactionSchema.post("save", async function (doc, next) {

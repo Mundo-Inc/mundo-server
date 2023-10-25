@@ -1,4 +1,8 @@
-import mongoose, { Schema, type Document } from "mongoose";
+import mongoose, { Schema, type Document, CallbackError } from "mongoose";
+import Place from "./Place";
+import Reaction from "./Reaction";
+import Comment from "./Comment";
+import UserActivity from "./UserActivity";
 
 export const predefinedTags = [
   "gourmet_cuisine",
@@ -123,6 +127,56 @@ const ReviewSchema: Schema = new Schema<IReview>(
 );
 
 ReviewSchema.index({ place: 1 });
+
+// dependency removal function
+async function removeReviewDependencies(review: IReview) {
+  // reduce the place reviewCount by 1
+  await Place.updateOne(
+    { _id: review.place, reviewCount: { $gt: 0 } },
+    { $inc: { reviewCount: -1 } }
+  );
+
+  // remove all reactions related to the review
+  const reactions = await Reaction.find({ target: review.userActivityId });
+  await Promise.all(reactions.map((reaction) => reaction.deleteOne()));
+
+  // remove all comments related to the review
+  const comments = await Comment.find({
+    userActivity: review.userActivityId,
+  });
+  await Promise.all(comments.map((comment) => comment.deleteOne()));
+
+  // remove the userActivity related to the review
+  const userActivity = await UserActivity.findById(review.userActivityId);
+  await userActivity.deleteOne();
+}
+
+// Query middleware (for Comment.deleteOne(), Comment.deleteMany(), etc.)
+ReviewSchema.pre<IReview>(
+  "deleteOne",
+  { document: true, query: false },
+  async function (next) {
+    console.log("deleteOne review");
+    try {
+      const review = this as IReview;
+      await removeReviewDependencies(review);
+      next();
+    } catch (error) {
+      next(error as CallbackError);
+    }
+  }
+);
+
+ReviewSchema.pre("deleteOne", async function (next) {
+  try {
+    console.log("deleteOne review");
+    const review = await this.model.findOne(this.getQuery());
+    await removeReviewDependencies(review);
+    next();
+  } catch (error) {
+    next(error as CallbackError);
+  }
+});
 
 export default mongoose.models.Review ||
   mongoose.model<IReview>("Review", ReviewSchema);

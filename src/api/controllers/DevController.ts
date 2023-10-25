@@ -90,16 +90,16 @@ export async function devTests(
           } else {
             if (mostReviewCount! < reviewsCount) {
               await Place.findByIdAndDelete(keepId);
-              await Review.deleteMany({ place: keepId });
-              await CheckIn.deleteMany({ place: keepId });
+              await Review.deleteMany({ place: keepId }); //FIXME: NEVER USE THIS DELETEMANY METHOD, USE FOR+DELETEONE INSTEAD
+              await CheckIn.deleteMany({ place: keepId }); //FIXME: NEVER USE THIS DELETEMANY METHOD, USE FOR+DELETEONE INSTEAD
 
               mostReviewCount = reviewsCount;
               keepId = id;
             } else {
               // delete
               await Place.findByIdAndDelete(id);
-              await Review.deleteMany({ place: id });
-              await CheckIn.deleteMany({ place: id });
+              await Review.deleteMany({ place: id }); //FIXME: NEVER USE THIS DELETEMANY METHOD, USE FOR+DELETEONE INSTEAD
+              await CheckIn.deleteMany({ place: id }); //FIXME: NEVER USE THIS DELETEMANY METHOD, USE FOR+DELETEONE INSTEAD
             }
           }
         }
@@ -269,7 +269,7 @@ export async function fixPlaces(
           for (const placeToRemove of placesToRemove) {
             console.log("DUP " + placeToRemove.name);
             dupCount++;
-            await Place.deleteOne({ _id: placeToRemove._id });
+            await Place.deleteOne({ _id: placeToRemove._id }); //FIXME: NEVER USE THIS DELETEONE METHOD, USE FOR+DELETEONE INSTEAD
           }
         }
       }

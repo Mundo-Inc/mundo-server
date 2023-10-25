@@ -74,10 +74,11 @@ export async function deleteList(
       throw createError(strings.authorization.userOnly, StatusCodes.FORBIDDEN);
     }
 
-    const deletedList = await List.deleteOne({
+    const deletedList = await List.findOne({
       _id: id,
       owner: authId,
     });
+    await deletedList.deleteOne();
 
     if (deletedList.deletedCount === 0) {
       throw createError(
