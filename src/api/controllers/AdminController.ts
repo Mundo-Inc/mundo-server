@@ -164,8 +164,6 @@ export async function resolveFlag(
     const { action } = req.body;
     const { id } = req.params;
 
-      await Review.findById(id).deleteOne();
-
       const flag = await Flag.findById(id).populate("target");
       if (!flag) {
         throw createError("Flag not found", StatusCodes.NOT_FOUND);
