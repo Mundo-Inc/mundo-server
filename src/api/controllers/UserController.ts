@@ -571,6 +571,16 @@ export async function getUserConnections(
           localField: type === "followers" ? "user" : "target",
           foreignField: "_id",
           as: "user",
+          pipeline: [
+            {
+              $lookup: {
+                from: "achievements",
+                localField: "progress.achievements",
+                foreignField: "_id",
+                as: "progress.achievements",
+              },
+            },
+          ],
         },
       },
       {

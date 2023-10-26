@@ -30,7 +30,13 @@ async function getNotificationContent(notification: INotification) {
   switch (notification.type) {
     case NotificationType.COMMENT:
       await Comment.findById(notification.resources![0]._id)
-        .populate("author", publicReadUserProjection)
+        .populate({
+          path: "author",
+          select: publicReadUserProjection,
+          populate: {
+            path: "progress.achievements",
+          },
+        })
         .then((comment) => {
           if (!comment) {
             handleResourceNotFound(notification);
@@ -47,7 +53,13 @@ async function getNotificationContent(notification: INotification) {
       break;
     case NotificationType.FOLLOW:
       await Follow.findById(notification.resources![0]._id)
-        .populate("user", publicReadUserProjection)
+        .populate({
+          path: "user",
+          select: publicReadUserProjection,
+          populate: {
+            path: "progress.achievements",
+          },
+        })
         .then((follow) => {
           if (!follow) {
             handleResourceNotFound(notification);
@@ -62,7 +74,13 @@ async function getNotificationContent(notification: INotification) {
       break;
     case NotificationType.COMMENT_MENTION:
       await Comment.findById(notification.resources![0]._id)
-        .populate("author", publicReadUserProjection)
+        .populate({
+          path: "author",
+          select: publicReadUserProjection,
+          populate: {
+            path: "progress.achievements",
+          },
+        })
         .then((comment) => {
           if (!comment) {
             handleResourceNotFound(notification);
@@ -79,7 +97,13 @@ async function getNotificationContent(notification: INotification) {
       break;
     case NotificationType.REACTION:
       await Reaction.findById(notification.resources![0]._id)
-        .populate("user", publicReadUserProjection)
+        .populate({
+          path: "user",
+          select: publicReadUserProjection,
+          populate: {
+            path: "progress.achievements",
+          },
+        })
         .then((reaction) => {
           if (!reaction) {
             handleResourceNotFound(notification);

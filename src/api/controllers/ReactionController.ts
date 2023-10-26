@@ -2,14 +2,11 @@ import type { NextFunction, Request, Response } from "express";
 import { body, param, type ValidationChain } from "express-validator";
 import { StatusCodes } from "http-status-codes";
 
+import Notification, { ResourceTypes } from "../../models/Notification";
 import Reaction from "../../models/Reaction";
 import strings, { dStrings as ds, dynamicMessage } from "../../strings";
 import { createError, handleInputErrors } from "../../utilities/errorHandlers";
 import { addCreateReactionXP } from "../services/ranking.service";
-import Notification, {
-  NotificationType,
-  ResourceTypes,
-} from "../../models/Notification";
 import { addReward } from "../services/reward/reward.service";
 
 export const createReactionValidation: ValidationChain[] = [
@@ -64,7 +61,6 @@ export async function createReaction(
       refId: newReaction._id,
       userActivityId: target,
     });
-    console.log(reward);
 
     res
       .status(StatusCodes.CREATED)

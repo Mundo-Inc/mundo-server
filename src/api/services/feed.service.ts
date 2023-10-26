@@ -112,7 +112,9 @@ export const getResourceInfo = async (activity: IUserActivity) => {
   const userInfo = await User.findOne(
     { _id: activity.userId },
     publicReadUserProjection
-  ).lean();
+  )
+    .populate("progress.achievements")
+    .lean();
   if (activity.resourceType === ResourceTypeEnum.PLACE) {
     resourceInfo = await Place.findById(
       activity.resourceId,
@@ -133,6 +135,14 @@ export const getResourceInfo = async (activity: IUserActivity) => {
           foreignField: "_id",
           as: "writer",
           pipeline: [
+            {
+              $lookup: {
+                from: "achievements",
+                localField: "progress.achievements",
+                foreignField: "_id",
+                as: "progress.achievements",
+              },
+            },
             {
               $project: publicReadUserProjectionAG,
             },
@@ -297,6 +307,19 @@ export const getResourceInfo = async (activity: IUserActivity) => {
                 localField: "user",
                 foreignField: "_id",
                 as: "user",
+                pipeline: [
+                  {
+                    $lookup: {
+                      from: "achievements",
+                      localField: "progress.achievements",
+                      foreignField: "_id",
+                      as: "progress.achievements",
+                    },
+                  },
+                  {
+                    $project: publicReadUserProjectionAG,
+                  },
+                ],
               },
             },
             {
@@ -345,7 +368,9 @@ export const getResourceInfo = async (activity: IUserActivity) => {
     resourceInfo = await User.findById(
       activity.resourceId,
       publicReadUserProjection
-    );
+    )
+      .populate("progress.achievements")
+      .lean();
     if (activity.placeId) {
       placeInfo = await Place.findById(
         activity.placeId,
@@ -597,6 +622,14 @@ export const getUserFeed = async (
             as: "author",
             pipeline: [
               {
+                $lookup: {
+                  from: "achievements",
+                  localField: "progress.achievements",
+                  foreignField: "_id",
+                  as: "progress.achievements",
+                },
+              },
+              {
                 $project: publicReadUserProjectionAG,
               },
             ],
@@ -634,18 +667,6 @@ export const getUserFeed = async (
         comments: comments,
       });
     }
-
-    // activities.sort((a, b) => {
-    //   const weightDifference = a.weight - b.weight;
-    //   if (weightDifference !== 0) {
-    //     return weightDifference;
-    //   }
-    //   const scoreDifference = b.score - a.score;
-    //   if (scoreDifference !== 0) {
-    //     return scoreDifference;
-    //   }
-    //   return a.weight - b.weight;
-    // });
 
     // strategy when once all unseen activities are exhausted, retrieve previously seen activities
     if (activities.length === 0) {

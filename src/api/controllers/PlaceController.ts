@@ -8,11 +8,11 @@ import { StatusCodes } from "http-status-codes";
 import mongoose from "mongoose";
 
 import Place, { type IPlace } from "../../models/Place";
-import Queue from "../../models/Queue";
 import { dStrings, dynamicMessage } from "../../strings";
-import type { IGPNearbySearch } from "../../types/googleplaces.interface";
 import { createError, handleInputErrors } from "../../utilities/errorHandlers";
 import { bucketName, parseForm, region, s3 } from "../../utilities/storage";
+import { areSimilar } from "../../utilities/stringHelper";
+import { publicReadUserProjectionAG } from "../dto/user/read-user-public.dto";
 import { placeEarning } from "../services/earning.service";
 import {
   findFoursquareId,
@@ -25,8 +25,6 @@ import {
 import { addCreatePlaceXP } from "../services/ranking.service";
 import { addNewPlaceActivity } from "../services/user.activity.service";
 import validate from "./validators";
-import { areSimilar } from "../../utilities/stringHelper";
-import { publicReadUserProjectionAG } from "../dto/user/read-user-public.dto";
 
 var levenshtein = require("fast-levenshtein");
 var country = require("countrystatesjs");
@@ -307,6 +305,14 @@ export async function getPlaces(
                 foreignField: "_id",
                 as: "user",
                 pipeline: [
+                  {
+                    $lookup: {
+                      from: "achievements",
+                      localField: "progress.achievements",
+                      foreignField: "_id",
+                      as: "progress.achievements",
+                    },
+                  },
                   {
                     $project: publicReadUserProjectionAG,
                   },

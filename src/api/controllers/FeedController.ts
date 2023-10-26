@@ -1,8 +1,8 @@
 import type { NextFunction, Request, Response } from "express";
 import { param, query, type ValidationChain } from "express-validator";
 import { StatusCodes } from "http-status-codes";
-
 import mongoose from "mongoose";
+
 import ActivitySeen from "../../models/ActivitySeen";
 import Comment from "../../models/Comment";
 import Follow, { IFollow } from "../../models/Follow";
@@ -10,9 +10,9 @@ import Reaction from "../../models/Reaction";
 import UserActivity from "../../models/UserActivity";
 import { dStrings, dynamicMessage } from "../../strings";
 import { createError, handleInputErrors } from "../../utilities/errorHandlers";
+import { publicReadUserProjectionAG } from "../dto/user/read-user-public.dto";
 import { getResourceInfo, getUserFeed } from "../services/feed.service";
 import validate from "./validators";
-import { publicReadUserProjectionAG } from "../dto/user/read-user-public.dto";
 
 export const getFeedValidation: ValidationChain[] = [
   validate.page(query("page").optional()),
@@ -154,14 +154,16 @@ export async function getActivity(
           as: "author",
           pipeline: [
             {
-              $project: {
-                _id: 1,
-                name: 1,
-                username: 1,
-                level: 1,
-                profileImage: 1,
-                verified: 1,
+              // TODO: Test
+              $lookup: {
+                from: "achievements",
+                localField: "progress.achievements",
+                foreignField: "_id",
+                as: "progress.achievements",
               },
+            },
+            {
+              $project: publicReadUserProjectionAG,
             },
           ],
         },
@@ -284,6 +286,15 @@ export async function getComments(
           foreignField: "_id",
           as: "author",
           pipeline: [
+            {
+              // TODO: Test
+              $lookup: {
+                from: "achievements",
+                localField: "progress.achievements",
+                foreignField: "_id",
+                as: "progress.achievements",
+              },
+            },
             {
               $project: publicReadUserProjectionAG,
             },

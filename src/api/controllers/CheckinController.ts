@@ -7,17 +7,14 @@ import CheckIn from "../../models/CheckIn";
 import User from "../../models/User";
 import { ActivityPrivacyTypeEnum } from "../../models/UserActivity";
 import { createError, handleInputErrors } from "../../utilities/errorHandlers";
+import { getFormattedPlaceLocationAG } from "../dto/place/place-dto";
+import { readPlaceBriefProjectionAG } from "../dto/place/read-place-brief.dto";
+import { publicReadUserProjectionAG } from "../dto/user/read-user-public.dto";
 import { checkinEarning } from "../services/earning.service";
 import { addCreateCheckinXP } from "../services/ranking.service";
+import { addReward } from "../services/reward/reward.service";
 import { addCheckinActivity } from "../services/user.activity.service";
 import validate from "./validators";
-import { publicReadUserProjectionAG } from "../dto/user/read-user-public.dto";
-import { readPlaceBriefProjectionAG } from "../dto/place/read-place-brief.dto";
-import { getFormattedPlaceLocationAG } from "../dto/place/place-dto";
-import {
-  addReward,
-  checkForCustomAchivements,
-} from "../services/reward/reward.service";
 
 const checkinWaitTime = 5; // minutes
 
@@ -91,6 +88,16 @@ export async function getCheckins(
                 localField: "user",
                 foreignField: "_id",
                 as: "user",
+                pipeline: [
+                  {
+                    $lookup: {
+                      from: "achievements",
+                      localField: "progress.achievements",
+                      foreignField: "_id",
+                      as: "progress.achievements",
+                    },
+                  },
+                ],
               },
             },
             {

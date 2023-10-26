@@ -21,6 +21,7 @@ import { openAiAnalyzeReview } from "../../utilities/openAi";
 import Upload from "../../models/Upload";
 import Media, { MediaTypeEnum } from "../../models/Media";
 import { addReward } from "../services/reward/reward.service";
+import { publicReadUserProjectionAG } from "../dto/user/read-user-public.dto";
 
 export const getReviewsValidation: ValidationChain[] = [
   query("writer").optional().isMongoId(),
@@ -104,13 +105,15 @@ export async function getReviews(
           as: "writer",
           pipeline: [
             {
-              $project: {
-                _id: 1,
-                name: 1,
-                username: 1,
-                profileImage: 1,
-                level: 1,
+              $lookup: {
+                from: "achievements",
+                localField: "progress.achievements",
+                foreignField: "_id",
+                as: "progress.achievements",
               },
+            },
+            {
+              $project: publicReadUserProjectionAG,
             },
           ],
         },
@@ -509,14 +512,15 @@ export async function getReview(
           as: "writer",
           pipeline: [
             {
-              $project: {
-                _id: 1,
-                name: 1,
-                username: 1,
-                level: 1,
-                profileImage: 1,
-                verified: 1,
+              $lookup: {
+                from: "achievements",
+                localField: "progress.achievements",
+                foreignField: "_id",
+                as: "progress.achievements",
               },
+            },
+            {
+              $project: publicReadUserProjectionAG,
             },
           ],
         },

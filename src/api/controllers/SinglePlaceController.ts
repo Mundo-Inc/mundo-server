@@ -99,6 +99,14 @@ export async function getPlace(
                 as: "writer",
                 pipeline: [
                   {
+                    $lookup: {
+                      from: "users",
+                      localField: "progress.achievements",
+                      foreignField: "_id",
+                      as: "progress.achievements",
+                    },
+                  },
+                  {
                     $project: publicReadUserProjectionAG,
                   },
                 ],
@@ -200,6 +208,14 @@ export async function getPlace(
                       foreignField: "_id",
                       as: "author",
                       pipeline: [
+                        {
+                          $lookup: {
+                            from: "users",
+                            localField: "progress.achievements",
+                            foreignField: "_id",
+                            as: "progress.achievements",
+                          },
+                        },
                         {
                           $project: publicReadUserProjectionAG,
                         },
@@ -441,6 +457,14 @@ export async function getPlaceMedia(
                 as: "user",
                 pipeline: [
                   {
+                    $lookup: {
+                      from: "users",
+                      localField: "progress.achievements",
+                      foreignField: "_id",
+                      as: "progress.achievements",
+                    },
+                  },
+                  {
                     $project: publicReadUserProjectionAG,
                   },
                 ],
@@ -545,6 +569,14 @@ export async function getPlaceReviews(
           as: "writer",
           pipeline: [
             {
+              $lookup: {
+                from: "users",
+                localField: "progress.achievements",
+                foreignField: "_id",
+                as: "progress.achievements",
+              },
+            },
+            {
               $project: publicReadUserProjectionAG,
             },
           ],
@@ -646,6 +678,14 @@ export async function getPlaceReviews(
                 foreignField: "_id",
                 as: "author",
                 pipeline: [
+                  {
+                    $lookup: {
+                      from: "users",
+                      localField: "progress.achievements",
+                      foreignField: "_id",
+                      as: "progress.achievements",
+                    },
+                  },
                   {
                     $project: publicReadUserProjectionAG,
                   },

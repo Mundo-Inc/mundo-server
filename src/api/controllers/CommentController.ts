@@ -1,6 +1,7 @@
 import type { NextFunction, Request, Response } from "express";
 import { body, param, type ValidationChain } from "express-validator";
 import { StatusCodes } from "http-status-codes";
+import mongoose from "mongoose";
 
 import Comment, { type IComment } from "../../models/Comment";
 import User from "../../models/User";
@@ -8,7 +9,6 @@ import UserActivity from "../../models/UserActivity";
 import strings, { dStrings as ds, dynamicMessage } from "../../strings";
 import { createError, handleInputErrors } from "../../utilities/errorHandlers";
 import { publicReadUserProjection } from "../dto/user/read-user-public.dto";
-import mongoose from "mongoose";
 import { addReward } from "../services/reward/reward.service";
 
 export const createCommentValidation: ValidationChain[] = [
@@ -26,7 +26,9 @@ export async function createComment(
     const { content, activity } = req.body;
     const { id: authId } = req.user!;
 
-    const user = await User.findById(authId, publicReadUserProjection);
+    const user = await User.findById(authId, publicReadUserProjection).populate(
+      "progress.achievements"
+    );
     if (!user) {
       throw createError(
         dynamicMessage(ds.notFound, "User"),
@@ -136,7 +138,13 @@ export async function likeComment(
     comment.likes.push(new mongoose.Types.ObjectId(authId));
     await comment.save();
 
-    await comment.populate("author", publicReadUserProjection);
+    await comment.populate({
+      path: "author",
+      select: publicReadUserProjection,
+      populate: {
+        path: "progress.achievements",
+      },
+    });
 
     res.status(StatusCodes.OK).json({
       success: true,
@@ -185,7 +193,13 @@ export async function deleteCommentLike(
     comment.likes = comment.likes.filter((l: any) => l.toString() !== authId);
     await comment.save();
 
-    await comment.populate("author", publicReadUserProjection);
+    await comment.populate({
+      path: "author",
+      select: publicReadUserProjection,
+      populate: {
+        path: "progress.achievements",
+      },
+    });
 
     res.status(StatusCodes.OK).json({
       success: true,
