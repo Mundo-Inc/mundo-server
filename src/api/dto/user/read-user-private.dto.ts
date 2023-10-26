@@ -1,3 +1,5 @@
+import mongoose from "mongoose";
+
 export type PrivateReadUserDto = {
   _id: string;
   name: string;
@@ -13,6 +15,11 @@ export type PrivateReadUserDto = {
   xp?: number;
   level?: number;
   coins?: number;
+  progress?: {
+    level: number;
+    xp: number;
+    achievements: mongoose.Types.ObjectId[];
+  };
 };
 
 type PrivateReadUserProjection = {
@@ -34,4 +41,5 @@ export const privateReadUserProjection: PrivateReadUserProjection = {
   xp: true,
   level: true,
   coins: true,
+  progress: true,
 };

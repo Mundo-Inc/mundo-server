@@ -226,7 +226,9 @@ export async function getUser(req: Request, res: Response, next: NextFunction) {
 
     let user: any, isFollower, isFollowing;
     if (id === req.user!.id) {
-      user = await User.findById(id, privateReadUserProjection).lean();
+      user = await User.findById(id, privateReadUserProjection)
+        .populate("progress.achievements")
+        .lean();
     } else {
       user = await User.findById(id, publicReadUserProjection).lean();
 
