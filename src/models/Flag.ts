@@ -50,6 +50,7 @@ const FlagSchema = new Schema<IFlag>(
     },
     target: {
       type: Schema.Types.ObjectId,
+      refPath: "targetType",
       required: true,
       index: true,
     },

@@ -118,8 +118,11 @@ export async function getFlags(
       }
     }
     // Create a query object to filter the results based on the "review" query parameter if it's set
-    const queryObj = review ? { target: review } : {};
+    const queryObj = review
+      ? { target: review, adminAction: { $exists: false } }
+      : { adminAction: { $exists: false } };
 
+    const totalDocuments = await Flag.countDocuments(queryObj);
     // Query the database to fetch the flags
     const result = await Flag.find(queryObj)
       .sort("-createdAt")
@@ -131,8 +134,8 @@ export async function getFlags(
     for (const flag of result) {
       switch (flag.targetType) {
         case "Review":
-          await flag.populate("target.videos", "src caption type");
-          await flag.populate("target.images", "src caption type");
+          await flag.populate("target.videos", "_id src caption type");
+          await flag.populate("target.images", "_id src caption type");
           await flag.populate("target.writer", privateReadUserProjection);
         case "Comment":
           await flag.populate("target.author", privateReadUserProjection);
@@ -141,7 +144,9 @@ export async function getFlags(
       }
     }
 
-    res.status(StatusCodes.OK).json({ success: true, data: result });
+    res
+      .status(StatusCodes.OK)
+      .json({ success: true, data: result, total: totalDocuments });
   } catch (err) {
     next(err);
   }
@@ -164,35 +169,35 @@ export async function resolveFlag(
     const { action } = req.body;
     const { id } = req.params;
 
-      const flag = await Flag.findById(id).populate("target");
-      if (!flag) {
-        throw createError("Flag not found", StatusCodes.NOT_FOUND);
+    const flag = await Flag.findById(id).populate("target");
+    if (!flag) {
+      throw createError("Flag not found", StatusCodes.NOT_FOUND);
+    }
+
+    if (flag.adminAction) {
+      throw createError("Flag already resolved", StatusCodes.BAD_REQUEST);
+    }
+
+    if (action === "DELETE") {
+      if (flag.targetType === "Comment") {
+        const comment = await Comment.findById(flag.target);
+        await comment.deleteOne();
+      } else if (flag.targetType === "Review") {
+        const review = await Review.findById(flag.target);
+        await review.deleteOne();
       }
+    }
 
-      if (flag.adminAction) {
-        throw createError("Flag already resolved", StatusCodes.BAD_REQUEST);
-      }
+    // save the action
+    flag.adminAction = {
+      type: action,
+      note: req.body.note,
+      admin: new mongoose.Types.ObjectId(userId),
+      createdAt: new Date(),
+    };
 
-      if (action === "DELETE") {
-        if (flag.targetType === "Comment") {
-          const comment = await Comment.findById(flag.target);
-          await comment.deleteOne();
-        } else if (flag.targetType === "Review") {
-          const review = await Review.findById(flag.target);
-          await review.deleteOne();
-        }
-      }
-
-      // save the action
-      flag.adminAction = {
-        type: action,
-        note: req.body.note,
-        admin: new mongoose.Types.ObjectId(userId),
-        createdAt: new Date(),
-      };
-
-      await flag.save();
-      res.status(StatusCodes.OK).json({ success: true, data: flag });
+    await flag.save();
+    res.status(StatusCodes.OK).json({ success: true, data: flag });
   } catch (err) {
     next(err);
   }
