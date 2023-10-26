@@ -208,47 +208,53 @@ export async function getNotifications(
       },
     ]);
 
-    for (const notification of notifications[0].notifications) {
-      const { content, title, subtitle, user, image, activity, error } =
-        await getNotificationContent(notification);
-      if (error) {
-        notification.error = true;
-        continue;
-      }
-      if (user) {
-        notification.user = user;
-      } else {
-        delete notification.user;
-      }
-      if (image) {
-        notification.image = image;
-      }
-      if (content) {
-        notification.content = content;
-      }
-      if (subtitle) {
-        notification.subtitle = subtitle;
-      }
-      if (title) {
-        notification.title = title;
-      }
-      if (activity) {
-        notification.activity = activity;
-      }
-    }
-
-    notifications[0].notifications = notifications[0].notifications.filter(
-      (
-        n: INotification & {
-          error?: boolean;
+    if (notifications.length > 0 && notifications[0].length > 0) {
+      for (const notification of notifications[0].notifications) {
+        const { content, title, subtitle, user, image, activity, error } =
+          await getNotificationContent(notification);
+        if (error) {
+          notification.error = true;
+          continue;
         }
-      ) => !n.error
-    );
+        if (user) {
+          notification.user = user;
+        } else {
+          delete notification.user;
+        }
+        if (image) {
+          notification.image = image;
+        }
+        if (content) {
+          notification.content = content;
+        }
+        if (subtitle) {
+          notification.subtitle = subtitle;
+        }
+        if (title) {
+          notification.title = title;
+        }
+        if (activity) {
+          notification.activity = activity;
+        }
+      }
+
+      notifications[0].notifications = notifications[0].notifications.filter(
+        (
+          n: INotification & {
+            error?: boolean;
+          }
+        ) => !n.error
+      );
+    } else {
+    }
 
     res.status(StatusCodes.OK).json({
       success: true,
-      data: notifications[0],
-      hasMore: notifications[0].total > page * limit,
+      data: notifications.length > 0 ? notifications[0] : [],
+      hasMore:
+        notifications.length > 0
+          ? notifications[0].total > page * limit
+          : false,
     });
   } catch (err) {
     next(err);
