@@ -11,6 +11,14 @@ export type PublicReadUserDto = {
   xp?: number;
   level?: number;
   coins?: number;
+  progress: {
+    xp: number;
+    level: number;
+    achievements: {
+      userId: string;
+      type: string;
+    }[];
+  };
 };
 
 type PublicReadUserProjection = {
@@ -30,6 +38,7 @@ export const publicReadUserProjection: PublicReadUserProjection = {
   xp: true,
   level: true,
   coins: true,
+  progress: true,
 };
 
 // For aggregate
@@ -46,4 +55,5 @@ export const publicReadUserProjectionAG: PublicReadUserProjection = {
   xp: 1,
   level: 1,
   coins: 1,
+  progress: 1,
 };

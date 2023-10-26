@@ -230,7 +230,9 @@ export async function getUser(req: Request, res: Response, next: NextFunction) {
         .populate("progress.achievements")
         .lean();
     } else {
-      user = await User.findById(id, publicReadUserProjection).lean();
+      user = await User.findById(id, publicReadUserProjection)
+        .populate("progress.achievements")
+        .lean();
 
       isFollower =
         (await Follow.findOne({ user: id, target: req.user!.id }).lean()) !=
@@ -302,7 +304,7 @@ export async function editUser(
       );
     }
 
-    const { name, bio, username, removeProfileImage } = req.body; // TODO: phone need to be verified
+    const { name, bio, username, removeProfileImage } = req.body;
 
     const editUserDto: EditUserDto = {};
     if (name) {
@@ -331,7 +333,9 @@ export async function editUser(
       }
     });
 
-    const updatedUser = await User.findById(id, privateReadUserProjection);
+    const updatedUser = await User.findById(id, privateReadUserProjection)
+      .populate("progress.achievements")
+      .lean();
 
     res.status(StatusCodes.OK).json({
       success: true,
