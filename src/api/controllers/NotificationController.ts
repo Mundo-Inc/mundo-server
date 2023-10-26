@@ -250,7 +250,13 @@ export async function getNotifications(
 
     res.status(StatusCodes.OK).json({
       success: true,
-      data: notifications.length > 0 ? notifications[0] : [],
+      data:
+        notifications.length > 0
+          ? notifications[0]
+          : {
+              notifications: [],
+              total: 0,
+            },
       hasMore:
         notifications.length > 0
           ? notifications[0].total > page * limit
