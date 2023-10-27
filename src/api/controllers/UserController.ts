@@ -198,7 +198,7 @@ export async function getLeaderBoard(
     const leaderboard = await User.aggregate([
       {
         $sort: {
-          xp: -1,
+          "progress.xp": -1,
         },
       },
       { $skip: skip },
