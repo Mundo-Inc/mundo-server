@@ -354,6 +354,36 @@ export async function editUser(
   }
 }
 
+export const deleteUserValidation: ValidationChain[] = [
+  param("id").isMongoId(),
+];
+export async function deleteUser(
+  req: Request,
+  res: Response,
+  next: NextFunction
+) {
+  try {
+    handleInputErrors(req);
+    const { id } = req.params;
+
+    if (id !== req.user!.id && req.user!.role !== "admin") {
+      throw createError(
+        strings.authorization.accessDenied,
+        StatusCodes.FORBIDDEN
+      );
+    }
+    const user = await User.findById(id);
+    if (!user) throw createError(strings.user.notFound, StatusCodes.NOT_FOUND);
+
+    await user.deleteOne();
+
+    res.status(StatusCodes.NO_CONTENT);
+  } catch (err) {
+    next(err);
+  }
+}
+
+
 export const userSettingsValidation: ValidationChain[] = [
   param("id").isMongoId(),
   body("action").isIn(["deviceToken"]),

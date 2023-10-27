@@ -5,8 +5,10 @@ import {
   createUserConnection,
   createUserConnectionValidation,
   createUserValidation,
+  deleteUser,
   deleteUserConnection,
   deleteUserConnectionValidation,
+  deleteUserValidation,
   editUser,
   editUserValidation,
   getLatestPlace,
@@ -58,7 +60,8 @@ router.get(
 router
   .route("/:id")
   .put(authMiddleware, editUserValidation, editUser)
-  .get(authMiddleware, getUserValidation, getUser);
+  .get(authMiddleware, getUserValidation, getUser)
+  .delete(authMiddleware, deleteUserValidation, deleteUser);
 
 router.put(
   "/:id/settings",

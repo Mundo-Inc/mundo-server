@@ -158,6 +158,7 @@ export const resolveFlagValidation: ValidationChain[] = [
   body("note").optional().isString(),
 ];
 
+//TODO: if resolved as delete, apply the delete effect to all the flags with the same target
 export async function resolveFlag(
   req: Request,
   res: Response,

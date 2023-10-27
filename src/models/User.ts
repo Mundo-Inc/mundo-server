@@ -1,5 +1,15 @@
-import mongoose, { Schema, type Document } from "mongoose";
-import { IAchievement } from "./Achievement";
+import mongoose, { Schema, type Document, CallbackError } from "mongoose";
+import Achievement, { IAchievement } from "./Achievement";
+import ActivitySeen from "./ActivitySeen";
+import CheckIn from "./CheckIn";
+import Comment from "./Comment";
+import Deal from "./Deal";
+import Follow from "./Follow";
+import Flag from "./Flag";
+import List from "./List";
+import Media from "./Media";
+import Reaction from "./Reaction";
+import Review from "./Review";
 
 export enum UserRoleEnum {
   admin = "admin",
@@ -194,6 +204,91 @@ UserSchema.pre("validate", function (next) {
     next(new Error("Password is required for traditional signup"));
   } else {
     next();
+  }
+});
+
+// dependency removal function
+async function removeDependencies(user: IUser) {
+  //remove all achievements of the user
+  const achievements = await Achievement.find({ userId: user._id });
+  for (const achievement of achievements) {
+    await achievement.deleteOne();
+  }
+
+  //remove activitySeen of the user
+  const activitiesSeen = await ActivitySeen.find({
+    $or: [{ observerId: user._id }, { subjectId: user._id }],
+  });
+  await Promise.all(
+    activitiesSeen.map((activitySeen) => activitySeen.deleteOne())
+  );
+
+  // remove all checkins of the user
+  const checkins = await CheckIn.find({ user: user._id });
+  await Promise.all(checkins.map((checkin) => checkin.deleteOne()));
+
+  //remove all comments of that user
+  const comments = await Comment.find({ author: user._id });
+  await Promise.all(comments.map((comment) => comment.deleteOne()));
+
+  // remove all deals created by that user
+  const deals = await Deal.find({ creator: user._id });
+  await Promise.all(deals.map((deal) => deal.deleteOne()));
+
+  // remove all followings and followers of that user
+  const follows = await Follow.find({
+    $or: [{ user: user._id }, { target: user._id }],
+  });
+  await Promise.all(follows.map((follow) => follow.deleteOne()));
+
+  // remove all flags created by that user
+  const flags = await Flag.find({ user: user._id });
+  await Promise.all(flags.map((flag) => flag.deleteOne()));
+
+  // remove all lists created by that user
+  const lists = await List.find({ owner: user._id });
+  await Promise.all(lists.map((list) => list.deleteOne()));
+
+  // remove the user from all the lists that he is a collaborator of
+  await List.updateMany(
+    { "collaborators.user": user._id },
+    { $pull: { collaborators: { user: user._id } } }
+  );
+
+  // remove all media created by that user
+  const media = await Media.find({ user: user._id });
+  await Promise.all(media.map((medium) => medium.deleteOne()));
+
+  // remove all reactions of that user
+  const reactions = await Reaction.find({ user: user._id });
+  await Promise.all(reactions.map((reaction) => reaction.deleteOne()));
+
+  // remove all reviews of that user
+  const reviews = await Review.find({ writer: user._id });
+  await Promise.all(reviews.map((review) => review.deleteOne()));
+}
+
+UserSchema.pre<IUser>(
+  "deleteOne",
+  { document: true, query: false },
+  async function (next) {
+    try {
+      const user = this;
+      removeDependencies(user);
+      next();
+    } catch (error) {
+      next(error as CallbackError);
+    }
+  }
+);
+
+UserSchema.pre("deleteOne", async function (next) {
+  try {
+    const user = await this.model.findOne(this.getQuery());
+    await removeDependencies(user);
+    next();
+  } catch (error) {
+    next(error as CallbackError);
   }
 });
 
