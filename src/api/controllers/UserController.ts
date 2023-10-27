@@ -100,6 +100,14 @@ export async function getUsers(
         $limit: limit,
       },
       {
+        $lookup: {
+          from: "achievements",
+          localField: "progress.achievements",
+          foreignField: "_id",
+          as: "progress.achievements",
+        },
+      },
+      {
         $project: publicReadUserProjection,
       },
     ]).exec();
