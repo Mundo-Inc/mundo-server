@@ -28,6 +28,10 @@ import {
   authMiddleware,
   optionalAuthMiddleware,
 } from "../middlewares/authMiddleWare";
+import {
+  getActivitiesOfaUser,
+  getActivitiesOfaUserValidation,
+} from "../controllers/UserActivityController";
 
 const router = express.Router();
 router.use(express.json());
@@ -79,6 +83,13 @@ router.get(
   authMiddleware,
   getUserConnectionsValidation,
   getUserConnections
+);
+
+router.get(
+  "/:id/userActivities",
+  authMiddleware,
+  getActivitiesOfaUserValidation,
+  getActivitiesOfaUser
 );
 
 export default router;
