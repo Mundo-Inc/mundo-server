@@ -53,6 +53,7 @@ async function getNotificationContent(notification: INotification) {
       break;
     case NotificationType.FOLLOW:
       await Follow.findById(notification.resources![0]._id)
+        // .populate("user")
         .populate({
           path: "user",
           select: publicReadUserProjection,
@@ -165,6 +166,7 @@ export async function getNotifications(
         },
       },
     ];
+
     if (unread) {
       matchPipeline.push({
         $match: {
@@ -208,7 +210,7 @@ export async function getNotifications(
       },
     ]);
 
-    if (notifications.length > 0 && notifications[0].length > 0) {
+    if (notifications.length > 0 && notifications[0].notifications.length > 0) {
       for (const notification of notifications[0].notifications) {
         const { content, title, subtitle, user, image, activity, error } =
           await getNotificationContent(notification);
@@ -245,7 +247,6 @@ export async function getNotifications(
           }
         ) => !n.error
       );
-    } else {
     }
 
     res.status(StatusCodes.OK).json({
