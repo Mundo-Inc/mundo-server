@@ -31,7 +31,7 @@ export interface IUser extends Document {
   name: string;
   phone?: string;
   bio: string;
-  profileImage?: string;
+  profileImage: string;
   password: string;
   token?: {
     verificationToken: string;
@@ -110,7 +110,7 @@ const UserSchema = new Schema<IUser>(
     },
     profileImage: {
       type: String,
-      default: null,
+      default: "",
     },
     xp: {
       type: Number,
