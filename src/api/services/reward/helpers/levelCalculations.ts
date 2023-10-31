@@ -58,8 +58,9 @@ export const calcRemainingXP = (currentXP: number): number => {
     throw new Error(`XP threshold for level ${upperLevel} is not defined.`);
   }
 
-  const xpPerLevel =
-    (upperThreshold - lowerThreshold) / (upperLevel - lowerLevel);
+  const xpPerLevel = Math.floor(
+    (upperThreshold - lowerThreshold) / (upperLevel - lowerLevel)
+  );
   const remainingXP = xpPerLevel - ((currentXP - lowerThreshold) % xpPerLevel);
 
   return remainingXP;
