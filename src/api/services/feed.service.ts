@@ -519,7 +519,6 @@ export const getUserFeed = async (
       target: userId,
     });
 
-    console.log(blocked);
 
     const activities = [];
     const skip = (page - 1) * limit;
@@ -536,8 +535,6 @@ export const getUserFeed = async (
       .skip(skip)
       .limit(limit)
       .lean();
-
-    console.log("were good");
 
     for await (const _act of userActivities) {
       const seen: FilterQuery<IActivitySeen> | null =
