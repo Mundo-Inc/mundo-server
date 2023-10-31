@@ -13,10 +13,6 @@ import {
   addRecommendActivity,
   addReviewActivity,
 } from "../services/user.activity.service";
-import {
-  addCreateRecommendXP,
-  addCreateReviewXP,
-} from "../services/ranking.service";
 import { openAiAnalyzeReview } from "../../utilities/openAi";
 import Upload from "../../models/Upload";
 import Media, { MediaTypeEnum } from "../../models/Media";
@@ -450,10 +446,8 @@ export async function createReview(
       let _act;
       if (!images && !videos && !content) {
         _act = await addRecommendActivity(authId, review._id, place);
-        await addCreateReviewXP(authId, images, videos);
       } else {
         _act = await addReviewActivity(authId, review._id, place);
-        await addCreateRecommendXP(authId, recommend);
       }
       if (_act) {
         review.userActivityId = _act._id;

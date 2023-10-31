@@ -11,7 +11,6 @@ import { getFormattedPlaceLocationAG } from "../dto/place/place-dto";
 import { readPlaceBriefProjectionAG } from "../dto/place/read-place-brief.dto";
 import { publicReadUserProjectionAG } from "../dto/user/read-user-public.dto";
 import { checkinEarning } from "../services/earning.service";
-import { addCreateCheckinXP } from "../services/ranking.service";
 import { addReward } from "../services/reward/reward.service";
 import { addCheckinActivity } from "../services/user.activity.service";
 import validate from "./validators";
@@ -193,7 +192,6 @@ export async function createCheckin(
         place,
         privacyType || ActivityPrivacyTypeEnum.PUBLIC
       );
-      await addCreateCheckinXP(authId);
       checkin.userActivityId = _act._id;
       await checkin.save();
       User.updateOne({ _id: authId }, { latestPlace: place });
