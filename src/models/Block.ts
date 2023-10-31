@@ -30,5 +30,5 @@ const BlockSchema = new Schema<IBlock>(
 
 BlockSchema.index({ user: 1, target: 1 });
 
-export default mongoose.models.Follow ||
+export default mongoose.models.Block ||
   mongoose.model<IBlock>("Block", BlockSchema);

@@ -68,6 +68,9 @@ const strings = {
   blocks: {
     alreadyExists: "Block already exists",
     notFound: "Block not found",
+    user: {
+      isBlocked: "You are not allowed to view this user's profile",
+    },
   },
   user: {
     notFound: "User not found",

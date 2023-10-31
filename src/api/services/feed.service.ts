@@ -25,6 +25,7 @@ import {
 import { createLogger } from "./logger.service";
 import { getFormattedPlaceLocationAG } from "../dto/place/place-dto";
 import { readPlaceBriefProjectionAG } from "../dto/place/read-place-brief.dto";
+import Block, { IBlock } from "../../models/Block";
 
 export type IMedia = {
   _id: string;
@@ -514,10 +515,17 @@ export const getUserFeed = async (
       }
     ).lean();
 
+    const blocked: FilterQuery<IBlock> = await Block.find({
+      target: userId,
+    });
+
+    console.log(blocked);
+
     const activities = [];
     const skip = (page - 1) * limit;
     const userActivities = UserActivity.find({
       userId: {
+        $nin: blocked.map((b: IBlock) => b.user),
         $in: [
           ...followings.map((f: IFollow) => f.target),
           new mongoose.Types.ObjectId(userId),
@@ -528,6 +536,8 @@ export const getUserFeed = async (
       .skip(skip)
       .limit(limit)
       .lean();
+
+    console.log("were good");
 
     for await (const _act of userActivities) {
       const seen: FilterQuery<IActivitySeen> | null =

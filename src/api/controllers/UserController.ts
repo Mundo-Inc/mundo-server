@@ -252,10 +252,7 @@ export async function getUser(req: Request, res: Response, next: NextFunction) {
         ],
       });
       if (isBlocked) {
-        throw createError(
-          dynamicMessage(dStrings.notFound, "User"),
-          StatusCodes.NOT_FOUND
-        );
+        throw createError(strings.blocks.user.isBlocked, StatusCodes.FORBIDDEN);
       }
       user = await User.findById(id, publicReadUserProjection)
         .populate("progress.achievements")
