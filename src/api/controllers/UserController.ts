@@ -40,6 +40,7 @@ import UserActivity, {
 } from "../../models/UserActivity";
 import mongoose from "mongoose";
 import Notification, { ResourceTypes } from "../../models/Notification";
+import CheckIn from "../../models/CheckIn";
 
 export const getUsersValidation: ValidationChain[] = [
   validate.q(query("q").optional()),
@@ -277,11 +278,14 @@ export async function getUser(req: Request, res: Response, next: NextFunction) {
       },
     ]);
 
+    const totalCheckins = await CheckIn.countDocuments({ user: id });
+
     const result = {
       ...user,
       followersCount,
       followingCount,
       reviewsCount,
+      totalCheckins,
       rank: rank[0]?.rank + 1 || 1,
       remainingXp: getRemainingXpToNextLevel(user.xp || 0),
     };
@@ -390,7 +394,6 @@ export async function deleteUser(
     next(err);
   }
 }
-
 
 export const userSettingsValidation: ValidationChain[] = [
   param("id").isMongoId(),
@@ -542,20 +545,20 @@ export async function deleteUserConnection(
     const { id } = req.params;
     const { id: authId } = req.user!;
 
-    const deletedDoc = await Follow.findOneAndRemove({
+    const deletedDoc = await Follow.findOneAndDelete({
       user: authId,
       target: id,
     });
 
     try {
-      await UserActivity.findOneAndRemove({
+      await UserActivity.findOneAndDelete({
         userId: new mongoose.Types.ObjectId(authId),
         resourceId: new mongoose.Types.ObjectId(id as string),
         activityType: ActivityTypeEnum.FOLLOWING,
         resourceType: ResourceTypeEnum.USER,
       });
 
-      await Notification.findOneAndRemove({
+      await Notification.findOneAndDelete({
         resources: {
           $elemMatch: { _id: deletedDoc._id, type: ResourceTypes.FOLLOW },
         },
