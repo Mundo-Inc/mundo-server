@@ -270,7 +270,7 @@ export async function getUser(req: Request, res: Response, next: NextFunction) {
     const rank = await User.aggregate([
       {
         $match: {
-          xp: {
+          "progress.xp": {
             $gt: user.progress.xp,
           },
         },
@@ -663,13 +663,11 @@ export async function getUserConnections(
       },
     ]);
 
-    res
-      .status(200)
-      .json({
-        success: true,
-        data: data[0]?.connections || [],
-        total: data[0]?.total || 0,
-      });
+    res.status(200).json({
+      success: true,
+      data: data[0]?.connections || [],
+      total: data[0]?.total || 0,
+    });
   } catch (err) {
     next(err);
   }
