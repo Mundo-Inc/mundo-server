@@ -28,10 +28,6 @@ import {
   type PublicReadUserDto,
 } from "../dto/user/read-user-public.dto";
 import { handleSignUp } from "../lib/profile-handlers";
-import {
-  addNewFollowingXP,
-  getRemainingXpToNextLevel,
-} from "../services/ranking.service";
 import { addNewFollowingActivity } from "../services/user.activity.service";
 import validate from "./validators";
 import UserActivity, {
@@ -41,6 +37,7 @@ import UserActivity, {
 import mongoose from "mongoose";
 import Notification, { ResourceTypes } from "../../models/Notification";
 import CheckIn from "../../models/CheckIn";
+import { calcRemainingXP } from "../services/reward/helpers/levelCalculations";
 
 export const getUsersValidation: ValidationChain[] = [
   validate.q(query("q").optional()),
@@ -115,7 +112,7 @@ export async function getUsers(
 
     result = result.map((user: PublicReadUserDto) => ({
       ...user,
-      remainingXp: getRemainingXpToNextLevel(user.xp || 0),
+      remainingXp: calcRemainingXP((user.progress && user.progress.xp) || 0),
     }));
 
     res.status(StatusCodes.OK).json({ success: true, data: result });
@@ -269,7 +266,7 @@ export async function getUser(req: Request, res: Response, next: NextFunction) {
       {
         $match: {
           xp: {
-            $gt: user.xp,
+            $gt: user.progress.xp,
           },
         },
       },
@@ -287,7 +284,7 @@ export async function getUser(req: Request, res: Response, next: NextFunction) {
       reviewsCount,
       totalCheckins,
       rank: rank[0]?.rank + 1 || 1,
-      remainingXp: getRemainingXpToNextLevel(user.xp || 0),
+      remainingXp: calcRemainingXP((user.progress && user.progress.xp) || 0),
     };
 
     if (id !== req.user!.id) {
@@ -520,7 +517,6 @@ export async function createUserConnection(
     try {
       const _act = await addNewFollowingActivity(authId, id as string);
       if (_act) {
-        await addNewFollowingXP(authId);
       }
     } catch (e) {
       console.log(`Something happened during create following: ${e}`);

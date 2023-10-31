@@ -13,7 +13,6 @@ import { createError, handleInputErrors } from "../../utilities/errorHandlers";
 import { bucketName, parseForm, region, s3 } from "../../utilities/storage";
 import { areSimilar } from "../../utilities/stringHelper";
 import { publicReadUserProjectionAG } from "../dto/user/read-user-public.dto";
-import { placeEarning } from "../services/earning.service";
 import {
   findFoursquareId,
   findTripAdvisorId,
@@ -22,8 +21,6 @@ import {
   getTripAdvisorRating,
   getYelpData,
 } from "../services/provider.service";
-import { addCreatePlaceXP } from "../services/ranking.service";
-import { addNewPlaceActivity } from "../services/user.activity.service";
 import validate from "./validators";
 
 var levenshtein = require("fast-levenshtein");
@@ -117,15 +114,7 @@ export async function createPlace(
 
       unlinkSync(filepath);
     }
-
     await place.save();
-    try {
-      await placeEarning(authId, place);
-      const _act = await addNewPlaceActivity(authId, place._id);
-      if (_act) await addCreatePlaceXP(authId);
-    } catch (e) {
-      console.log(`Something happened during create place: ${e}`);
-    }
     return res.status(StatusCodes.CREATED).json({ success: true, data: place });
   } catch (err) {
     next(err);

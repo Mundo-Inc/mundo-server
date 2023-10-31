@@ -35,3 +35,32 @@ export function calcReviewReward(review: IReview) {
     amt += rewards_amounts.REVIEW.HAS_VIDEOS;
   return amt;
 }
+
+export const calcRemainingXP = (currentXP: number): number => {
+  const currentLevel = calcLevel(currentXP);
+  const nextLevel = currentLevel + 1;
+
+  // If the user is already at or above level 100, calculate remaining XP based on a flat rate of 500 XP per level
+  if (currentLevel >= 100) {
+    return (
+      500 -
+      ((currentXP - level_thresholds[100] - (currentLevel - 100) * 500) % 500)
+    );
+  }
+
+  // If the user's level is not directly defined in the thresholds, calculate it linearly
+  const lowerLevel = Math.floor(currentLevel / 10) * 10;
+  const upperLevel = lowerLevel + 10;
+  const lowerThreshold = level_thresholds[lowerLevel] || 0;
+  const upperThreshold = level_thresholds[upperLevel];
+
+  if (upperThreshold === undefined) {
+    throw new Error(`XP threshold for level ${upperLevel} is not defined.`);
+  }
+
+  const xpPerLevel =
+    (upperThreshold - lowerThreshold) / (upperLevel - lowerLevel);
+  const remainingXP = xpPerLevel - ((currentXP - lowerThreshold) % xpPerLevel);
+
+  return remainingXP;
+};

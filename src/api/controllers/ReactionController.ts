@@ -6,7 +6,6 @@ import Notification, { ResourceTypes } from "../../models/Notification";
 import Reaction from "../../models/Reaction";
 import strings, { dStrings as ds, dynamicMessage } from "../../strings";
 import { createError, handleInputErrors } from "../../utilities/errorHandlers";
-import { addCreateReactionXP } from "../services/ranking.service";
 import { addReward } from "../services/reward/reward.service";
 
 export const createReactionValidation: ValidationChain[] = [
@@ -43,17 +42,6 @@ export async function createReaction(
       type,
       reaction,
     });
-
-    try {
-      // await updateUserFeature(userId, reaction, req.body.targetType);
-      await addCreateReactionXP(authId);
-    } catch (e) {
-      console.log(`Something happened during create reaction: ${e}`);
-      throw createError(
-        "Something went wrong",
-        StatusCodes.INTERNAL_SERVER_ERROR
-      );
-    }
 
     // adding reward
     const reward = await addReward(authId, {
