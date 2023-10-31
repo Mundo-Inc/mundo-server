@@ -34,6 +34,11 @@ import {
   getActivitiesOfaUser,
   getActivitiesOfaUserValidation,
 } from "../controllers/UserActivityController";
+import {
+  block,
+  blockValidation,
+  unblock,
+} from "../controllers/BlockController";
 
 const router = express.Router();
 router.use(express.json());
@@ -94,5 +99,10 @@ router.get(
   getActivitiesOfaUserValidation,
   getActivitiesOfaUser
 );
+
+router
+  .route("/:id/block")
+  .post(authMiddleware, blockValidation, block)
+  .delete(authMiddleware, blockValidation, unblock);
 
 export default router;

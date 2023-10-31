@@ -38,6 +38,7 @@ import mongoose from "mongoose";
 import Notification, { ResourceTypes } from "../../models/Notification";
 import CheckIn from "../../models/CheckIn";
 import { calcRemainingXP } from "../services/reward/helpers/levelCalculations";
+import Block from "../../models/Block";
 
 export const getUsersValidation: ValidationChain[] = [
   validate.q(query("q").optional()),
@@ -244,6 +245,18 @@ export async function getUser(req: Request, res: Response, next: NextFunction) {
         .populate("progress.achievements")
         .lean();
     } else {
+      const isBlocked = await Block.findOne({
+        $or: [
+          { user: id, target: req.user!.id },
+          { user: req.user!.id, target: id },
+        ],
+      });
+      if (isBlocked) {
+        throw createError(
+          dynamicMessage(dStrings.notFound, "User"),
+          StatusCodes.NOT_FOUND
+        );
+      }
       user = await User.findById(id, publicReadUserProjection)
         .populate("progress.achievements")
         .lean();

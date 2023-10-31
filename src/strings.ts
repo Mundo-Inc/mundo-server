@@ -65,6 +65,10 @@ const strings = {
     alreadyExists: "Follow already exists",
     notFound: "Follow not found",
   },
+  blocks: {
+    alreadyExists: "Block already exists",
+    notFound: "Block not found",
+  },
   user: {
     notFound: "User not found",
     noLatestPlace: "No latest place",
