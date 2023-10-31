@@ -609,41 +609,66 @@ export async function getUserConnections(
         },
       },
       {
-        $skip: skipNumber,
-      },
-      {
-        $limit: limitNumber,
-      },
-      {
-        $lookup: {
-          from: "users",
-          localField: type === "followers" ? "user" : "target",
-          foreignField: "_id",
-          as: "user",
-          pipeline: [
+        $facet: {
+          total: [
+            {
+              $count: "total",
+            },
+          ],
+          connections: [
+            {
+              $skip: skipNumber,
+            },
+            {
+              $limit: limitNumber,
+            },
             {
               $lookup: {
-                from: "achievements",
-                localField: "progress.achievements",
+                from: "users",
+                localField: type === "followers" ? "user" : "target",
                 foreignField: "_id",
-                as: "progress.achievements",
+                as: "user",
+                pipeline: [
+                  {
+                    $lookup: {
+                      from: "achievements",
+                      localField: "progress.achievements",
+                      foreignField: "_id",
+                      as: "progress.achievements",
+                    },
+                  },
+                ],
+              },
+            },
+            {
+              $unwind: "$user",
+            },
+            {
+              $project: {
+                user: publicReadUserProjection,
+                createdAt: 1,
               },
             },
           ],
         },
       },
       {
-        $unwind: "$user",
-      },
-      {
         $project: {
-          user: publicReadUserProjection,
-          createdAt: 1,
+          total: {
+            $arrayElemAt: ["$total.total", 0],
+          },
+          connections: 1,
         },
       },
     ]);
 
-    res.status(200).json({ success: true, data });
+    res
+      .status(200)
+      .json({
+        success: true,
+        data: data[0]?.connections || [],
+        total: data[0]?.total || 0,
+      });
   } catch (err) {
     next(err);
   }
