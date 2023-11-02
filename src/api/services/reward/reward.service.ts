@@ -16,6 +16,7 @@ import Comment from "../../../models/Comment";
 import CheckIn from "../../../models/CheckIn";
 import { AchievementTypeEnum } from "../../../models/Achievement";
 import { eligibleForAchivement } from "./helpers/achivementEligibility";
+import { addLevelUpActivity } from "../user.activity.service";
 
 const getValidatedEntity = async (
   refType: string,
@@ -79,6 +80,10 @@ const saveRewardAndUpdateUser = async (
     user.progress.level
   );
   await user.save();
+
+  if (oldLevel !== user.progress.level) {
+    await addLevelUpActivity(user._id);
+  }
 
   return {
     oldXP,

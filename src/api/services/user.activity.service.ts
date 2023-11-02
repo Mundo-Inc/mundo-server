@@ -170,7 +170,7 @@ export const addLevelUpActivity = async (
     resourceId: userId,
     privacyType,
   };
-  return await addActivity(activityParams, true);
+  return await UserActivity.create(activityParams);
 };
 
 export const addNewFollowingActivity = async (
