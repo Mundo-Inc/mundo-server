@@ -31,7 +31,8 @@ export async function block(req: Request, res: Response, next: NextFunction) {
       user: authId,
       target: id,
     });
-    res.status(StatusCodes.CREATED).json({ success: true, data: block });
+
+    res.sendStatus(StatusCodes.NO_CONTENT);
   } catch (err) {
     next(err);
   }

@@ -245,7 +245,13 @@ export async function getUser(req: Request, res: Response, next: NextFunction) {
         .populate("progress.achievements")
         .lean();
     } else {
-      const isBlocked = await Block.findOne({ user: id, target: req.user!.id });
+      const isBlocked = await Block.findOne({
+        $or: [
+          { user: id, target: req.user!.id },
+          { user: req.user!.id, target: id },
+        ],
+      });
+      console.log(isBlocked);
       if (isBlocked) {
         throw createError(strings.blocks.user.isBlocked, StatusCodes.FORBIDDEN);
       }
