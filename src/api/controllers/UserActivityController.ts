@@ -8,11 +8,27 @@ import mongoose from "mongoose";
 import { publicReadUserProjectionAG } from "../dto/user/read-user-public.dto";
 import Comment from "../../models/Comment";
 import Reaction from "../../models/Reaction";
+import validate from "./validators";
 
 export const getActivitiesOfaUserValidation: ValidationChain[] = [
   param("id").isMongoId(),
-  query("page").optional().isInt(),
-  query("limit").optional().isInt(),
+  query("type")
+    .optional()
+    .toUpperCase()
+    .isIn([
+      "NEW_CHECKIN",
+      "NEW_REVIEW",
+      "NEW_RECOMMEND",
+      "REACT_TO_REVIEW",
+      "REACT_TO_PLACE",
+      "ADD_PLACE",
+      "GOT_BADGE",
+      "LEVEL_UP",
+      "CREATE_DEAL",
+      "FOLLOWING",
+    ]),
+  validate.page(query("page").optional()),
+  validate.limit(query("limit").optional(), 1, 50),
 ];
 
 export async function getActivitiesOfaUser(
@@ -27,8 +43,22 @@ export async function getActivitiesOfaUser(
     const page = Number(req.query.page) || 1;
     const limit = Number(req.query.limit) || 20;
 
-    const total = await UserActivity.countDocuments({ userId });
-    const userActivities = await UserActivity.find({ userId })
+    const total = await UserActivity.countDocuments({
+      userId,
+      ...(req.query.type
+        ? {
+            activityType: req.query.type,
+          }
+        : {}),
+    });
+    const userActivities = await UserActivity.find({
+      userId,
+      ...(req.query.type
+        ? {
+            activityType: req.query.type,
+          }
+        : {}),
+    })
       .sort({ createdAt: -1 })
       .skip((page - 1) * limit)
       .limit(limit);
