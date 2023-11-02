@@ -22,10 +22,12 @@ export async function getActivitiesOfaUser(
 ) {
   try {
     handleInputErrors(req);
-    const { id: authId } = req.user!;
+
     const userId = req.params.id;
     const page = Number(req.query.page) || 1;
     const limit = Number(req.query.limit) || 20;
+
+    const total = await UserActivity.countDocuments({ userId });
     const userActivities = await UserActivity.find({ userId })
       .sort({ createdAt: -1 })
       .skip((page - 1) * limit)
@@ -142,7 +144,9 @@ export async function getActivitiesOfaUser(
       });
     }
 
-    res.status(StatusCodes.OK).json({ success: true, result: result || [] });
+    res
+      .status(StatusCodes.OK)
+      .json({ success: true, data: result || [], total: total });
   } catch (err) {
     next(err);
   }

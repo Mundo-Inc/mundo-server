@@ -41,7 +41,7 @@ export async function getCheckins(
 
     const { id: userId } = req.user!;
 
-    const { user, place, page: reqPage, limit: reqLimit, count } = req.query;
+    const { user, place, page: reqPage, limit: reqLimit } = req.query;
     const page = parseInt(reqPage as string) || 1;
     const limit = parseInt(reqLimit as string) || 50;
     const skip = (page - 1) * limit;
