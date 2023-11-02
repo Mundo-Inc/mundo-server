@@ -161,6 +161,7 @@ export const addGotBadgeActivity = async (
 
 export const addLevelUpActivity = async (
   userId: string,
+  newLevel: number,
   privacyType: string = ActivityPrivacyTypeEnum.PUBLIC
 ) => {
   const activityParams = {
@@ -169,6 +170,7 @@ export const addLevelUpActivity = async (
     resourceType: ResourceTypeEnum.USER,
     resourceId: userId,
     privacyType,
+    newLevel,
   };
   return await UserActivity.create(activityParams);
 };

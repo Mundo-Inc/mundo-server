@@ -36,6 +36,7 @@ export interface IUserActivity extends Document {
   resourceId: mongoose.Types.ObjectId;
   placeId?: mongoose.Types.ObjectId;
   privacyType: ActivityPrivacyTypeEnum;
+  newLevel?: number;
   createdAt: Date;
 }
 
@@ -66,6 +67,10 @@ const UserActivitySchema: Schema = new Schema<IUserActivity>(
       type: String,
       enum: Object.values(ActivityPrivacyTypeEnum),
       required: true,
+    },
+    newLevel: {
+      type: Number,
+      required: false,
     },
     createdAt: {
       type: Date,
