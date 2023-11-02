@@ -81,7 +81,7 @@ const saveRewardAndUpdateUser = async (
   );
   await user.save();
 
-  if (oldLevel !== user.progress.level) {
+  if (oldLevel && oldLevel !== user.progress.level) {
     await addLevelUpActivity(user._id);
   }
 
