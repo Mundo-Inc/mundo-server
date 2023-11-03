@@ -251,9 +251,19 @@ export async function getUser(req: Request, res: Response, next: NextFunction) {
           { user: req.user!.id, target: id },
         ],
       });
-      console.log(isBlocked);
+
       if (isBlocked) {
-        throw createError(strings.blocks.user.isBlocked, StatusCodes.FORBIDDEN);
+        if (isBlocked.user.toString() === req.user!.id) {
+          throw createError(
+            strings.blocks.user.isBlocked,
+            StatusCodes.FORBIDDEN
+          );
+        } else {
+          throw createError(
+            strings.blocks.user.hasBlocked,
+            StatusCodes.FORBIDDEN
+          );
+        }
       }
       user = await User.findById(id, publicReadUserProjection)
         .populate("progress.achievements")

@@ -20,12 +20,14 @@ export async function block(req: Request, res: Response, next: NextFunction) {
     const { id: authId } = req.user!;
 
     let block = await Block.findOne({ user: authId, target: id });
-    if (block)
+    if (block) {
       throw createError(strings.blocks.alreadyExists, StatusCodes.CONFLICT);
+    }
 
     const userTarget = User.findById(id);
-    if (!userTarget)
+    if (!userTarget) {
       throw createError(strings.user.notFound, StatusCodes.NOT_FOUND);
+    }
 
     block = await Block.create({
       user: authId,
