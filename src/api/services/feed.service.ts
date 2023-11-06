@@ -459,10 +459,12 @@ const calculateScore = async (
   let distanceScore;
   if (location && place) {
     const { lat: lat2, lng: lon2 } = getLatLng(place);
-    distanceScore = 1 / haversine(location.lat, location.lng, lat2, lon2);
+    distanceScore =
+      1 / Math.max(haversine(location.lat, location.lng, lat2, lon2), 0.000001);
   } else if (user.latestPlace && place) {
     const userPlace = await Place.findById(user.latestPlace);
-    distanceScore = 1 / (await calculateDistance(userPlace, place));
+    distanceScore =
+      1 / Math.max(await calculateDistance(userPlace, place), 0.000001);
   } else {
     distanceScore = 0.000001;
   }
@@ -518,7 +520,6 @@ export const getUserFeed = async (
     const blocked: FilterQuery<IBlock> = await Block.find({
       target: userId,
     });
-
 
     const activities = [];
     const skip = (page - 1) * limit;

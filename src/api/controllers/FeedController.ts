@@ -1,9 +1,10 @@
 import type { NextFunction, Request, Response } from "express";
 import { param, query, type ValidationChain } from "express-validator";
 import { StatusCodes } from "http-status-codes";
-import mongoose, { FilterQuery } from "mongoose";
+import mongoose from "mongoose";
 
 import ActivitySeen from "../../models/ActivitySeen";
+import Block from "../../models/Block";
 import Comment from "../../models/Comment";
 import Follow, { IFollow } from "../../models/Follow";
 import Reaction from "../../models/Reaction";
@@ -12,9 +13,8 @@ import { dStrings, dynamicMessage } from "../../strings";
 import { createError, handleInputErrors } from "../../utilities/errorHandlers";
 import { publicReadUserProjectionAG } from "../dto/user/read-user-public.dto";
 import { getResourceInfo, getUserFeed } from "../services/feed.service";
-import validate from "./validators";
-import Block, { IBlock } from "../../models/Block";
 import { getForYouFeed } from "../services/foryou.service";
+import validate from "./validators";
 
 export const getFeedValidation: ValidationChain[] = [
   validate.page(query("page").optional()),
@@ -330,7 +330,11 @@ export async function getComments(
   }
 }
 
-export async function getForYou(req: Request, res: Response, next: NextFunction) {
+export async function getForYou(
+  req: Request,
+  res: Response,
+  next: NextFunction
+) {
   try {
     handleInputErrors(req);
 
