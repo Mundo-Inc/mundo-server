@@ -7,6 +7,7 @@ import Reaction from "../../models/Reaction";
 import strings, { dStrings as ds, dynamicMessage } from "../../strings";
 import { createError, handleInputErrors } from "../../utilities/errorHandlers";
 import { addReward } from "../services/reward/reward.service";
+import UserActivity from "../../models/UserActivity";
 
 export const createReactionValidation: ValidationChain[] = [
   body("target").isMongoId(),
@@ -49,6 +50,12 @@ export async function createReaction(
       refId: newReaction._id,
       userActivityId: target,
     });
+
+    // update reaction count in user activity
+    await UserActivity.updateOne(
+      { _id: target },
+      { $inc: { "engagements.reactions": 1 } }
+    );
 
     res
       .status(StatusCodes.CREATED)
@@ -97,6 +104,12 @@ export async function deleteReaction(
         StatusCodes.INTERNAL_SERVER_ERROR
       );
     }
+
+    // update reaction count in user activity
+    await UserActivity.updateOne(
+      { _id: reaction.target },
+      { $inc: { "engagements.reactions": -1 } }
+    );
 
     try {
       await Notification.deleteMany({

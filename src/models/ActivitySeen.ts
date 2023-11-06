@@ -2,20 +2,13 @@ import mongoose, { Schema, type Document } from "mongoose";
 
 export interface IActivitySeen extends Document {
   observerId: mongoose.Types.ObjectId; // user who seen the activity
-  subjectId: mongoose.Types.ObjectId; // activity owner
   activityId: mongoose.Types.ObjectId; // id of activity
   seenAt: Date;
-  weight: Number; // occurrence of an activity by a user
+  count: Number; // occurrence of an seen by a user
 }
 
 const ActivitySeenSchema: Schema = new Schema<IActivitySeen>({
   observerId: {
-    type: Schema.Types.ObjectId,
-    ref: "User",
-    required: true,
-    index: true,
-  },
-  subjectId: {
     type: Schema.Types.ObjectId,
     ref: "User",
     required: true,
@@ -28,15 +21,14 @@ const ActivitySeenSchema: Schema = new Schema<IActivitySeen>({
     index: true,
   },
   seenAt: { type: Date, default: Date.now, index: true },
-  weight: { type: Number, default: 0, index: true },
+  count: { type: Number, default: 1, index: true },
 });
 
 ActivitySeenSchema.index({
   observerId: 1,
-  subjectId: 1,
   activityId: 1,
   seenAt: -1,
-  weight: 1,
+  count: 1,
 });
 
 export default mongoose.models.ActivitySeen ||

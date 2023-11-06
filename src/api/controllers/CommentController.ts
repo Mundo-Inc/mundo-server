@@ -91,6 +91,12 @@ export async function createComment(
 
     let commentObj = comment.toObject();
 
+    // update comments count in user activity
+    await UserActivity.updateOne(
+      { _id: activity },
+      { $inc: { "engagements.comments": 1 } }
+    );
+
     // adding reward
     const reward = await addReward(user._id, {
       refType: "Comment",
@@ -200,6 +206,12 @@ export async function deleteCommentLike(
         path: "progress.achievements",
       },
     });
+
+    // update comments count in user activity
+    await UserActivity.updateOne(
+      { _id: comment.userActivity },
+      { $inc: { "engagements.comments": -1 } }
+    );
 
     res.status(StatusCodes.OK).json({
       success: true,

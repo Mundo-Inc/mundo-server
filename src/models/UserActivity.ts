@@ -38,6 +38,11 @@ export interface IUserActivity extends Document {
   privacyType: ActivityPrivacyTypeEnum;
   newLevel?: number;
   createdAt: Date;
+  engagements: {
+    reactions: number;
+    comments: number;
+    views: number;
+  }
 }
 
 const UserActivitySchema: Schema = new Schema<IUserActivity>(
@@ -76,6 +81,20 @@ const UserActivitySchema: Schema = new Schema<IUserActivity>(
       type: Date,
       default: Date.now,
     },
+    engagements: {
+      reactions: {
+        type: Number,
+        default: 0,
+      },
+      comments: {
+        type: Number,
+        default: 0,
+      },
+      views: {
+        type: Number,
+        default: 0,
+      }
+    }
   },
   { timestamps: true }
 );

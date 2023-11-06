@@ -14,6 +14,7 @@ import { publicReadUserProjectionAG } from "../dto/user/read-user-public.dto";
 import { getResourceInfo, getUserFeed } from "../services/feed.service";
 import validate from "./validators";
 import Block, { IBlock } from "../../models/Block";
+import { getForYouFeed } from "../services/foryou.service";
 
 export const getFeedValidation: ValidationChain[] = [
   validate.page(query("page").optional()),
@@ -324,6 +325,30 @@ export async function getComments(
     ]);
 
     res.status(StatusCodes.OK).json({ success: true, data: comments });
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function getForYou(req: Request, res: Response, next: NextFunction) {
+  try {
+    handleInputErrors(req);
+
+    const { id: authId } = req.user!;
+    const page = Number(req.query.page) || 1;
+    const limit = Number(req.query.limit) || 20;
+    const { lng, lat } = req.query;
+
+    const result = await getForYouFeed(
+      authId,
+      page,
+      limit,
+      lng && lat
+        ? { lng: Number(lng as string), lat: Number(lat as string) }
+        : undefined
+    );
+
+    // res.status(StatusCodes.OK).json({ success: true, result: result || [] });
   } catch (err) {
     next(err);
   }

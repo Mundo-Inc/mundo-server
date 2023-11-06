@@ -14,6 +14,10 @@ import User from "../../models/User";
 import UserFeature from "../../models/UserFeature";
 import { areSimilar } from "../../utilities/stringHelper";
 import axios from "axios";
+import UserActivity from "../../models/UserActivity";
+import Reaction from "../../models/Reaction";
+import Comment from "../../models/Comment";
+import ActivitySeen from "../../models/ActivitySeen";
 
 export async function devTests(
   req: Request,
@@ -415,6 +419,29 @@ async function updateExistingUsersProgress() {
     }
   );
   console.log("All users updated!");
+}
+
+export async function engagements(
+  req: Request,
+  res: Response,
+  next: NextFunction
+) {
+  try {
+    console.log("Populating engagements");
+
+    const userActivities = await UserActivity.find({ engagements: { $exists: false } });
+    for (const activity of userActivities) {
+      const reactionsCount = await Reaction.countDocuments({ target: activity._id });
+      const commentsCount = await Comment.countDocuments({ userActivity: activity._id });
+      const viewsCount = await ActivitySeen.countDocuments({ activityId: activity._id });
+      await activity.updateOne({ engagements: { reactions: reactionsCount, comments: commentsCount, views: viewsCount } });
+      console.log(activity._id);
+    }
+    console.log("Populating engagements finished successfully ✅");
+    return res.sendStatus(StatusCodes.NO_CONTENT)
+  } catch (error) {
+    console.error(error);
+  }
 }
 
 const categories: string[] = ["restaurant", "bar", "cafe"];
