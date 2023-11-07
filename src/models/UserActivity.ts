@@ -1,4 +1,5 @@
 import mongoose, { Schema, type Document } from "mongoose";
+import { weights } from "../config/trendFactors";
 
 export enum ActivityTypeEnum {
   NEW_CHECKIN = "NEW_CHECKIN",
@@ -37,6 +38,7 @@ export interface IUserActivity extends Document {
   placeId?: mongoose.Types.ObjectId;
   privacyType: ActivityPrivacyTypeEnum;
   newLevel?: number;
+  hotnessScore: number;
   createdAt: Date;
   engagements: {
     reactions: number;
@@ -81,6 +83,10 @@ const UserActivitySchema: Schema = new Schema<IUserActivity>(
       type: Date,
       default: Date.now,
     },
+    hotnessScore: {
+      type: Number,
+      default: 0, // Initialized to a default value
+    },
     engagements: {
       reactions: {
         type: Number,
@@ -105,6 +111,26 @@ UserActivitySchema.index({
   resourceType: 1,
   resourceId: 1,
 });
+
+UserActivitySchema.methods.calculateHotnessScore = function () {
+  const hoursSinceCreation = Math.max(1, (new Date().getTime() - this.createdAt.getTime()) / 36e5);
+  const reactionWeight = weights.reaction;
+  const commentWeight = weights.comment;
+  const viewWeight = weights.view;
+  const timeDecayFactor = Math.pow(1 / hoursSinceCreation, weights.timeDecay);
+
+  const hotnessScore = (this.engagements.reactions * reactionWeight +
+    this.engagements.comments * commentWeight +
+    this.engagements.views * viewWeight) * timeDecayFactor;
+
+  return hotnessScore;
+};
+
+UserActivitySchema.methods.updateHotnessScore = function () {
+  const hotnessScore = this.calculateHotnessScore();
+  this.hotnessScore = hotnessScore;
+  return this.save();
+};
 
 export default mongoose.models.UserActivity ||
   mongoose.model<IUserActivity>("UserActivity", UserActivitySchema);
