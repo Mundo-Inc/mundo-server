@@ -338,7 +338,9 @@ export async function createReview(
     const uploadIds: string[] = [];
     const imageMediaIds: string[] = [];
     const videoMediaIds: string[] = [];
+    let hasMedia = false;
     if (images && images.length > 0) {
+      hasMedia = true;
       for (const image of images) {
         const upload = await Upload.findById(image.uploadId);
         if (!upload) {
@@ -374,6 +376,7 @@ export async function createReview(
       }
     }
     if (videos && videos.length > 0) {
+      hasMedia = true;
       for (const video of videos) {
         const upload = await Upload.findById(video.uploadId);
         if (!upload) {
@@ -447,7 +450,7 @@ export async function createReview(
       if (!images && !videos && !content) {
         _act = await addRecommendActivity(authId, review._id, place);
       } else {
-        _act = await addReviewActivity(authId, review._id, place);
+        _act = await addReviewActivity(authId, review._id, place, hasMedia);
       }
       if (_act) {
         review.userActivityId = _act._id;
@@ -687,3 +690,5 @@ export async function getReview(
     next(err);
   }
 }
+
+// TODO: By adding Edit Review API make sure to consider updating hasMedia field of the activity if the review has media or not

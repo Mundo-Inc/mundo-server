@@ -42,6 +42,8 @@ async function main() {
     console.log(`Server listening on port ${config.APP_PORT}`);
   });
 
+  await import("./cronjobs/updateTrendScores");
+
   if (process.env.NODE_ENV === "production") {
     await import("./cronjobs/notification");
   }

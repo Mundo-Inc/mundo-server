@@ -428,12 +428,20 @@ export async function engagements(
 ) {
   try {
     console.log("Populating engagements");
-
-    const userActivities = await UserActivity.find({ engagements: { $exists: false } });
+    const userActivities = await UserActivity.find();
     for (const activity of userActivities) {
       const reactionsCount = await Reaction.countDocuments({ target: activity._id });
       const commentsCount = await Comment.countDocuments({ userActivity: activity._id });
       const viewsCount = await ActivitySeen.countDocuments({ activityId: activity._id });
+      activity.hasMedia = false;
+      await activity.save();
+      if (activity.resourceType === "Review") {
+        const relatedReview = await Review.findById(activity.resourceId);
+        if (relatedReview && ((relatedReview.images && relatedReview.images.length > 0) || (relatedReview.videos && relatedReview.videos.length > 0))) {
+          activity.hasMedia = true;
+          await activity.save();
+        }
+      }
       await activity.updateOne({ engagements: { reactions: reactionsCount, comments: commentsCount, views: viewsCount } });
       console.log(activity._id);
     }

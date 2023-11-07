@@ -63,6 +63,7 @@ export const addReviewActivity = async (
   userId: string,
   reviewId: string,
   placeId: string | null = null,
+  hasMedia: boolean = false,
   privacyType: string = ActivityPrivacyTypeEnum.PUBLIC,
   createdAt?: Date
 ) => {
@@ -74,6 +75,7 @@ export const addReviewActivity = async (
     resourceType: ResourceTypeEnum.REVIEW,
     resourceId: reviewId,
     placeId,
+    hasMedia,
     privacyType,
   };
   if (createdAt) {

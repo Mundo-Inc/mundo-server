@@ -38,6 +38,7 @@ export interface IUserActivity extends Document {
   placeId?: mongoose.Types.ObjectId;
   privacyType: ActivityPrivacyTypeEnum;
   newLevel?: number;
+  hasMedia: boolean;
   hotnessScore: number;
   createdAt: Date;
   engagements: {
@@ -86,6 +87,10 @@ const UserActivitySchema: Schema = new Schema<IUserActivity>(
     hotnessScore: {
       type: Number,
       default: 0, // Initialized to a default value
+    },
+    hasMedia: {
+      type: Boolean,
+      default: false,
     },
     engagements: {
       reactions: {
