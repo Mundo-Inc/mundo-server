@@ -18,7 +18,7 @@ import validate from "./validators";
 
 export const getFeedValidation: ValidationChain[] = [
   validate.page(query("page").optional()),
-  validate.limit(query("limit").optional(), 10, 50),
+  validate.limit(query("limit").optional(), 5, 50),
   validate.lng(query("lng").optional()),
   validate.lat(query("lat").optional()),
 ];
@@ -352,7 +352,7 @@ export async function getForYou(
         : undefined
     );
 
-    // res.status(StatusCodes.OK).json({ success: true, result: result || [] });
+    res.status(StatusCodes.OK).json({ success: true, result: result || [] });
   } catch (err) {
     next(err);
   }

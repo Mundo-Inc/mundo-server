@@ -19,7 +19,7 @@ async function updateHotnessScores() {
 }
 
 // Set up a cron job to run the updateHotnessScores function every hour
-cron.schedule('*/30 * * * *', async () => {
+cron.schedule('*/10 * * * *', async () => {
     console.log('Cron job started: Updating hotness scores.');
     await updateHotnessScores();
     console.log('Cron job finished.');

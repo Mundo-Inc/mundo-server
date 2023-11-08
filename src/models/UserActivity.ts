@@ -115,6 +115,7 @@ UserActivitySchema.index({
   activityType: 1,
   resourceType: 1,
   resourceId: 1,
+  hotnessScore: -1,
 });
 
 UserActivitySchema.methods.calculateHotnessScore = function () {
