@@ -13,7 +13,6 @@ import { dStrings, dynamicMessage } from "../../strings";
 import { createError, handleInputErrors } from "../../utilities/errorHandlers";
 import { publicReadUserProjectionAG } from "../dto/user/read-user-public.dto";
 import { getResourceInfo, getUserFeed } from "../services/feed.service";
-import { getForYouFeed } from "../services/foryou.service";
 import validate from "./validators";
 
 export const getFeedValidation: ValidationChain[] = [
@@ -21,6 +20,7 @@ export const getFeedValidation: ValidationChain[] = [
   validate.limit(query("limit").optional(), 5, 50),
   validate.lng(query("lng").optional()),
   validate.lat(query("lat").optional()),
+  validate.isForYou(query("isForYou").optional()),
 ];
 export async function getFeed(req: Request, res: Response, next: NextFunction) {
   try {
@@ -30,10 +30,12 @@ export async function getFeed(req: Request, res: Response, next: NextFunction) {
 
     const page = Number(req.query.page) || 1;
     const limit = Number(req.query.limit) || 20;
+    const isForYou = Boolean(req.query.isForYou) || false;
     const { lng, lat } = req.query;
 
     const result = await getUserFeed(
       authId,
+      isForYou,
       page,
       limit,
       lng && lat
@@ -325,34 +327,6 @@ export async function getComments(
     ]);
 
     res.status(StatusCodes.OK).json({ success: true, data: comments });
-  } catch (err) {
-    next(err);
-  }
-}
-
-export async function getForYou(
-  req: Request,
-  res: Response,
-  next: NextFunction
-) {
-  try {
-    handleInputErrors(req);
-
-    const { id: authId } = req.user!;
-    const page = Number(req.query.page) || 1;
-    const limit = Number(req.query.limit) || 20;
-    const { lng, lat } = req.query;
-
-    const result = await getForYouFeed(
-      authId,
-      page,
-      limit,
-      lng && lat
-        ? { lng: Number(lng as string), lat: Number(lat as string) }
-        : undefined
-    );
-
-    res.status(StatusCodes.OK).json({ success: true, result: result || [] });
   } catch (err) {
     next(err);
   }

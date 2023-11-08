@@ -10,15 +10,12 @@ import {
   getCommentsValidation,
   getFeed,
   getFeedValidation,
-  getForYou,
 } from "../controllers/FeedController";
 
 const router = express.Router();
 router.use(express.json());
 
 router.get("/", authMiddleware, getFeedValidation, getFeed);
-
-router.get("/foryou", authMiddleware, getFeedValidation, getForYou);
 
 router
   .route("/:id")

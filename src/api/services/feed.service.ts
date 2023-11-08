@@ -1,4 +1,4 @@
-import mongoose, { type FilterQuery } from "mongoose";
+import mongoose, { SortOrder, type FilterQuery } from "mongoose";
 
 import Achievement from "../../models/Achievement";
 import ActivitySeen, { type IActivitySeen } from "../../models/ActivitySeen";
@@ -405,9 +405,9 @@ const haversine = (lat1: number, lon1: number, lat2: number, lon2: number) => {
   const a =
     Math.sin(dLat / 2) * Math.sin(dLat / 2) +
     Math.cos(lat1 * rad) *
-      Math.cos(lat2 * rad) *
-      Math.sin(dLon / 2) *
-      Math.sin(dLon / 2);
+    Math.cos(lat2 * rad) *
+    Math.sin(dLon / 2) *
+    Math.sin(dLon / 2);
 
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 
@@ -499,6 +499,7 @@ const calculateScore = async (
 
 export const getUserFeed = async (
   userId: string,
+  isForYou: boolean = false,
   page: number = 1,
   limit: number = 20,
   location?: {
@@ -523,7 +524,8 @@ export const getUserFeed = async (
 
     const activities = [];
     const skip = (page - 1) * limit;
-    const userActivities = UserActivity.find({
+
+    let query: object = {
       userId: {
         $nin: blocked.map((b: IBlock) => b.user),
         $in: [
@@ -531,8 +533,23 @@ export const getUserFeed = async (
           new mongoose.Types.ObjectId(userId),
         ],
       },
-    })
-      .sort({ createdAt: -1 })
+    };
+
+    if (isForYou) {
+      query = {
+        userId: {
+          $nin: blocked.map((b: IBlock) => b.user),
+        },
+        hasMedia: true,
+      };
+    }
+
+    let sortBy: { [key: string]: SortOrder } = { createdAt: -1 }
+    if (isForYou)
+      sortBy = { hotnessScore: -1 }
+
+    const userActivities = UserActivity.find(query)
+      .sort(sortBy)
       .skip(skip)
       .limit(limit)
       .lean();
