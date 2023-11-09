@@ -59,3 +59,12 @@ export function areSimilar(str1: string, str2: string) {
     // windowedLevenshtein(longer, shorter, levThreshold)
   );
 }
+
+export function areStrictlySimilar(str1: string, str2: string) {
+  if (!str1 || !str2) return false;
+  const cleanedStr1 = str1.trim().toLowerCase()
+  const cleanedStr2 = str2.trim().toLowerCase()
+  return (
+    cleanedStr1.includes(cleanedStr2) || cleanedStr2.includes(cleanedStr1) || cleanedStr1 === cleanedStr2
+  );
+}

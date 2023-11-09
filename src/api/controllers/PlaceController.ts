@@ -1,7 +1,7 @@
 import { PutObjectCommand } from "@aws-sdk/client-s3";
 import axios from "axios";
 import type { NextFunction, Request, Response } from "express";
-import { param, query, type ValidationChain } from "express-validator";
+import { body, param, query, type ValidationChain } from "express-validator";
 import { type File } from "formidable";
 import { readFileSync, unlinkSync } from "fs";
 import { StatusCodes } from "http-status-codes";
@@ -11,7 +11,7 @@ import Place, { type IPlace } from "../../models/Place";
 import { dStrings, dynamicMessage } from "../../strings";
 import { createError, handleInputErrors } from "../../utilities/errorHandlers";
 import { bucketName, parseForm, region, s3 } from "../../utilities/storage";
-import { areSimilar } from "../../utilities/stringHelper";
+import { areSimilar, areStrictlySimilar } from "../../utilities/stringHelper";
 import { publicReadUserProjectionAG } from "../dto/user/read-user-public.dto";
 import {
   findFoursquareId,
@@ -22,6 +22,7 @@ import {
   getYelpData,
 } from "../services/provider.service";
 import validate from "./validators";
+import { getDetailedPlace } from "./SinglePlaceController";
 
 var levenshtein = require("fast-levenshtein");
 var country = require("countrystatesjs");
@@ -33,6 +34,7 @@ export const createPlaceValidation: ValidationChain[] = [
   // validate.place.priceRange(body("priceRange").optional()),
   // validate.place.categories(body("categories").optional()),
 ];
+
 export async function createPlace(
   req: Request,
   res: Response,
@@ -99,9 +101,8 @@ export async function createPlace(
     if (files.image && files.image.length > 0) {
       const { filepath } = files.image[0] as File;
       let fileBuffer = readFileSync(filepath);
-      const key = `${
-        process.env.NODE_ENV === "production" ? "places" : "devplaces"
-      }/${place._id}/thumbnail.jpg`;
+      const key = `${process.env.NODE_ENV === "production" ? "places" : "devplaces"
+        }/${place._id}/thumbnail.jpg`;
       await s3.send(
         new PutObjectCommand({
           Bucket: bucketName,
@@ -194,8 +195,8 @@ export async function getPlaces(
           : "score"
         : req.query.sort
       : lat && lng
-      ? "distance"
-      : "score";
+        ? "distance"
+        : "score";
     const limit = Number(req.query.limit) || 50;
     const page = Number(req.query.page) || 1;
     const skip = (page - 1) * limit;
@@ -370,113 +371,6 @@ export async function getPlaces(
       ...lookupPipeline,
       ...projectPipeline,
     ]);
-
-    // const types = ["restaurant", "cafe", "bar"];
-    // if (lng && lat && places.length !== limit) {
-    //   let results: IGPNearbySearch["results"] = [];
-    //   await Promise.all(
-    //     types.map(async (type, index) => {
-    //       return axios(
-    //         `https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${lat}%2C${lng}&radius=${
-    //           radius ? (radius === "global" ? 100000 : Number(radius)) : 1000
-    //         }${q ? `&keyword=${q}` : ""}&type=${type}&key=${
-    //           process.env.GOOGLE_PLACES_API_KEY
-    //         }`
-    //       ).then((res) => {
-    //         if (res.data.status === "OK") {
-    //           for (const result of res.data.results) {
-    //             if (!results.find((r) => r.place_id === result.place_id)) {
-    //               results.push(result);
-    //             }
-    //           }
-    //         }
-    //       });
-    //     })
-    //   );
-
-    //   if (q && (q as string).length >= 2 && results.length === 0) {
-    //     await axios(
-    //       `https://maps.googleapis.com/maps/api/place/findplacefromtext/json?input=${q}&inputtype=textquery&locationbias=circle%3A2000%${lat}%2C${lng}&fields=name%2Cplace_id%2Crating&key=${process.env.GOOGLE_PLACES_API_KEY}`
-    //     ).then((res) => {
-    //       if (res.data.status === "OK") {
-    //         results.push(...res.data.candidates);
-    //       }
-    //     });
-    //   }
-
-    //   for (const result of results) {
-    //     const found = places.find(
-    //       (p) => p.otherSources?.googlePlaces?._id === result.place_id
-    //     );
-    //     if (found) {
-    //       if (found.otherSources?.googlePlaces) {
-    //         await Place.updateOne(
-    //           { _id: found._id },
-    //           {
-    //             otherSources: {
-    //               googlePlaces: {
-    //                 rating: result.rating,
-    //                 updatedAt: new Date(),
-    //               },
-    //             },
-    //           }
-    //         );
-    //       } else {
-    //         await Place.updateOne(
-    //           { _id: found._id },
-    //           {
-    //             otherSources: {
-    //               googlePlaces: {
-    //                 _id: result.place_id,
-    //                 rating: result.rating,
-    //                 updatedAt: new Date(),
-    //               },
-    //             },
-    //           }
-    //         );
-    //       }
-    //     } else {
-    //       // search db for place
-    //       const found = await Place.findOne({
-    //         "otherSources.googlePlaces._id": result.place_id,
-    //       });
-    //       if (found) {
-    //         if (found.name !== result.name) {
-    //           found.otherNames.push(found.name);
-    //           found.name = result.name;
-    //         }
-    //         found.otherSources.googlePlaces.rating = result.rating;
-    //         // found.otherSources.googlePlaces.updatedAt = new Date();
-    //         found.save();
-    //         continue;
-    //       }
-
-    //       try {
-    //         const queue = await Queue.create({
-    //           googlePlaceId: result.place_id,
-    //           type: "new",
-    //         });
-    //         await queue.process();
-    //       } catch (e: any) {
-    //         continue;
-    //       }
-    //     }
-    //   }
-
-    //   places = await Place.aggregate([
-    //     ...distancePipeline,
-    //     ...matchPipeline,
-    //     ...sortPipeline,
-    //     {
-    //       $skip: skip,
-    //     },
-    //     {
-    //       $limit: limit,
-    //     },
-    //     ...lookupPipeline,
-    //     ...projectPipeline,
-    //   ]);
-    // }
 
     res.status(StatusCodes.OK).json({ success: true, places: places });
   } catch (err) {
@@ -910,6 +804,85 @@ export async function getPlacesWithinBoundaries(
     };
 
     const result = await getClusteredPlaces(northEast, southWest, Number(zoom));
+
+    res.status(StatusCodes.OK).json({
+      success: true,
+      data: result,
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
+
+
+export const getPlacesByContextValidation: ValidationChain[] = [
+  query("lat").isNumeric().withMessage("Invalid lat"),
+  query("lng").isNumeric().withMessage("Invalid lng"),
+  query("title").isString().withMessage("Invalid title"),
+];
+
+export async function getPlacesByContext(
+  req: Request,
+  res: Response,
+  next: NextFunction
+) {
+  try {
+    handleInputErrors(req);
+
+    const authId = req.user?.id;
+
+    const { lat, lng, title } =
+      req.query;
+    const latitude = Number(lat)
+    const longitude = Number(lng)
+
+    // get the place or if it doesn't exist create it
+
+    const nearbyPlaces = await Place.find({
+      "location.geoLocation": {
+        $nearSphere: {
+          $geometry: {
+            type: "Point",
+            coordinates: [longitude, latitude],
+          },
+          $maxDistance: 30, // in meters
+        },
+      },
+    });
+
+    let matchedPlace: IPlace | null = null;
+
+    if (typeof title === "string") {
+      for (const place of nearbyPlaces) {
+        if (areStrictlySimilar(title, place.name)) {
+          matchedPlace = place;
+          console.log("found existing place");
+          break;
+        }
+      }
+    } else {
+      throw createError("Invalid title", StatusCodes.BAD_REQUEST);
+    }
+
+    if (!matchedPlace) {
+      console.log("new place adding to db");
+      const place = new Place({
+        name: title,
+        location: {
+          geoLocation: {
+            type: "Point",
+            coordinates: [longitude, latitude],
+          },
+        },
+      });
+      matchedPlace =
+        await place.save();
+    }
+
+    // combine it with detailed data
+
+    const result = await getDetailedPlace(matchedPlace?._id, authId);
 
     res.status(StatusCodes.OK).json({
       success: true,

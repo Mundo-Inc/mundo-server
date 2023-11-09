@@ -4,6 +4,8 @@ import {
   createPlace,
   createPlaceValidation,
   getPlaces,
+  getPlacesByContext,
+  getPlacesByContextValidation,
   getPlacesValidation,
   getPlacesWithinBoundaries,
   getPlacesWithinBoundariesValidation,
@@ -45,6 +47,8 @@ router
     getPlacesWithinBoundariesValidation,
     getPlacesWithinBoundaries
   );
+
+router.route("/context").get(express.json(), optionalAuthMiddleware, getPlacesByContextValidation, getPlacesByContext);
 
 router
   .route("/search")

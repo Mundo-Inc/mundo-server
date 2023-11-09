@@ -154,22 +154,18 @@ const PlaceSchema: Schema = new Schema<IPlace>(
       city: {
         type: String,
         trim: true,
-        required: true,
       },
       state: {
         type: String,
         trim: true,
-        required: true,
       },
       country: {
         type: String,
         trim: true,
-        required: true,
       },
       zip: {
         type: String,
         trim: true,
-        // required: true,
       },
       house_number: {
         type: String,
@@ -186,7 +182,6 @@ const PlaceSchema: Schema = new Schema<IPlace>(
           type: Number,
           min: 0,
           max: 5,
-          // required: true,
         },
         drinkQuality: { type: Number, min: 0, max: 5 },
         foodQuality: { type: Number, min: 0, max: 5 },
@@ -202,7 +197,6 @@ const PlaceSchema: Schema = new Schema<IPlace>(
     phone: {
       type: String,
       trim: true,
-      // required: true,
     },
     website: {
       type: String,
@@ -381,8 +375,8 @@ const PlaceSchema: Schema = new Schema<IPlace>(
 
             scores[0].phantom =
               this.otherSources.googlePlaces.rating *
-                20 *
-                GOOGLE_PLACES_PERCENTAGE +
+              20 *
+              GOOGLE_PLACES_PERCENTAGE +
               scores[0].phantom * (1 - GOOGLE_PLACES_PERCENTAGE);
           }
         }
