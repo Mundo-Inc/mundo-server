@@ -830,6 +830,7 @@ async function fetchGoogle(place: IPlace, getReviews: boolean) {
     }
     return {
       google: {
+        _id: googlePlacesId,
         rating,
         reviewCount,
         reviews,

@@ -852,12 +852,13 @@ export async function getPlacesByContext(
     });
 
     let matchedPlace: IPlace | null = null;
+    let existing: Boolean = false;
 
     if (typeof title === "string") {
       for (const place of nearbyPlaces) {
         if (areStrictlySimilar(title, place.name)) {
           matchedPlace = place;
-          console.log("found existing place");
+          existing = true;
           break;
         }
       }
@@ -884,10 +885,20 @@ export async function getPlacesByContext(
 
     const result = await getDetailedPlace(matchedPlace?._id, authId);
 
-    res.status(StatusCodes.OK).json({
-      success: true,
-      data: result,
-    });
+    if (!existing && !result.thirdParty.google?._id) {
+      console.log("Here");
+
+      const place = await Place.findById(matchedPlace?._id)
+      await place.deleteOne()
+      res.status(StatusCodes.NOT_FOUND).json({
+        success: false,
+      });
+    } else {
+      res.status(StatusCodes.OK).json({
+        success: true,
+        data: result,
+      });
+    }
   } catch (err) {
     next(err);
   }
