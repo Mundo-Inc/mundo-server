@@ -45,7 +45,7 @@ export interface IPlace extends Document {
   };
   phone: string;
   website?: string;
-  categories: Categories[];
+  categories: string[];
   amenity: string;
   cuisine: string[];
   owner?: mongoose.Types.ObjectId;
@@ -81,6 +81,14 @@ export interface IPlace extends Document {
         type: string;
         unique: true;
       };
+      streetNumber?: string,
+      streetName?: string,
+      city?: string,
+      state?: string,
+      zip?: string,
+      country?: string,
+      address?: string,
+      categories?: string[],
       rating?: number;
       updatedAt?: Date;
     };
@@ -202,12 +210,10 @@ const PlaceSchema: Schema = new Schema<IPlace>(
       type: String,
       trim: true,
     },
-    categories: [
-      {
-        type: String,
-        ref: "Category",
-      },
-    ],
+    categories: {
+      type: [String],
+      default: [],
+    },
     owner: {
       type: Schema.Types.ObjectId,
       ref: "User",
@@ -260,6 +266,14 @@ const PlaceSchema: Schema = new Schema<IPlace>(
           rating: Number,
           updatedAt: Date,
         },
+        streetNumber: String,
+        streetName: String,
+        city: String,
+        state: String,
+        zip: String,
+        country: String,
+        address: String,
+        categories: [String],
         default: {},
       },
       yelp: {

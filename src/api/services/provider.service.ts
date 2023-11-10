@@ -35,7 +35,7 @@ export const findYelpId = async (place: IPlace) => {
       );
     }
   } catch (error) {
-    console.error("Error:", error);
+    // console.error("Error:", error);
     throw error; // or return a default/fallback value if preferred
   }
 };

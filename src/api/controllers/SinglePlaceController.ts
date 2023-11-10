@@ -18,6 +18,7 @@ import {
 } from "../services/provider.service";
 import { IGPReview } from "./../../types/googleplaces.interface";
 import validate from "./validators";
+import { extractComponentFromGoogleAddressComponents } from "../../utilities/providersHelper";
 
 export const getPlaceValidation: ValidationChain[] = [
   param("id").isMongoId().withMessage("Invalid place id"),
@@ -361,6 +362,16 @@ export async function getDetailedPlace(id: string, userId: string | undefined, r
   response[0].thumbnail =
     thirdPartyData.google?.thumbnail || thirdPartyData.yelp?.thumbnail;
 
+  if (thirdPartyData.google) {
+    response[0].location.address = thirdPartyData.google?.address
+    response[0].location.streetNumber = thirdPartyData.google?.streetNumber
+    response[0].location.streetName = thirdPartyData.google?.streetName
+    response[0].location.city = thirdPartyData.google?.city
+    response[0].location.state = thirdPartyData.google?.state
+    response[0].location.zip = thirdPartyData.google?.zip
+    response[0].location.country = thirdPartyData.google?.country
+    response[0].categories = thirdPartyData.google?.categories
+  }
   return response[0];
 }
 
@@ -799,6 +810,8 @@ async function fetchGoogle(place: IPlace, getReviews: boolean) {
     let rating = -1;
     let opening_hours = {};
     let reviewCount = 0;
+    let streetNumber, streetName, city, state, zip, country, address, categories;
+
     if (typeof googlePlacesId === "string" && googlePlacesId !== "") {
       googlePlacesData = await getGooglePlacesData(googlePlacesId);
       googlePlacesData.rating && (rating = googlePlacesData.rating);
@@ -806,6 +819,17 @@ async function fetchGoogle(place: IPlace, getReviews: boolean) {
         (reviewCount = googlePlacesData.user_ratings_total);
       googlePlacesData.opening_hours &&
         (opening_hours = googlePlacesData.opening_hours);
+      if (googlePlacesData.address_components) {
+        streetNumber = extractComponentFromGoogleAddressComponents(googlePlacesData.address_components, 'street_number');
+        streetName = extractComponentFromGoogleAddressComponents(googlePlacesData.address_components, 'route');
+        city = extractComponentFromGoogleAddressComponents(googlePlacesData.address_components, 'locality');
+        state = extractComponentFromGoogleAddressComponents(googlePlacesData.address_components, 'administrative_area_level_1', true); // Use short format
+        zip = extractComponentFromGoogleAddressComponents(googlePlacesData.address_components, 'postal_code');
+        country = extractComponentFromGoogleAddressComponents(googlePlacesData.address_components, 'country', true); // Use short format
+        address = `${streetNumber} ${streetName}`;
+        if (googlePlacesData.types)
+          categories = [...googlePlacesData.types];
+      }
     } else {
       // Getting the googlePlacesId
       //@ts-ignore
@@ -815,8 +839,18 @@ async function fetchGoogle(place: IPlace, getReviews: boolean) {
         // Storing the googlePlaceId
         place.otherSources.googlePlaces = { _id: googlePlacesId };
         await place.save();
-        // Returning the googlePlacesRating
         googlePlacesData = await getGooglePlacesData(googlePlacesId);
+        if (googlePlacesData && googlePlacesData.address_components) {
+          streetNumber = extractComponentFromGoogleAddressComponents(googlePlacesData.address_components, 'street_number');
+          streetName = extractComponentFromGoogleAddressComponents(googlePlacesData.address_components, 'route');
+          city = extractComponentFromGoogleAddressComponents(googlePlacesData.address_components, 'locality');
+          state = extractComponentFromGoogleAddressComponents(googlePlacesData.address_components, 'administrative_area_level_1', true); // Use short format
+          zip = extractComponentFromGoogleAddressComponents(googlePlacesData.address_components, 'postal_code');
+          country = extractComponentFromGoogleAddressComponents(googlePlacesData.address_components, 'country', true); // Use short format
+          address = `${streetNumber} ${streetName}`;
+          if (googlePlacesData.types)
+            categories = [...googlePlacesData.types];
+        }
         googlePlacesData.opening_hours &&
           (opening_hours = googlePlacesData.opening_hours);
         googlePlacesData.rating && (rating = googlePlacesData.rating);
@@ -825,9 +859,25 @@ async function fetchGoogle(place: IPlace, getReviews: boolean) {
       }
     }
     const thumbnail = googlePlacesData?.thumbnail;
+
+    if (thumbnail) {
+      place.thumbnail = thumbnail;
+      await place.save();
+    }
+
     if (getReviews) {
       reviews = googlePlacesData?.reviews;
     }
+
+    if (address) { //update address with fresh google data
+      place.location.address = address;
+      place.location.city = city;
+      place.location.state = state;
+      place.location.zip = zip;
+      place.location.country = country;
+      await place.save();
+    }
+
     return {
       google: {
         _id: googlePlacesId,
@@ -836,6 +886,7 @@ async function fetchGoogle(place: IPlace, getReviews: boolean) {
         reviews,
         opening_hours,
         thumbnail,
+        streetNumber, streetName, city, state, zip, country, address, categories
       },
     };
   } catch (error) {

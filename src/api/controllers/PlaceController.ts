@@ -55,7 +55,7 @@ export async function createPlace(
       priceRange: fields.priceRange?.[0] ? parseInt(fields.priceRange[0]) : 0,
       categories: fields.categories?.[0]
         ? fields.categories[0].split(",")
-        : undefined,
+        : [],
     } as IPlace;
 
     let place = await Place.findOne({
@@ -867,7 +867,6 @@ export async function getPlacesByContext(
     }
 
     if (!matchedPlace) {
-      console.log("new place adding to db");
       const place = new Place({
         name: title,
         location: {
@@ -886,8 +885,7 @@ export async function getPlacesByContext(
     const result = await getDetailedPlace(matchedPlace?._id, authId);
 
     if (!existing && !result.thirdParty.google?._id) {
-      console.log("Here");
-
+      // If the place is new and doesn't exist on Google, delete it
       const place = await Place.findById(matchedPlace?._id)
       await place.deleteOne()
       res.status(StatusCodes.NOT_FOUND).json({
