@@ -130,21 +130,12 @@ async function getOrSavePlace(place: IGooglePlace) {
           longitude: place.geometry.location.lng,
         }
       );
-      console.log(place.types);
 
       const amenityMatchScore = amenityMatch(nearbyPlace.amenity, place.types);
       const similarityScore =
         nameSimilarityScore * 0.5 +
         locationProximityScore * 0.45 +
         amenityMatchScore * 0.05;
-      console.log(
-        place.name,
-        nearbyPlace.name,
-        Number(nameSimilarityScore.toFixed(2)),
-        Number(locationProximityScore.toFixed(2)),
-        Number(amenityMatchScore.toFixed(2)),
-        Number(similarityScore.toFixed(2))
-      );
 
       if (similarityScore > highestSimilarityScore) {
         highestSimilarityScore = similarityScore;
@@ -157,11 +148,7 @@ async function getOrSavePlace(place: IGooglePlace) {
       // Update existingPlace with Google's place_id
       //   existingPlace.otherSources.googlePlaces._id = place.place_id;
       //   await existingPlace.save();
-    } else {
-      console.log("no match found for " + place.name);
     }
-  } else {
-    console.log("found existing place for " + place.name);
   }
 
   return existingPlace;
@@ -196,8 +183,6 @@ export async function searchPlaces(
     const places: IPlace[] = [];
     console.log("found " + googlePlaces.length + " places");
     for (const place of googlePlaces) {
-      console.log(place.name + "-------------------");
-
       const savedPlace = await getOrSavePlace(place);
       if (savedPlace) {
         places.push(savedPlace);
