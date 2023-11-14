@@ -148,7 +148,8 @@ async function removeReviewDependencies(review: IReview) {
 
   // remove the userActivity related to the review
   const userActivity = await UserActivity.findById(review.userActivityId);
-  await userActivity.deleteOne();
+  if (userActivity)
+    await userActivity.deleteOne();
 }
 
 // Query middleware (for Comment.deleteOne(), Comment.deleteMany(), etc.)

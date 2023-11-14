@@ -182,22 +182,41 @@ export async function resolveFlag(
     if (action === "DELETE") {
       if (flag.targetType === "Comment") {
         const comment = await Comment.findById(flag.target);
-        await comment.deleteOne();
+        if (comment)
+          await comment.deleteOne();
+
       } else if (flag.targetType === "Review") {
         const review = await Review.findById(flag.target);
-        await review.deleteOne();
+        if (review)
+          await review.deleteOne();
       }
     }
 
-    // save the action
-    flag.adminAction = {
+    const adminAction = {
       type: action,
       note: req.body.note,
       admin: new mongoose.Types.ObjectId(userId),
       createdAt: new Date(),
     };
 
+    // save the action
+    flag.adminAction = adminAction
+
     await flag.save();
+
+
+    // If the flagaction was delete we need to resolve all the flags for that target. 
+    if (action === "DELETE") {
+      const relatedFlags = await Flag.find({
+        targetType: flag.targetType,
+        target: flag.target
+      })
+      for (const f of relatedFlags) {
+        f.adminAction = adminAction
+        await f.save()
+      }
+    }
+
     res.status(StatusCodes.OK).json({ success: true, data: flag });
   } catch (err) {
     next(err);
