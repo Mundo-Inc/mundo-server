@@ -10,6 +10,8 @@ import strings from "../../strings";
 import { createError, handleInputErrors } from "../../utilities/errorHandlers";
 import validate from "./validators";
 import passport from "../lib/passport-setup";
+import axios from "axios";
+const FIREBASE_WEB_API_KEY = process.env.FIREBASE_WEB_API_KEY
 
 export const signinValidation: ValidationChain[] = [
   body("action").isIn(["signin", "signout"]),
@@ -41,17 +43,27 @@ export async function authPost(
     const { email, password, action } = req.body;
 
     if (action === "signin") {
+
+      // Sign in to get the Firebase ID token
+      const signInResponse = await axios.post(
+        `https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${FIREBASE_WEB_API_KEY}`,
+        {
+          email: email.toLowerCase(),
+          password: password,
+          returnSecureToken: true
+        }
+      );
+      const token = signInResponse.data.idToken;
+
       const user = await User.findOne({
         "email.address": { $regex: new RegExp(email, "i") },
       });
       if (!user) {
         throw createError(strings.authorization.invalidCredentials, 401);
       }
-      const isPasswordCorrect = await bcrypt.compare(password, user.password);
-      if (!isPasswordCorrect) {
-        throw createError(strings.authorization.invalidCredentials, 401);
-      }
-      const token = generateJwtToken(user);
+
+      // const token = generateJwtToken(user);
+
       res.cookie("token", token, {
         httpOnly: true,
         secure: process.env.NODE_ENV !== "development",

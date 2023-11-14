@@ -3,6 +3,7 @@ import jwt from "jsonwebtoken";
 import { config } from "../../config";
 import { StatusCodes } from "http-status-codes";
 import User, { type IUser } from "../../models/User";
+import { getAuth } from "firebase-admin/auth";
 
 interface DecodedUser {
   userId: string;
@@ -11,7 +12,7 @@ interface DecodedUser {
   exp: number;
 }
 
-export function authMiddleware(
+export async function authMiddleware(
   req: Request,
   res: Response,
   next: NextFunction
@@ -25,11 +26,15 @@ export function authMiddleware(
   }
 
   try {
-    const decodedUser = jwt.verify(token, config.JWT_SECRET) as DecodedUser;
+    // const decodedUser = jwt.verify(token, config.JWT_SECRET) as DecodedUser;
+    const decodedToken = await getAuth().verifyIdToken(token)
+    const uid = decodedToken.uid
+
+    const user = await User.findById(uid)
 
     req.user = {
-      id: decodedUser.userId,
-      role: decodedUser.role as "user" | "admin",
+      id: user._id,
+      role: user.role as "user" | "admin",
     };
 
     next();
