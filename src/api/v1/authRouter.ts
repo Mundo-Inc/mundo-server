@@ -11,8 +11,8 @@ import {
 const router = express.Router();
 router.use(express.json());
 
-router.get("/", authGetValidation, authGet);
+// router.get("/", authGetValidation, authGet);
 router.post("/", signinValidation, authPost);
-router.get("/social_callback", authCallback);
+// router.get("/social_callback", authCallback);
 
 export default router;

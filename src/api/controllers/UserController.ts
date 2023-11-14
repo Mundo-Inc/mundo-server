@@ -1,23 +1,30 @@
-import { DeleteObjectCommand, PutObjectCommand } from "@aws-sdk/client-s3";
+import { DeleteObjectCommand } from "@aws-sdk/client-s3";
 import bcrypt from "bcryptjs";
 import type { NextFunction, Request, Response } from "express";
 import { body, param, query, type ValidationChain } from "express-validator";
-import { readFileSync, unlinkSync } from "fs";
+import { getAuth } from 'firebase-admin/auth';
 import { StatusCodes } from "http-status-codes";
-import jwt from "jsonwebtoken";
 
-import { config } from "../../config";
+import axios from "axios";
+import mongoose from "mongoose";
+import Block from "../../models/Block";
+import CheckIn from "../../models/CheckIn";
 import Follow from "../../models/Follow";
+import Notification, { ResourceTypes } from "../../models/Notification";
 import Place, { type IPlace } from "../../models/Place";
 import Review from "../../models/Review";
 import User, { SignupMethodEnum } from "../../models/User";
+import UserActivity, {
+  ActivityTypeEnum,
+  ResourceTypeEnum,
+} from "../../models/UserActivity";
 import strings, {
   dStrings,
   dStrings as ds,
   dynamicMessage,
 } from "../../strings";
 import { createError, handleInputErrors } from "../../utilities/errorHandlers";
-import { bucketName, parseForm, region, s3 } from "../../utilities/storage";
+import { bucketName, s3 } from "../../utilities/storage";
 import { type EditUserDto } from "../dto/user/edit-user.dto";
 import {
   PrivateReadUserDto,
@@ -28,17 +35,10 @@ import {
   type PublicReadUserDto,
 } from "../dto/user/read-user-public.dto";
 import { handleSignUp } from "../lib/profile-handlers";
+import { calcRemainingXP } from "../services/reward/helpers/levelCalculations";
 import { addNewFollowingActivity } from "../services/user.activity.service";
 import validate from "./validators";
-import UserActivity, {
-  ActivityTypeEnum,
-  ResourceTypeEnum,
-} from "../../models/UserActivity";
-import mongoose from "mongoose";
-import Notification, { ResourceTypes } from "../../models/Notification";
-import CheckIn from "../../models/CheckIn";
-import { calcRemainingXP } from "../services/reward/helpers/levelCalculations";
-import Block from "../../models/Block";
+const FIREBASE_WEB_API_KEY = process.env.FIREBASE_WEB_API_KEY
 
 export const getUsersValidation: ValidationChain[] = [
   validate.q(query("q").optional()),
@@ -148,8 +148,18 @@ export async function createUser(
         StatusCodes.CONFLICT
       );
     }
-    const hashedPassword = await bcrypt.hash(password, 10);
+    /*
+    const token = jwt.sign(
+      { userId: newUser._id, role: newUser.role },
+      config.JWT_SECRET,
+      {
+        expiresIn: "30d",
+      }
+    );
+    */
 
+
+    const hashedPassword = await bcrypt.hash(password, 10);
     const newUser = await handleSignUp(
       email.toLowerCase(),
       name,
@@ -158,13 +168,25 @@ export async function createUser(
       hashedPassword
     );
 
-    const token = jwt.sign(
-      { userId: newUser._id, role: newUser.role },
-      config.JWT_SECRET,
+    const firebaseUserRecord = await getAuth()
+      .createUser({
+        uid: newUser._id.toString(),
+        email: email.toLowerCase(),
+        emailVerified: false,
+        password: password,
+        disabled: false,
+      })
+
+    // Sign in to get the Firebase ID token
+    const signInResponse = await axios.post(
+      `https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${FIREBASE_WEB_API_KEY}`,
       {
-        expiresIn: "30d",
+        email: email.toLowerCase(),
+        password: password,
+        returnSecureToken: true
       }
     );
+    const token = signInResponse.data.idToken;
 
     res.cookie("token", token, {
       httpOnly: true,

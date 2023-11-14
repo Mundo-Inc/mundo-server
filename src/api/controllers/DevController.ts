@@ -18,6 +18,8 @@ import UserActivity from "../../models/UserActivity";
 import Reaction from "../../models/Reaction";
 import Comment from "../../models/Comment";
 import ActivitySeen from "../../models/ActivitySeen";
+import { getAuth } from 'firebase-admin/auth';
+
 
 export async function devTests(
   req: Request,
@@ -453,3 +455,49 @@ export async function engagements(
 }
 
 const categories: string[] = ["restaurant", "bar", "cafe"];
+
+
+
+
+export async function importAllUsersToFirebase(req: Request, res: Response, next: NextFunction) {
+  try {
+    const users = await User.find({ source: { $exists: false } }, "_id email password"); // Corrected the projection syntax
+
+    const usersArray = users.map((user) => {
+      return {
+        uid: user._id.toString(),
+        email: user.email.address,
+        passwordHash: Buffer.from(user.password)
+      }
+    })
+    getAuth()
+      .importUsers(
+        usersArray,
+        {
+          hash: {
+            algorithm: 'BCRYPT',
+          },
+        }
+      )
+      .then((results: any) => {
+        results.errors.forEach((indexedError: any) => {
+          console.log(`Error importing user ${indexedError.index}`);
+          console.log(indexedError);
+
+        });
+      })
+      .catch((error: any) => {
+        console.log('Error importing users :', error);
+      });
+
+    res.status(200).send('All users imported successfully');
+  } catch (error: any) {
+    console.error('Error during user import:', error);
+    res.status(500).send('Error importing users');
+  }
+}
+// function importUser(_id: string, email: string, hashedPassword: string) {
+//   console.log(email);
+
+
+// }
