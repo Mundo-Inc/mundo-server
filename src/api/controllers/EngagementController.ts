@@ -75,7 +75,6 @@ async function getComments(id: string, authId: string, blockedUsers: IUser[]) {
                 as: "author",
                 pipeline: [
                     {
-                        // TODO: Test
                         $lookup: {
                             from: "achievements",
                             localField: "progress.achievements",
@@ -91,20 +90,25 @@ async function getComments(id: string, authId: string, blockedUsers: IUser[]) {
         },
         {
             $project: {
-                _id: 1,
-                createdAt: 1,
-                updatedAt: 1,
-                content: 1,
-                mentions: 1,
-                author: { $arrayElemAt: ["$author", 0] },
-                likes: { $size: "$likes" },
-                liked: {
-                    $in: [new mongoose.Types.ObjectId(authId), "$likes"],
-                },
+                resourceType: { $literal: "COMMENT" },
+                resource: {
+                    _id: "$_id",
+                    content: "$content",
+                    mentions: "$mentions",
+                    createdAt: "$createdAt",
+                    updatedAt: "$updatedAt",
+                    author: { $arrayElemAt: ["$author", 0] },
+                    likes: { $size: "$likes" },
+                    liked: {
+                        $in: [new mongoose.Types.ObjectId(authId), "$likes"],
+                    },
+                }
             },
         },
     ]);
-    return comments || []
+
+    return comments || [];
+
 }
 
 
@@ -129,7 +133,6 @@ async function getReactions(id: string, authId: string, blockedUsers: IUser[]) {
                 as: "user",
                 pipeline: [
                     {
-                        // TODO: Test
                         $lookup: {
                             from: "achievements",
                             localField: "progress.achievements",
@@ -145,12 +148,17 @@ async function getReactions(id: string, authId: string, blockedUsers: IUser[]) {
         },
         {
             $project: {
-                _id: 1,
-                createdAt: 1,
-                reaction: 1,
-                user: { $arrayElemAt: ["$user", 0] },
+                resourceType: { $literal: "REACTION" },
+                resource: {
+                    _id: "$_id",
+                    createdAt: "$createdAt",
+                    reaction: "$reaction",
+                    user: { $arrayElemAt: ["$user", 0] },
+                }
             },
         },
     ]);
-    return reactions || []
+
+    return reactions || [];
+
 }
