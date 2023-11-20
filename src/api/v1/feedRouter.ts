@@ -11,6 +11,7 @@ import {
   getFeed,
   getFeedValidation,
 } from "../controllers/FeedController";
+import { getEngagements, getEngagementsValidation } from "../controllers/EngagementController";
 
 const router = express.Router();
 router.use(express.json());
@@ -23,5 +24,7 @@ router
   .post(authMiddleware, activitySeenValidation, activitySeen);
 
 router.get("/:id/comments", authMiddleware, getCommentsValidation, getComments);
+
+router.get("/:id/engagements", authMiddleware, getEngagementsValidation, getEngagements);
 
 export default router;
