@@ -26,17 +26,28 @@ export async function authMiddleware(
   }
 
   try {
-    // const decodedUser = jwt.verify(token, config.JWT_SECRET) as DecodedUser;
-    const decodedToken = await getAuth().verifyIdToken(token)
-    const uid = decodedToken.uid
-
-    const user = await User.findById(uid)
-
-    req.user = {
-      id: user._id,
-      role: user.role as "user" | "admin",
-    };
-
+    const decoded = jwt.decode(token, { complete: true });
+    const payload = decoded?.payload;
+    if (payload && typeof payload == "object") {
+      if (payload.iss && payload.iss.includes("securetoken.google.com")) {
+        const firebaseUser = await getAuth().verifyIdToken(token);
+        const uid = firebaseUser.uid;
+        const user = await User.findById(uid);
+        req.user = {
+          id: user._id,
+          role: user.role as "user" | "admin",
+        };
+      } else if (payload.userId) {
+        const oldTokenPayload = jwt.verify(
+          token,
+          config.JWT_SECRET
+        ) as DecodedUser;
+        req.user = {
+          id: oldTokenPayload.userId,
+          role: oldTokenPayload.role as "user" | "admin",
+        };
+      }
+    }
     next();
   } catch (err) {
     return res
@@ -45,7 +56,7 @@ export async function authMiddleware(
   }
 }
 
-export function optionalAuthMiddleware(
+export async function optionalAuthMiddleware(
   req: Request,
   res: Response,
   next: NextFunction
@@ -57,13 +68,28 @@ export function optionalAuthMiddleware(
   }
 
   try {
-    const decodedUser = jwt.verify(token, config.JWT_SECRET) as DecodedUser;
-
-    req.user = {
-      id: decodedUser.userId,
-      role: decodedUser.role as "user" | "admin",
-    };
-
+    const decoded = jwt.decode(token, { complete: true });
+    const payload = decoded?.payload;
+    if (payload && typeof payload == "object") {
+      if (payload.iss && payload.iss.includes("securetoken.google.com")) {
+        const firebaseUser = await getAuth().verifyIdToken(token);
+        const uid = firebaseUser.uid;
+        const user = await User.findById(uid);
+        req.user = {
+          id: user._id,
+          role: user.role as "user" | "admin",
+        };
+      } else if (payload.userId) {
+        const oldTokenPayload = jwt.verify(
+          token,
+          config.JWT_SECRET
+        ) as DecodedUser;
+        req.user = {
+          id: oldTokenPayload.userId,
+          role: oldTokenPayload.role as "user" | "admin",
+        };
+      }
+    }
     next();
   } catch (err) {
     next();
@@ -84,26 +110,38 @@ export async function adminAuthMiddleware(
   }
 
   try {
-    const decodedUser = jwt.verify(token, config.JWT_SECRET) as DecodedUser;
-
-    if (decodedUser.role !== "admin") {
-      return res
-        .status(StatusCodes.UNAUTHORIZED)
-        .json({ error: "Admins only." });
+    const decoded = jwt.decode(token, { complete: true });
+    const payload = decoded?.payload;
+    if (payload && typeof payload == "object") {
+      if (payload.iss && payload.iss.includes("securetoken.google.com")) {
+        const firebaseUser = await getAuth().verifyIdToken(token);
+        const uid = firebaseUser.uid;
+        const user = await User.findById(uid);
+        if (!user || user.role !== "admin") {
+          return res
+            .status(StatusCodes.UNAUTHORIZED)
+            .json({ error: "Admins only." });
+        }
+        req.user = {
+          id: user._id,
+          role: user.role as "user" | "admin",
+        };
+      } else if (payload.userId) {
+        const oldTokenPayload = jwt.verify(
+          token,
+          config.JWT_SECRET
+        ) as DecodedUser;
+        if (!oldTokenPayload || oldTokenPayload.role !== "admin") {
+          return res
+            .status(StatusCodes.UNAUTHORIZED)
+            .json({ error: "Admins only." });
+        }
+        req.user = {
+          id: oldTokenPayload.userId,
+          role: oldTokenPayload.role as "user" | "admin",
+        };
+      }
     }
-
-    const user: IUser | null = await User.findById(decodedUser.userId).lean();
-    if (!user || user.role !== "admin") {
-      return res
-        .status(StatusCodes.UNAUTHORIZED)
-        .json({ error: "Nice try :)" });
-    }
-
-    req.user = {
-      id: decodedUser.userId,
-      role: decodedUser.role,
-    };
-
     next();
   } catch (err) {
     return res
