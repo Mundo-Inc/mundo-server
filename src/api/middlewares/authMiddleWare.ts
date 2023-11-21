@@ -39,7 +39,7 @@ export async function authMiddleware(
             .json({ error: "User not found" });
         }
         req.user = {
-          id: user._id,
+          id: user._id.toString(),
           role: user.role as "user" | "admin",
         };
       } else if (payload.userId) {
@@ -48,7 +48,7 @@ export async function authMiddleware(
           config.JWT_SECRET
         ) as DecodedUser;
         req.user = {
-          id: oldTokenPayload.userId,
+          id: oldTokenPayload.userId.toString(),
           role: oldTokenPayload.role as "user" | "admin",
         };
       }
@@ -82,7 +82,7 @@ export async function optionalAuthMiddleware(
         const user: IUser | null = await User.findById(uid).lean();
         if (user) {
           req.user = {
-            id: user._id,
+            id: user._id.toString(),
             role: user.role as "user" | "admin",
           };
         }
@@ -92,7 +92,7 @@ export async function optionalAuthMiddleware(
           config.JWT_SECRET
         ) as DecodedUser;
         req.user = {
-          id: oldTokenPayload.userId,
+          id: oldTokenPayload.userId.toString(),
           role: oldTokenPayload.role as "user" | "admin",
         };
       }
@@ -130,7 +130,7 @@ export async function adminAuthMiddleware(
             .json({ error: "Admins only." });
         }
         req.user = {
-          id: user._id,
+          id: user._id.toString(),
           role: user.role as "user" | "admin",
         };
       } else if (payload.userId) {
@@ -147,7 +147,7 @@ export async function adminAuthMiddleware(
             .json({ error: "Admins only." });
         }
         req.user = {
-          id: oldTokenPayload.userId,
+          id: oldTokenPayload.userId.toString(),
           role: oldTokenPayload.role as "user" | "admin",
         };
       }
