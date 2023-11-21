@@ -2,7 +2,7 @@ import { DeleteObjectCommand } from "@aws-sdk/client-s3";
 import bcrypt from "bcryptjs";
 import type { NextFunction, Request, Response } from "express";
 import { body, param, query, type ValidationChain } from "express-validator";
-import { getAuth } from 'firebase-admin/auth';
+import { getAuth } from "firebase-admin/auth";
 import { StatusCodes } from "http-status-codes";
 
 import axios from "axios";
@@ -38,7 +38,9 @@ import { handleSignUp } from "../lib/profile-handlers";
 import { calcRemainingXP } from "../services/reward/helpers/levelCalculations";
 import { addNewFollowingActivity } from "../services/user.activity.service";
 import validate from "./validators";
-const FIREBASE_WEB_API_KEY = process.env.FIREBASE_WEB_API_KEY
+import { config } from "../../config";
+const FIREBASE_WEB_API_KEY = process.env.FIREBASE_WEB_API_KEY;
+import jwt from "jsonwebtoken";
 
 export const getUsersValidation: ValidationChain[] = [
   validate.q(query("q").optional()),
@@ -148,16 +150,6 @@ export async function createUser(
         StatusCodes.CONFLICT
       );
     }
-    /*
-    const token = jwt.sign(
-      { userId: newUser._id, role: newUser.role },
-      config.JWT_SECRET,
-      {
-        expiresIn: "30d",
-      }
-    );
-    */
-
 
     const hashedPassword = await bcrypt.hash(password, 10);
     const newUser = await handleSignUp(
@@ -168,14 +160,21 @@ export async function createUser(
       hashedPassword
     );
 
-    const firebaseUserRecord = await getAuth()
-      .createUser({
-        uid: newUser._id.toString(),
-        email: email.toLowerCase(),
-        emailVerified: false,
-        password: password,
-        disabled: false,
-      })
+    const token = jwt.sign(
+      { userId: newUser._id, role: newUser.role },
+      config.JWT_SECRET,
+      {
+        expiresIn: "30d",
+      }
+    ); // this is the old way of token sending to the user
+
+    const firebaseUserRecord = await getAuth().createUser({
+      uid: newUser._id.toString(),
+      email: email.toLowerCase(),
+      emailVerified: false,
+      password: password,
+      disabled: false,
+    });
 
     // Sign in to get the Firebase ID token
     const signInResponse = await axios.post(
@@ -183,10 +182,10 @@ export async function createUser(
       {
         email: email.toLowerCase(),
         password: password,
-        returnSecureToken: true
+        returnSecureToken: true,
       }
     );
-    const token = signInResponse.data.idToken;
+    const fbasetoken = signInResponse.data.idToken;
 
     res.cookie("token", token, {
       httpOnly: true,
