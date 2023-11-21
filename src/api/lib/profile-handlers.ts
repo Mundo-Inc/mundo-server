@@ -7,7 +7,8 @@ export const handleSignUp = async (
   name: string,
   username: string,
   signupMethod: SignupMethodEnum,
-  password: string
+  password: string,
+  uid?: string
 ) => {
   let user = await User.findOne({
     "email.address": email.toLowerCase(),
@@ -27,6 +28,12 @@ export const handleSignUp = async (
     password: password || null,
     verificationToken: crypto.randomBytes(20).toString("hex"),
   });
+  if (uid) {
+    user.uid = uid;
+  } else {
+    user.uid = user._id.toString();
+  }
+  await user.save();
   return user;
 };
 

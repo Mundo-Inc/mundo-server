@@ -32,7 +32,7 @@ export async function authMiddleware(
       if (payload.iss && payload.iss.includes("securetoken.google.com")) {
         const firebaseUser = await getAuth().verifyIdToken(token);
         const uid = firebaseUser.uid;
-        const user: IUser | null = await User.findById(uid).lean();
+        const user: IUser | null = await User.findOne({ uid: uid }).lean();
         if (!user) {
           return res
             .status(StatusCodes.UNAUTHORIZED)
@@ -79,7 +79,7 @@ export async function optionalAuthMiddleware(
       if (payload.iss && payload.iss.includes("securetoken.google.com")) {
         const firebaseUser = await getAuth().verifyIdToken(token);
         const uid = firebaseUser.uid;
-        const user: IUser | null = await User.findById(uid).lean();
+        const user: IUser | null = await User.findOne({ uid: uid }).lean();
         if (user) {
           req.user = {
             id: user._id.toString(),
@@ -123,7 +123,7 @@ export async function adminAuthMiddleware(
       if (payload.iss && payload.iss.includes("securetoken.google.com")) {
         const firebaseUser = await getAuth().verifyIdToken(token);
         const uid = firebaseUser.uid;
-        const user: IUser | null = await User.findById(uid).lean();
+        const user: IUser | null = await User.findOne({ uid: uid }).lean();
         if (!user || user.role !== "admin") {
           return res
             .status(StatusCodes.UNAUTHORIZED)

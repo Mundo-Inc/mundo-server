@@ -21,6 +21,7 @@ export enum SignupMethodEnum {
   traditional = "traditional",
 }
 export interface IUser extends Document {
+  uid: string;
   username: string;
   email: {
     address: string;
@@ -62,6 +63,13 @@ export interface IUser extends Document {
 
 const UserSchema = new Schema<IUser>(
   {
+    uid: {
+      type: String,
+      // required: true, TODO: fix it
+      unique: true,
+      trim: true,
+      index: true,
+    },
     name: {
       type: String,
       trim: true,
