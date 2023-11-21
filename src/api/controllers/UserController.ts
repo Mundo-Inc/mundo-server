@@ -13,7 +13,7 @@ import Follow from "../../models/Follow";
 import Notification, { ResourceTypes } from "../../models/Notification";
 import Place, { type IPlace } from "../../models/Place";
 import Review from "../../models/Review";
-import User, { SignupMethodEnum } from "../../models/User";
+import User, { IUser, SignupMethodEnum } from "../../models/User";
 import UserActivity, {
   ActivityTypeEnum,
   ResourceTypeEnum,
@@ -250,11 +250,23 @@ export async function getLeaderBoard(
   }
 }
 
-export const getUserValidation: ValidationChain[] = [param("id").isMongoId()];
+export const getUserValidation: ValidationChain[] = [
+  param("id").isString(),
+  query("idType").optional().isIn(["oid", "uid"]),
+];
 export async function getUser(req: Request, res: Response, next: NextFunction) {
   try {
     handleInputErrors(req);
-    const { id } = req.params;
+    let { id } = req.params;
+    // if id type is uid -> get userby uid -> id = user._id
+    if (req.query && req.query.idType && req.query.idType === "uid") {
+      const user: IUser | null = await User.findOne({ uid: id }).lean();
+      if (user) {
+        id = user._id.toString();
+      } else {
+        throw createError("user not found", 404);
+      }
+    }
 
     const followersCount = await Follow.countDocuments({ target: id });
     const followingCount = await Follow.countDocuments({ user: id });
