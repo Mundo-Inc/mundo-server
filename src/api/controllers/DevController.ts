@@ -18,8 +18,7 @@ import UserActivity from "../../models/UserActivity";
 import Reaction from "../../models/Reaction";
 import Comment from "../../models/Comment";
 import ActivitySeen from "../../models/ActivitySeen";
-import { getAuth } from 'firebase-admin/auth';
-
+import { getAuth } from "firebase-admin/auth";
 
 export async function devTests(
   req: Request,
@@ -432,23 +431,39 @@ export async function engagements(
     console.log("Populating engagements");
     const userActivities = await UserActivity.find();
     for (const activity of userActivities) {
-      const reactionsCount = await Reaction.countDocuments({ target: activity._id });
-      const commentsCount = await Comment.countDocuments({ userActivity: activity._id });
-      const viewsCount = await ActivitySeen.countDocuments({ activityId: activity._id });
+      const reactionsCount = await Reaction.countDocuments({
+        target: activity._id,
+      });
+      const commentsCount = await Comment.countDocuments({
+        userActivity: activity._id,
+      });
+      const viewsCount = await ActivitySeen.countDocuments({
+        activityId: activity._id,
+      });
       activity.hasMedia = false;
       await activity.save();
       if (activity.resourceType === "Review") {
         const relatedReview = await Review.findById(activity.resourceId);
-        if (relatedReview && ((relatedReview.images && relatedReview.images.length > 0) || (relatedReview.videos && relatedReview.videos.length > 0))) {
+        if (
+          relatedReview &&
+          ((relatedReview.images && relatedReview.images.length > 0) ||
+            (relatedReview.videos && relatedReview.videos.length > 0))
+        ) {
           activity.hasMedia = true;
           await activity.save();
         }
       }
-      await activity.updateOne({ engagements: { reactions: reactionsCount, comments: commentsCount, views: viewsCount } });
-      console.log(activity._id);
+      await activity.updateOne({
+        engagements: {
+          reactions: reactionsCount,
+          comments: commentsCount,
+          views: viewsCount,
+        },
+      });
+      // console.log(activity._id);
     }
     console.log("Populating engagements finished successfully ✅");
-    return res.sendStatus(StatusCodes.NO_CONTENT)
+    return res.sendStatus(StatusCodes.NO_CONTENT);
   } catch (error) {
     console.error(error);
   }
@@ -456,48 +471,47 @@ export async function engagements(
 
 const categories: string[] = ["restaurant", "bar", "cafe"];
 
-
-
-
-export async function importAllUsersToFirebase(req: Request, res: Response, next: NextFunction) {
+export async function importAllUsersToFirebase(
+  req: Request,
+  res: Response,
+  next: NextFunction
+) {
   try {
-    const users = await User.find({ source: { $exists: false } }, "_id email password"); // Corrected the projection syntax
+    const users = await User.find(
+      { source: { $exists: false } },
+      "_id email password"
+    ); // Corrected the projection syntax
 
     const usersArray = users.map((user) => {
       return {
         uid: user._id.toString(),
         email: user.email.address,
-        passwordHash: Buffer.from(user.password)
-      }
-    })
+        passwordHash: Buffer.from(user.password),
+      };
+    });
     getAuth()
-      .importUsers(
-        usersArray,
-        {
-          hash: {
-            algorithm: 'BCRYPT',
-          },
-        }
-      )
+      .importUsers(usersArray, {
+        hash: {
+          algorithm: "BCRYPT",
+        },
+      })
       .then((results: any) => {
         results.errors.forEach((indexedError: any) => {
           console.log(`Error importing user ${indexedError.index}`);
           console.log(indexedError);
-
         });
       })
       .catch((error: any) => {
-        console.log('Error importing users :', error);
+        console.log("Error importing users :", error);
       });
 
-    res.status(200).send('All users imported successfully');
+    res.status(200).send("All users imported successfully");
   } catch (error: any) {
-    console.error('Error during user import:', error);
-    res.status(500).send('Error importing users');
+    console.error("Error during user import:", error);
+    res.status(500).send("Error importing users");
   }
 }
 // function importUser(_id: string, email: string, hashedPassword: string) {
 //   console.log(email);
-
 
 // }

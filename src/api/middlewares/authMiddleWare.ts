@@ -32,7 +32,12 @@ export async function authMiddleware(
       if (payload.iss && payload.iss.includes("securetoken.google.com")) {
         const firebaseUser = await getAuth().verifyIdToken(token);
         const uid = firebaseUser.uid;
-        const user = await User.findById(uid);
+        const user: IUser | null = await User.findById(uid).lean();
+        if (!user) {
+          return res
+            .status(StatusCodes.UNAUTHORIZED)
+            .json({ error: "User not found" });
+        }
         req.user = {
           id: user._id,
           role: user.role as "user" | "admin",
@@ -74,11 +79,13 @@ export async function optionalAuthMiddleware(
       if (payload.iss && payload.iss.includes("securetoken.google.com")) {
         const firebaseUser = await getAuth().verifyIdToken(token);
         const uid = firebaseUser.uid;
-        const user = await User.findById(uid);
-        req.user = {
-          id: user._id,
-          role: user.role as "user" | "admin",
-        };
+        const user: IUser | null = await User.findById(uid).lean();
+        if (user) {
+          req.user = {
+            id: user._id,
+            role: user.role as "user" | "admin",
+          };
+        }
       } else if (payload.userId) {
         const oldTokenPayload = jwt.verify(
           token,
@@ -116,7 +123,7 @@ export async function adminAuthMiddleware(
       if (payload.iss && payload.iss.includes("securetoken.google.com")) {
         const firebaseUser = await getAuth().verifyIdToken(token);
         const uid = firebaseUser.uid;
-        const user = await User.findById(uid);
+        const user: IUser | null = await User.findById(uid).lean();
         if (!user || user.role !== "admin") {
           return res
             .status(StatusCodes.UNAUTHORIZED)
@@ -131,7 +138,10 @@ export async function adminAuthMiddleware(
           token,
           config.JWT_SECRET
         ) as DecodedUser;
-        if (!oldTokenPayload || oldTokenPayload.role !== "admin") {
+        const user: IUser | null = await User.findById(
+          oldTokenPayload.userId
+        ).lean();
+        if (!user || user.role !== "admin") {
           return res
             .status(StatusCodes.UNAUTHORIZED)
             .json({ error: "Admins only." });
