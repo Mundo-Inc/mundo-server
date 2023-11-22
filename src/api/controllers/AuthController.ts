@@ -5,12 +5,14 @@ import bcrypt from "bcryptjs";
 import { StatusCodes } from "http-status-codes";
 import jwt from "jsonwebtoken";
 import { config } from "../../config";
-import User from "../../models/User";
+import User, { SignupMethodEnum } from "../../models/User";
 import strings from "../../strings";
 import { createError, handleInputErrors } from "../../utilities/errorHandlers";
 import validate from "./validators";
 import passport from "../lib/passport-setup";
 import axios from "axios";
+import { createUser } from "./UserController";
+import { handleSignUp } from "../lib/profile-handlers";
 const FIREBASE_WEB_API_KEY = process.env.FIREBASE_WEB_API_KEY;
 
 export const signinValidation: ValidationChain[] = [
@@ -171,5 +173,60 @@ export async function authCallback(
   } catch (err) {
     console.log(err);
     next(err);
+  }
+}
+
+function createRandomUsername() {
+  // Get the current timestamp
+  const timestamp = Date.now();
+
+  // Generate a random number, for example, between 0 to 999
+  const randomNum = Math.floor(Math.random() * 1000);
+
+  // Combine them to form a username
+  const username = `ph${timestamp}${randomNum}`;
+  return username;
+}
+
+export async function firebaseSync(
+  req: Request,
+  res: Response,
+  next: NextFunction
+) {
+  try {
+    // Add user data to your database
+    const authHeader = req.headers.authorization;
+    if (authHeader === process.env.FIREBASE_SYNC_SECRET) {
+      // Proceed with handling the request
+      const userData = req.body;
+
+      //check if we have the same user with these information:
+      console.log("Received user data:", userData);
+
+      const user = await User.findOne({
+        uid: userData.uid,
+        "email.address": userData.email,
+      });
+
+      if (!user) {
+        await handleSignUp(
+          userData.email,
+          userData.displayName,
+          createRandomUsername(),
+          SignupMethodEnum.cloud,
+          null,
+          userData.uid,
+          userData.photoURL
+        );
+      }
+
+      res.status(200).send("User data received");
+    } else {
+      // Respond with an error or ignore the request
+      res.status(403).send("Unauthorized");
+    }
+  } catch (error) {
+    console.log(error);
+    next(error);
   }
 }

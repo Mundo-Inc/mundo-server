@@ -5,6 +5,7 @@ import {
   authGet,
   authGetValidation,
   authPost,
+  firebaseSync,
   signinValidation,
 } from "../controllers/AuthController";
 
@@ -13,6 +14,7 @@ router.use(express.json());
 
 // router.get("/", authGetValidation, authGet);
 router.post("/", signinValidation, authPost);
+router.post("/firebaseSync", firebaseSync);
 // router.get("/social_callback", authCallback);
 
 export default router;

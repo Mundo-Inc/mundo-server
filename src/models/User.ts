@@ -19,6 +19,7 @@ export enum UserRoleEnum {
 export enum SignupMethodEnum {
   social = "social",
   traditional = "traditional",
+  cloud = "cloud",
 }
 export interface IUser extends Document {
   uid: string;

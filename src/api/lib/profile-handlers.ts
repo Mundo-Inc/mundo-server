@@ -7,8 +7,9 @@ export const handleSignUp = async (
   name: string,
   username: string,
   signupMethod: SignupMethodEnum,
-  password: string,
-  uid?: string
+  password: string | null,
+  uid?: string,
+  profileImage?: string
 ) => {
   let user = await User.findOne({
     "email.address": email.toLowerCase(),
@@ -32,6 +33,9 @@ export const handleSignUp = async (
     user.uid = uid;
   } else {
     user.uid = user._id.toString();
+  }
+  if (profileImage) {
+    user.profileImage = profileImage;
   }
   await user.save();
   return user;
