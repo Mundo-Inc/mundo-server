@@ -209,10 +209,12 @@ export async function firebaseSync(
       });
 
       if (!user) {
+        console.log(userData);
+        const username = createRandomUsername();
         await handleSignUp(
           userData.email,
-          userData.displayName,
-          createRandomUsername(),
+          userData.displayName || username,
+          username,
           SignupMethodEnum.cloud,
           null,
           userData.uid,
