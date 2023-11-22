@@ -22,6 +22,7 @@ export enum SignupMethodEnum {
   cloud = "cloud",
 }
 export interface IUser extends Document {
+  accepted_eula: Date;
   uid: string;
   username: string;
   email: {
@@ -64,6 +65,9 @@ export interface IUser extends Document {
 
 const UserSchema = new Schema<IUser>(
   {
+    accepted_eula: {
+      type: Date,
+    },
     uid: {
       type: String,
       // required: true, TODO: fix it

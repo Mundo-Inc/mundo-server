@@ -3,4 +3,5 @@ export type EditUserDto = {
   bio?: string;
   profileImage?: string;
   username?: string;
+  accepted_eula?: Date;
 };

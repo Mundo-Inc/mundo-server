@@ -160,6 +160,9 @@ export async function createUser(
       hashedPassword
     );
 
+    newUser.accepted_eula = new Date();
+    await newUser.save();
+
     const token = jwt.sign(
       { userId: newUser._id, role: newUser.role },
       config.JWT_SECRET,
@@ -357,6 +360,7 @@ export const editUserValidation: ValidationChain[] = [
   validate.name(body("name").optional()),
   validate.bio(body("bio").optional()),
   validate.username(body("username").optional()),
+  body("eula").optional().isBoolean(),
   body("removeProfileImage").optional().isBoolean(),
 ];
 export async function editUser(
@@ -375,7 +379,7 @@ export async function editUser(
       );
     }
 
-    const { name, bio, username, removeProfileImage } = req.body;
+    const { name, bio, username, removeProfileImage, eula } = req.body;
 
     const editUserDto: EditUserDto = {};
     if (name) {
@@ -386,6 +390,9 @@ export async function editUser(
     }
     if (username) {
       editUserDto.username = username;
+    }
+    if (eula) {
+      editUserDto.accepted_eula = new Date();
     }
 
     if (removeProfileImage === true) {

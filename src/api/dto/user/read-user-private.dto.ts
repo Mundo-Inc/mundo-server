@@ -20,6 +20,7 @@ export type PrivateReadUserDto = {
     xp: number;
     achievements: mongoose.Types.ObjectId[];
   };
+  accepted_eula?: Date;
 };
 
 type PrivateReadUserProjection = {
@@ -42,4 +43,5 @@ export const privateReadUserProjection: PrivateReadUserProjection = {
   level: true,
   coins: true,
   progress: true,
+  accepted_eula: true,
 };
