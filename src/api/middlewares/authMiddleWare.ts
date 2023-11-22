@@ -20,9 +20,12 @@ export async function authMiddleware(
   const token = req.header("Authorization") || req.cookies?.token;
 
   if (!token) {
-    return res
-      .status(StatusCodes.UNAUTHORIZED)
-      .json({ error: "No authentication token provided." });
+    return res.status(StatusCodes.UNAUTHORIZED).json({
+      success: false,
+      error: {
+        message: "No authentication token provided.",
+      },
+    });
   }
 
   try {
@@ -34,9 +37,12 @@ export async function authMiddleware(
         const uid = firebaseUser.uid;
         const user: IUser | null = await User.findOne({ uid: uid }).lean();
         if (!user) {
-          return res
-            .status(StatusCodes.UNAUTHORIZED)
-            .json({ error: "User not found" });
+          return res.status(StatusCodes.NOT_FOUND).json({
+            success: false,
+            error: {
+              message: "User not found",
+            },
+          });
         }
         req.user = {
           id: user._id.toString(),
@@ -55,9 +61,12 @@ export async function authMiddleware(
     }
     next();
   } catch (err) {
-    return res
-      .status(StatusCodes.UNAUTHORIZED)
-      .json({ error: "Invalid or expired authentication token." });
+    return res.status(StatusCodes.UNAUTHORIZED).json({
+      success: false,
+      error: {
+        message: "Invalid or expired authentication token.",
+      },
+    });
   }
 }
 
@@ -111,9 +120,12 @@ export async function adminAuthMiddleware(
   const token = req.header("Authorization") || req.cookies?.token;
 
   if (!token) {
-    return res
-      .status(StatusCodes.UNAUTHORIZED)
-      .json({ error: "No authentication token provided." });
+    return res.status(StatusCodes.UNAUTHORIZED).json({
+      success: false,
+      error: {
+        message: "No authentication token provided.",
+      },
+    });
   }
 
   try {
@@ -125,9 +137,12 @@ export async function adminAuthMiddleware(
         const uid = firebaseUser.uid;
         const user: IUser | null = await User.findOne({ uid: uid }).lean();
         if (!user || user.role !== "admin") {
-          return res
-            .status(StatusCodes.UNAUTHORIZED)
-            .json({ error: "Admins only." });
+          return res.status(StatusCodes.FORBIDDEN).json({
+            success: false,
+            error: {
+              message: "Admins only.",
+            },
+          });
         }
         req.user = {
           id: user._id.toString(),
@@ -142,9 +157,12 @@ export async function adminAuthMiddleware(
           oldTokenPayload.userId
         ).lean();
         if (!user || user.role !== "admin") {
-          return res
-            .status(StatusCodes.UNAUTHORIZED)
-            .json({ error: "Admins only." });
+          return res.status(StatusCodes.FORBIDDEN).json({
+            success: false,
+            error: {
+              message: "Admins only.",
+            },
+          });
         }
         req.user = {
           id: oldTokenPayload.userId.toString(),
@@ -154,9 +172,12 @@ export async function adminAuthMiddleware(
     }
     next();
   } catch (err) {
-    return res
-      .status(StatusCodes.UNAUTHORIZED)
-      .json({ error: "Invalid or expired authentication token." });
+    return res.status(StatusCodes.UNAUTHORIZED).json({
+      success: false,
+      error: {
+        message: "Invalid or expired authentication token.",
+      },
+    });
   }
 }
 
