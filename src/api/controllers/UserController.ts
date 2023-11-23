@@ -320,19 +320,12 @@ export async function getUser(req: Request, res: Response, next: NextFunction) {
       );
     }
 
-    const rank = await User.aggregate([
-      {
-        $match: {
-          source: { $ne: "yelp" },
-          "progress.xp": {
-            $gt: user.progress.xp,
-          },
-        },
+    const rank = await User.countDocuments({
+      source: { $ne: "yelp" },
+      "progress.xp": {
+        $gt: user.progress.xp,
       },
-      {
-        $count: "rank",
-      },
-    ]);
+    });
 
     const totalCheckins = await CheckIn.countDocuments({ user: id });
 
@@ -342,7 +335,7 @@ export async function getUser(req: Request, res: Response, next: NextFunction) {
       followingCount,
       reviewsCount,
       totalCheckins,
-      rank: rank[0]?.rank + 1 || 1,
+      rank: rank + 1,
       remainingXp: calcRemainingXP((user.progress && user.progress.xp) || 0),
     };
 
