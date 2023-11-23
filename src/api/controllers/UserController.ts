@@ -219,12 +219,6 @@ export async function getLeaderBoard(
     const page = Number(req.query.page) || 1;
     const limit = Number(req.query.limit) || 10;
     const skip = (page - 1) * limit;
-    if (page * limit > 100) {
-      return res.status(StatusCodes.OK).json({
-        success: true,
-        data: [],
-      });
-    }
 
     const leaderboard = await User.aggregate([
       { $match: { source: { $ne: "yelp" } } },
