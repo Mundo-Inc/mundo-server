@@ -227,6 +227,7 @@ export async function getLeaderBoard(
     }
 
     const leaderboard = await User.aggregate([
+      { $match: { source: { $ne: "yelp" } } },
       {
         $sort: {
           "progress.xp": -1,
@@ -322,6 +323,7 @@ export async function getUser(req: Request, res: Response, next: NextFunction) {
     const rank = await User.aggregate([
       {
         $match: {
+          source: { $ne: "yelp" },
           "progress.xp": {
             $gt: user.progress.xp,
           },
