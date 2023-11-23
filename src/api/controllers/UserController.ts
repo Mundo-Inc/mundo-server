@@ -231,7 +231,7 @@ export async function getLeaderBoard(
       {
         $sort: {
           "progress.xp": -1,
-          createdAt: 1,
+          createdAt: -1,
         },
       },
       { $skip: skip },
@@ -326,11 +326,11 @@ export async function getUser(req: Request, res: Response, next: NextFunction) {
       "progress.xp": {
         $gt: user.progress.xp,
       },
-    });
-
-    const totalCheckins = await CheckIn.countDocuments({ user: id }).sort({
+    }).sort({
       createdAt: -1,
     });
+
+    const totalCheckins = await CheckIn.countDocuments({ user: id });
 
     const result = {
       ...user,
