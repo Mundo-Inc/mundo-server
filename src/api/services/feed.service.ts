@@ -405,9 +405,9 @@ const haversine = (lat1: number, lon1: number, lat2: number, lon2: number) => {
   const a =
     Math.sin(dLat / 2) * Math.sin(dLat / 2) +
     Math.cos(lat1 * rad) *
-    Math.cos(lat2 * rad) *
-    Math.sin(dLon / 2) *
-    Math.sin(dLon / 2);
+      Math.cos(lat2 * rad) *
+      Math.sin(dLon / 2) *
+      Math.sin(dLon / 2);
 
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 
@@ -544,9 +544,8 @@ export const getUserFeed = async (
       };
     }
 
-    let sortBy: { [key: string]: SortOrder } = { createdAt: -1 }
-    if (isForYou)
-      sortBy = { hotnessScore: -1 }
+    let sortBy: { [key: string]: SortOrder } = { createdAt: -1 };
+    if (isForYou) sortBy = { hotnessScore: -1 };
 
     const userActivities = UserActivity.find(query)
       .sort(sortBy)

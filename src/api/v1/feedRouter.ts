@@ -1,6 +1,9 @@
 import express from "express";
 
-import { authMiddleware } from "../middlewares/authMiddleWare";
+import {
+  getEngagements,
+  getEngagementsValidation,
+} from "../controllers/EngagementController";
 import {
   activitySeen,
   activitySeenValidation,
@@ -11,7 +14,7 @@ import {
   getFeed,
   getFeedValidation,
 } from "../controllers/FeedController";
-import { getEngagements, getEngagementsValidation } from "../controllers/EngagementController";
+import { authMiddleware } from "../middlewares/authMiddleWare";
 
 const router = express.Router();
 router.use(express.json());
@@ -25,6 +28,11 @@ router
 
 router.get("/:id/comments", authMiddleware, getCommentsValidation, getComments);
 
-router.get("/:id/engagements", authMiddleware, getEngagementsValidation, getEngagements);
+router.get(
+  "/:id/engagements",
+  authMiddleware,
+  getEngagementsValidation,
+  getEngagements
+);
 
 export default router;

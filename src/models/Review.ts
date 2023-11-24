@@ -98,12 +98,15 @@ const ReviewSchema: Schema = new Schema<IReview>(
     writer: { type: Schema.Types.ObjectId, ref: "User", required: true },
     place: { type: Schema.Types.ObjectId, ref: "Place", required: true },
     scores: {
-      overall: { type: Number },
-      drinkQuality: { type: Number },
-      foodQuality: { type: Number },
-      atmosphere: { type: Number },
-      service: { type: Number },
-      value: { type: Number },
+      type: {
+        overall: Number,
+        drinkQuality: Number,
+        foodQuality: Number,
+        atmosphere: Number,
+        service: Number,
+        value: Number,
+      },
+      default: {},
     },
     originalContent: { type: String },
     content: { type: String, default: "" },
@@ -148,8 +151,7 @@ async function removeReviewDependencies(review: IReview) {
 
   // remove the userActivity related to the review
   const userActivity = await UserActivity.findById(review.userActivityId);
-  if (userActivity)
-    await userActivity.deleteOne();
+  if (userActivity) await userActivity.deleteOne();
 }
 
 // Query middleware (for Comment.deleteOne(), Comment.deleteMany(), etc.)
