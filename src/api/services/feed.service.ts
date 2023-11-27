@@ -668,6 +668,10 @@ export const getUserFeed = async (
         },
       ]);
 
+      const commentsCount = await Comment.countDocuments({
+        userActivity: _act._id,
+      });
+
       activities.push({
         id: _act._id,
         user: userInfo,
@@ -682,6 +686,7 @@ export const getUserFeed = async (
         weight,
         reactions: reactions[0],
         comments: comments,
+        commentsCount,
       });
     }
 
