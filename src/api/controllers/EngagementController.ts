@@ -11,7 +11,13 @@ import validate from "./validators";
 
 export const getEngagementsValidation: ValidationChain[] = [
   param("id").isMongoId(),
-  query("before").optional().isString(),
+  query("before")
+    .optional()
+    .custom((value) => {
+      const timestamp = Number(value);
+      const date = new Date(timestamp);
+      return !isNaN(timestamp) && !isNaN(date.getTime());
+    }),
   validate.limit(query("limit").optional(), 1, 40),
 ];
 
@@ -26,10 +32,10 @@ export async function getEngagements(
     const { id: authId } = req.user!;
     const { id } = req.params;
 
-    let before = new Date();
-    if (req.query.before && typeof req.query.before === "string") {
-      before = new Date(req.query.before);
-    }
+    const before = req.query.before
+      ? new Date(Number(req.query.before))
+      : new Date();
+
     const limit = Number(req.query.limit) || 20;
 
     const blockedUsers = (await Block.find({ target: authId }, "user")).map(
