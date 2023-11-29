@@ -613,12 +613,15 @@ export async function deleteUserConnection(
     const { id } = req.params;
     const { id: authId } = req.user!;
 
-    const deletedDoc = await Follow.findOneAndDelete({
-      user: authId,
-      target: id,
-    });
-
-    console.log(deletedDoc);
+    const deletedDoc = await Follow.findOneAndDelete(
+      {
+        user: authId,
+        target: id,
+      },
+      {
+        includeResultMetadata: false,
+      }
+    );
 
     try {
       await UserActivity.findOneAndDelete({
@@ -630,7 +633,7 @@ export async function deleteUserConnection(
 
       await Notification.findOneAndDelete({
         resources: {
-          $elemMatch: { _id: deletedDoc.value._id, type: ResourceTypes.FOLLOW },
+          $elemMatch: { _id: deletedDoc._id, type: ResourceTypes.FOLLOW },
         },
       });
     } catch (e) {
