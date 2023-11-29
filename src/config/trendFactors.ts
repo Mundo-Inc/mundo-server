@@ -1,6 +1,12 @@
 export const weights = {
-    reaction: 6,
-    comment: 20,
-    view: 1,
-    timeDecay: 1.8
-}
+  reaction: 10,
+  comment: 50,
+  view: 1,
+  timeDecay: 0.1,
+  newPostInitialBoost: 50,
+  latest24HoursBoost: 25,
+  latest12HoursBoost: 75,
+  latest6HoursBoost: 150,
+  latest3HoursBoost: 250,
+  latest1HoursBoost: 350,
+};

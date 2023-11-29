@@ -1,26 +1,50 @@
-import cron from 'node-cron';
-import UserActivity from '../models/UserActivity';
+import cron from "node-cron";
+import UserActivity from "../models/UserActivity";
 
-// Function to calculate and update the hotness score
-async function updateHotnessScores() {
-    const activities = await UserActivity.find({
-        hasMedia: true,
-    });
-    try {
-        for (const activity of activities) {
-            const hotnessScore = activity.calculateHotnessScore(); // assuming this method exists on your UserActivity model
-            activity.hotnessScore = hotnessScore;
-            await activity.save();
-        }
-    } catch (error) {
-        console.log(error);
-    }
-
+interface Query {
+  hasMedia: boolean;
+  createdAt?: {
+    $gt?: Date;
+    $lt?: Date;
+  };
 }
 
-// Set up a cron job to run the updateHotnessScores function every hour
-cron.schedule('*/10 * * * *', async () => {
-    // console.log('Cron job started: Updating hotness scores.');
-    await updateHotnessScores();
-    // console.log('Cron job finished.');
+async function updateHotnessScores(
+  before: Date | undefined,
+  after: Date | undefined
+) {
+  const query: Query = { hasMedia: true };
+  if (after) {
+    query.createdAt = { ...query.createdAt, $gt: after };
+  }
+  if (before) {
+    query.createdAt = { ...query.createdAt, $lt: before };
+  }
+
+  const activities = await UserActivity.find(query);
+  try {
+    for (const activity of activities) {
+      const hotnessScore = activity.calculateHotnessScore();
+      activity.hotnessScore = hotnessScore;
+      await activity.save();
+    }
+    console.log("Hotness scores updated ✅");
+  } catch (error) {
+    console.log(error);
+  }
+}
+const now = new Date();
+const lastWeek = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+updateHotnessScores(now, lastWeek);
+
+cron.schedule("*/5 * * * *", async () => {
+  const now = new Date();
+  const last24Hours = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+  await updateHotnessScores(now, last24Hours);
+});
+
+cron.schedule("0 * * * *", async () => {
+  const now = new Date();
+  const last24Hours = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+  await updateHotnessScores(last24Hours, undefined);
 });

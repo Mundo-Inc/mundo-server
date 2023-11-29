@@ -45,7 +45,7 @@ export interface IUserActivity extends Document {
     reactions: number;
     comments: number;
     views: number;
-  }
+  };
 }
 
 const UserActivitySchema: Schema = new Schema<IUserActivity>(
@@ -104,8 +104,8 @@ const UserActivitySchema: Schema = new Schema<IUserActivity>(
       views: {
         type: Number,
         default: 0,
-      }
-    }
+      },
+    },
   },
   { timestamps: true }
 );
@@ -118,18 +118,39 @@ UserActivitySchema.index({
   hotnessScore: -1,
 });
 
+function getFreshHoursBoost(hoursValue: number) {
+  const boostThresholds = [
+    { limit: 1, boost: weights.latest1HoursBoost },
+    { limit: 3, boost: weights.latest3HoursBoost },
+    { limit: 6, boost: weights.latest6HoursBoost },
+    { limit: 12, boost: weights.latest12HoursBoost },
+    { limit: 24, boost: weights.latest24HoursBoost },
+  ];
+
+  for (let threshold of boostThresholds) {
+    if (hoursValue <= threshold.limit) {
+      return threshold.boost;
+    }
+  }
+  return 0;
+}
+
 UserActivitySchema.methods.calculateHotnessScore = function () {
-  const hoursSinceCreation = Math.max(1, (new Date().getTime() - this.createdAt.getTime()) / 36e5);
-  const reactionWeight = weights.reaction;
-  const commentWeight = weights.comment;
-  const viewWeight = weights.view;
-  const timeDecayFactor = Math.pow(1 / hoursSinceCreation, weights.timeDecay);
+  const hoursSinceCreation = Math.max(
+    1,
+    (new Date().getTime() - this.createdAt.getTime()) / 36e5
+  );
 
-  const hotnessScore = (this.engagements.reactions * reactionWeight +
-    this.engagements.comments * commentWeight +
-    this.engagements.views * viewWeight) * timeDecayFactor;
-
-  return hotnessScore;
+  const hoursValue = Math.max(1, hoursSinceCreation);
+  const timeDecayFactor = Math.pow(1 / hoursValue, weights.timeDecay);
+  let score =
+    (this.engagements.reactions * weights.reaction +
+      this.engagements.comments * weights.comment +
+      this.engagements.views * weights.view) *
+    timeDecayFactor;
+  const newPostBoost = weights.newPostInitialBoost / hoursValue;
+  const finalScore = score + newPostBoost + getFreshHoursBoost(hoursValue);
+  return finalScore;
 };
 
 UserActivitySchema.methods.updateHotnessScore = function () {
