@@ -497,11 +497,15 @@ export async function putUserSettings(
         throw createError(strings.user.notFound, StatusCodes.NOT_FOUND);
       }
       const found = user.devices.find(
-        (device: UserDevice) => device.apnToken === apnToken
+        (device: UserDevice) =>
+          device.apnToken === apnToken || device.fcmToken === fcmToken
       );
       if (found) {
         if (found.fcmToken !== fcmToken) {
           found.fcmToken = fcmToken;
+          await user.save();
+        } else if (found.apnToken !== apnToken) {
+          found.apnToken = apnToken;
           await user.save();
         }
       } else {

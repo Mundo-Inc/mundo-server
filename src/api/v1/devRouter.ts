@@ -1,7 +1,6 @@
 import express from "express";
 
 import {
-  deviceTokens,
   engagements,
   fixPlaces,
   importAllUsersToFirebase,
@@ -17,8 +16,6 @@ router.use(adminAuthMiddleware);
 router.get("/fixPlaces", fixPlaces);
 
 router.get("/engagements", engagements);
-
-router.get("/deviceTokens", deviceTokens);
 
 router.post("/importAllUsersToFirebase", importAllUsersToFirebase);
 
