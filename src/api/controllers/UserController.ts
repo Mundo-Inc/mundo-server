@@ -628,7 +628,7 @@ export async function deleteUserConnection(
 
       await Notification.findOneAndDelete({
         resources: {
-          $elemMatch: { _id: deletedDoc._id, type: ResourceTypes.FOLLOW },
+          $elemMatch: { _id: deletedDoc.value._id, type: ResourceTypes.FOLLOW },
         },
       });
     } catch (e) {
