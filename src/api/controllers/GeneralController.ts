@@ -2,8 +2,9 @@ import type { NextFunction, Request, Response } from "express";
 import { param, query, type ValidationChain } from "express-validator";
 import { StatusCodes } from "http-status-codes";
 
+import AppSetting, { type IAppSetting } from "../../models/AppSetting";
 import Category from "../../models/Category";
-import { handleInputErrors } from "../../utilities/errorHandlers";
+import { createError, handleInputErrors } from "../../utilities/errorHandlers";
 import validate from "./validators";
 
 export const getCategoriesValidation: ValidationChain[] = [
@@ -55,19 +56,29 @@ export async function getVersionInfo(
     handleInputErrors(req);
     const { version } = req.params;
 
-    const latestVersion = "0.13.0";
-    const minOperationalVersion = "0.11.0";
-    const isLatest = version === latestVersion;
+    let latestAppVersion: IAppSetting | null = await AppSetting.findOne({
+      key: "latestAppVersion",
+    }).lean();
 
-    const compare = compareVersion(version, minOperationalVersion);
+    let minOperationalVersion: IAppSetting | null = await AppSetting.findOne({
+      key: "minOperationalVersion",
+    }).lean();
+
+    if (!latestAppVersion || !minOperationalVersion) {
+      throw createError("App settings not found", StatusCodes.NOT_FOUND);
+    }
+
+    const isLatest = version === latestAppVersion.value;
+    const compare = compareVersion(version, minOperationalVersion.value);
 
     const isOperational = compare >= 0;
 
     return res.status(StatusCodes.OK).json({
       isLatest,
-      latestVersion,
+      latestAppVersion: latestAppVersion.value,
       isOperational,
-      minOperationalVersion,
+      minOperationalVersion: minOperationalVersion.value,
+      message: isOperational ? "" : "Please update to the latest version",
     });
   } catch (err) {
     next(err);

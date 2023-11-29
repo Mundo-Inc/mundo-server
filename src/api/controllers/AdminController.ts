@@ -1,8 +1,10 @@
-import { ResourceTypes } from "./../../models/Notification";
 import type { NextFunction, Request, Response } from "express";
 import { body, param, query, type ValidationChain } from "express-validator";
 import { StatusCodes } from "http-status-codes";
+import mongoose from "mongoose";
 
+import AppSetting from "../../models/AppSetting";
+import Comment from "../../models/Comment";
 import Flag from "../../models/Flag";
 import Review from "../../models/Review";
 import User from "../../models/User";
@@ -10,11 +12,6 @@ import { createError, handleInputErrors } from "../../utilities/errorHandlers";
 import { adminReadUserProjection } from "../dto/user/read-user-admin.dto";
 import { privateReadUserProjection } from "../dto/user/read-user-private.dto";
 import validate from "./validators";
-import mongoose from "mongoose";
-import Notification from "../../models/Notification";
-import Comment from "../../models/Comment";
-import UserActivity, { ActivityTypeEnum } from "../../models/UserActivity";
-import Reaction from "../../models/Reaction";
 
 export const getUsersValidation: ValidationChain[] = [
   validate.q(query("q").optional()),
@@ -182,13 +179,10 @@ export async function resolveFlag(
     if (action === "DELETE") {
       if (flag.targetType === "Comment") {
         const comment = await Comment.findById(flag.target);
-        if (comment)
-          await comment.deleteOne();
-
+        if (comment) await comment.deleteOne();
       } else if (flag.targetType === "Review") {
         const review = await Review.findById(flag.target);
-        if (review)
-          await review.deleteOne();
+        if (review) await review.deleteOne();
       }
     }
 
@@ -200,24 +194,74 @@ export async function resolveFlag(
     };
 
     // save the action
-    flag.adminAction = adminAction
+    flag.adminAction = adminAction;
 
     await flag.save();
 
-
-    // If the flagaction was delete we need to resolve all the flags for that target. 
+    // If the flagaction was delete we need to resolve all the flags for that target.
     if (action === "DELETE") {
       const relatedFlags = await Flag.find({
         targetType: flag.targetType,
-        target: flag.target
-      })
+        target: flag.target,
+      });
       for (const f of relatedFlags) {
-        f.adminAction = adminAction
-        await f.save()
+        f.adminAction = adminAction;
+        await f.save();
       }
     }
 
     res.status(StatusCodes.OK).json({ success: true, data: flag });
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function getSettings(
+  req: Request,
+  res: Response,
+  next: NextFunction
+) {
+  try {
+    handleInputErrors(req);
+
+    const settings = await AppSetting.find({}).lean();
+
+    const data: { [key: string]: any } = {};
+
+    for (const setting of settings) {
+      data[setting.key] = setting.value;
+    }
+
+    res.status(StatusCodes.OK).json({ success: true, data });
+  } catch (err) {
+    next(err);
+  }
+}
+
+export const updateSettingsValidation: ValidationChain[] = [
+  body("key")
+    .isString()
+    .notEmpty()
+    .isIn(["latestAppVersion", "minOperationalVersion"]),
+  body("value").isString().notEmpty(),
+];
+export async function updateSettings(
+  req: Request,
+  res: Response,
+  next: NextFunction
+) {
+  try {
+    handleInputErrors(req);
+
+    const { key, value } = req.body;
+
+    const setting = await AppSetting.findOneAndUpdate(
+      { key },
+      { value },
+      { new: true }
+    );
+
+    res.sendStatus(StatusCodes.NO_CONTENT);
   } catch (err) {
     next(err);
   }
