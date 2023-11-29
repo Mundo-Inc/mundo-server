@@ -45,7 +45,9 @@ cron.schedule("*/30 * * * * *", async () => {
         await apnProvider
           .send(
             note,
-            user.devices.map((d: UserDevice) => d.apnToken)
+            user.devices
+              .filter((d: UserDevice) => d.apnToken)
+              .map((d: UserDevice) => d.apnToken)
           )
           .then((result) => {
             if (result.sent.length === 0) {
@@ -81,21 +83,6 @@ cron.schedule("*/30 * * * * *", async () => {
       }
     }
   }
-
-  // let note = new apn.Notification();
-  // note.alert = "Hello, world!";
-  // note.topic = "ai.phantomphood.app";
-  // note.badge = 1;
-  // note.sound = "default";
-
-  // apnProvider
-  //   .send(
-  //     note,
-  //     "fccf6a18ee83215e9e72069aee900e632ad538507a147334fa9ac16bcc2ec5ec"
-  //   )
-  //   .then((result) => {
-  //     console.log(result);
-  //   });
 });
 
 export async function getNotificationContent(notification: INotification) {
