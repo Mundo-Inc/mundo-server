@@ -618,11 +618,7 @@ export async function deleteUserConnection(
       target: id,
     });
 
-    console.log(deletedDoc.value);
-    console.log("--");
-    console.log(deletedDoc.ok);
-    console.log("--");
-    console.log(deletedDoc.lastErrorObject);
+    console.log(deletedDoc);
 
     try {
       await UserActivity.findOneAndDelete({
