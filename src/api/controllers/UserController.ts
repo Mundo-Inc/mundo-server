@@ -618,6 +618,12 @@ export async function deleteUserConnection(
       target: id,
     });
 
+    console.log(deletedDoc.value);
+    console.log("--");
+    console.log(deletedDoc.ok);
+    console.log("--");
+    console.log(deletedDoc.lastErrorObject);
+
     try {
       await UserActivity.findOneAndDelete({
         userId: new mongoose.Types.ObjectId(authId),
