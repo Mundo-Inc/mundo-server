@@ -1,6 +1,11 @@
 import express from "express";
 
-import { devTests, fixPlaces, engagements, importAllUsersToFirebase } from "../controllers/DevController";
+import {
+  deviceTokens,
+  engagements,
+  fixPlaces,
+  importAllUsersToFirebase,
+} from "../controllers/DevController";
 import { adminAuthMiddleware } from "../middlewares/authMiddleWare";
 
 // Admin Only
@@ -8,14 +13,13 @@ const router = express.Router();
 router.use(express.json());
 router.use(adminAuthMiddleware);
 
-router.route("/fixPlaces").get(fixPlaces);
+// Routes
+router.get("/fixPlaces", fixPlaces);
 
-router.route("/engagements").get(engagements);
+router.get("/engagements", engagements);
 
-router.route("/:action").get(devTests);
+router.get("/deviceTokens", deviceTokens);
 
-
-router.route("/importAllUsersToFirebase").post(importAllUsersToFirebase)
-
+router.post("/importAllUsersToFirebase", importAllUsersToFirebase);
 
 export default router;

@@ -1,19 +1,25 @@
 import { DeleteObjectCommand } from "@aws-sdk/client-s3";
+import axios from "axios";
 import bcrypt from "bcryptjs";
 import type { NextFunction, Request, Response } from "express";
 import { body, param, query, type ValidationChain } from "express-validator";
 import { getAuth } from "firebase-admin/auth";
 import { StatusCodes } from "http-status-codes";
-
-import axios from "axios";
+import jwt from "jsonwebtoken";
 import mongoose from "mongoose";
+
+import { config } from "../../config";
 import Block from "../../models/Block";
 import CheckIn from "../../models/CheckIn";
 import Follow from "../../models/Follow";
 import Notification, { ResourceTypes } from "../../models/Notification";
 import Place, { type IPlace } from "../../models/Place";
 import Review from "../../models/Review";
-import User, { IUser, SignupMethodEnum } from "../../models/User";
+import User, {
+  SignupMethodEnum,
+  type IUser,
+  type UserDevice,
+} from "../../models/User";
 import UserActivity, {
   ActivityTypeEnum,
   ResourceTypeEnum,
@@ -38,9 +44,8 @@ import { handleSignUp } from "../lib/profile-handlers";
 import { calcRemainingXP } from "../services/reward/helpers/levelCalculations";
 import { addNewFollowingActivity } from "../services/user.activity.service";
 import validate from "./validators";
-import { config } from "../../config";
+
 const FIREBASE_WEB_API_KEY = process.env.FIREBASE_WEB_API_KEY;
-import jwt from "jsonwebtoken";
 
 export const getUsersValidation: ValidationChain[] = [
   validate.q(query("q").optional()),
@@ -448,7 +453,15 @@ export async function deleteUser(
 export const userSettingsValidation: ValidationChain[] = [
   param("id").isMongoId(),
   body("action").isIn(["deviceToken"]),
-  body("token").if(body("action").equals("deviceToken")).isString(),
+  body("token").if(body("action").equals("deviceToken")).optional().isString(),
+  body("apnToken")
+    .if(body("action").equals("deviceToken"))
+    .optional()
+    .isString(),
+  body("fcmToken")
+    .if(body("action").equals("deviceToken"))
+    .optional()
+    .isString(),
   body("platform").if(body("action").equals("deviceToken")).isString(),
 ];
 export async function putUserSettings(
@@ -471,8 +484,9 @@ export async function putUserSettings(
     const { action } = req.body;
 
     if (action === "deviceToken") {
-      const { token, platform } = req.body;
-      if (!token || !platform) {
+      let { token, apnToken, fcmToken, platform } = req.body;
+      apnToken = apnToken || token;
+      if ((!token && !apnToken && !fcmToken) || !platform) {
         throw createError(
           strings.validations.missRequiredFields,
           StatusCodes.BAD_REQUEST
@@ -483,10 +497,15 @@ export async function putUserSettings(
         throw createError(strings.user.notFound, StatusCodes.NOT_FOUND);
       }
       const found = user.devices.find(
-        (device: { token: string; platform: string }) => device.token === token
+        (device: UserDevice) => device.apnToken === apnToken
       );
-      if (!found) {
-        user.devices.push({ token, platform });
+      if (found) {
+        if (found.fcmToken !== fcmToken) {
+          found.fcmToken = fcmToken;
+          await user.save();
+        }
+      } else {
+        user.devices.push({ apnToken, fcmToken, platform });
         await user.save();
       }
     }

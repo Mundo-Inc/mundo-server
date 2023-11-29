@@ -1,19 +1,14 @@
+import apn from "@parse/node-apn";
 import cron from "node-cron";
 import apnProvider from "../config/apn";
-import apn from "@parse/node-apn";
-import Notification, {
-  INotification,
-  NotificationType,
-} from "../models/Notification";
-import User from "../models/User";
-import Follow from "../models/Follow";
 import Comment from "../models/Comment";
+import Follow from "../models/Follow";
+import Notification, {
+  NotificationType,
+  type INotification,
+} from "../models/Notification";
 import Reaction from "../models/Reaction";
-
-type device = {
-  token: string;
-  platform: string;
-};
+import User, { type UserDevice } from "../models/User";
 
 cron.schedule("*/30 * * * * *", async () => {
   const notifications = await Notification.find({
@@ -50,7 +45,7 @@ cron.schedule("*/30 * * * * *", async () => {
         await apnProvider
           .send(
             note,
-            user.devices.map((d: device) => d.token)
+            user.devices.map((d: UserDevice) => d.apnToken)
           )
           .then((result) => {
             if (result.sent.length === 0) {
@@ -64,7 +59,7 @@ cron.schedule("*/30 * * * * *", async () => {
                 if (failure.response?.reason === "BadDeviceToken") {
                   hasFailedDevice = true;
                   user.devices = user.devices.filter(
-                    (d: device) => d.token !== failure.device
+                    (d: UserDevice) => d.apnToken !== failure.device
                   );
                 }
               }

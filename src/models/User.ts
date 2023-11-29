@@ -1,11 +1,11 @@
-import mongoose, { Schema, type Document, CallbackError } from "mongoose";
-import Achievement, { IAchievement } from "./Achievement";
+import mongoose, { CallbackError, Schema, type Document } from "mongoose";
+import Achievement from "./Achievement";
 import ActivitySeen from "./ActivitySeen";
 import CheckIn from "./CheckIn";
 import Comment from "./Comment";
 import Deal from "./Deal";
-import Follow from "./Follow";
 import Flag from "./Flag";
+import Follow from "./Follow";
 import List from "./List";
 import Media from "./Media";
 import Reaction from "./Reaction";
@@ -21,6 +21,13 @@ export enum SignupMethodEnum {
   traditional = "traditional",
   cloud = "cloud",
 }
+
+export type UserDevice = {
+  apnToken?: string;
+  fcmToken?: string;
+  platform: string;
+};
+
 export interface IUser extends Document {
   accepted_eula: Date;
   uid: string;
@@ -46,10 +53,7 @@ export interface IUser extends Document {
   xp?: number;
   level?: number;
   signupMethod: string;
-  devices?: {
-    token: string;
-    platform: string;
-  }[];
+  devices?: UserDevice[];
   progress: {
     level: number;
     xp: number;
@@ -150,10 +154,8 @@ const UserSchema = new Schema<IUser>(
     devices: {
       type: [
         {
-          token: {
-            type: String,
-            required: true,
-          },
+          apnToken: String,
+          fcmToken: String,
           platform: {
             type: String,
             required: true,

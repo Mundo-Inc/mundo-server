@@ -1,120 +1,21 @@
-import { Location } from "./PlaceController";
+import axios from "axios";
 import type { NextFunction, Request, Response } from "express";
+import { getAuth } from "firebase-admin/auth";
 import { StatusCodes } from "http-status-codes";
-import mongoose from "mongoose";
-import Place, { type IPlace } from "../../models/Place";
-import Review from "../../models/Review";
-import { handleInputErrors } from "../../utilities/errorHandlers";
+import ActivitySeen from "../../models/ActivitySeen";
 import CheckIn from "../../models/CheckIn";
-import { stateMapping } from "../services/place.service";
+import Comment from "../../models/Comment";
 import Deal from "../../models/Deal";
+import Place, { type IPlace } from "../../models/Place";
 import PlaceFeature from "../../models/PlaceFeature";
+import Reaction from "../../models/Reaction";
+import Review from "../../models/Review";
 import SystemRecommendation from "../../models/SystemRecommendation";
 import User from "../../models/User";
-import UserFeature from "../../models/UserFeature";
-import { areSimilar } from "../../utilities/stringHelper";
-import axios from "axios";
 import UserActivity from "../../models/UserActivity";
-import Reaction from "../../models/Reaction";
-import Comment from "../../models/Comment";
-import ActivitySeen from "../../models/ActivitySeen";
-import { getAuth } from "firebase-admin/auth";
-
-export async function devTests(
-  req: Request,
-  res: Response,
-  next: NextFunction
-) {
-  try {
-    handleInputErrors(req);
-
-    const { action } = req.params;
-
-    if (action === "processReviews") {
-      const places = await Place.find({});
-      let i = 0;
-      for (const place of places) {
-        try {
-          await place.processReviews();
-        } catch (err) {
-          console.error(place._id);
-        }
-        i++;
-        console.log(i);
-      }
-
-      res.sendStatus(StatusCodes.NO_CONTENT);
-    } else if (action === "removeDuplicates") {
-      // find duplicated places
-      const places = await Place.aggregate([
-        {
-          $group: {
-            _id: "$otherSources.googlePlaces._id",
-            count: { $sum: 1 },
-            ids: { $push: "$_id" },
-          },
-        },
-        {
-          $match: {
-            $and: [
-              {
-                count: {
-                  $gt: 1,
-                },
-              },
-              {
-                _id: {
-                  $ne: "",
-                },
-              },
-            ],
-          },
-        },
-        {
-          $sort: {
-            count: -1,
-          },
-        },
-      ]);
-
-      let deleted = {
-        places: 0,
-        reviews: 0,
-        checkIns: 0,
-      };
-
-      for (const place of places) {
-        let keepId = null;
-        let mostReviewCount = null;
-        for (const id of place.ids) {
-          const reviewsCount = await Review.countDocuments({ place: id });
-
-          if (keepId === null) {
-            mostReviewCount = reviewsCount;
-            keepId = id;
-          } else {
-            if (mostReviewCount! < reviewsCount) {
-              await Place.findByIdAndDelete(keepId);
-              await Review.deleteMany({ place: keepId }); //FIXME: NEVER USE THIS DELETEMANY METHOD, USE FOR+DELETEONE INSTEAD
-              await CheckIn.deleteMany({ place: keepId }); //FIXME: NEVER USE THIS DELETEMANY METHOD, USE FOR+DELETEONE INSTEAD
-
-              mostReviewCount = reviewsCount;
-              keepId = id;
-            } else {
-              // delete
-              await Place.findByIdAndDelete(id);
-              await Review.deleteMany({ place: id }); //FIXME: NEVER USE THIS DELETEMANY METHOD, USE FOR+DELETEONE INSTEAD
-              await CheckIn.deleteMany({ place: id }); //FIXME: NEVER USE THIS DELETEMANY METHOD, USE FOR+DELETEONE INSTEAD
-            }
-          }
-        }
-      }
-      res.status(StatusCodes.OK).json(deleted);
-    }
-  } catch (err) {
-    next(err);
-  }
-}
+import UserFeature from "../../models/UserFeature";
+import { createError, handleInputErrors } from "../../utilities/errorHandlers";
+import { areSimilar } from "../../utilities/stringHelper";
 
 async function fetchOSMTags(lat: number, lon: number, name: string) {
   try {
@@ -515,3 +416,60 @@ export async function importAllUsersToFirebase(
 //   console.log(email);
 
 // }
+
+export async function deviceTokens(
+  req: Request,
+  res: Response,
+  next: NextFunction
+) {
+  try {
+    console.log("Fixing Device Tokens");
+
+    const users = await User.find({
+      "devices.0": { $exists: true },
+    });
+
+    const objUsers = await User.find({
+      "devices.0": { $exists: true },
+    }).lean();
+
+    if (users.length !== objUsers.length) {
+      throw createError(
+        "Error in deviceTokens",
+        StatusCodes.INTERNAL_SERVER_ERROR
+      );
+    }
+
+    for (let i = 0; i < users.length; i++) {
+      const user = users[i];
+      const objUser = objUsers[i];
+      // Rename token to apnToken
+      let devices = [];
+      for (let j = 0; j < user.devices.length; j++) {
+        const objDevice = objUser.devices[j];
+        if (objDevice.token.length <= 64) {
+          devices.push({
+            _id: objDevice._id,
+            platform: objDevice.platform,
+            apnToken: objDevice.token,
+          });
+        } else {
+          devices.push({
+            _id: objDevice._id,
+            platform: objDevice.platform,
+            fcmToken: objDevice.token,
+          });
+        }
+      }
+
+      user.devices = devices;
+
+      await user.save();
+    }
+
+    console.log("Populating engagements finished successfully ✅");
+    return res.sendStatus(StatusCodes.NO_CONTENT);
+  } catch (error) {
+    console.error(error);
+  }
+}
