@@ -440,36 +440,44 @@ export async function deviceTokens(
       );
     }
 
+    console.log(1);
     for (let i = 0; i < users.length; i++) {
+      console.log(2);
       const user = users[i];
       const objUser = objUsers[i];
       // Rename token to apnToken
       let devices = [];
       for (let j = 0; j < user.devices.length; j++) {
+        console.log(3);
         const objDevice = objUser.devices[j];
         if (objDevice.token.length <= 64) {
+          console.log(4);
           devices.push({
             _id: objDevice._id,
             platform: objDevice.platform,
             apnToken: objDevice.token,
           });
         } else {
+          console.log(5);
           devices.push({
             _id: objDevice._id,
             platform: objDevice.platform,
             fcmToken: objDevice.token,
           });
         }
+        console.log(6);
       }
-
+      console.log(7);
       user.devices = devices;
 
       await user.save();
+      console.log(8);
     }
 
     console.log("Populating engagements finished successfully ✅");
     return res.sendStatus(StatusCodes.NO_CONTENT);
   } catch (error) {
     console.error(error);
+    return res.sendStatus(StatusCodes.INTERNAL_SERVER_ERROR);
   }
 }
