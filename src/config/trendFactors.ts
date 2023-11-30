@@ -1,8 +1,8 @@
 export const weights = {
-  reaction: 10,
-  comment: 50,
+  reaction: 5,
+  comment: 30,
   view: 1,
-  timeDecay: 0.1,
+  timeDecay: 0.5,
   newPostInitialBoost: 50,
   latest48HoursBoost: 12,
   latest24HoursBoost: 25,
