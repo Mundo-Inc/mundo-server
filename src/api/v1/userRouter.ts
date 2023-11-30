@@ -2,12 +2,8 @@ import express from "express";
 
 import {
   createUser,
-  createUserConnection,
-  createUserConnectionValidation,
   createUserValidation,
   deleteUser,
-  deleteUserConnection,
-  deleteUserConnectionValidation,
   deleteUserValidation,
   editUser,
   editUserValidation,
@@ -15,8 +11,6 @@ import {
   getLatestPlaceValidation,
   getLeaderBoard,
   getUser,
-  getUserConnections,
-  getUserConnectionsValidation,
   getUserValidation,
   getUsers,
   getUsersValidation,
@@ -39,6 +33,16 @@ import {
   blockValidation,
   unblock,
 } from "../controllers/BlockController";
+import {
+  connectionFollowStatus,
+  connectionFollowStatusValidation,
+  createUserConnection,
+  createUserConnectionValidation,
+  deleteUserConnection,
+  deleteUserConnectionValidation,
+  getUserConnections,
+  getUserConnectionsValidation,
+} from "../controllers/ConnectionController";
 
 const router = express.Router();
 router.use(express.json());
@@ -85,6 +89,14 @@ router
   .route("/:id/connections")
   .post(authMiddleware, createUserConnectionValidation, createUserConnection)
   .delete(authMiddleware, deleteUserConnectionValidation, deleteUserConnection);
+
+router
+  .route("/:id/connections/followStatus")
+  .get(
+    authMiddleware,
+    connectionFollowStatusValidation,
+    connectionFollowStatus
+  );
 
 router.get(
   "/:id/connections/:type",
