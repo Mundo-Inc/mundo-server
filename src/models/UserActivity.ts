@@ -125,6 +125,7 @@ function getFreshHoursBoost(hoursValue: number) {
     { limit: 6, boost: weights.latest6HoursBoost },
     { limit: 12, boost: weights.latest12HoursBoost },
     { limit: 24, boost: weights.latest24HoursBoost },
+    { limit: 48, boost: weights.latest48HoursBoost },
   ];
 
   for (let threshold of boostThresholds) {
