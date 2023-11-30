@@ -41,7 +41,6 @@ const ListSchema = new Schema<IList>({
         type: Schema.Types.ObjectId,
         ref: "Place",
         required: true,
-        unique: true,
       },
       user: { type: Schema.Types.ObjectId, ref: "User", required: true },
     },
@@ -50,7 +49,6 @@ const ListSchema = new Schema<IList>({
     {
       user: {
         type: Schema.Types.ObjectId,
-        unique: true,
         ref: "User",
       },
       access: {

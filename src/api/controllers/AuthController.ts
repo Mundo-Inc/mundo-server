@@ -45,17 +45,6 @@ export async function authPost(
     const { email, password, action } = req.body;
 
     if (action === "signin") {
-      // Sign in to get the Firebase ID token
-      // const signInResponse = await axios.post(
-      //   `https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${FIREBASE_WEB_API_KEY}`,
-      //   {
-      //     email: email.toLowerCase(),
-      //     password: password,
-      //     returnSecureToken: true,
-      //   }
-      // );
-      // const fbasetoken = signInResponse.data.idToken;
-
       const user = await User.findOne({
         "email.address": { $regex: new RegExp(email, "i") },
       });

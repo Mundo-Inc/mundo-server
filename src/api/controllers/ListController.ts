@@ -8,7 +8,6 @@ import strings, { dStrings as ds, dynamicMessage } from "../../strings";
 
 export const createListValidation: ValidationChain[] = [
   body("name").isString(),
-  body("owner").optional().isMongoId(),
   body("collaborators").optional().isArray(),
   body("icon").optional().isString(),
   body("isPrivate").optional().isBoolean(),
@@ -349,5 +348,30 @@ export async function editCollaboratorAccess(
     return res.sendStatus(StatusCodes.NO_CONTENT);
   } catch (err) {
     next(err);
+  }
+}
+
+export const checkPlaceInUserListsValidation: ValidationChain[] = [
+  param("placeId").isMongoId(),
+];
+
+export async function checkPlaceInUserLists(
+  req: Request,
+  res: Response,
+  next: NextFunction
+) {
+  try {
+    handleInputErrors(req);
+    const { id: authId } = req.user!;
+    const placeId = req.params.placeId;
+
+    const lists = await List.find({
+      "places.place": placeId,
+      owner: authId,
+    });
+
+    res.json(lists);
+  } catch (error) {
+    next(error);
   }
 }
