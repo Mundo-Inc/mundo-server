@@ -64,7 +64,13 @@ export interface IUser extends Document {
   updatedAt: Date;
   verified?: boolean;
   coins: number;
-  latestPlace?: mongoose.Types.ObjectId;
+  latestLocation?: {
+    geoLocation: {
+      type: string;
+      coordinates: number[];
+    };
+    updatedAt: Date;
+  };
 }
 
 const UserSchema = new Schema<IUser>(
@@ -189,9 +195,15 @@ const UserSchema = new Schema<IUser>(
       type: Number,
       default: 0,
     },
-    latestPlace: {
-      type: Schema.Types.ObjectId,
-      ref: "Place",
+    latestLocation: {
+      geoLocation: {
+        type: { type: String, default: "Point" },
+        coordinates: { type: [Number], required: true },
+      },
+      updatedAt: {
+        type: Date,
+        default: Date.now,
+      },
     },
     progress: {
       xp: {
@@ -307,5 +319,6 @@ UserSchema.pre("deleteOne", async function (next) {
   }
 });
 
+UserSchema.index({ "latestLocation.geoLocation": "2dsphere" });
 export default mongoose.models.User ||
   mongoose.model<IUser>("User", UserSchema);

@@ -18,6 +18,7 @@ import Upload from "../../models/Upload";
 import Media, { MediaTypeEnum } from "../../models/Media";
 import { addReward } from "../services/reward/reward.service";
 import { publicReadUserProjectionAG } from "../dto/user/read-user-public.dto";
+import User from "../../models/User";
 
 export const getReviewsValidation: ValidationChain[] = [
   query("writer").optional().isMongoId(),
@@ -313,8 +314,8 @@ export async function createReview(
       throw createError(strings.authorization.otherUser, StatusCodes.FORBIDDEN);
     }
 
-    const thePlace = await Place.findById(place);
-    if (!thePlace) {
+    const populatedPlace = await Place.findById(place);
+    if (!populatedPlace) {
       throw createError(
         dynamicMessage(ds.notFound, "Place"),
         StatusCodes.NOT_FOUND
@@ -427,6 +428,15 @@ export async function createReview(
         : undefined,
     });
 
+    User.updateOne(
+      { _id: authId },
+      {
+        latestLocation: {
+          geoLocation: populatedPlace.location.geoLocation,
+          updatedAt: new Date(),
+        },
+      }
+    );
     const reward = await addReward(authId, {
       refType: "Review",
       refId: review._id,
@@ -473,10 +483,10 @@ export async function createReview(
         };
         review.tags = tags;
         await review.save();
-        thePlace.processReviews();
+        populatedPlace.processReviews();
       });
     } else {
-      thePlace.processReviews();
+      populatedPlace.processReviews();
     }
   } catch (err) {
     next(err);

@@ -14,8 +14,9 @@ import { checkinEarning } from "../services/earning.service";
 import { addReward } from "../services/reward/reward.service";
 import { addCheckinActivity } from "../services/user.activity.service";
 import validate from "./validators";
+import Place from "../../models/Place";
 
-const checkinWaitTime = 5; // minutes
+const checkinWaitTime = 1; // minutes
 
 export const getCheckinsValidation: ValidationChain[] = [
   query("user").optional().isMongoId().withMessage("Invalid user id"),
@@ -186,6 +187,10 @@ export async function createCheckin(
     });
     try {
       await checkinEarning(authId, checkin);
+      const populatedPlace = await Place.findById(place);
+      if (!populatedPlace) {
+        throw "Place is missing";
+      }
       const _act = await addCheckinActivity(
         authId,
         checkin._id,
@@ -194,7 +199,13 @@ export async function createCheckin(
       );
       checkin.userActivityId = _act._id;
       await checkin.save();
-      User.updateOne({ _id: authId }, { latestPlace: place });
+      await User.updateOne(
+        { _id: authId },
+        {
+          "latestLocation.geoLocation": populatedPlace.location.geoLocation,
+          "latestLocation.updatedAt": new Date(),
+        }
+      );
     } catch (e) {
       console.log(`Something happened during checkin: ${e}`);
     }
