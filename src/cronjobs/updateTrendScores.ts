@@ -28,14 +28,14 @@ async function updateHotnessScores(
       activity.hotnessScore = hotnessScore;
       await activity.save();
     }
-    console.log("Hotness scores updated ✅");
   } catch (error) {
     console.log(error);
   }
 }
 const now = new Date();
-const lastWeek = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-updateHotnessScores(now, lastWeek);
+const lastMonth = new Date(now.getTime() - 4 * 7 * 24 * 60 * 60 * 1000);
+console.log("Hotness scores updated for last month✅");
+updateHotnessScores(now, lastMonth);
 
 cron.schedule("*/5 * * * *", async () => {
   const now = new Date();
