@@ -19,7 +19,7 @@ export function errorHanlder(
   res: Response,
   next: NextFunction
 ) {
-  if (!err.statusCode) {
+  if (!err.statusCode || err.statusCode === 500) {
     err.statusCode = 500;
     console.log(err);
   }

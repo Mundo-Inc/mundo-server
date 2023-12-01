@@ -35,7 +35,6 @@ export const validateReactionReward = async (
       "reason.refType": "Reaction",
       "reason.userActivityId": reaction.target,
     });
-    console.log("is reward exists :", reward);
 
     if (reward) return false;
     return true;

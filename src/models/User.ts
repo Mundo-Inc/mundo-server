@@ -198,7 +198,7 @@ const UserSchema = new Schema<IUser>(
     latestLocation: {
       geoLocation: {
         type: { type: String, default: "Point" },
-        coordinates: { type: [Number], required: true },
+        coordinates: { type: [Number] },
       },
       updatedAt: {
         type: Date,

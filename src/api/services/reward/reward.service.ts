@@ -17,6 +17,7 @@ import CheckIn from "../../../models/CheckIn";
 import { AchievementTypeEnum } from "../../../models/Achievement";
 import { eligibleForAchivement } from "./helpers/achivementEligibility";
 import { addLevelUpActivity } from "../user.activity.service";
+import { createError } from "../../../utilities/errorHandlers";
 
 const getValidatedEntity = async (
   refType: string,
@@ -140,8 +141,7 @@ export const addReward = async (
       };
     }
   } catch (error) {
-    console.log(error);
-    throw new Error("Error adding reward");
+    throw createError("Error adding reward!", 500);
   }
 };
 
