@@ -141,7 +141,7 @@ export const addReward = async (
       };
     }
   } catch (error) {
-    throw createError("Error adding reward!", 500);
+    throw createError("Error adding reward!" + error, 500);
   }
 };
 
