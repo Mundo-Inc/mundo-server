@@ -8,6 +8,7 @@ export enum NotificationType {
   REVIEW_MENTION = "REVIEW_MENTION",
   XP = "XP",
   LEVEL_UP = "LEVEL_UP",
+  NEW_REVIEW = "NEW_REVIEW",
 }
 
 export enum ResourceTypes {

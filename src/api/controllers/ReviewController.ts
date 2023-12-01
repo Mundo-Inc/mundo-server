@@ -413,6 +413,16 @@ export async function createReview(
       }
     }
 
+    await User.updateOne(
+      { _id: authId },
+      {
+        latestLocation: {
+          geoLocation: populatedPlace.location.geoLocation,
+          updatedAt: new Date(),
+        },
+      }
+    );
+
     const review = await Review.create({
       writer,
       place,
@@ -428,15 +438,6 @@ export async function createReview(
         : undefined,
     });
 
-    User.updateOne(
-      { _id: authId },
-      {
-        latestLocation: {
-          geoLocation: populatedPlace.location.geoLocation,
-          updatedAt: new Date(),
-        },
-      }
-    );
     const reward = await addReward(authId, {
       refType: "Review",
       refId: review._id,
@@ -464,6 +465,7 @@ export async function createReview(
       }
       if (_act) {
         review.userActivityId = _act._id;
+        //TODO: send notification to the follower + nearby users.
         await review.save();
       }
     } catch (e) {
