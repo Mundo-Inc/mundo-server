@@ -39,7 +39,7 @@ export async function connectionFollowStatus(
         target: authId,
       })) !== null;
     return res.json({
-      sucsess: true,
+      success: true,
       data: {
         isFollowing,
         isFollower,
