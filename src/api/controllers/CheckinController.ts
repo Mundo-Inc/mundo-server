@@ -199,13 +199,7 @@ export async function createCheckin(
       );
       checkin.userActivityId = _act._id;
       await checkin.save();
-      await User.updateOne(
-        { _id: authId },
-        {
-          "latestLocation.geoLocation": populatedPlace.location.geoLocation,
-          "latestLocation.updatedAt": new Date(),
-        }
-      );
+      await User.updateOne({ _id: authId }, { latestPlace: place });
     } catch (e) {
       console.log(`Something happened during checkin: ${e}`);
     }

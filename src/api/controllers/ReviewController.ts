@@ -416,10 +416,7 @@ export async function createReview(
     await User.updateOne(
       { _id: authId },
       {
-        latestLocation: {
-          geoLocation: populatedPlace.location.geoLocation,
-          updatedAt: new Date(),
-        },
+        latestPlace: place,
       }
     );
 

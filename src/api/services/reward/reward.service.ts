@@ -62,37 +62,44 @@ const saveRewardAndUpdateUser = async (
   userActivityId?: mongoose.Types.ObjectId,
   placeId?: mongoose.Types.ObjectId
 ) => {
-  const reward = await Reward.create({
-    userId: user._id,
-    reason: { refType, refId, userActivityId, placeId },
-    amount,
-  });
-  await reward.save();
+  try {
+    const reward = await Reward.create({
+      userId: user._id,
+      reason: { refType, refId, userActivityId, placeId },
+      amount,
+    });
+    await reward.save();
 
-  const oldXP = user.progress.xp || 0;
-  const oldLevel = user.progress.level || 1;
+    const oldXP = user.progress.xp || 0;
+    const oldLevel = user.progress.level || 1;
 
-  user.progress.xp = oldXP + amount;
-  user.progress.level = calcLevel(user.progress.xp);
+    user.progress.xp = oldXP + amount;
+    user.progress.level = calcLevel(user.progress.xp);
 
-  const newLevelupAchivements = await checkNewLevelupAchivements(
-    user,
-    oldLevel,
-    user.progress.level
-  );
-  await user.save();
+    const newLevelupAchivements = await checkNewLevelupAchivements(
+      user,
+      oldLevel,
+      user.progress.level
+    );
+    await user.save();
 
-  if (oldLevel && oldLevel !== user.progress.level) {
-    await addLevelUpActivity(user._id, user.progress.level);
+    if (oldLevel && oldLevel !== user.progress.level) {
+      await addLevelUpActivity(user._id, user.progress.level);
+    }
+
+    return {
+      oldXP,
+      currentXP: user.progress.xp,
+      oldLevel,
+      currentLevel: user.progress.level,
+      newAchivements: [...newLevelupAchivements, ...customAchivements],
+    };
+  } catch (error) {
+    throw createError(
+      "error creating reward and assigning to the user" + error,
+      500
+    );
   }
-
-  return {
-    oldXP,
-    currentXP: user.progress.xp,
-    oldLevel,
-    currentLevel: user.progress.level,
-    newAchivements: [...newLevelupAchivements, ...customAchivements],
-  };
 };
 
 export const addReward = async (
