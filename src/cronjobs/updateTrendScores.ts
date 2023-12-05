@@ -1,5 +1,6 @@
 import cron from "node-cron";
 import UserActivity from "../models/UserActivity";
+import logger from "../api/services/logger";
 
 interface Query {
   hasMedia: boolean;
@@ -34,7 +35,7 @@ async function updateHotnessScores(
 }
 const now = new Date();
 const lastMonth = new Date(now.getTime() - 4 * 7 * 24 * 60 * 60 * 1000);
-console.log("Hotness scores updated for last month✅");
+logger.info("Hotness scores updated (since last month)");
 updateHotnessScores(now, lastMonth);
 
 cron.schedule("*/5 * * * *", async () => {

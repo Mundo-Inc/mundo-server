@@ -3,14 +3,12 @@ import { SendSmtpEmail, SendSmtpEmailTo } from "@sendinblue/client";
 import path from "path";
 import * as fs from "fs";
 import * as hbs from "handlebars";
-import { createLogger } from "./logger.service";
+import logger from "./logger";
 
 export interface EmailSender {
   email: string;
   name: string;
 }
-
-const logger = createLogger("Brevo Service");
 
 export class BrevoService {
   private accountInstance: SibApiV3Sdk.AccountApi;

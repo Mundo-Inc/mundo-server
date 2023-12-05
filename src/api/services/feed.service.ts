@@ -22,10 +22,10 @@ import {
   publicReadUserProjection,
   publicReadUserProjectionAG,
 } from "../dto/user/read-user-public.dto";
-import { createLogger } from "./logger.service";
 import { getFormattedPlaceLocationAG } from "../dto/place/place-dto";
 import { readPlaceBriefProjectionAG } from "../dto/place/read-place-brief.dto";
 import Block, { IBlock } from "../../models/Block";
+import logger from "./logger";
 
 export type IMedia = {
   _id: string;
@@ -507,7 +507,6 @@ export const getUserFeed = async (
     lat: number;
   }
 ) => {
-  const logger = createLogger("Feed Service");
   try {
     const followings: FilterQuery<IFollow> = await Follow.find(
       {

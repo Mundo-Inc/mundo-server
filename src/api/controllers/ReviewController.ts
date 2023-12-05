@@ -462,7 +462,7 @@ export async function createReview(
       }
       if (_act) {
         review.userActivityId = _act._id;
-        //TODO: send notification to the follower + nearby users.
+        //TODO: send notification to the follower + nearby users if they haven't seen the post.
         await review.save();
       }
     } catch (e) {

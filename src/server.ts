@@ -4,11 +4,9 @@ import dotenv from "dotenv";
 import express, { type Express } from "express";
 import rateLimit from "express-rate-limit";
 import helmet from "helmet";
-
 var admin = require("firebase-admin");
-
 dotenv.config();
-
+import logger from "./api/services/logger";
 const serviceAccount = {
   type: process.env.FIREBASE_TYPE,
   project_id: process.env.FIREBASE_PROJECT_ID,
@@ -62,7 +60,7 @@ async function main() {
   app.use(errorHanlder);
 
   app.listen(config.APP_PORT, () => {
-    console.log(`Server listening on port ${config.APP_PORT}`);
+    logger.info(`Server listening on port ${config.APP_PORT}`);
   });
 
   await import("./cronjobs/updateTrendScores");
