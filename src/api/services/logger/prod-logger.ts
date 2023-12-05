@@ -7,7 +7,7 @@ const { timestamp, errors } = format;
 const customConsoleFormat = format.combine(
   errors({ stack: true }),
   format.colorize(),
-  timestamp({ format: "YYYY-MM-DD HH-mm-ss" }),
+  timestamp({ format: "MM/DD HH:mm:ss" }),
 
   format.printf((x) => {
     const { level, message, timestamp, label, metadata } = x;
@@ -28,6 +28,7 @@ const mongoDBformat = format.combine(
 
 export default function buildProdLogger(): Logger {
   return createLogger({
+    level: "warn",
     format: format.combine(
       errors({ stack: true }),
       timestamp(),
