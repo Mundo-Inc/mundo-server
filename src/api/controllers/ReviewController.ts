@@ -19,6 +19,7 @@ import Media, { MediaTypeEnum } from "../../models/Media";
 import { addReward } from "../services/reward/reward.service";
 import { publicReadUserProjectionAG } from "../dto/user/read-user-public.dto";
 import User from "../../models/User";
+import logger from "../services/logger";
 
 export const getReviewsValidation: ValidationChain[] = [
   query("writer").optional().isMongoId(),
@@ -449,7 +450,7 @@ export async function createReview(
       // delete uploads
       await Upload.deleteMany({ _id: { $in: uploadIds } });
     } catch (e) {
-      console.log(`Something happened during delete upload: ${e}`);
+      logger.error("Internal server error on deleting upload(s)", { error: e });
     }
 
     try {
@@ -466,15 +467,16 @@ export async function createReview(
         await review.save();
       }
     } catch (e) {
-      console.log(`Something happened during create review: ${e}`);
+      logger.error("Internal server error during creating the review", {
+        error: e,
+      });
     }
 
     if (content && content.length > 8) {
       openAiAnalyzeReview(content).then(async ({ error, scores, tags }) => {
         if (error) {
           // TODO: handle error -> return something to the user!
-          console.log("Error analyzing review");
-          console.log(error);
+          logger.error("Error analyzing review", { error });
         }
         review.scores = {
           ...scores,

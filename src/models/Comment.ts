@@ -2,6 +2,7 @@ import mongoose, { Schema, type Document, CallbackError } from "mongoose";
 
 import Notification, { NotificationType, ResourceTypes } from "./Notification";
 import UserActivity, { type IUserActivity } from "./UserActivity";
+import logger from "../api/services/logger";
 
 export interface IComment extends Document {
   author: mongoose.Types.ObjectId;
@@ -126,7 +127,7 @@ CommentSchema.pre<IComment>(
   "deleteOne",
   { document: true, query: false },
   async function (next) {
-    console.log("deleteOne comment");
+    logger.debug("deleteOne comment");
     try {
       const comment = this;
       // Find all notifications related to the comment
@@ -140,7 +141,7 @@ CommentSchema.pre<IComment>(
 
 CommentSchema.pre("deleteOne", async function (next) {
   try {
-    console.log("deleteOne comment");
+    logger.debug("deleteOne comment");
     const comment = await this.model.findOne(this.getQuery());
     await removeCommentDependencies(comment);
     next();

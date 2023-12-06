@@ -28,7 +28,7 @@ admin.initializeApp({
 import { config } from "./config";
 import { connectDatabase } from "./config/database";
 import router from "./router";
-import { errorHanlder } from "./utilities/errorHandlers";
+import { errorHandler } from "./utilities/errorHandlers";
 
 const app: Express = express();
 
@@ -57,7 +57,7 @@ async function main() {
     res.sendFile(process.cwd() + "/apple-app-site-association");
   });
 
-  app.use(errorHanlder);
+  app.use(errorHandler);
 
   app.listen(config.APP_PORT, () => {
     logger.info(`Server listening on port ${config.APP_PORT}`);

@@ -6,6 +6,7 @@ import CheckIn from "../../../../models/CheckIn";
 import Reaction from "../../../../models/Reaction";
 import Review from "../../../../models/Review";
 import User from "../../../../models/User";
+import logger from "../../logger";
 import { thresholds } from "../utils/threshold";
 const tzlookup = require("tz-lookup");
 const moment = require("moment-timezone");
@@ -16,7 +17,7 @@ export const eligibleForAchivement = async (
   try {
     const user = await User.findById(userId).populate("progress.achievements");
     if (!user.progress.achievements) user.progress.achievements = [];
-    console.log(AchievementType);
+    logger.verbose("Checkin eligibility for " + AchievementType);
     switch (AchievementType) {
       case AchievementTypeEnum.ROOKIE_REVIEWER:
         if (
@@ -109,8 +110,6 @@ export const eligibleForAchivement = async (
         break;
 
       case AchievementTypeEnum.REACT_ROLL:
-        console.log("checking react roll eligibility");
-
         //check how many achivements user has with type CHECK_CHECK in the last week (createdAt)
         const reactRollAchivementsCount = user.progress.achievements.filter(
           (a: IAchievement) => a.type === AchievementTypeEnum.REACT_ROLL
@@ -199,6 +198,7 @@ export const eligibleForAchivement = async (
     }
     return;
   } catch (error) {
-    console.log(error);
+    logger.error("Error while checking achievement eligibility", { error });
+    throw error;
   }
 };

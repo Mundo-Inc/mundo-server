@@ -15,6 +15,7 @@ const API_KEY = process.env.GOOGLE_PLACES_API_KEY;
 import haversine from "haversine-distance";
 
 import Place, { IPlace } from "../../models/Place";
+import logger from "../services/logger";
 
 const RADIUS = 10000; // In meters, adjust as necessary
 const INTEREST_TYPES = [
@@ -181,7 +182,7 @@ export async function searchPlaces(
     let limit = 8;
     // Handle the places
     const places: IPlace[] = [];
-    console.log("found " + googlePlaces.length + " places");
+    logger.verbose("found " + googlePlaces.length + " places");
     for (const place of googlePlaces) {
       const savedPlace = await getOrSavePlace(place);
       if (savedPlace) {

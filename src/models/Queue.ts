@@ -8,6 +8,7 @@ import { bucketName, region, s3 } from "../utilities/storage";
 import Place from "./Place";
 import Review from "./Review";
 import User from "./User";
+import logger from "../api/services/logger";
 
 const API_TOKEN_LIMIT = 80000;
 const API_KEY = process.env.GOOGLE_PLACES_API_KEY;
@@ -206,7 +207,10 @@ const QueueSchema = new Schema<IQueue>(
                 addReviews(placeDetails, place, reviewsArray);
               })
               .catch((err) => {
-                console.log(err);
+                logger.error(
+                  "error while fetching googlePlaces reviews and adding as reviews",
+                  { error: err }
+                );
               });
           }
 

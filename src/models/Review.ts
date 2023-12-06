@@ -3,6 +3,7 @@ import Place from "./Place";
 import Reaction from "./Reaction";
 import Comment from "./Comment";
 import UserActivity from "./UserActivity";
+import logger from "../api/services/logger";
 
 export const predefinedTags = [
   "gourmet_cuisine",
@@ -159,7 +160,7 @@ ReviewSchema.pre<IReview>(
   "deleteOne",
   { document: true, query: false },
   async function (next) {
-    console.log("deleteOne review");
+    logger.debug("deleteOne review");
     try {
       const review = this as IReview;
       await removeReviewDependencies(review);
@@ -172,7 +173,7 @@ ReviewSchema.pre<IReview>(
 
 ReviewSchema.pre("deleteOne", async function (next) {
   try {
-    console.log("deleteOne review");
+    logger.debug("deleteOne review");
     const review = await this.model.findOne(this.getQuery());
     await removeReviewDependencies(review);
     next();

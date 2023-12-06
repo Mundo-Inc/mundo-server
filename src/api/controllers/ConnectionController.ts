@@ -14,6 +14,7 @@ import UserActivity, {
 } from "../../models/UserActivity";
 import { addNewFollowingActivity } from "../services/user.activity.service";
 import strings from "../../strings";
+import logger from "../services/logger";
 
 export const connectionFollowStatusValidation: ValidationChain[] = [
   param("id").isMongoId(),
@@ -53,6 +54,19 @@ export async function connectionFollowStatus(
 export const createUserConnectionValidation: ValidationChain[] = [
   param("id").isMongoId(),
 ];
+
+async function logFollowingActivity(authId: string, targetId: string) {
+  try {
+    await addNewFollowingActivity(authId, targetId);
+  } catch (e) {
+    logger.error(
+      "Something happened during creation of activity for the following",
+      { error: e }
+    );
+    throw e;
+  }
+}
+
 export async function createUserConnection(
   req: Request,
   res: Response,
@@ -64,24 +78,22 @@ export async function createUserConnection(
     const { id } = req.params;
     const { id: authId } = req.user!;
 
-    let follow = await Follow.findOne({ user: authId, target: id });
-    if (follow) {
+    // Check if the follow relationship already exists
+    const existingFollow = await Follow.findOne({ user: authId, target: id });
+    if (existingFollow) {
+      logger.debug("You already followed this person");
       throw createError(strings.follows.alreadyExists, StatusCodes.CONFLICT);
     }
-    follow = await Follow.create({
-      user: authId,
-      target: id,
-    });
-    try {
-      const _act = await addNewFollowingActivity(authId, id as string);
-      if (_act) {
-      }
-    } catch (e) {
-      console.log(`Something happened during create following: ${e}`);
-    }
+
+    // Create new follow relationship
+    const follow = await Follow.create({ user: authId, target: id });
+
+    // Log new following activity
+    await logFollowingActivity(authId, id);
+
     res.status(StatusCodes.CREATED).json({ success: true, data: follow });
   } catch (err) {
-    next(err);
+    next(err); // Pass any errors to the error handling middleware
   }
 }
 

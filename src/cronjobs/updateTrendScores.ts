@@ -30,12 +30,12 @@ async function updateHotnessScores(
       await activity.save();
     }
   } catch (error) {
-    console.log(error);
+    logger.error("error while updating hotness scores", { error });
   }
 }
 const now = new Date();
 const lastMonth = new Date(now.getTime() - 4 * 7 * 24 * 60 * 60 * 1000);
-logger.info("Hotness scores updated (since last month)");
+logger.verbose("Hotness scores updated (since last month)");
 updateHotnessScores(now, lastMonth);
 
 cron.schedule("*/5 * * * *", async () => {

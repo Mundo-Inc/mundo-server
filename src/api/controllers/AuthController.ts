@@ -160,7 +160,6 @@ export async function authCallback(
       }
     })(req, res);
   } catch (err) {
-    console.log(err);
     next(err);
   }
 }
@@ -189,16 +188,12 @@ export async function firebaseSync(
       // Proceed with handling the request
       const userData = req.body;
 
-      //check if we have the same user with these information:
-      console.log("Received user data:", userData);
-
       const user = await User.findOne({
         uid: userData.uid,
         "email.address": userData.email,
       });
 
       if (!user) {
-        console.log(userData);
         const username = createRandomUsername();
         await handleSignUp(
           userData.email,
@@ -217,7 +212,6 @@ export async function firebaseSync(
       res.status(403).send("Unauthorized");
     }
   } catch (error) {
-    console.log(error);
     next(error);
   }
 }

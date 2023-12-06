@@ -2,6 +2,7 @@ import axios from "axios";
 import { IPlace } from "../../models/Place";
 import { createError } from "../../utilities/errorHandlers";
 import { IGPPlaceDetails } from "../../types/googleplaces.interface";
+import logger from "./logger";
 
 const YELP_FUSION_API_KEY = process.env.YELP_FUSION_API_KEY;
 const FOURSQUARE_API_KEY = process.env.FOURSQUARE_API_KEY;
@@ -20,7 +21,6 @@ export const findYelpId = async (place: IPlace) => {
       },
     });
 
-
     if (yelpResult.status === 200) {
       if (yelpResult.data.businesses.length >= 1) {
         return yelpResult.data.businesses[0].id;
@@ -28,14 +28,14 @@ export const findYelpId = async (place: IPlace) => {
         throw createError(`Yelp place not found!`);
       }
     } else {
-      console.log(yelpResult);
+      logger.debug("yelp result", { yelpResult });
       throw createError(
         `Unexpected response. Status: ${yelpResult.status}`,
         yelpResult.status
       );
     }
   } catch (error) {
-    // console.error("Error:", error);
+    logger.error("Internal server error", { error });
     throw error; // or return a default/fallback value if preferred
   }
 };
@@ -58,7 +58,7 @@ export const getYelpData = async (yelpId: string) => {
         thumbnail: yelpResult.data.image_url,
       };
     } else {
-      console.log(yelpResult);
+      logger.debug("yelp result", { yelpResult });
       throw new Error(`Unexpected response. Status: ${yelpResult.status}`);
     }
   } catch (error) {
@@ -83,7 +83,7 @@ export const getYelpReviews = async (yelpId: string) => {
         reviews: yelpResult.data.reviews,
       };
     } else {
-      console.log(yelpResult);
+      logger.debug("yelp result", { yelpResult });
       throw new Error(`Unexpected response. Status: ${yelpResult.status}`);
     }
   } catch (error) {
@@ -153,7 +153,6 @@ export const getGooglePlacesData = async (googlePlacesId: string) => {
   }
 };
 
-
 export const findTripAdvisorId = async (place: IPlace) => {
   return "";
 };
@@ -186,7 +185,7 @@ export const findFoursquareId = async (place: IPlace) => {
   }
 };
 export const getFoursquareRating = async (foursquareId: string) => {
-  console.log(foursquareId);
+  logger.debug("foursquareID", { foursquareId });
 
   return -1;
 };

@@ -1,5 +1,6 @@
 import Achievement, { IAchievement } from "../../../../models/Achievement";
 import { IUser } from "../../../../models/User";
+import logger from "../../logger";
 
 type LevelupAcivement = {
   [key: number]: string;
@@ -50,7 +51,10 @@ export const checkNewLevelupAchivements = async (
     }
     return newAchievements; // Optionally, return the new achievements so you can notify the user or do something else with this info
   } catch (error) {
-    console.log(error);
+    logger.error("Error while checking for new level up achievements", {
+      error,
+    });
+    //TODO: we need to stop from going on instead of returning empty array.
     return [];
   }
 };

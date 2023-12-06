@@ -3,11 +3,12 @@ import { body, param, type ValidationChain } from "express-validator";
 import { StatusCodes } from "http-status-codes";
 
 import Notification, { ResourceTypes } from "../../models/Notification";
-import Reaction from "../../models/Reaction";
+import Reaction, { IReaction } from "../../models/Reaction";
 import strings, { dStrings as ds, dynamicMessage } from "../../strings";
 import { createError, handleInputErrors } from "../../utilities/errorHandlers";
 import { addReward } from "../services/reward/reward.service";
 import UserActivity from "../../models/UserActivity";
+import logger from "../services/logger";
 
 export const createReactionValidation: ValidationChain[] = [
   body("target").isMongoId(),
@@ -79,53 +80,64 @@ export async function deleteReaction(
     const { id: authId } = req.user!;
     const { id } = req.params;
 
-    const reaction = await Reaction.findById(id);
+    const reaction = await findReactionById(id);
+    validateReactionOwnership(reaction, authId);
 
-    if (!reaction) {
-      throw createError(
-        dynamicMessage(ds.notFound, "Reaction"),
-        StatusCodes.NOT_FOUND
-      );
-    }
-
-    // Check if the reaction belongs to the authenticated user
-    if (reaction.user.toString() !== authId) {
-      throw createError(strings.authorization.userOnly, StatusCodes.FORBIDDEN);
-    }
-
-    const deletedReaction = await Reaction.deleteOne({
-      _id: id,
-      user: authId,
-    });
-
-    if (deletedReaction.deletedCount === 0) {
-      throw createError(
-        strings.general.deleteFailed,
-        StatusCodes.INTERNAL_SERVER_ERROR
-      );
-    }
-
-    // update reaction count in user activity
-    await UserActivity.updateOne(
-      { _id: reaction.target },
-      { $inc: { "engagements.reactions": -1 } }
-    );
-
-    try {
-      await Notification.deleteMany({
-        resources: {
-          $elemMatch: {
-            type: ResourceTypes.REACTION,
-            _id: id,
-          },
-        },
-      });
-    } catch (e) {
-      console.log(`Something happened during delete reaction: ${e}`);
-    }
+    await removeReaction(id, authId);
+    await updateUserActivity(reaction.target);
+    await removeAssociatedNotifications(id);
 
     res.sendStatus(StatusCodes.NO_CONTENT);
   } catch (err) {
     next(err);
+  }
+}
+
+async function findReactionById(id: string) {
+  const reaction = await Reaction.findById(id);
+  if (!reaction) {
+    logger.debug("reaction not found");
+    throw createError(
+      dynamicMessage(ds.notFound, "Reaction"),
+      StatusCodes.NOT_FOUND
+    );
+  }
+  return reaction;
+}
+
+function validateReactionOwnership(reaction: IReaction, userId: string) {
+  if (reaction.user.toString() !== userId) {
+    logger.debug("not authorized for this action");
+    throw createError(strings.authorization.userOnly, StatusCodes.FORBIDDEN);
+  }
+}
+
+async function removeReaction(reactionId: string, userId: string) {
+  const result = await Reaction.deleteOne({ _id: reactionId, user: userId });
+  if (result.deletedCount === 0) {
+    throw createError(
+      strings.general.deleteFailed,
+      StatusCodes.INTERNAL_SERVER_ERROR
+    );
+  }
+}
+
+async function updateUserActivity(targetId: string) {
+  await UserActivity.updateOne(
+    { _id: targetId },
+    { $inc: { "engagements.reactions": -1 } }
+  );
+}
+
+async function removeAssociatedNotifications(reactionId: string) {
+  try {
+    await Notification.deleteMany({
+      resources: {
+        $elemMatch: { type: ResourceTypes.REACTION, _id: reactionId },
+      },
+    });
+  } catch (e) {
+    logger.error(`Something happened during delete reaction`, { error: e });
+    throw e;
   }
 }

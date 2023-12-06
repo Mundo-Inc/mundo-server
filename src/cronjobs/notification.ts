@@ -9,6 +9,7 @@ import Notification, {
 } from "../models/Notification";
 import Reaction from "../models/Reaction";
 import User, { type UserDevice } from "../models/User";
+import logger from "../api/services/logger";
 
 cron.schedule("*/30 * * * * *", async () => {
   const notifications = await Notification.find({
@@ -18,7 +19,7 @@ cron.schedule("*/30 * * * * *", async () => {
   });
 
   if (notifications.length > 0) {
-    console.log(`Sending ${notifications.length} notifications.`);
+    logger.info(`Sending ${notifications.length} notifications.`);
 
     for (const notification of notifications) {
       let failReason: string | null = null;
@@ -68,7 +69,10 @@ cron.schedule("*/30 * * * * *", async () => {
             }
           })
           .catch((err) => {
-            console.log("ERROR", err);
+            logger.error(
+              "Internal server error while sending APN notification",
+              { error: err }
+            );
           });
       } else {
         failReason = "NoDevices";

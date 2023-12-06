@@ -18,6 +18,7 @@ import { AchievementTypeEnum } from "../../../models/Achievement";
 import { eligibleForAchivement } from "./helpers/achivementEligibility";
 import { addLevelUpActivity } from "../user.activity.service";
 import { createError } from "../../../utilities/errorHandlers";
+import logger from "../logger";
 
 const getValidatedEntity = async (
   refType: string,
@@ -170,9 +171,8 @@ export const checkForCustomAchivements = async (
             userId,
             reviewAchivementType
           );
-          console.log(
-            "is eligibile for " + reviewAchivementType,
-            reviewAchivement
+          logger.debug(
+            "eligibile for " + reviewAchivementType + reviewAchivement
           );
 
           if (reviewAchivement) {

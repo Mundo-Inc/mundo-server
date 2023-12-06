@@ -3,7 +3,7 @@ import { body, query, type ValidationChain } from "express-validator";
 import { StatusCodes } from "http-status-codes";
 import mongoose from "mongoose";
 
-import CheckIn from "../../models/CheckIn";
+import CheckIn, { ICheckIn } from "../../models/CheckIn";
 import User from "../../models/User";
 import { ActivityPrivacyTypeEnum } from "../../models/UserActivity";
 import { createError, handleInputErrors } from "../../utilities/errorHandlers";
@@ -15,6 +15,7 @@ import { addReward } from "../services/reward/reward.service";
 import { addCheckinActivity } from "../services/user.activity.service";
 import validate from "./validators";
 import Place from "../../models/Place";
+import logger from "../services/logger";
 
 const checkinWaitTime = 1; // minutes
 
@@ -153,6 +154,66 @@ export const createCheckinValidation: ValidationChain[] = [
   body("place").exists().isMongoId().withMessage("Invalid place id"),
   body("privacyType").optional().isIn(Object.values(ActivityPrivacyTypeEnum)),
 ];
+
+async function enforceCheckinInterval(authId: string, authRole: string) {
+  if (authRole !== "admin") {
+    const lastCheckIn = await CheckIn.findOne({ user: authId }).sort(
+      "-createdAt"
+    );
+    if (lastCheckIn) {
+      const diffMinutes =
+        (new Date().getTime() - lastCheckIn.createdAt.getTime()) / 1000 / 60;
+      if (diffMinutes < checkinWaitTime) {
+        logger.debug(`check-in cool down: ${checkinWaitTime} minutes`);
+        throw createError(
+          `You must wait at least ${checkinWaitTime} minutes between check-ins`,
+          StatusCodes.BAD_REQUEST
+        );
+      }
+    }
+  }
+}
+
+async function createNewCheckin(authId: string, place: string) {
+  return CheckIn.create({ user: authId, place: place });
+}
+
+async function addCheckinReward(authId: string, checkin: ICheckIn) {
+  return addReward(authId, {
+    refType: "Checkin",
+    refId: checkin._id,
+    placeId: checkin.place,
+  });
+}
+
+async function processCheckinActivities(
+  authId: string,
+  checkin: ICheckIn,
+  place: string,
+  privacyType?: ActivityPrivacyTypeEnum
+) {
+  try {
+    await checkinEarning(authId, checkin);
+    const populatedPlace = await Place.findById(place);
+    if (!populatedPlace) {
+      throw new Error("Place is missing");
+    }
+
+    const activity = await addCheckinActivity(
+      authId,
+      checkin._id,
+      place,
+      privacyType || ActivityPrivacyTypeEnum.PUBLIC
+    );
+    checkin.userActivityId = activity._id;
+    await checkin.save();
+    await User.updateOne({ _id: authId }, { latestPlace: place });
+  } catch (e) {
+    logger.error(`Something happened during checkin activities: ${e}`);
+    throw e;
+  }
+}
+
 export async function createCheckin(
   req: Request,
   res: Response,
@@ -161,58 +222,25 @@ export async function createCheckin(
   try {
     handleInputErrors(req);
 
-    const { id: authId, role: authrole } = req.user!;
+    const { id: authId, role: authRole } = req.user!;
     const { place, privacyType } = req.body;
 
-    if (authrole !== "admin") {
-      // check for last checkin
-      const lastCheckIn = await CheckIn.findOne({ user: authId }).sort(
-        "-createdAt"
-      );
-      if (lastCheckIn) {
-        const diffMinutes: number =
-          (new Date().getTime() - lastCheckIn.createdAt.getTime()) / 1000 / 60;
-        if (diffMinutes < checkinWaitTime) {
-          throw createError(
-            `You must wait at least ${checkinWaitTime} minutes between check-ins`,
-            StatusCodes.BAD_REQUEST
-          );
-        }
-      }
-    }
+    await enforceCheckinInterval(authId, authRole);
 
-    const checkin = await CheckIn.create({
-      user: authId,
-      place: place,
-    });
-    try {
-      await checkinEarning(authId, checkin);
-      const populatedPlace = await Place.findById(place);
-      if (!populatedPlace) {
-        throw "Place is missing";
-      }
-      const _act = await addCheckinActivity(
-        authId,
-        checkin._id,
-        place,
-        privacyType || ActivityPrivacyTypeEnum.PUBLIC
-      );
-      checkin.userActivityId = _act._id;
-      await checkin.save();
-      await User.updateOne({ _id: authId }, { latestPlace: place });
-    } catch (e) {
-      console.log(`Something happened during checkin: ${e}`);
-    }
-    const reward = await addReward(authId, {
-      refType: "Checkin",
-      refId: checkin._id,
-      placeId: checkin.place,
-    });
+    logger.verbose("creating a new checkin");
+    const checkin = await createNewCheckin(authId, place);
+
+    logger.verbose("processing check-in post activities");
+    await processCheckinActivities(authId, checkin, place, privacyType);
+
+    logger.verbose("adding check-in rewards");
+    const reward = await addCheckinReward(authId, checkin);
+
+    logger.verbose("check-in successful!");
     res
       .status(StatusCodes.OK)
       .json({ success: true, data: checkin, reward: reward });
   } catch (err) {
-    console.log(err);
     next(err);
   }
 }

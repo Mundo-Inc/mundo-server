@@ -6,6 +6,7 @@ import Reward from "../../../../models/Reward";
 import { IUser } from "../../../../models/User";
 import { thresholds } from "../utils/threshold";
 import { ICheckIn } from "../../../../models/CheckIn";
+import logger from "../../logger";
 
 export const validateReviewReward = async (user: IUser, review: IReview) => {
   try {
@@ -19,7 +20,8 @@ export const validateReviewReward = async (user: IUser, review: IReview) => {
     if (existingRewards.length >= thresholds.MAX_REVIEW_PER_PLACE) return false;
     return true;
   } catch (error) {
-    console.log(error);
+    logger.error("Error for validating review reward", { error });
+    //TODO: we have to fix this instead of saying not eligible.
     return false;
   }
 };
@@ -39,7 +41,8 @@ export const validateReactionReward = async (
     if (reward) return false;
     return true;
   } catch (error) {
-    console.log(error);
+    logger.error("Error for validating reaction reward", { error });
+    //TODO: we have to fix this instead of saying not eligible.
     return false;
   }
 };
@@ -55,7 +58,8 @@ export const validateCommentReward = async (user: IUser, comment: IComment) => {
     if (reward) return false;
     return true;
   } catch (error) {
-    console.log(error);
+    logger.error("Error for validating comment reward", { error });
+    //TODO: we have to fix this instead of saying not eligible.
     return false;
   }
 };
@@ -77,7 +81,8 @@ export const validateCheckinReward = async (user: IUser, checkin: ICheckIn) => {
       return false;
     return true;
   } catch (error) {
-    console.log(error);
+    logger.error("Error for validating check-in reward", { error });
+    //TODO: we have to fix this instead of saying not eligible.
     return false;
   }
 };
