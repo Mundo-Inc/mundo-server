@@ -1,6 +1,7 @@
 import mongoose, { Schema, type Document, CallbackError } from "mongoose";
 import Notification, { NotificationType, ResourceTypes } from "./Notification";
 import UserActivity from "./UserActivity";
+import logger from "../api/services/logger";
 
 export interface IReaction extends Document {
   user: mongoose.Types.ObjectId;
@@ -76,7 +77,7 @@ ReactionSchema.pre<IReaction>(
 
 ReactionSchema.pre("deleteOne", async function (next) {
   try {
-    console.log("deleteOne reaction");
+    logger.debug("deleteOne reaction");
     const reaction = await this.model.findOne(this.getQuery());
     await removeDependencies(reaction);
     next();
