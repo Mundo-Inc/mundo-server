@@ -236,6 +236,12 @@ export async function createCheckin(
     logger.verbose("adding check-in rewards");
     const reward = await addCheckinReward(authId, checkin);
 
+    logger.verbose("adding checkin count to the place");
+    const placeObject = await Place.findById(place);
+    placeObject.activities.checkinCount =
+      placeObject.activities.checkinCount + 1;
+    await placeObject.save();
+
     logger.verbose("check-in successful!");
     res
       .status(StatusCodes.OK)

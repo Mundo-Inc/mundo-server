@@ -1,5 +1,7 @@
 import mongoose, { Schema, type Document, CallbackError } from "mongoose";
 import UserActivity from "./UserActivity";
+import logger from "../api/services/logger";
+import Place from "./Place";
 
 export interface ICheckIn extends Document {
   user: mongoose.Types.ObjectId;
@@ -29,6 +31,13 @@ CheckInSchema.pre<ICheckIn>(
       const checkin = this;
       // Find all notifications related to the comment
       await removeDependencies(checkin);
+
+      logger.verbose("decreasing checkin count of the place");
+      const placeObject = await Place.findById(checkin.place);
+      placeObject.activities.checkinCount =
+        placeObject.activities.checkinCount - 1;
+      await placeObject.save();
+
       next();
     } catch (error) {
       next(error as CallbackError);
@@ -40,6 +49,11 @@ CheckInSchema.pre("deleteOne", async function (next) {
   try {
     const checkin = await this.model.findOne(this.getQuery());
     await removeDependencies(checkin);
+    logger.verbose("decreasing checkin count of the place");
+    const placeObject = await Place.findById(checkin.place);
+    placeObject.activities.checkinCount =
+      placeObject.activities.checkinCount - 1;
+    await placeObject.save();
     next();
   } catch (error) {
     next(error as CallbackError);

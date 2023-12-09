@@ -23,6 +23,8 @@
     "@ffmpeg-installer/ffmpeg": "^1.1.0",
     "@parse/node-apn": "^6.0.1",
     "@sendinblue/client": "^3.3.1",
+    "@types/async": "^3.2.24",
+    "async": "^3.2.5",
     "axios": "^1.6.2",
     "bcryptjs": "^2.4.3",
     "cookie-parser": "^1.4.6",

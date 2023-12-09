@@ -16,6 +16,8 @@ import UserActivity from "../../models/UserActivity";
 import UserFeature from "../../models/UserFeature";
 import { createError, handleInputErrors } from "../../utilities/errorHandlers";
 import { areSimilar } from "../../utilities/stringHelper";
+import logger from "../services/logger";
+import async from "async";
 
 async function fetchOSMTags(lat: number, lon: number, name: string) {
   try {
@@ -410,5 +412,65 @@ export async function importAllUsersToFirebase(
   } catch (error: any) {
     console.error("Error during user import:", error);
     res.status(500).send("Error importing users");
+  }
+}
+
+export async function addPlaceActivities(
+  req: Request,
+  res: Response,
+  next: NextFunction
+) {
+  try {
+    logger.info("Starting to adjust activities per place.");
+
+    // Get a cursor for all places
+    const cursor = Place.find({ activities: { $exists: false } }).cursor();
+
+    // Get the total count of places for logging progress
+    const totalPlaceCount = await Place.countDocuments({
+      activities: { $exists: false },
+    });
+
+    // Create a counter to keep track of progress
+    let processedCount = 0;
+
+    // Use eachSeries to process each place one by one
+    async.eachSeries(
+      cursor,
+      async (place: IPlace) => {
+        const checkinCount = await CheckIn.countDocuments({ place: place._id });
+        const reviewCount = await Review.countDocuments({
+          source: { $nin: ["yelp", "google"] },
+          place: place._id,
+        });
+
+        place.activities = { reviewCount, checkinCount };
+        await place.save(); // Ensure you await the save operation
+
+        processedCount++;
+        logger.verbose(`Processed place ${processedCount}/${totalPlaceCount}`);
+      },
+      (err: any) => {
+        if (err) {
+          logger.error(
+            "Something happened during initializing activities count per place!",
+            { error: err }
+          );
+          next(err);
+        } else {
+          logger.info("Finished adjusting activities per place.");
+          res.json({
+            success: true,
+            message: "Activities updated successfully.",
+          });
+        }
+      }
+    );
+  } catch (error) {
+    logger.error(
+      "Something happened during initializing activities count per place!",
+      { error }
+    );
+    next(error);
   }
 }

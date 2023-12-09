@@ -436,6 +436,11 @@ export async function createReview(
         : undefined,
     });
 
+    logger.verbose("adding review count to the place");
+    const placeObject = await Place.findById(place);
+    placeObject.activities.reviewCount = placeObject.activities.reviewCount + 1;
+    await placeObject.save();
+
     const reward = await addReward(authId, {
       refType: "Review",
       refId: review._id,

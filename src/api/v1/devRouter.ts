@@ -1,6 +1,7 @@
 import express from "express";
 
 import {
+  addPlaceActivities,
   engagements,
   fixPlaces,
   importAllUsersToFirebase,
@@ -18,5 +19,7 @@ router.get("/fixPlaces", fixPlaces);
 router.get("/engagements", engagements);
 
 router.post("/importAllUsersToFirebase", importAllUsersToFirebase);
+
+router.get("/addPlaceActivities", addPlaceActivities);
 
 export default router;

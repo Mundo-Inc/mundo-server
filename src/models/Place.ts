@@ -54,6 +54,10 @@ export interface IPlace extends Document {
   createdAt: Date;
   updatedAt: Date;
   addedBy?: mongoose.Types.ObjectId;
+  activities: {
+    reviewCount: number;
+    checkinCount: number;
+  };
   otherSources: {
     OSM: {
       _id?: {
@@ -81,14 +85,14 @@ export interface IPlace extends Document {
         type: string;
         unique: true;
       };
-      streetNumber?: string,
-      streetName?: string,
-      city?: string,
-      state?: string,
-      zip?: string,
-      country?: string,
-      address?: string,
-      categories?: string[],
+      streetNumber?: string;
+      streetName?: string;
+      city?: string;
+      state?: string;
+      zip?: string;
+      country?: string;
+      address?: string;
+      categories?: string[];
       rating?: number;
       updatedAt?: Date;
     };
@@ -288,6 +292,16 @@ const PlaceSchema: Schema = new Schema<IPlace>(
         default: {},
       },
     },
+    activities: {
+      reviewCount: {
+        type: Number,
+        default: 0,
+      },
+      checkinCount: {
+        type: Number,
+        default: 0,
+      },
+    },
   },
   {
     timestamps: true,
@@ -389,8 +403,8 @@ const PlaceSchema: Schema = new Schema<IPlace>(
 
             scores[0].phantom =
               this.otherSources.googlePlaces.rating *
-              20 *
-              GOOGLE_PLACES_PERCENTAGE +
+                20 *
+                GOOGLE_PLACES_PERCENTAGE +
               scores[0].phantom * (1 - GOOGLE_PLACES_PERCENTAGE);
           }
         }

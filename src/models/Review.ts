@@ -164,6 +164,13 @@ ReviewSchema.pre<IReview>(
     try {
       const review = this as IReview;
       await removeReviewDependencies(review);
+
+      logger.verbose("decreasing review count of the place");
+      const placeObject = await Place.findById(review.place);
+      placeObject.activities.reviewCount =
+        placeObject.activities.reviewCount - 1;
+      await placeObject.save();
+
       next();
     } catch (error) {
       next(error as CallbackError);
@@ -176,6 +183,12 @@ ReviewSchema.pre("deleteOne", async function (next) {
     logger.debug("deleteOne review");
     const review = await this.model.findOne(this.getQuery());
     await removeReviewDependencies(review);
+
+    logger.verbose("decreasing review count of the place");
+    const placeObject = await Place.findById(review.place);
+    placeObject.activities.reviewCount = placeObject.activities.reviewCount - 1;
+    await placeObject.save();
+
     next();
   } catch (error) {
     next(error as CallbackError);
