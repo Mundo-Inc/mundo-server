@@ -157,6 +157,10 @@ export async function getActivitiesOfaUser(
         },
       ]);
 
+      const commentsCount = await Comment.countDocuments({
+        userActivity: _act._id,
+      });
+
       result.push({
         id: _act._id,
         user: userInfo,
@@ -171,6 +175,7 @@ export async function getActivitiesOfaUser(
         weight: 0,
         reactions: reactions[0],
         comments: comments,
+        commentsCount,
       });
     }
 
