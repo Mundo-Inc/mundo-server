@@ -16,6 +16,8 @@ import {
 
 import {
   getPlace,
+  getPlaceExists,
+  getPlaceExistsValidation,
   getPlaceMedia,
   getPlaceMediaValidation,
   getPlaceReviews,
@@ -48,7 +50,14 @@ router
     getPlacesWithinBoundaries
   );
 
-router.route("/context").get(express.json(), optionalAuthMiddleware, getPlacesByContextValidation, getPlacesByContext);
+router
+  .route("/context")
+  .get(
+    express.json(),
+    optionalAuthMiddleware,
+    getPlacesByContextValidation,
+    getPlacesByContext
+  );
 
 router
   .route("/search")
@@ -59,6 +68,10 @@ router.route("/import").post(express.json(), adminAuthMiddleware, importPlaces);
 router
   .route("/:id/media")
   .get(express.json(), getPlaceMediaValidation, getPlaceMedia);
+
+router
+  .route("/:id/exists")
+  .get(express.json(), getPlaceExistsValidation, getPlaceExists);
 
 router
   .route("/:id/reviews")
@@ -76,7 +89,5 @@ router
 router
   .route("/:id")
   .get(express.json(), optionalAuthMiddleware, getPlaceValidation, getPlace);
-
-
 
 export default router;

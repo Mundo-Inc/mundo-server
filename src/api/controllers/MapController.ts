@@ -201,7 +201,7 @@ export async function getGeoActivities(
 
         // Construct the activity object in the desired format
         return {
-          _id: place._id,
+          placeId: place._id,
           coordinates: place.location.geoLocation.coordinates,
           activities: {
             ...place.activities,
