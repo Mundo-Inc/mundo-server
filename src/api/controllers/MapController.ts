@@ -3,14 +3,13 @@ import type { NextFunction, Request, Response } from "express";
 import { query, type ValidationChain } from "express-validator";
 import { StatusCodes } from "http-status-codes";
 
+import CheckIn from "../../models/CheckIn";
+import Place from "../../models/Place";
+import Review from "../../models/Review";
 import strings from "../../strings";
 import { createError, handleInputErrors } from "../../utilities/errorHandlers";
-import validate from "./validators";
 import logger from "../services/logger";
-import Review, { IReview } from "../../models/Review";
-import Comment from "../../models/Comment";
-import Place, { IPlace } from "../../models/Place";
-import CheckIn from "../../models/CheckIn";
+import validate from "./validators";
 
 const API_KEY = process.env.GOOGLE_GEO_API_KEY!;
 
@@ -178,7 +177,8 @@ export async function getGeoActivities(
         const checkins = await CheckIn.find({ place: place._id })
           .populate("user", "profileImage name")
           .select("user")
-          .limit(10); // Limit the number of checkins
+          .limit(10) // Limit the number of checkins
+          .lean();
 
         const reviews = await Review.find({
           place: place._id,
@@ -186,15 +186,17 @@ export async function getGeoActivities(
         })
           .populate("writer", "profileImage name")
           .select("writer")
-          .limit(10); // Limit the number of reviews
+          .limit(10) // Limit the number of reviews
+          .lean();
 
-        // Transform checkins and reviews to the desired format
         const transformedCheckins = checkins.map((checkin) => ({
+          _id: checkin.user._id,
           name: checkin.user.name,
           profileImage: checkin.user.profileImage,
         }));
 
         const transformedReviews = reviews.map((review) => ({
+          _id: review.writer._id,
           name: review.writer.name,
           profileImage: review.writer.profileImage,
         }));
