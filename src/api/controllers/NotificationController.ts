@@ -170,7 +170,7 @@ export async function getNotifications(
     if (unread) {
       matchPipeline.push({
         $match: {
-          read: null,
+          readAt: null,
         },
       });
     }
