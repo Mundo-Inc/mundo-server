@@ -158,7 +158,6 @@ export async function getActivity(
           as: "author",
           pipeline: [
             {
-              // TODO: Test
               $lookup: {
                 from: "achievements",
                 localField: "progress.achievements",
@@ -188,6 +187,10 @@ export async function getActivity(
       },
     ]);
 
+    const commentsCount = await Comment.countDocuments({
+      userActivity: activity._id,
+    });
+
     res.status(StatusCodes.OK).json({
       success: true,
       data: {
@@ -202,6 +205,7 @@ export async function getActivity(
         updatedAt: activity.updatedAt,
         reactions: reactions[0],
         comments: comments,
+        commentsCount,
       },
     });
   } catch (err) {
