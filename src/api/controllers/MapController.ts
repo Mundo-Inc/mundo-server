@@ -189,16 +189,46 @@ export async function getGeoActivities(
           .limit(10) // Limit the number of reviews
           .lean();
 
-        const transformedCheckins = checkins.map((checkin) => ({
-          _id: checkin.user._id,
-          name: checkin.user.name,
-          profileImage: checkin.user.profileImage,
-        }));
+        let usersData: any[] = [];
+        checkins.forEach((checkin) => {
+          const found = usersData.find(
+            (uCheckin) => uCheckin._id === checkin.user._id
+          );
+          if (!found) {
+            usersData.push({
+              _id: checkin.user._id,
+              name: checkin.user.name,
+              profileImage: checkin.user.profileImage,
+              checkinsCount: 1,
+              reviewsCount: 0,
+            });
+          } else {
+            found.checkinsCount++;
+          }
+        });
 
-        const transformedReviews = reviews.map((review) => ({
-          _id: review.writer._id,
-          name: review.writer.name,
-          profileImage: review.writer.profileImage,
+        reviews.forEach((review) => {
+          const found = usersData.find(
+            (uReview) => uReview._id === review.writer._id
+          );
+          if (!found) {
+            usersData.push({
+              _id: review.writer._id,
+              name: review.writer.name,
+              profileImage: review.writer.profileImage,
+              checkinsCount: 0,
+              reviewsCount: 1,
+            });
+          } else {
+            found.reviewsCount++;
+          }
+        });
+
+        usersData = usersData.map((user) => ({
+          name: user.name,
+          profileImage: user.profileImage,
+          checkinsCount: user.checkinsCount,
+          reviewsCount: user.reviewsCount,
         }));
 
         // Construct the activity object in the desired format
@@ -207,8 +237,7 @@ export async function getGeoActivities(
           coordinates: place.location.geoLocation.coordinates,
           activities: {
             ...place.activities,
-            checkins: transformedCheckins,
-            reviews: transformedReviews,
+            data: usersData,
           },
         };
       })
