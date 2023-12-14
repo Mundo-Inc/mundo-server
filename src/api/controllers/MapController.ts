@@ -192,11 +192,11 @@ export async function getGeoActivities(
         let usersData: any[] = [];
         checkins.forEach((checkin) => {
           const found = usersData.find(
-            (uCheckin) => uCheckin._id === checkin.user._id
+            (uData) => uData._id === checkin.user._id.toString()
           );
           if (!found) {
             usersData.push({
-              _id: checkin.user._id,
+              _id: checkin.user._id.toString(),
               name: checkin.user.name,
               profileImage: checkin.user.profileImage,
               checkinsCount: 1,
@@ -209,11 +209,11 @@ export async function getGeoActivities(
 
         reviews.forEach((review) => {
           const found = usersData.find(
-            (uReview) => uReview._id === review.writer._id
+            (uData) => uData._id === review.writer._id.toString()
           );
           if (!found) {
             usersData.push({
-              _id: review.writer._id,
+              _id: review.writer._id.toString(),
               name: review.writer.name,
               profileImage: review.writer.profileImage,
               checkinsCount: 0,
