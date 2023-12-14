@@ -183,9 +183,11 @@ export async function adminAuthMiddleware(
 
 declare global {
   namespace Express {
-    interface User {
-      id: string;
-      role: "user" | "admin";
+    interface Request {
+      user?: {
+        id: string;
+        role: "user" | "admin";
+      };
     }
   }
 }
