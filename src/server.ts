@@ -4,9 +4,9 @@ import dotenv from "dotenv";
 import express, { type Express } from "express";
 import rateLimit from "express-rate-limit";
 import helmet from "helmet";
-var admin = require("firebase-admin");
-dotenv.config();
 import logger from "./api/services/logger";
+let admin = require("firebase-admin");
+dotenv.config();
 const serviceAccount = {
   type: process.env.FIREBASE_TYPE,
   project_id: process.env.FIREBASE_PROJECT_ID,
@@ -50,12 +50,6 @@ async function main() {
   await connectDatabase();
 
   app.use("/api/v1", router);
-
-  // apple-app-site-association
-  app.get("/apple-app-site-association", (req, res) => {
-    res.setHeader("Content-Type", "application/json");
-    res.sendFile(process.cwd() + "/apple-app-site-association");
-  });
 
   app.use(errorHandler);
 
