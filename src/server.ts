@@ -1,12 +1,12 @@
 import cookieParser from "cookie-parser";
 import cors from "cors";
-import dotenv from "dotenv";
+import "dotenv/config";
 import express, { type Express } from "express";
 import rateLimit from "express-rate-limit";
 import helmet from "helmet";
 import logger from "./api/services/logger";
+
 var admin = require("firebase-admin");
-dotenv.config();
 const serviceAccount = {
   type: process.env.FIREBASE_TYPE,
   project_id: process.env.FIREBASE_PROJECT_ID,
