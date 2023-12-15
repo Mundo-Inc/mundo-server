@@ -5,7 +5,7 @@ import express, { type Express } from "express";
 import rateLimit from "express-rate-limit";
 import helmet from "helmet";
 import logger from "./api/services/logger";
-let admin = require("firebase-admin");
+var admin = require("firebase-admin");
 dotenv.config();
 const serviceAccount = {
   type: process.env.FIREBASE_TYPE,
