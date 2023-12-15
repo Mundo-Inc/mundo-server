@@ -1,6 +1,6 @@
 export const config = {
   // App configuration
-  APP_PORT: process.env.PORT || 3000,
+  APP_PORT: process.env.PORT || 3020,
 
   // Database
   DB_URI: process.env.DB_URI || "mongodb://localhost:27017",
