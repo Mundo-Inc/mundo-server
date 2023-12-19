@@ -14,6 +14,7 @@ import { privateReadUserProjection } from "../dto/user/read-user-private.dto";
 import validate from "./validators";
 
 export const getUsersValidation: ValidationChain[] = [
+  query("signupMethod").optional(),
   validate.q(query("q").optional()),
   validate.page(query("page").optional()),
   validate.limit(query("limit").optional(), 1, 50),
@@ -26,7 +27,7 @@ export async function getUsers(
   try {
     handleInputErrors(req);
 
-    const { q } = req.query;
+    const { q, signupMethod } = req.query;
     const page = Number(req.query.page) || 1;
     const limit = Number(req.query.limit) || 20;
     const skip = (page - 1) * limit;
@@ -42,7 +43,9 @@ export async function getUsers(
         { username: { $regex: q, $options: "i" } },
       ];
     }
-
+    if (signupMethod) {
+      matchObject["signupMethod"] = signupMethod;
+    }
     const matchPipeline = [];
     if (Object.keys(matchObject).length !== 0) {
       matchPipeline.push({ $match: matchObject });

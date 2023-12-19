@@ -43,7 +43,7 @@ export function errorHandler(
   }
 
   if (statusCode === 500) {
-    logger.error("Internal Server Error", { error: err });
+    logger.error("Internal Server Error", err);
   }
 
   return res.status(statusCode).json({ success: false, error: body });

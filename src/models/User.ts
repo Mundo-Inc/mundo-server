@@ -20,6 +20,7 @@ export enum SignupMethodEnum {
   social = "social",
   traditional = "traditional",
   cloud = "cloud",
+  bot = "bot",
 }
 
 export type UserDevice = {

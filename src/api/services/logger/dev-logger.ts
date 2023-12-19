@@ -1,21 +1,17 @@
-import {
-  format,
-  createLogger,
-  transports,
-  Logger,
-  level,
-  debug,
-} from "winston";
+import { format, createLogger, transports, Logger } from "winston";
 const { timestamp, colorize, printf, errors } = format;
 
 const customFormat = format.combine(
   colorize(),
   timestamp({ format: "MM/DD HH:mm:ss" }),
-  printf(({ level, message, timestamp, label }) => {
-    const labelString = label ? ` [${label}] ` : "";
-    return `${timestamp}${labelString} [${level}] ${message}`;
+  errors({ stack: true }), // Attach stack trace to errors
+  printf(({ level, message, timestamp, stack }) => {
+    let logMessage = `${timestamp} [${level}] ${message}`;
+    if (stack) {
+      logMessage += `\nStack Trace: ${stack}`; // Append stack trace if available
+    }
+    return logMessage;
   }),
-  errors({ stack: true }),
   format.metadata()
 );
 

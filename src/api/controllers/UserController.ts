@@ -20,10 +20,7 @@ import User, {
   type IUser,
   type UserDevice,
 } from "../../models/User";
-import UserActivity, {
-  ActivityTypeEnum,
-  ResourceTypeEnum,
-} from "../../models/UserActivity";
+
 import strings, {
   dStrings,
   dStrings as ds,
@@ -64,21 +61,6 @@ export async function getUsers(
     const page = Number(req.query.page) || 1;
     const limit = Number(req.query.limit) || 10;
     const skip = (page - 1) * limit;
-    // const users = await User.find(
-    //   { isActive: true },
-    //   publicReadUserProjection
-    // )
-    //   .skip(skip)
-    //   .limit(limit)
-    //   .lean();
-    // const result = await Promise.all(
-    //   users.map(async (u) => ({
-    //     ...u,
-    //     followersCount: (await Follow.find({ target: u._id })).length,
-    //     followingCount: (await Follow.find({ user: u._id })).length,
-    //     reviewsCount: (await Review.find({ writer: u._id })).length,
-    //   }))
-    // );
 
     const matchObject: {
       [key: string]: any;
