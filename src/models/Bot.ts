@@ -16,7 +16,7 @@ export interface IBot extends Document {
   userId: mongoose.Types.ObjectId;
   type: IBotType;
   target: String;
-  targetThresholdHours: Number;
+  targetThresholdHours: number;
   reactions: String[];
   comments: String[];
   interval: string;

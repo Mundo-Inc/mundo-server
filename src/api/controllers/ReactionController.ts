@@ -44,6 +44,11 @@ export async function createReaction(
       type,
       reaction,
     });
+    // update reaction count in user activity
+    await UserActivity.updateOne(
+      { _id: target },
+      { $inc: { "engagements.reactions": 1 } }
+    );
 
     // adding reward
     const reward = await addReward(authId, {
@@ -51,12 +56,6 @@ export async function createReaction(
       refId: newReaction._id,
       userActivityId: target,
     });
-
-    // update reaction count in user activity
-    await UserActivity.updateOne(
-      { _id: target },
-      { $inc: { "engagements.reactions": 1 } }
-    );
 
     res
       .status(StatusCodes.CREATED)

@@ -58,6 +58,7 @@ async function main() {
   });
 
   await import("./cronjobs/updateTrendScores");
+  await import("./cronjobs/bots");
 
   if (process.env.NODE_ENV === "production") {
     await import("./cronjobs/notification");
