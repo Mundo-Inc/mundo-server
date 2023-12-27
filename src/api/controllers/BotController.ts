@@ -1,5 +1,5 @@
 import { NextFunction, Request, Response } from "express";
-import { ValidationChain, body } from "express-validator";
+import { ValidationChain, body, param } from "express-validator";
 import { createError, handleInputErrors } from "../../utilities/errorHandlers";
 import validate from "./validators";
 import User, { SignupMethodEnum, UserRoleEnum } from "../../models/User";
@@ -56,8 +56,29 @@ export async function createBot(
   }
 }
 
+export const getBotValidation: ValidationChain[] = [param("id").isMongoId()];
+export async function getBot(req: Request, res: Response, next: NextFunction) {
+  try {
+    handleInputErrors(req);
+    const { id } = req.params;
+    const bot = await User.findById(id);
+    if (!bot) {
+      throw createError("Bot Not Found!");
+    }
+    const duties = await Bot.find({
+      userId: id,
+    });
+    return res.json({
+      sucess: true,
+      data: { bot, duties },
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
 export const createDutyValidation: ValidationChain[] = [
-  body("userId").isMongoId(),
+  param("id").isMongoId(),
   body("target").isIn(Object.values(IBotTarget)),
   body("type").isIn(Object.values(IBotType)),
   body("targetThresholdHours").optional().isNumeric(),
@@ -75,7 +96,6 @@ export async function createDuty(
   try {
     handleInputErrors(req);
     const {
-      userId,
       target,
       type,
       targetThresholdHours,
@@ -83,8 +103,9 @@ export async function createDuty(
       reactions,
       comments,
     } = req.body;
+    const { id } = req.params;
     const duty = await Bot.create({
-      userId,
+      userId: id,
       target,
       type,
       targetThresholdHours,

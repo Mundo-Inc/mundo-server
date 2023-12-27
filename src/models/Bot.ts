@@ -9,6 +9,7 @@ export enum IBotType {
 export enum IBotTarget {
   REVIEWS = "REVIEWS",
   CHECKINS = "CHECKINS",
+  HAS_MEDIA = "HAS_MEDIA",
 }
 
 export interface IBot extends Document {
@@ -30,7 +31,7 @@ const BotSchema = new Schema<IBot>(
       enum: Object.values(IBotType),
       default: IBotType.REACT,
     },
-    target: { type: String, enum: Object.values(IBotType), required: true },
+    target: { type: String, enum: Object.values(IBotTarget), required: true },
     targetThresholdHours: { type: Number, default: 24 },
     reactions: {
       type: [String],

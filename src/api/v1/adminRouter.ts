@@ -12,7 +12,14 @@ import {
   updateSettingsValidation,
 } from "../controllers/AdminController";
 import { adminAuthMiddleware } from "../middlewares/authMiddleWare";
-import { createBot, createBotValidation } from "../controllers/BotController";
+import {
+  createBot,
+  createBotValidation,
+  createDuty,
+  createDutyValidation,
+  getBot,
+  getBotValidation,
+} from "../controllers/BotController";
 
 // Admin Only
 const router = express.Router();
@@ -31,5 +38,7 @@ router.route("/flags").get(getFlagsValidation, getFlags);
 router.route("/flags/:id").post(resolveFlagValidation, resolveFlag);
 
 router.route("/bots/").post(createBotValidation, createBot);
+router.route("/bots/:id").get(getBotValidation, getBot);
+router.route("/bots/:id/duty").post(createDutyValidation, createDuty);
 
 export default router;
