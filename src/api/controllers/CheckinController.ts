@@ -45,7 +45,7 @@ export async function getCheckins(
 
     const { user, place, page: reqPage, limit: reqLimit } = req.query;
     const page = parseInt(reqPage as string) || 1;
-    const limit = parseInt(reqLimit as string) || 50;
+    const limit = parseInt(reqLimit as string) || 500;
     const skip = (page - 1) * limit;
     const matchPipeline: any[] = [];
     if (user) {
