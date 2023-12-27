@@ -4,6 +4,7 @@ import { createError, handleInputErrors } from "../../utilities/errorHandlers";
 import validate from "./validators";
 import User, { SignupMethodEnum, UserRoleEnum } from "../../models/User";
 import Bot, { IBotTarget, IBotType } from "../../models/Bot";
+import { createCron } from "../../cronjobs/bots";
 
 export const createBotValidation: ValidationChain[] = [
   validate.email(body("email")),
@@ -113,6 +114,8 @@ export async function createDuty(
       reactions,
       comments,
     });
+    const botUser = await User.findById(id);
+    createCron(duty._id.toString(), duty, botUser)?.start();
     return res.json({
       sucess: true,
       data: { duty },
