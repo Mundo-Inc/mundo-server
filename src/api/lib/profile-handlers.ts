@@ -40,36 +40,3 @@ export const handleSignUp = async (
   await user.save();
   return user;
 };
-
-export async function handleGoogleProfile(profile: any) {
-  const user = await handleSignUp(
-    profile.emails[0].value,
-    profile.displayName,
-    "",
-    SignupMethodEnum.social,
-    ""
-  );
-  return user;
-}
-
-export async function handleFacebookProfile(profile: any) {
-  const user = await handleSignUp(
-    profile.emails[0].value,
-    profile.displayName,
-    "",
-    SignupMethodEnum.social,
-    ""
-  );
-  return user;
-}
-
-export async function handleAppleProfile(idToken: string, profile: any) {
-  const user = await handleSignUp(
-    profile.emails[0].value,
-    profile.displayName,
-    "",
-    SignupMethodEnum.social,
-    ""
-  );
-  return user;
-}
