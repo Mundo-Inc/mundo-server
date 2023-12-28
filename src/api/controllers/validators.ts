@@ -3,12 +3,7 @@ import strings from "../../strings";
 
 const validate = {
   email: (start: ValidationChain) =>
-    start
-      .isEmail()
-      .withMessage("Email must be valid")
-      .toLowerCase()
-      .normalizeEmail()
-      .trim(),
+    start.isEmail().withMessage("Email must be valid").toLowerCase().trim(),
 
   password: (start: ValidationChain) =>
     start
@@ -20,7 +15,8 @@ const validate = {
 
   bio: (start: ValidationChain) => start.trim().escape(),
 
-  isForYou: (start: ValidationChain) => start.isBoolean().withMessage("isForYou must be a boolean"),
+  isForYou: (start: ValidationChain) =>
+    start.isBoolean().withMessage("isForYou must be a boolean"),
 
   username: (start: ValidationChain) =>
     start
@@ -37,11 +33,11 @@ const validate = {
   page: (start: ValidationChain, max?: number) =>
     max
       ? start
-        .isInt({ min: 1, max })
-        .withMessage(`Page must be between 1 and ${max}`)
+          .isInt({ min: 1, max })
+          .withMessage(`Page must be between 1 and ${max}`)
       : start
-        .isInt({ min: 1 })
-        .withMessage("Page must be greater than or equal to 1"),
+          .isInt({ min: 1 })
+          .withMessage("Page must be greater than or equal to 1"),
 
   limit: (start: ValidationChain, min: number, max: number) =>
     start
