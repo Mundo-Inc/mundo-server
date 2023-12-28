@@ -10,6 +10,7 @@ import strings from "../../strings";
 import { createError, handleInputErrors } from "../../utilities/errorHandlers";
 import { handleSignUp } from "../lib/profile-handlers";
 import validate from "./validators";
+import { sendSlackMessage } from "./SlackController";
 
 const FIREBASE_WEB_API_KEY = process.env.FIREBASE_WEB_API_KEY;
 
@@ -113,6 +114,14 @@ export async function firebaseSync(
           null,
           userData.uid,
           userData.photoURL
+        );
+
+        sendSlackMessage(
+          "phantomAssistant",
+          `New user:\nName: ${userData.displayName || "- - -"}\n${username} (${
+            userData.email
+          })`,
+          userData.photoURL || undefined
         );
       }
 
