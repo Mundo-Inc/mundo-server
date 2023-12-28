@@ -34,11 +34,7 @@ export async function sendSlackMessage(
     });
   }
 
-  try {
-    await axios.post(slackChannels[channel], {
-      blocks: blocks,
-    });
-  } catch {
-    console.log("Failed to send slack message");
-  }
+  await axios.post(slackChannels[channel], {
+    blocks: blocks,
+  });
 }

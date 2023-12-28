@@ -116,13 +116,17 @@ export async function firebaseSync(
           userData.photoURL
         );
 
-        sendSlackMessage(
-          "phantomAssistant",
-          `New user:\nName: ${userData.displayName || "- - -"}\n${username} (${
-            userData.email
-          })`,
-          userData.photoURL || undefined
-        );
+        try {
+          sendSlackMessage(
+            "phantomAssistant",
+            `New user:\nName: ${
+              userData.displayName || "- - -"
+            }\n${username} (${userData.email})`,
+            userData.photoURL || undefined
+          );
+        } catch (error) {
+          console.log(error);
+        }
       }
 
       res.status(200).send("User data received");
