@@ -6,7 +6,6 @@ import { body, param, query, type ValidationChain } from "express-validator";
 import { getAuth } from "firebase-admin/auth";
 import { StatusCodes } from "http-status-codes";
 import jwt from "jsonwebtoken";
-import mongoose from "mongoose";
 
 import { config } from "../../config";
 import Block from "../../models/Block";

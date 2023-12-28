@@ -5,6 +5,39 @@ import { StatusCodes } from "http-status-codes";
 import List, { AccessEnum, IList } from "../../models/List";
 import { createError, handleInputErrors } from "../../utilities/errorHandlers";
 import strings, { dStrings as ds, dynamicMessage } from "../../strings";
+import mongoose from "mongoose";
+import { getListOfListsDTO } from "../dto/list/readLists";
+
+export const getListValidation: ValidationChain[] = [param("id").isMongoId()];
+
+export async function getList(req: Request, res: Response, next: NextFunction) {
+  try {
+    handleInputErrors(req);
+    const { id: authId } = req.user!;
+    const { id } = req.params;
+    const list = await List.findById(id)
+      .populate("places.place", "_id location name thumbnail categories")
+      .populate(
+        "collaborators.user",
+        "_id name username profileImage progress.level"
+      );
+    if (!list) {
+      throw createError("List not found", 400);
+    }
+
+    // Authorization
+    const collaboratorsList = list.collaborators.map((c: any) =>
+      c.user.toString()
+    );
+    if (list.isPrivate && !collaboratorsList.includes(authId)) {
+      throw createError("not authorized to view the list", 401);
+    }
+
+    return res.json({ success: true, data: { list } });
+  } catch (error) {
+    next(error);
+  }
+}
 
 export const createListValidation: ValidationChain[] = [
   body("name").isString(),
@@ -94,7 +127,7 @@ export async function deleteList(
 
 export const addToListValidation: ValidationChain[] = [
   param("id").isMongoId(),
-  body("placeId").isMongoId(),
+  param("placeId").isMongoId(),
 ];
 
 export async function addToList(
@@ -104,8 +137,7 @@ export async function addToList(
 ) {
   try {
     handleInputErrors(req);
-    const { id } = req.params;
-    const { placeId } = req.body;
+    const { id, placeId } = req.params;
     const { id: authId } = req.user!;
     const list = (await List.findById(id)) as IList;
     if (!list) return res.status(StatusCodes.NOT_FOUND).json({ id: id });
@@ -136,6 +168,7 @@ export async function addToList(
       list.places.push({
         place: placeId as any,
         user: authId as any,
+        createdAt: new Date(),
       });
 
     await list.save();
@@ -198,7 +231,7 @@ export async function removeFromList(
 
 export const addCollaboratorValidation: ValidationChain[] = [
   param("id").isMongoId(), //list id
-  body("userId").isMongoId(),
+  param("userId").isMongoId(),
   body("access").optional().isIn(Object.values(AccessEnum)),
 ];
 
@@ -209,9 +242,9 @@ export async function addCollaborator(
 ) {
   try {
     handleInputErrors(req);
-    const { id } = req.params;
+    const { id, userId } = req.params;
     const { id: authId } = req.user!;
-    const { userId, access } = req.body;
+    const { access } = req.body;
 
     const list = (await List.findById(id)) as IList;
     if (!list) return res.status(StatusCodes.NOT_FOUND).json({ id: id });
@@ -295,8 +328,6 @@ export async function removeFromCollaborators(
   }
 }
 
-//TODO: edit list
-
 export const editCollaboratorAccessValidation: ValidationChain[] = [
   param("id").isMongoId(),
   param("userId").isMongoId(),
@@ -371,6 +402,43 @@ export async function checkPlaceInUserLists(
     });
 
     res.json(lists);
+  } catch (error) {
+    next(error);
+  }
+}
+
+export const getUserListsValidation: ValidationChain[] = [
+  param("id").isMongoId(),
+];
+export async function getUserLists(
+  req: Request,
+  res: Response,
+  next: NextFunction
+) {
+  try {
+    handleInputErrors(req);
+    const { id: authId } = req.user!; //person who wants to see the lists
+    const { id } = req.params; // person who has the lists (or collaborates in)
+
+    const lists = await List.aggregate([
+      {
+        $match: {
+          "collaborators.user": new mongoose.Types.ObjectId(id),
+          $or: [
+            { isPrivate: false },
+            {
+              "collaborators.user": new mongoose.Types.ObjectId(authId),
+              isPrivate: true,
+            },
+          ],
+        },
+      },
+      {
+        $project: getListOfListsDTO,
+      },
+    ]);
+
+    return res.json({ success: true, data: { lists } });
   } catch (error) {
     next(error);
   }

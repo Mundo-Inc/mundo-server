@@ -12,6 +12,8 @@ import {
   deleteListValidation,
   editCollaboratorAccess,
   editCollaboratorAccessValidation,
+  getList,
+  getListValidation,
   removeFromCollaborators,
   removeFromCollaboratorsValidation,
   removeFromList,
@@ -20,32 +22,32 @@ import {
 
 const router = express.Router();
 router.use(express.json());
+router.use(authMiddleware);
 
-router.route("/").post(authMiddleware, createListValidation, createList);
+// Create a list ✅
+router.route("/").post(createListValidation, createList);
 
-router.route("/:id").delete(authMiddleware, deleteListValidation, deleteList);
+// Get a list ✅
+// Delete a list ✅
+router
+  .route("/:id")
+  .get(getListValidation, getList)
+  .delete(deleteListValidation, deleteList);
 
-router.route("/:id/place").post(authMiddleware, addToListValidation, addToList);
-
+// Add to list ✅
+// Remove place from the list ✅
 router
   .route("/:id/place/:placeId")
-  .delete(authMiddleware, removeFromListValidation, removeFromList);
+  .post(addToListValidation, addToList)
+  .delete(removeFromListValidation, removeFromList);
 
-router
-  .route("/:id/collaborator")
-  .post(authMiddleware, addCollaboratorValidation, addCollaborator);
-
+// Add collaborator to a list ✅
+// Edit collaborator ✅
+// Remove collaborator ✅
 router
   .route("/:id/collaborator/:userId")
-  .delete(
-    authMiddleware,
-    removeFromCollaboratorsValidation,
-    removeFromCollaborators
-  )
-  .put(
-    authMiddleware,
-    editCollaboratorAccessValidation,
-    editCollaboratorAccess
-  );
+  .post(addCollaboratorValidation, addCollaborator)
+  .delete(removeFromCollaboratorsValidation, removeFromCollaborators)
+  .put(editCollaboratorAccessValidation, editCollaboratorAccess);
 
 export default router;

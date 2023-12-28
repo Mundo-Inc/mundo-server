@@ -43,6 +43,10 @@ import {
   getUserConnections,
   getUserConnectionsValidation,
 } from "../controllers/ConnectionController";
+import {
+  getUserLists,
+  getUserListsValidation,
+} from "../controllers/ListController";
 
 const router = express.Router();
 router.use(express.json());
@@ -104,6 +108,8 @@ router.get(
   getUserConnectionsValidation,
   getUserConnections
 );
+
+router.get("/:id/lists", authMiddleware, getUserListsValidation, getUserLists);
 
 router.get(
   "/:id/userActivities",

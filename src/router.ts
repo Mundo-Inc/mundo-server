@@ -34,7 +34,7 @@ router.use("/comments", commentRouter);
 router.use("/map", mapRouter);
 router.use("/feeds", feedRouter);
 router.use("/notifications", notificationRouter);
-router.use("/list", listRouter);
+router.use("/lists", listRouter);
 router.use("/dev", devRouter);
 router.use("/admin", adminRouter);
 

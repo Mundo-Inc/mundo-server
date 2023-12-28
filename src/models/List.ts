@@ -11,6 +11,7 @@ export interface IList extends Document {
   places?: {
     user: mongoose.Types.ObjectId;
     place: mongoose.Types.ObjectId;
+    createdAt: Date;
   }[];
   owner: mongoose.Types.ObjectId;
   collaborators: {
@@ -21,48 +22,52 @@ export interface IList extends Document {
   isPrivate: boolean;
 }
 
-const ListSchema = new Schema<IList>({
-  name: {
-    required: true,
-    type: String,
-  },
-  owner: {
-    type: Schema.Types.ObjectId,
-    ref: "User",
-    required: true,
-  },
-  icon: {
-    type: String,
-    default: "&#11088;",
-  },
-  places: [
-    {
-      place: {
-        type: Schema.Types.ObjectId,
-        ref: "Place",
-        required: true,
-      },
-      user: { type: Schema.Types.ObjectId, ref: "User", required: true },
+const ListSchema = new Schema<IList>(
+  {
+    name: {
+      required: true,
+      type: String,
     },
-  ],
-  collaborators: [
-    {
-      user: {
-        type: Schema.Types.ObjectId,
-        ref: "User",
-      },
-      access: {
-        type: String,
-        default: AccessEnum.edit,
-        enum: Object.values(AccessEnum),
-      },
+    owner: {
+      type: Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
     },
-  ],
-  isPrivate: {
-    type: Boolean,
-    default: false,
+    icon: {
+      type: String,
+      default: "&#11088;",
+    },
+    places: [
+      {
+        place: {
+          type: Schema.Types.ObjectId,
+          ref: "Place",
+          required: true,
+        },
+        user: { type: Schema.Types.ObjectId, ref: "User", required: true },
+        createdAt: { type: Date, default: Date.now },
+      },
+    ],
+    collaborators: [
+      {
+        user: {
+          type: Schema.Types.ObjectId,
+          ref: "User",
+        },
+        access: {
+          type: String,
+          default: AccessEnum.edit,
+          enum: Object.values(AccessEnum),
+        },
+      },
+    ],
+    isPrivate: {
+      type: Boolean,
+      default: false,
+    },
   },
-});
+  { timestamps: true }
+);
 
 ListSchema.pre<IList>("save", function (next) {
   // Check if this is a new document and it doesn't have the owner in the collaborators
