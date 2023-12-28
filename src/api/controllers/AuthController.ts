@@ -104,8 +104,6 @@ export async function firebaseSync(
         "email.address": userData.email,
       });
 
-      console.log(123, userData.uid);
-
       if (!user) {
         const username = createRandomUsername();
         await handleSignUp(
@@ -137,7 +135,6 @@ export async function firebaseSync(
       res.status(403).send("Unauthorized");
     }
   } catch (error) {
-    console.log("Here");
     next(error);
   }
 }

@@ -76,7 +76,8 @@ const UserSchema = new Schema<IUser>(
     uid: {
       type: String,
       // required: true, TODO: fix it
-      unique: true,
+      // ! If you want to make it unique, user creation process needs to be updated
+      // unique: true,
       trim: true,
       index: true,
     },
