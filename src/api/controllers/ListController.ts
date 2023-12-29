@@ -44,9 +44,6 @@ export async function getList(req: Request, res: Response, next: NextFunction) {
       },
       {
         $addFields: {
-          collaboratorsCount: {
-            $size: "$collaborators",
-          },
           placesCount: {
             $size: "$places",
           },
@@ -139,7 +136,13 @@ export async function createList(
     await newList.populate("owner", readUserCompactProjection);
     await newList.populate("collaborators.user", readUserCompactProjection);
 
-    res.status(StatusCodes.CREATED).json({ success: true, data: newList });
+    res.status(StatusCodes.CREATED).json({
+      success: true,
+      data: {
+        ...newList,
+        placesCount: 0,
+      },
+    });
   } catch (err) {
     next(err);
   }
