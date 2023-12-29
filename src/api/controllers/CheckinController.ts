@@ -98,6 +98,9 @@ export async function getCheckins(
                       as: "progress.achievements",
                     },
                   },
+                  {
+                    $project: publicReadUserProjection,
+                  },
                 ],
               },
             },
@@ -127,8 +130,8 @@ export async function getCheckins(
               $project: {
                 _id: 1,
                 createdAt: 1,
-                user: publicReadUserProjection,
-                place: readPlaceBriefProjection,
+                user: 1,
+                place: 1,
               },
             },
           ],

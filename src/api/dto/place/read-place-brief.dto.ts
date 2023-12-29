@@ -20,11 +20,11 @@ export type ReadPlaceBriefDto = {
 };
 
 export const readPlaceBriefProjection: {
-  [Property in keyof ReadPlaceBriefDto]?: boolean | Object;
+  [Property in keyof ReadPlaceBriefDto]?: boolean;
 } = {
   _id: true,
   name: true,
   categories: true,
   thumbnail: true,
-  location: readFormattedPlaceLocationProjection,
+  location: true,
 };
