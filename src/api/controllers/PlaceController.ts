@@ -1,7 +1,7 @@
 import { PutObjectCommand } from "@aws-sdk/client-s3";
 import axios from "axios";
 import type { NextFunction, Request, Response } from "express";
-import { body, param, query, type ValidationChain } from "express-validator";
+import { param, query, type ValidationChain } from "express-validator";
 import { type File } from "formidable";
 import { readFileSync, unlinkSync } from "fs";
 import { StatusCodes } from "http-status-codes";
@@ -21,8 +21,8 @@ import {
   getTripAdvisorRating,
   getYelpData,
 } from "../services/provider.service";
-import validate from "./validators";
 import { getDetailedPlace } from "./SinglePlaceController";
+import validate from "./validators";
 
 var levenshtein = require("fast-levenshtein");
 var country = require("countrystatesjs");

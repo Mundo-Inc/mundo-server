@@ -1,12 +1,9 @@
+import axios from "axios";
 import type { NextFunction, Request, Response } from "express";
-import { body, param, query, type ValidationChain } from "express-validator";
+import { query, type ValidationChain } from "express-validator";
 import { StatusCodes } from "http-status-codes";
 
-import List, { AccessEnum, IList } from "../../models/List";
 import { createError, handleInputErrors } from "../../utilities/errorHandlers";
-import strings, { dStrings as ds, dynamicMessage } from "../../strings";
-
-import axios from "axios";
 
 var levenshtein = require("fast-levenshtein");
 

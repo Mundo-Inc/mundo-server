@@ -2,7 +2,7 @@ type AdminReadUserDto = {
   _id: string;
   name: string;
   email: { address: string; verified: boolean };
-  profileImage?: string | null;
+  profileImage: string;
   username: string;
   bio: string;
   followersCount: number;
@@ -16,11 +16,9 @@ type AdminReadUserDto = {
   coins?: number;
 };
 
-type AdminReadUserProjection = {
+export const adminReadUserProjection: {
   [Property in keyof AdminReadUserDto]?: boolean;
-};
-
-export const adminReadUserProjection: AdminReadUserProjection = {
+} = {
   _id: true,
   name: true,
   email: true,

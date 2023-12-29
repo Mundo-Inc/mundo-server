@@ -11,7 +11,6 @@ import { config } from "../../config";
 import Block from "../../models/Block";
 import CheckIn from "../../models/CheckIn";
 import Follow from "../../models/Follow";
-import Notification, { ResourceTypes } from "../../models/Notification";
 import Place, { type IPlace } from "../../models/Place";
 import Review from "../../models/Review";
 import User, {
@@ -19,7 +18,6 @@ import User, {
   type IUser,
   type UserDevice,
 } from "../../models/User";
-
 import strings, {
   dStrings,
   dStrings as ds,
@@ -38,7 +36,6 @@ import {
 } from "../dto/user/read-user-public.dto";
 import { handleSignUp } from "../lib/profile-handlers";
 import { calcRemainingXP } from "../services/reward/helpers/levelCalculations";
-import { addNewFollowingActivity } from "../services/user.activity.service";
 import validate from "./validators";
 
 const FIREBASE_WEB_API_KEY = process.env.FIREBASE_WEB_API_KEY;

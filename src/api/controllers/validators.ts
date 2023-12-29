@@ -1,4 +1,5 @@
 import { type ValidationChain } from "express-validator";
+
 import strings from "../../strings";
 
 const validate = {

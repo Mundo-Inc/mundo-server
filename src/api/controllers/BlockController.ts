@@ -1,15 +1,11 @@
-import {
-  calcLevel,
-  calcRemainingXP,
-  calcReviewReward,
-} from "./../services/reward/helpers/levelCalculations";
 import type { NextFunction, Request, Response } from "express";
-import { createError, handleInputErrors } from "../../utilities/errorHandlers";
-import Block from "../../models/Block";
-import strings from "../../strings";
-import { StatusCodes } from "http-status-codes";
 import { ValidationChain, param } from "express-validator";
+import { StatusCodes } from "http-status-codes";
+
+import Block from "../../models/Block";
 import User from "../../models/User";
+import strings from "../../strings";
+import { createError, handleInputErrors } from "../../utilities/errorHandlers";
 
 export const blockValidation: ValidationChain[] = [param("id").isMongoId()];
 

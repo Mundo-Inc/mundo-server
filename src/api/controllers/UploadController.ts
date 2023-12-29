@@ -8,6 +8,7 @@ import { StatusCodes } from "http-status-codes";
 import path from "path";
 
 import Upload, { type UploadUsecase } from "../../models/Upload";
+import User from "../../models/User";
 import strings from "../../strings";
 import { createError, handleInputErrors } from "../../utilities/errorHandlers";
 import {
@@ -18,7 +19,6 @@ import {
   resizeVideo,
   s3,
 } from "../../utilities/storage";
-import User from "../../models/User";
 
 const imagesDir = "images";
 const videosDir = "videos";

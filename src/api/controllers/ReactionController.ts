@@ -4,11 +4,11 @@ import { StatusCodes } from "http-status-codes";
 
 import Notification, { ResourceTypes } from "../../models/Notification";
 import Reaction, { IReaction } from "../../models/Reaction";
+import UserActivity from "../../models/UserActivity";
 import strings, { dStrings as ds, dynamicMessage } from "../../strings";
 import { createError, handleInputErrors } from "../../utilities/errorHandlers";
-import { addReward } from "../services/reward/reward.service";
-import UserActivity from "../../models/UserActivity";
 import logger from "../services/logger";
+import { addReward } from "../services/reward/reward.service";
 
 export const createReactionValidation: ValidationChain[] = [
   body("target").isMongoId(),

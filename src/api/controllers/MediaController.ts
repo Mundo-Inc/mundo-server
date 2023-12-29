@@ -3,11 +3,11 @@ import crypto from "crypto";
 import type { NextFunction, Request, Response } from "express";
 import type { File } from "formidable";
 import * as fs from "fs";
+import { readFileSync } from "fs";
 import { StatusCodes } from "http-status-codes";
 import mongoose from "mongoose";
 import path from "path";
 
-import { readFileSync } from "fs";
 import Media, { MediaTypeEnum } from "../../models/Media";
 import strings from "../../strings";
 import { createError, handleInputErrors } from "../../utilities/errorHandlers";

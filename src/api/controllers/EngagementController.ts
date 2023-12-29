@@ -1,12 +1,13 @@
 import { NextFunction, Request, Response } from "express";
-import { handleInputErrors } from "../../utilities/errorHandlers";
-import Block from "../../models/Block";
-import mongoose from "mongoose";
-import { publicReadUserProjection } from "../dto/user/read-user-public.dto";
-import Comment from "../../models/Comment";
-import { IUser } from "../../models/User";
-import Reaction from "../../models/Reaction";
 import { ValidationChain, param, query } from "express-validator";
+import mongoose from "mongoose";
+
+import Block from "../../models/Block";
+import Comment from "../../models/Comment";
+import Reaction from "../../models/Reaction";
+import { IUser } from "../../models/User";
+import { handleInputErrors } from "../../utilities/errorHandlers";
+import { publicReadUserProjection } from "../dto/user/read-user-public.dto";
 import validate from "./validators";
 
 export const getEngagementsValidation: ValidationChain[] = [

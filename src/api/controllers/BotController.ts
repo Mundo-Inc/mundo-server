@@ -1,10 +1,11 @@
 import { NextFunction, Request, Response } from "express";
 import { ValidationChain, body, param } from "express-validator";
+
+import { createCron } from "../../cronjobs/bots";
+import Bot, { IBotTarget, IBotType } from "../../models/Bot";
+import User, { SignupMethodEnum, UserRoleEnum } from "../../models/User";
 import { createError, handleInputErrors } from "../../utilities/errorHandlers";
 import validate from "./validators";
-import User, { SignupMethodEnum, UserRoleEnum } from "../../models/User";
-import Bot, { IBotTarget, IBotType } from "../../models/Bot";
-import { createCron } from "../../cronjobs/bots";
 
 export const createBotValidation: ValidationChain[] = [
   validate.email(body("email")),

@@ -1,7 +1,9 @@
+import async from "async";
 import axios from "axios";
 import type { NextFunction, Request, Response } from "express";
 import { getAuth } from "firebase-admin/auth";
 import { StatusCodes } from "http-status-codes";
+
 import ActivitySeen from "../../models/ActivitySeen";
 import CheckIn from "../../models/CheckIn";
 import Comment from "../../models/Comment";
@@ -14,10 +16,9 @@ import SystemRecommendation from "../../models/SystemRecommendation";
 import User from "../../models/User";
 import UserActivity from "../../models/UserActivity";
 import UserFeature from "../../models/UserFeature";
-import { createError, handleInputErrors } from "../../utilities/errorHandlers";
+import { handleInputErrors } from "../../utilities/errorHandlers";
 import { areSimilar } from "../../utilities/stringHelper";
 import logger from "../services/logger";
-import async from "async";
 
 async function fetchOSMTags(lat: number, lon: number, name: string) {
   try {

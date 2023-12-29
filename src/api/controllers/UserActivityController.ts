@@ -1,13 +1,14 @@
 import type { NextFunction, Request, Response } from "express";
-import { handleInputErrors } from "../../utilities/errorHandlers";
-import { StatusCodes } from "http-status-codes";
 import { ValidationChain, param, query } from "express-validator";
-import UserActivity from "../../models/UserActivity";
-import { getResourceInfo } from "../services/feed.service";
+import { StatusCodes } from "http-status-codes";
 import mongoose from "mongoose";
-import { publicReadUserProjection } from "../dto/user/read-user-public.dto";
+
 import Comment from "../../models/Comment";
 import Reaction from "../../models/Reaction";
+import UserActivity from "../../models/UserActivity";
+import { handleInputErrors } from "../../utilities/errorHandlers";
+import { publicReadUserProjection } from "../dto/user/read-user-public.dto";
+import { getResourceInfo } from "../services/feed.service";
 import validate from "./validators";
 
 export const getActivitiesOfaUserValidation: ValidationChain[] = [

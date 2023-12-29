@@ -8,7 +8,9 @@ import Place, { IPlace } from "../../models/Place";
 import Review from "../../models/Review";
 import { dStrings, dynamicMessage } from "../../strings";
 import { createError, handleInputErrors } from "../../utilities/errorHandlers";
+import { extractComponentFromGoogleAddressComponents } from "../../utilities/providersHelper";
 import { publicReadUserProjection } from "../dto/user/read-user-public.dto";
+import logger from "../services/logger";
 import {
   findGooglePlacesId,
   findYelpId,
@@ -18,8 +20,6 @@ import {
 } from "../services/provider.service";
 import { IGPReview } from "./../../types/googleplaces.interface";
 import validate from "./validators";
-import { extractComponentFromGoogleAddressComponents } from "../../utilities/providersHelper";
-import logger from "../services/logger";
 
 export const getPlaceValidation: ValidationChain[] = [
   param("id").isMongoId().withMessage("Invalid place id"),

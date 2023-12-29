@@ -1,10 +1,11 @@
 import type { NextFunction, Request, Response } from "express";
 import { ValidationChain, body, param } from "express-validator";
-import Flag, { FlagTypeEnum, IFlag } from "../../models/Flag";
-import { createError, handleInputErrors } from "../../utilities/errorHandlers";
 import { StatusCodes } from "http-status-codes";
-import Review from "../../models/Review";
+
 import Comment from "../../models/Comment";
+import Flag, { FlagTypeEnum, IFlag } from "../../models/Flag";
+import Review from "../../models/Review";
+import { createError, handleInputErrors } from "../../utilities/errorHandlers";
 
 export const createFlagReviewValidation: ValidationChain[] = [
   param("id").isMongoId(),

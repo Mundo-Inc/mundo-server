@@ -4,7 +4,7 @@ export type PrivateReadUserDto = {
   _id: string;
   name: string;
   email: { address: string; verified: boolean };
-  profileImage?: string | null;
+  profileImage: string;
   username: string;
   bio: string;
   followersCount: number;
@@ -15,7 +15,7 @@ export type PrivateReadUserDto = {
   xp?: number;
   level?: number;
   coins?: number;
-  progress?: {
+  progress: {
     level: number;
     xp: number;
     achievements: mongoose.Types.ObjectId[];
@@ -23,11 +23,9 @@ export type PrivateReadUserDto = {
   accepted_eula?: Date;
 };
 
-type PrivateReadUserProjection = {
+export const privateReadUserProjection: {
   [Property in keyof PrivateReadUserDto]?: boolean;
-};
-
-export const privateReadUserProjection: PrivateReadUserProjection = {
+} = {
   _id: true,
   name: true,
   email: true,

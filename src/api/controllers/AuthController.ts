@@ -9,8 +9,8 @@ import User, { SignupMethodEnum } from "../../models/User";
 import strings from "../../strings";
 import { createError, handleInputErrors } from "../../utilities/errorHandlers";
 import { handleSignUp } from "../lib/profile-handlers";
-import validate from "./validators";
 import { sendSlackMessage } from "./SlackController";
+import validate from "./validators";
 
 const FIREBASE_WEB_API_KEY = process.env.FIREBASE_WEB_API_KEY;
 

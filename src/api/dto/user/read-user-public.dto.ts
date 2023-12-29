@@ -1,13 +1,13 @@
 export type PublicReadUserDto = {
   _id: string;
   name: string;
-  profileImage?: string | null;
+  profileImage: string;
   username: string;
   bio: string;
   followersCount: number;
   followingCount: number;
   reviewsCount: number;
-  verified?: boolean;
+  verified: boolean;
   xp?: number;
   level?: number;
   coins?: number;
@@ -21,11 +21,9 @@ export type PublicReadUserDto = {
   };
 };
 
-type PublicReadUserProjection = {
-  [Property in keyof PublicReadUserDto]?: boolean | 0 | 1;
-};
-
-export const publicReadUserProjection: PublicReadUserProjection = {
+export const publicReadUserProjection: {
+  [Property in keyof PublicReadUserDto]?: boolean;
+} = {
   _id: true,
   name: true,
   profileImage: true,

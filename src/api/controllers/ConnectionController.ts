@@ -1,20 +1,21 @@
 import { NextFunction, Request, Response } from "express";
 import { ValidationChain, param, query } from "express-validator";
-import { createError, handleInputErrors } from "../../utilities/errorHandlers";
-import Follow from "../../models/Follow";
-import { publicReadUserProjection } from "../dto/user/read-user-public.dto";
-import mongoose from "mongoose";
-import User from "../../models/User";
-import validate from "./validators";
 import { StatusCodes } from "http-status-codes";
+import mongoose from "mongoose";
+
+import Follow from "../../models/Follow";
 import Notification, { ResourceTypes } from "../../models/Notification";
+import User from "../../models/User";
 import UserActivity, {
   ActivityTypeEnum,
   ResourceTypeEnum,
 } from "../../models/UserActivity";
-import { addNewFollowingActivity } from "../services/user.activity.service";
 import strings from "../../strings";
+import { createError, handleInputErrors } from "../../utilities/errorHandlers";
+import { publicReadUserProjection } from "../dto/user/read-user-public.dto";
 import logger from "../services/logger";
+import { addNewFollowingActivity } from "../services/user.activity.service";
+import validate from "./validators";
 
 export const connectionFollowStatusValidation: ValidationChain[] = [
   param("id").isMongoId(),

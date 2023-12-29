@@ -1,12 +1,13 @@
 import type { NextFunction, Request, Response } from "express";
 import { body, param, type ValidationChain } from "express-validator";
 import { StatusCodes } from "http-status-codes";
+import mongoose from "mongoose";
 
 import List, { AccessEnum, IList } from "../../models/List";
-import { createError, handleInputErrors } from "../../utilities/errorHandlers";
 import strings, { dStrings as ds, dynamicMessage } from "../../strings";
-import mongoose from "mongoose";
+import { createError, handleInputErrors } from "../../utilities/errorHandlers";
 import { getListOfListsDTO } from "../dto/list/readLists";
+import { readUserCompactProjection } from "../dto/user/read-user-compact-dto";
 
 export const getListValidation: ValidationChain[] = [param("id").isMongoId()];
 
@@ -33,7 +34,7 @@ export async function getList(req: Request, res: Response, next: NextFunction) {
       throw createError("not authorized to view the list", 401);
     }
 
-    return res.json({ success: true, data: { list } });
+    return res.json({ success: true, data: list });
   } catch (error) {
     next(error);
   }
@@ -434,11 +435,27 @@ export async function getUserLists(
         },
       },
       {
+        $lookup: {
+          from: "users",
+          localField: "owner",
+          foreignField: "_id",
+          as: "owner",
+          pipeline: [
+            {
+              $project: readUserCompactProjection,
+            },
+          ],
+        },
+      },
+      {
+        $unwind: "$owner",
+      },
+      {
         $project: getListOfListsDTO,
       },
     ]);
 
-    return res.json({ success: true, data: { lists } });
+    return res.json({ success: true, data: lists });
   } catch (error) {
     next(error);
   }

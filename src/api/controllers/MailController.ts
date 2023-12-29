@@ -1,14 +1,14 @@
+import bcrypt from "bcryptjs";
+import crypto from "crypto";
 import type { NextFunction, Request, Response } from "express";
 import { body, query, type ValidationChain } from "express-validator";
 import { StatusCodes } from "http-status-codes";
-import bcrypt from "bcryptjs";
-import crypto from "crypto";
 
-import { createError, handleInputErrors } from "../../utilities/errorHandlers";
-import validate from "./validators";
-import strings, { dStrings as ds, dynamicMessage } from "../../strings";
 import User, { SignupMethodEnum } from "../../models/User";
+import strings, { dStrings as ds, dynamicMessage } from "../../strings";
+import { createError, handleInputErrors } from "../../utilities/errorHandlers";
 import { BrevoService } from "../services/brevo.service";
+import validate from "./validators";
 
 export const resetPasswordValidation: ValidationChain[] = [
   validate.email(body("email")),

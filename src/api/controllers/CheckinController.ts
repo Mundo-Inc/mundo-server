@@ -4,6 +4,7 @@ import { StatusCodes } from "http-status-codes";
 import mongoose from "mongoose";
 
 import CheckIn, { ICheckIn } from "../../models/CheckIn";
+import Place from "../../models/Place";
 import User from "../../models/User";
 import { ActivityPrivacyTypeEnum } from "../../models/UserActivity";
 import { createError, handleInputErrors } from "../../utilities/errorHandlers";
@@ -11,11 +12,10 @@ import { readFormattedPlaceLocationProjection } from "../dto/place/place-dto";
 import { readPlaceBriefProjection } from "../dto/place/read-place-brief.dto";
 import { publicReadUserProjection } from "../dto/user/read-user-public.dto";
 import { checkinEarning } from "../services/earning.service";
+import logger from "../services/logger";
 import { addReward } from "../services/reward/reward.service";
 import { addCheckinActivity } from "../services/user.activity.service";
 import validate from "./validators";
-import Place from "../../models/Place";
-import logger from "../services/logger";
 
 const checkinWaitTime = 1; // minutes
 
