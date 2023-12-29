@@ -135,7 +135,11 @@ export async function createList(
     });
 
     await newList.save();
-    res.status(StatusCodes.CREATED).json({ list: newList }); // Send the ID of the created list as response
+
+    await newList.populate("owner", readUserCompactProjection);
+    await newList.populate("collaborators.user", readUserCompactProjection);
+
+    res.status(StatusCodes.CREATED).json({ success: true, data: newList });
   } catch (err) {
     next(err);
   }
