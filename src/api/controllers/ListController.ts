@@ -4,9 +4,12 @@ import { StatusCodes } from "http-status-codes";
 import mongoose from "mongoose";
 
 import List, { AccessEnum, IList } from "../../models/List";
+import Place from "../../models/Place";
+import User from "../../models/User";
 import strings, { dStrings as ds, dynamicMessage } from "../../strings";
 import { createError, handleInputErrors } from "../../utilities/errorHandlers";
 import { getListOfListsDTO } from "../dto/list/readLists";
+import { readPlaceBriefProjection } from "../dto/place/read-place-brief.dto";
 import { readUserCompactProjection } from "../dto/user/read-user-compact-dto";
 
 export const getListValidation: ValidationChain[] = [param("id").isMongoId()];
@@ -16,25 +19,85 @@ export async function getList(req: Request, res: Response, next: NextFunction) {
     handleInputErrors(req);
     const { id: authId } = req.user!;
     const { id } = req.params;
-    const list = await List.findById(id)
-      .populate("places.place", "_id location name thumbnail categories")
-      .populate(
-        "collaborators.user",
-        "_id name username profileImage progress.level"
-      );
-    if (!list) {
+
+    const list = await List.aggregate([
+      {
+        $match: {
+          _id: new mongoose.Types.ObjectId(id),
+        },
+      },
+      {
+        $lookup: {
+          from: "users",
+          localField: "owner",
+          foreignField: "_id",
+          as: "owner",
+          pipeline: [
+            {
+              $project: readUserCompactProjection,
+            },
+          ],
+        },
+      },
+      {
+        $unwind: "$owner",
+      },
+      {
+        $addFields: {
+          collaboratorsCount: {
+            $size: "$collaborators",
+          },
+          placesCount: {
+            $size: "$places",
+          },
+        },
+      },
+    ]);
+
+    let result = list[0];
+
+    if (!result) {
       throw createError("List not found", 400);
     }
 
     // Authorization
-    const collaboratorsList = list.collaborators.map((c: any) =>
-      c.user.toString()
+    const isCollaborator = result.collaborators.find(
+      (c: any) => c.user.toString() === authId
     );
-    if (list.isPrivate && !collaboratorsList.includes(authId)) {
-      throw createError("not authorized to view the list", 401);
+    if (result.isPrivate && !isCollaborator) {
+      throw createError("not authorized to view the list", 403);
     }
 
-    return res.json({ success: true, data: list });
+    for (let i = 0; i < result.collaborators.length; i++) {
+      let user = await User.findById(
+        result.collaborators[i].user,
+        readUserCompactProjection
+      ).lean();
+      if (!user) {
+        throw createError("User not found", 400);
+      }
+      result.collaborators[i].user = user;
+    }
+    for (let i = 0; i < result.places.length; i++) {
+      let p = await Place.findById(
+        result.places[i].place,
+        readPlaceBriefProjection
+      ).lean();
+      let user = await User.findById(
+        result.places[i].user,
+        readUserCompactProjection
+      ).lean();
+      if (!p) {
+        throw createError("Place not found", 400);
+      }
+      if (!user) {
+        throw createError("User not found", 400);
+      }
+      result.places[i].place = p;
+      result.places[i].user = user;
+    }
+
+    return res.json({ success: true, data: result });
   } catch (error) {
     next(error);
   }

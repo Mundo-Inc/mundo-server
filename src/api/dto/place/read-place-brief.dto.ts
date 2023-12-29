@@ -1,4 +1,5 @@
 import type { Types } from "mongoose";
+import { readFormattedPlaceLocationProjection } from "./place-dto";
 
 export type ReadPlaceBriefDto = {
   _id: string;
@@ -18,14 +19,12 @@ export type ReadPlaceBriefDto = {
   };
 };
 
-type ReadPlaceBriefProjection = {
-  [Property in keyof ReadPlaceBriefDto]?: boolean | 0 | 1;
-};
-
-export const readPlaceBriefProjection: ReadPlaceBriefProjection = {
+export const readPlaceBriefProjection: {
+  [Property in keyof ReadPlaceBriefDto]?: boolean | Object;
+} = {
   _id: true,
   name: true,
   categories: true,
   thumbnail: true,
-  location: true,
+  location: readFormattedPlaceLocationProjection,
 };

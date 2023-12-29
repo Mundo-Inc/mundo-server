@@ -34,11 +34,9 @@ export type ReadPlaceDetailDto = {
   thumbnail: string;
 };
 
-type ReadPlaceDetailProjection = {
-  [Property in keyof ReadPlaceDetailDto]?: boolean | 0 | 1;
-};
-
-export const readPlaceDetailProjection: ReadPlaceDetailProjection = {
+export const readPlaceDetailProjection: {
+  [Property in keyof ReadPlaceDetailDto]?: boolean;
+} = {
   _id: true,
   name: true,
   otherNames: true,

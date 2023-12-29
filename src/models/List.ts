@@ -7,8 +7,8 @@ export enum AccessEnum {
 
 export interface IList extends Document {
   name: string;
-  icon?: string;
-  places?: {
+  icon: string;
+  places: {
     user: mongoose.Types.ObjectId;
     place: mongoose.Types.ObjectId;
     createdAt: Date;
@@ -37,17 +37,20 @@ const ListSchema = new Schema<IList>(
       type: String,
       default: "&#11088;",
     },
-    places: [
-      {
-        place: {
-          type: Schema.Types.ObjectId,
-          ref: "Place",
-          required: true,
+    places: {
+      type: [
+        {
+          place: {
+            type: Schema.Types.ObjectId,
+            ref: "Place",
+            required: true,
+          },
+          user: { type: Schema.Types.ObjectId, ref: "User", required: true },
+          createdAt: { type: Date, default: Date.now },
         },
-        user: { type: Schema.Types.ObjectId, ref: "User", required: true },
-        createdAt: { type: Date, default: Date.now },
-      },
-    ],
+      ],
+      default: [],
+    },
     collaborators: [
       {
         user: {
