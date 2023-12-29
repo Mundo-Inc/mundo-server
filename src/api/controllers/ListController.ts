@@ -54,7 +54,10 @@ export async function getList(req: Request, res: Response, next: NextFunction) {
     let result = list[0];
 
     if (!result) {
-      throw createError("List not found", 400);
+      throw createError(
+        dynamicMessage(ds.notFound, "List"),
+        StatusCodes.NOT_FOUND
+      );
     }
 
     // Authorization
@@ -62,7 +65,7 @@ export async function getList(req: Request, res: Response, next: NextFunction) {
       (c: any) => c.user.toString() === authId
     );
     if (result.isPrivate && !isCollaborator) {
-      throw createError("not authorized to view the list", 403);
+      throw createError("UNAUTHORIZED", StatusCodes.UNAUTHORIZED);
     }
 
     for (let i = 0; i < result.collaborators.length; i++) {
@@ -71,7 +74,10 @@ export async function getList(req: Request, res: Response, next: NextFunction) {
         readUserCompactProjection
       ).lean();
       if (!user) {
-        throw createError("User not found", 400);
+        throw createError(
+          dynamicMessage(ds.notFound, "User"),
+          StatusCodes.NOT_FOUND
+        );
       }
       result.collaborators[i].user = user;
     }
@@ -85,10 +91,16 @@ export async function getList(req: Request, res: Response, next: NextFunction) {
         readUserCompactProjection
       ).lean();
       if (!p) {
-        throw createError("Place not found", 400);
+        throw createError(
+          dynamicMessage(ds.notFound, "Place"),
+          StatusCodes.NOT_FOUND
+        );
       }
       if (!user) {
-        throw createError("User not found", 400);
+        throw createError(
+          dynamicMessage(ds.notFound, "User"),
+          StatusCodes.NOT_FOUND
+        );
       }
       result.places[i].place = p;
       result.places[i].user = user;
@@ -214,9 +226,10 @@ export async function addToList(
     if (!list) return res.status(StatusCodes.NOT_FOUND).json({ id: id });
     // checking user's access level
     if (!list.collaborators || list.collaborators.length === 0) {
-      return res.status(StatusCodes.UNAUTHORIZED).json({
-        error: "The list has no collaborator!",
-      });
+      throw createError(
+        dynamicMessage(ds.notFound, "List"),
+        StatusCodes.NOT_FOUND
+      );
     }
 
     const collaborator = list.collaborators.find(
@@ -224,15 +237,14 @@ export async function addToList(
     );
 
     if (!collaborator) {
-      return res.status(StatusCodes.UNAUTHORIZED).json({
-        error: "You don't have edit permissions on this list.",
-      });
+      throw createError("UNAUTHORIZED", StatusCodes.UNAUTHORIZED);
     }
 
     if (list.places?.find((p) => p.place.toString() === placeId)) {
-      return res
-        .status(StatusCodes.BAD_REQUEST)
-        .json({ error: "Place already exists" });
+      throw createError(
+        dynamicMessage(ds.alreadyExists, "Place"),
+        StatusCodes.BAD_REQUEST
+      );
     }
 
     if (list.places)
@@ -267,9 +279,10 @@ export async function removeFromList(
     if (!list) return res.status(StatusCodes.NOT_FOUND).json({ id: id });
     // checking user's access level
     if (!list.collaborators || list.collaborators.length === 0) {
-      return res.status(StatusCodes.UNAUTHORIZED).json({
-        error: "The list has no collaborator!",
-      });
+      throw createError(
+        dynamicMessage(ds.notFound, "List"),
+        StatusCodes.NOT_FOUND
+      );
     }
 
     const collaborator = list.collaborators.find(
@@ -277,15 +290,14 @@ export async function removeFromList(
     );
 
     if (!collaborator) {
-      return res.status(StatusCodes.UNAUTHORIZED).json({
-        error: "You don't have edit permissions on this list.",
-      });
+      throw createError("UNAUTHORIZED", 403);
     }
 
     if (!list.places?.find((p) => p.place.toString() === placeId)) {
-      return res
-        .status(StatusCodes.BAD_REQUEST)
-        .json({ error: "Place not exists in the list" });
+      throw createError(
+        dynamicMessage(ds.notFound, "Place"),
+        StatusCodes.NOT_FOUND
+      );
     }
 
     if (list.places)
@@ -321,22 +333,21 @@ export async function addCollaborator(
     if (!list) return res.status(StatusCodes.NOT_FOUND).json({ id: id });
 
     if (!list.collaborators || list.collaborators.length === 0) {
-      return res.status(StatusCodes.UNAUTHORIZED).json({
-        error: "The list has no collaborator!",
-      });
+      throw createError(
+        dynamicMessage(ds.notFound, "Place"),
+        StatusCodes.NOT_FOUND
+      );
     }
 
     if (list.owner.toString() !== authId) {
-      return res.status(StatusCodes.UNAUTHORIZED).json({
-        error:
-          "You don't have edit permissions to add collaborators on this list.",
-      });
+      throw createError("UNAUTHORIZED", StatusCodes.UNAUTHORIZED);
     }
 
     if (list.collaborators?.find((c) => c.user.toString() === userId)) {
-      return res
-        .status(StatusCodes.BAD_REQUEST)
-        .json({ error: "User is already exist in the collaborators" });
+      throw createError(
+        dynamicMessage(ds.alreadyExists, "User"),
+        StatusCodes.BAD_REQUEST
+      );
     }
 
     list.collaborators.push({
@@ -369,22 +380,21 @@ export async function removeFromCollaborators(
     if (!list) return res.status(StatusCodes.NOT_FOUND).json({ id: id });
     // checking user's access level
     if (!list.collaborators || list.collaborators.length === 0) {
-      return res.status(StatusCodes.UNAUTHORIZED).json({
-        error: "The list has no collaborator!",
-      });
+      throw createError(
+        dynamicMessage(ds.notFound, "List"),
+        StatusCodes.NOT_FOUND
+      );
     }
 
     if (list.owner.toString() !== authId) {
-      return res.status(StatusCodes.UNAUTHORIZED).json({
-        error:
-          "You don't have edit permissions to add collaborators on this list.",
-      });
+      throw createError("UNAUTHORIZED", StatusCodes.UNAUTHORIZED);
     }
 
     if (!list.collaborators?.find((c) => c.user.toString() === userId)) {
-      return res
-        .status(StatusCodes.BAD_REQUEST)
-        .json({ error: "User does not exist in the list" });
+      throw createError(
+        dynamicMessage(ds.notFound, "User"),
+        StatusCodes.NOT_FOUND
+      );
     }
 
     if (list.collaborators)
@@ -421,16 +431,14 @@ export async function editCollaboratorAccess(
 
     // checking user's access level
     if (!list.collaborators || list.collaborators.length === 0) {
-      return res.status(StatusCodes.UNAUTHORIZED).json({
-        error: "The list has no collaborator!",
-      });
+      throw createError(
+        dynamicMessage(ds.notFound, "List"),
+        StatusCodes.NOT_FOUND
+      );
     }
 
     if (list.owner.toString() !== authId) {
-      return res.status(StatusCodes.UNAUTHORIZED).json({
-        error:
-          "You don't have edit permissions to modify collaborators on this list.",
-      });
+      throw createError("UNAUTHORIZED", StatusCodes.UNAUTHORIZED);
     }
 
     const collaboratorIndex = list.collaborators.findIndex(
@@ -438,9 +446,10 @@ export async function editCollaboratorAccess(
     );
 
     if (collaboratorIndex === -1) {
-      return res
-        .status(StatusCodes.BAD_REQUEST)
-        .json({ error: "User does not exist in the list" });
+      throw createError(
+        dynamicMessage(ds.notFound, "User"),
+        StatusCodes.NOT_FOUND
+      );
     }
 
     // Edit the access of the collaborator
