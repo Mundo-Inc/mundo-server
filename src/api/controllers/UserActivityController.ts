@@ -5,7 +5,7 @@ import { ValidationChain, param, query } from "express-validator";
 import UserActivity from "../../models/UserActivity";
 import { getResourceInfo } from "../services/feed.service";
 import mongoose from "mongoose";
-import { publicReadUserProjectionAG } from "../dto/user/read-user-public.dto";
+import { publicReadUserProjection } from "../dto/user/read-user-public.dto";
 import Comment from "../../models/Comment";
 import Reaction from "../../models/Reaction";
 import validate from "./validators";
@@ -136,7 +136,7 @@ export async function getActivitiesOfaUser(
                 },
               },
               {
-                $project: publicReadUserProjectionAG,
+                $project: publicReadUserProjection,
               },
             ],
           },

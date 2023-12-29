@@ -12,7 +12,7 @@ import { dStrings, dynamicMessage } from "../../strings";
 import { createError, handleInputErrors } from "../../utilities/errorHandlers";
 import { bucketName, parseForm, region, s3 } from "../../utilities/storage";
 import { areSimilar, areStrictlySimilar } from "../../utilities/stringHelper";
-import { publicReadUserProjectionAG } from "../dto/user/read-user-public.dto";
+import { publicReadUserProjection } from "../dto/user/read-user-public.dto";
 import {
   findFoursquareId,
   findTripAdvisorId,
@@ -53,9 +53,7 @@ export async function createPlace(
       location: JSON.parse(fields.location![0]),
       description: fields.description?.[0],
       priceRange: fields.priceRange?.[0] ? parseInt(fields.priceRange[0]) : 0,
-      categories: fields.categories?.[0]
-        ? fields.categories[0].split(",")
-        : [],
+      categories: fields.categories?.[0] ? fields.categories[0].split(",") : [],
     } as IPlace;
 
     let place = await Place.findOne({
@@ -101,8 +99,9 @@ export async function createPlace(
     if (files.image && files.image.length > 0) {
       const { filepath } = files.image[0] as File;
       let fileBuffer = readFileSync(filepath);
-      const key = `${process.env.NODE_ENV === "production" ? "places" : "devplaces"
-        }/${place._id}/thumbnail.jpg`;
+      const key = `${
+        process.env.NODE_ENV === "production" ? "places" : "devplaces"
+      }/${place._id}/thumbnail.jpg`;
       await s3.send(
         new PutObjectCommand({
           Bucket: bucketName,
@@ -195,8 +194,8 @@ export async function getPlaces(
           : "score"
         : req.query.sort
       : lat && lng
-        ? "distance"
-        : "score";
+      ? "distance"
+      : "score";
     const limit = Number(req.query.limit) || 50;
     const page = Number(req.query.page) || 1;
     const skip = (page - 1) * limit;
@@ -304,7 +303,7 @@ export async function getPlaces(
                     },
                   },
                   {
-                    $project: publicReadUserProjectionAG,
+                    $project: publicReadUserProjection,
                   },
                 ],
               },
@@ -814,8 +813,6 @@ export async function getPlacesWithinBoundaries(
   }
 }
 
-
-
 export const getPlacesByContextValidation: ValidationChain[] = [
   query("lat").isNumeric().withMessage("Invalid lat"),
   query("lng").isNumeric().withMessage("Invalid lng"),
@@ -832,10 +829,9 @@ export async function getPlacesByContext(
 
     const authId = req.user?.id;
 
-    const { lat, lng, title } =
-      req.query;
-    const latitude = Number(lat)
-    const longitude = Number(lng)
+    const { lat, lng, title } = req.query;
+    const latitude = Number(lat);
+    const longitude = Number(lng);
 
     // get the place or if it doesn't exist create it
 
@@ -876,8 +872,7 @@ export async function getPlacesByContext(
           },
         },
       });
-      matchedPlace =
-        await place.save();
+      matchedPlace = await place.save();
     }
 
     // combine it with detailed data
@@ -886,8 +881,8 @@ export async function getPlacesByContext(
 
     if (!existing && !result.thirdParty.google?._id) {
       // If the place is new and doesn't exist on Google, delete it
-      const place = await Place.findById(matchedPlace?._id)
-      await place.deleteOne()
+      const place = await Place.findById(matchedPlace?._id);
+      await place.deleteOne();
       res.status(StatusCodes.NOT_FOUND).json({
         success: false,
       });

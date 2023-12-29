@@ -1,25 +1,25 @@
 import type { NextFunction, Request, Response } from "express";
 import { body, param, query, type ValidationChain } from "express-validator";
 import { StatusCodes } from "http-status-codes";
-
 import mongoose from "mongoose";
+
+import Media, { MediaTypeEnum } from "../../models/Media";
 import Place from "../../models/Place";
+import Review from "../../models/Review";
+import Upload from "../../models/Upload";
+import User from "../../models/User";
 import strings, { dStrings as ds, dynamicMessage } from "../../strings";
 import { createError, handleInputErrors } from "../../utilities/errorHandlers";
-import Review from "../../models/Review";
-import validate from "./validators";
+import { openAiAnalyzeReview } from "../../utilities/openAi";
+import { publicReadUserProjection } from "../dto/user/read-user-public.dto";
 import { reviewEarning } from "../services/earning.service";
+import logger from "../services/logger";
+import { addReward } from "../services/reward/reward.service";
 import {
   addRecommendActivity,
   addReviewActivity,
 } from "../services/user.activity.service";
-import { openAiAnalyzeReview } from "../../utilities/openAi";
-import Upload from "../../models/Upload";
-import Media, { MediaTypeEnum } from "../../models/Media";
-import { addReward } from "../services/reward/reward.service";
-import { publicReadUserProjectionAG } from "../dto/user/read-user-public.dto";
-import User from "../../models/User";
-import logger from "../services/logger";
+import validate from "./validators";
 
 export const getReviewsValidation: ValidationChain[] = [
   query("writer").optional().isMongoId(),
@@ -111,7 +111,7 @@ export async function getReviews(
               },
             },
             {
-              $project: publicReadUserProjectionAG,
+              $project: publicReadUserProjection,
             },
           ],
         },
@@ -533,7 +533,7 @@ export async function getReview(
               },
             },
             {
-              $project: publicReadUserProjectionAG,
+              $project: publicReadUserProjection,
             },
           ],
         },

@@ -40,20 +40,3 @@ export const publicReadUserProjection: PublicReadUserProjection = {
   coins: true,
   progress: true,
 };
-
-// For aggregate
-export const publicReadUserProjectionAG: PublicReadUserProjection = {
-  _id: 1,
-  name: 1,
-  profileImage: 1,
-  username: 1,
-  bio: 1,
-  followersCount: 1,
-  followingCount: 1,
-  reviewsCount: 1,
-  verified: 1,
-  xp: 1,
-  level: 1,
-  coins: 1,
-  progress: 1,
-};

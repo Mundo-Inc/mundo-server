@@ -1,4 +1,4 @@
-export const getFormattedPlaceLocationAG = {
+export const readFormattedPlaceLocationProjection = {
   geoLocation: {
     lng: {
       $arrayElemAt: ["$location.geoLocation.coordinates", 0],

@@ -8,7 +8,7 @@ import Place, { IPlace } from "../../models/Place";
 import Review from "../../models/Review";
 import { dStrings, dynamicMessage } from "../../strings";
 import { createError, handleInputErrors } from "../../utilities/errorHandlers";
-import { publicReadUserProjectionAG } from "../dto/user/read-user-public.dto";
+import { publicReadUserProjection } from "../dto/user/read-user-public.dto";
 import {
   findGooglePlacesId,
   findYelpId,
@@ -121,7 +121,7 @@ export async function getDetailedPlace(
                   },
                 },
                 {
-                  $project: publicReadUserProjectionAG,
+                  $project: publicReadUserProjection,
                 },
               ],
             },
@@ -231,7 +231,7 @@ export async function getDetailedPlace(
                         },
                       },
                       {
-                        $project: publicReadUserProjectionAG,
+                        $project: publicReadUserProjection,
                       },
                     ],
                   },
@@ -483,7 +483,7 @@ export async function getPlaceMedia(
                     },
                   },
                   {
-                    $project: publicReadUserProjectionAG,
+                    $project: publicReadUserProjection,
                   },
                 ],
               },
@@ -618,7 +618,7 @@ export async function getPlaceReviews(
               },
             },
             {
-              $project: publicReadUserProjectionAG,
+              $project: publicReadUserProjection,
             },
           ],
         },
@@ -728,7 +728,7 @@ export async function getPlaceReviews(
                     },
                   },
                   {
-                    $project: publicReadUserProjectionAG,
+                    $project: publicReadUserProjection,
                   },
                 ],
               },

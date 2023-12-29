@@ -2,7 +2,7 @@ import { NextFunction, Request, Response } from "express";
 import { handleInputErrors } from "../../utilities/errorHandlers";
 import Block from "../../models/Block";
 import mongoose from "mongoose";
-import { publicReadUserProjectionAG } from "../dto/user/read-user-public.dto";
+import { publicReadUserProjection } from "../dto/user/read-user-public.dto";
 import Comment from "../../models/Comment";
 import { IUser } from "../../models/User";
 import Reaction from "../../models/Reaction";
@@ -105,7 +105,7 @@ async function getComments(
             },
           },
           {
-            $project: publicReadUserProjectionAG,
+            $project: publicReadUserProjection,
           },
         ],
       },
@@ -171,7 +171,7 @@ async function getReactions(
             },
           },
           {
-            $project: publicReadUserProjectionAG,
+            $project: publicReadUserProjection,
           },
         ],
       },

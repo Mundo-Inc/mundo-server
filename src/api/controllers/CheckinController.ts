@@ -7,9 +7,9 @@ import CheckIn, { ICheckIn } from "../../models/CheckIn";
 import User from "../../models/User";
 import { ActivityPrivacyTypeEnum } from "../../models/UserActivity";
 import { createError, handleInputErrors } from "../../utilities/errorHandlers";
-import { getFormattedPlaceLocationAG } from "../dto/place/place-dto";
-import { readPlaceBriefProjectionAG } from "../dto/place/read-place-brief.dto";
-import { publicReadUserProjectionAG } from "../dto/user/read-user-public.dto";
+import { readFormattedPlaceLocationProjection } from "../dto/place/place-dto";
+import { readPlaceBriefProjection } from "../dto/place/read-place-brief.dto";
+import { publicReadUserProjection } from "../dto/user/read-user-public.dto";
 import { checkinEarning } from "../services/earning.service";
 import { addReward } from "../services/reward/reward.service";
 import { addCheckinActivity } from "../services/user.activity.service";
@@ -110,8 +110,8 @@ export async function getCheckins(
                 pipeline: [
                   {
                     $project: {
-                      ...readPlaceBriefProjectionAG,
-                      location: getFormattedPlaceLocationAG,
+                      ...readPlaceBriefProjection,
+                      location: readFormattedPlaceLocationProjection,
                     },
                   },
                 ],
@@ -127,8 +127,8 @@ export async function getCheckins(
               $project: {
                 _id: 1,
                 createdAt: 1,
-                user: publicReadUserProjectionAG,
-                place: readPlaceBriefProjectionAG,
+                user: publicReadUserProjection,
+                place: readPlaceBriefProjection,
               },
             },
           ],

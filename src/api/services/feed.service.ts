@@ -2,6 +2,7 @@ import mongoose, { SortOrder, type FilterQuery } from "mongoose";
 
 import Achievement from "../../models/Achievement";
 import ActivitySeen, { type IActivitySeen } from "../../models/ActivitySeen";
+import Block, { IBlock } from "../../models/Block";
 import CheckIn from "../../models/CheckIn";
 import Comment from "../../models/Comment";
 import Deal from "../../models/Deal";
@@ -14,17 +15,9 @@ import UserActivity, {
   ResourceTypeEnum,
   type IUserActivity,
 } from "../../models/UserActivity";
-import {
-  readPlaceDetailProjection,
-  readPlaceDetailProjectionAG,
-} from "../dto/place/read-place-detail.dto";
-import {
-  publicReadUserProjection,
-  publicReadUserProjectionAG,
-} from "../dto/user/read-user-public.dto";
-import { getFormattedPlaceLocationAG } from "../dto/place/place-dto";
-import { readPlaceBriefProjectionAG } from "../dto/place/read-place-brief.dto";
-import Block, { IBlock } from "../../models/Block";
+import { readFormattedPlaceLocationProjection } from "../dto/place/place-dto";
+import { readPlaceDetailProjection } from "../dto/place/read-place-detail.dto";
+import { publicReadUserProjection } from "../dto/user/read-user-public.dto";
 import logger from "./logger";
 
 export type IMedia = {
@@ -138,7 +131,7 @@ export const getResourceInfo = async (activity: IUserActivity) => {
               },
             },
             {
-              $project: publicReadUserProjectionAG,
+              $project: publicReadUserProjection,
             },
           ],
         },
@@ -188,8 +181,8 @@ export const getResourceInfo = async (activity: IUserActivity) => {
           pipeline: [
             {
               $project: {
-                ...readPlaceDetailProjectionAG,
-                location: getFormattedPlaceLocationAG,
+                ...readPlaceDetailProjection,
+                location: readFormattedPlaceLocationProjection,
                 scores: {
                   overall: 1,
                   drinkQuality: 1,
@@ -311,7 +304,7 @@ export const getResourceInfo = async (activity: IUserActivity) => {
                     },
                   },
                   {
-                    $project: publicReadUserProjectionAG,
+                    $project: publicReadUserProjection,
                   },
                 ],
               },
@@ -325,8 +318,8 @@ export const getResourceInfo = async (activity: IUserActivity) => {
                 pipeline: [
                   {
                     $project: {
-                      ...readPlaceDetailProjectionAG,
-                      location: getFormattedPlaceLocationAG,
+                      ...readPlaceDetailProjection,
+                      location: readFormattedPlaceLocationProjection,
                     },
                   },
                 ],
@@ -342,8 +335,8 @@ export const getResourceInfo = async (activity: IUserActivity) => {
               $project: {
                 _id: 1,
                 createdAt: 1,
-                user: publicReadUserProjectionAG,
-                place: readPlaceDetailProjectionAG,
+                user: publicReadUserProjection,
+                place: readPlaceDetailProjection,
               },
             },
           ],
@@ -646,7 +639,7 @@ export const getUserFeed = async (
                 },
               },
               {
-                $project: publicReadUserProjectionAG,
+                $project: publicReadUserProjection,
               },
             ],
           },

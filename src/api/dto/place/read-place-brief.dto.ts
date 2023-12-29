@@ -29,11 +29,3 @@ export const readPlaceBriefProjection: ReadPlaceBriefProjection = {
   thumbnail: true,
   location: true,
 };
-
-export const readPlaceBriefProjectionAG: ReadPlaceBriefProjection = {
-  _id: 1,
-  name: 1,
-  categories: 1,
-  thumbnail: 1,
-  location: 1,
-};
