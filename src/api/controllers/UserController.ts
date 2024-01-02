@@ -53,53 +53,74 @@ export async function getUsers(
   try {
     handleInputErrors(req);
 
+    const { id: authId } = req.user!;
+
     const { q } = req.query;
     const page = Number(req.query.page) || 1;
     const limit = Number(req.query.limit) || 10;
     const skip = (page - 1) * limit;
 
-    const matchObject: {
-      [key: string]: any;
-    } = {
-      isActive: true,
-    };
+    let result;
+
     if (q) {
-      matchObject["$or"] = [
-        { name: { $regex: q, $options: "i" } },
-        { username: { $regex: q, $options: "i" } },
-      ];
-    }
-
-    const matchPipeline = [];
-    if (Object.keys(matchObject).length !== 0) {
-      matchPipeline.push({ $match: matchObject });
-    }
-
-    let result = await User.aggregate([
-      ...matchPipeline,
-      {
-        $skip: skip,
-      },
-      {
-        $limit: limit,
-      },
-      {
-        $lookup: {
-          from: "achievements",
-          localField: "progress.achievements",
-          foreignField: "_id",
-          as: "progress.achievements",
+      result = await User.aggregate([
+        {
+          $match: {
+            $or: [
+              { name: { $regex: q, $options: "i" } },
+              { username: { $regex: q, $options: "i" } },
+            ],
+          },
         },
-      },
-      {
-        $project: publicReadUserProjection,
-      },
-    ]).exec();
+        {
+          $skip: skip,
+        },
+        {
+          $limit: limit,
+        },
+        {
+          $lookup: {
+            from: "achievements",
+            localField: "progress.achievements",
+            foreignField: "_id",
+            as: "progress.achievements",
+          },
+        },
+        {
+          $project: publicReadUserProjection,
+        },
+      ]);
+    } else {
+      const followings = await Follow.find({ user: authId })
+        .populate({
+          path: "target",
+          select: publicReadUserProjection,
+          populate: {
+            path: "progress.achievements",
+          },
+        })
+        .skip(skip)
+        .limit(limit)
+        .lean();
 
-    result = result.map((user: PublicReadUserDto) => ({
-      ...user,
-      remainingXp: calcRemainingXP((user.progress && user.progress.xp) || 0),
-    }));
+      result = followings.map((following) => following.target);
+    }
+
+    if (result.length === 0) {
+      const followers = await Follow.find({ target: authId })
+        .populate({
+          path: "user",
+          select: publicReadUserProjection,
+          populate: {
+            path: "progress.achievements",
+          },
+        })
+        .skip(skip)
+        .limit(limit)
+        .lean();
+
+      result = followers.map((follower) => follower.user);
+    }
 
     res.status(StatusCodes.OK).json({ success: true, data: result });
   } catch (err) {
