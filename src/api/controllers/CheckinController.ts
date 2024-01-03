@@ -228,7 +228,7 @@ async function sendNotificiationToFollowers(authId: string, checkin: ICheckIn) {
   }).lean();
   for (const follower of followers) {
     await Notification.create({
-      user: follower.userId,
+      user: follower.user,
       type: NotificationType.FOLLOWING_CHECKIN,
       resources: [
         {

@@ -142,7 +142,10 @@ async function getNotificationContent(notification: INotification) {
             user = review.writer;
             title = review.writer.name;
             activity = review.place._id;
-            content = `${review.writer.name} rated ${review.place.name} ${review.scores.overal}/5⭐️`;
+            content = `${review.writer.name} reviewed ${review.place.name}`;
+            if (review.scores && review.scores.overal) {
+              content = `${review.writer.name} rated ${review.place.name} ${review.scores.overal}/5⭐️`;
+            }
             subtitle = review.content;
           }
         });

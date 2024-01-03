@@ -458,7 +458,7 @@ export async function createReview(
     }).lean();
     for (const follower of followers) {
       await Notification.create({
-        user: follower.userId,
+        user: follower.user,
         type: NotificationType.FOLLOWING_REVIEW,
         resources: [
           {
