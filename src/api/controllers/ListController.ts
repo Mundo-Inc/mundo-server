@@ -135,7 +135,7 @@ export async function createList(
       isPrivate = false,
     } = req.body;
 
-    const newList: IList = new List({
+    let newList: IList = new List({
       name,
       owner,
       collaborators,
@@ -147,6 +147,8 @@ export async function createList(
 
     await newList.populate("owner", readUserCompactProjection);
     await newList.populate("collaborators.user", readUserCompactProjection);
+
+    newList = newList.toObject();
 
     res.status(StatusCodes.CREATED).json({
       success: true,
