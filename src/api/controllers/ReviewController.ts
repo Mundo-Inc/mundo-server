@@ -20,6 +20,11 @@ import {
   addReviewActivity,
 } from "../services/user.activity.service";
 import validate from "./validators";
+import Notification, {
+  NotificationType,
+  ResourceTypes,
+} from "../../models/Notification";
+import Follow from "../../models/Follow";
 
 export const getReviewsValidation: ValidationChain[] = [
   query("writer").optional().isMongoId(),
@@ -446,6 +451,25 @@ export async function createReview(
       refId: review._id,
       placeId: place,
     });
+
+    //Send notifications to followers
+    const followers = await Follow.find({
+      target: writer,
+    }).lean();
+    for (const follower of followers) {
+      await Notification.create({
+        user: follower.userId,
+        type: NotificationType.FOLLOWING_REVIEW,
+        resources: [
+          {
+            _id: review._id,
+            type: ResourceTypes.REVIEW,
+            date: review.createdAt,
+          },
+        ],
+        importance: 2,
+      });
+    }
 
     res
       .status(StatusCodes.CREATED)

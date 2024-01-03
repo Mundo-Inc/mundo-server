@@ -9,6 +9,8 @@ export enum NotificationType {
   XP = "XP",
   LEVEL_UP = "LEVEL_UP",
   NEW_REVIEW = "NEW_REVIEW",
+  FOLLOWING_CHECKIN = "FOLLOWING_CHECKIN",
+  FOLLOWING_REVIEW = "FOLLOWING_REVIEW",
 }
 
 export enum ResourceTypes {

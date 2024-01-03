@@ -16,6 +16,11 @@ import logger from "../services/logger";
 import { addReward } from "../services/reward/reward.service";
 import { addCheckinActivity } from "../services/user.activity.service";
 import validate from "./validators";
+import Follow from "../../models/Follow";
+import Notification, {
+  NotificationType,
+  ResourceTypes,
+} from "../../models/Notification";
 
 const checkinWaitTime = 1; // minutes
 
@@ -217,6 +222,26 @@ async function processCheckinActivities(
   }
 }
 
+async function sendNotificiationToFollowers(authId: string, checkin: ICheckIn) {
+  const followers = await Follow.find({
+    target: authId,
+  }).lean();
+  for (const follower of followers) {
+    await Notification.create({
+      user: follower.userId,
+      type: NotificationType.FOLLOWING_CHECKIN,
+      resources: [
+        {
+          _id: checkin._id,
+          type: ResourceTypes.CHECKIN,
+          date: checkin.createdAt,
+        },
+      ],
+      importance: 2,
+    });
+  }
+}
+
 export async function createCheckin(
   req: Request,
   res: Response,
@@ -244,6 +269,9 @@ export async function createCheckin(
     placeObject.activities.checkinCount =
       placeObject.activities.checkinCount + 1;
     await placeObject.save();
+
+    logger.verbose("Sending notification to followers");
+    await sendNotificiationToFollowers(authId, checkin);
 
     logger.verbose("check-in successful!");
     res

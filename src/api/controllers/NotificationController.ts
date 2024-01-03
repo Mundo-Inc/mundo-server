@@ -13,6 +13,8 @@ import Reaction from "../../models/Reaction";
 import { handleInputErrors } from "../../utilities/errorHandlers";
 import { publicReadUserProjection } from "../dto/user/read-user-public.dto";
 import validate from "./validators";
+import Review, { IReview } from "../../models/Review";
+import CheckIn from "../../models/CheckIn";
 
 async function handleResourceNotFound(notification: INotification) {
   await Notification.findByIdAndDelete(notification._id);
@@ -118,6 +120,52 @@ async function getNotificationContent(notification: INotification) {
             } else {
               content = "Added an special reaction to your activity.";
             }
+          }
+        });
+      break;
+
+    case NotificationType.FOLLOWING_REVIEW:
+      await Review.findById(notification.resources![0]._id)
+        .populate({
+          path: "writer",
+          select: publicReadUserProjection,
+          populate: {
+            path: "progress.achievements",
+          },
+        })
+        .populate("place")
+        .then((review) => {
+          if (!review) {
+            handleResourceNotFound(notification);
+            error = true;
+          } else {
+            user = review.writer;
+            title = review.writer.name;
+            activity = review.place._id;
+            content = `${review.writer.name} rated ${review.place.name} ${review.scores.overal}/5⭐️`;
+            subtitle = review.content;
+          }
+        });
+      break;
+    case NotificationType.FOLLOWING_CHECKIN:
+      await CheckIn.findById(notification.resources![0]._id)
+        .populate({
+          path: "user",
+          select: publicReadUserProjection,
+          populate: {
+            path: "progress.achievements",
+          },
+        })
+        .populate("place")
+        .then((checkin) => {
+          if (!checkin) {
+            handleResourceNotFound(notification);
+            error = true;
+          } else {
+            user = checkin.user;
+            title = checkin.user.name;
+            activity = checkin.place._id;
+            content = `${checkin.user.name} checked into ${checkin.place.name}`;
           }
         });
       break;
