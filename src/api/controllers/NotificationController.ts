@@ -15,6 +15,7 @@ import { publicReadUserProjection } from "../dto/user/read-user-public.dto";
 import validate from "./validators";
 import Review, { IReview } from "../../models/Review";
 import CheckIn from "../../models/CheckIn";
+import logger from "../services/logger";
 
 async function handleResourceNotFound(notification: INotification) {
   await Notification.findByIdAndDelete(notification._id);
@@ -151,6 +152,8 @@ async function getNotificationContent(notification: INotification) {
         });
       break;
     case NotificationType.FOLLOWING_CHECKIN:
+      logger.warn(notification.resources);
+      logger.warn("FOLLOWING CHECKIN FOUND");
       await CheckIn.findById(notification.resources![0]._id)
         .populate({
           path: "user",
