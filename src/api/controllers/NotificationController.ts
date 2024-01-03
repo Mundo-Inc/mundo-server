@@ -141,7 +141,7 @@ async function getNotificationContent(notification: INotification) {
           } else {
             user = review.writer;
             title = review.writer.name;
-            activity = review.place._id;
+            activity = review.userActivityId;
             content = `${review.writer.name} reviewed ${review.place.name}`;
             if (review.scores && review.scores.overal) {
               content = `${review.writer.name} rated ${review.place.name} ${review.scores.overal}/5⭐️`;
@@ -167,7 +167,7 @@ async function getNotificationContent(notification: INotification) {
           } else {
             user = checkin.user;
             title = checkin.user.name;
-            activity = checkin.place._id;
+            activity = checkin.userActivityId;
             content = `${checkin.user.name} checked into ${checkin.place.name}`;
           }
         });
