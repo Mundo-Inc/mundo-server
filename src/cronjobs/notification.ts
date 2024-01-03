@@ -10,6 +10,9 @@ import Notification, {
 import Reaction from "../models/Reaction";
 import User, { type UserDevice } from "../models/User";
 import logger from "../api/services/logger";
+import Review from "../models/Review";
+import { readUserCompactProjection } from "../api/dto/user/read-user-compact-dto";
+import CheckIn from "../models/CheckIn";
 
 cron.schedule("*/30 * * * * *", async () => {
   const notifications = await Notification.find({
@@ -132,6 +135,34 @@ export async function getNotificationContent(notification: INotification) {
           } else {
             content = "Added an special reaction to your activity.";
           }
+        });
+      break;
+    case NotificationType.FOLLOWING_REVIEW:
+      await Review.findById(notification.resources![0]._id)
+        .populate({
+          path: "writer",
+          select: readUserCompactProjection,
+        })
+        .populate("place")
+        .then((review) => {
+          title = review.writer.name;
+          content = `${review.writer.name} reviewed ${review.place.name}`;
+          if (review.scores && review.scores.overal) {
+            content = `${review.writer.name} rated ${review.place.name} ${review.scores.overal}/5⭐️`;
+          }
+          subtitle = review.content;
+        });
+      break;
+    case NotificationType.FOLLOWING_CHECKIN:
+      await CheckIn.findById(notification.resources![0]._id)
+        .populate({
+          path: "user",
+          select: readUserCompactProjection,
+        })
+        .populate("place")
+        .then((checkin) => {
+          title = checkin.user.name;
+          content = `${checkin.user.name} checked into ${checkin.place.name}`;
         });
       break;
     default:

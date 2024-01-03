@@ -124,57 +124,6 @@ async function getNotificationContent(notification: INotification) {
           }
         });
       break;
-
-    case NotificationType.FOLLOWING_REVIEW:
-      await Review.findById(notification.resources![0]._id)
-        .populate({
-          path: "writer",
-          select: publicReadUserProjection,
-          populate: {
-            path: "progress.achievements",
-          },
-        })
-        .populate("place")
-        .then((review) => {
-          if (!review) {
-            handleResourceNotFound(notification);
-            error = true;
-          } else {
-            user = review.writer;
-            title = review.writer.name;
-            activity = review.userActivityId;
-            content = `${review.writer.name} reviewed ${review.place.name}`;
-            if (review.scores && review.scores.overal) {
-              content = `${review.writer.name} rated ${review.place.name} ${review.scores.overal}/5⭐️`;
-            }
-            subtitle = review.content;
-          }
-        });
-      break;
-    case NotificationType.FOLLOWING_CHECKIN:
-      logger.warn(notification.resources);
-      logger.warn("FOLLOWING CHECKIN FOUND");
-      await CheckIn.findById(notification.resources![0]._id)
-        .populate({
-          path: "user",
-          select: publicReadUserProjection,
-          populate: {
-            path: "progress.achievements",
-          },
-        })
-        .populate("place")
-        .then((checkin) => {
-          if (!checkin) {
-            handleResourceNotFound(notification);
-            error = true;
-          } else {
-            user = checkin.user;
-            title = checkin.user.name;
-            activity = checkin.userActivityId;
-            content = `${checkin.user.name} checked into ${checkin.place.name}`;
-          }
-        });
-      break;
     case NotificationType.XP:
       title = "XP Gain!";
       content = `You gained ${notification.content} XP.`;
