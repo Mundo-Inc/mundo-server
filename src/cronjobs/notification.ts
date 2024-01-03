@@ -147,8 +147,8 @@ export async function getNotificationContent(notification: INotification) {
         .then((review) => {
           title = review.writer.name;
           content = `${review.writer.name} reviewed ${review.place.name}`;
-          if (review.scores && review.scores.overal) {
-            content = `${review.writer.name} rated ${review.place.name} ${review.scores.overal}/5⭐️`;
+          if (review.scores && review.scores.overall) {
+            content = `${review.writer.name} rated ${review.place.name} ${review.scores.overall}/5⭐️`;
           }
           subtitle = review.content;
         });
