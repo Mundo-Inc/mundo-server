@@ -3,8 +3,8 @@ import { body, param, type ValidationChain } from "express-validator";
 import { StatusCodes } from "http-status-codes";
 import mongoose from "mongoose";
 
-import List, { AccessEnum, IList } from "../../models/List";
-import Place from "../../models/Place";
+import List, { AccessEnum, type IList } from "../../models/List";
+import Place, { type IPlace } from "../../models/Place";
 import User from "../../models/User";
 import strings, { dStrings as ds, dynamicMessage } from "../../strings";
 import { createError, handleInputErrors } from "../../utilities/errorHandlers";
@@ -82,7 +82,7 @@ export async function getList(req: Request, res: Response, next: NextFunction) {
       result.collaborators[i].user = user;
     }
     for (let i = 0; i < result.places.length; i++) {
-      let p = await Place.findById(
+      let p: IPlace | null = await Place.findById(
         result.places[i].place,
         readPlaceBriefProjection
       ).lean();
@@ -102,7 +102,17 @@ export async function getList(req: Request, res: Response, next: NextFunction) {
           StatusCodes.NOT_FOUND
         );
       }
-      result.places[i].place = p;
+
+      result.places[i].place = {
+        ...p,
+        location: {
+          ...p.location,
+          geoLocation: {
+            lat: p.location.geoLocation.coordinates[1],
+            lng: p.location.geoLocation.coordinates[0],
+          },
+        },
+      };
       result.places[i].user = user;
     }
 
