@@ -20,6 +20,7 @@ import {
 } from "../services/provider.service";
 import { IGPReview } from "./../../types/googleplaces.interface";
 import validate from "./validators";
+import List, { IList } from "../../models/List";
 
 export const getPlaceValidation: ValidationChain[] = [
   param("id").isMongoId().withMessage("Invalid place id"),
@@ -782,6 +783,37 @@ export async function getPlaceReviews(
     });
   } catch (err) {
     next(err);
+  }
+}
+
+export const getExistInListsValidation: ValidationChain[] = [
+  param("id").isMongoId().withMessage("Invalid place id"),
+];
+export async function getExistInLists(
+  req: Request,
+  res: Response,
+  next: NextFunction
+) {
+  try {
+    handleInputErrors(req);
+    const authId = req.user!.id;
+    const { id } = req.params;
+
+    const lists = await List.find({
+      "collaborators.user": authId,
+      "places.place": id,
+    })
+      .select("_id")
+      .lean();
+
+    const result = lists.map((obj) => obj._id);
+
+    res.json({
+      success: true,
+      data: result,
+    });
+  } catch (error) {
+    next(error);
   }
 }
 

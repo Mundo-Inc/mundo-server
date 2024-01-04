@@ -15,6 +15,8 @@ import {
 } from "../controllers/PlaceController";
 
 import {
+  getExistInLists,
+  getExistInListsValidation,
   getPlace,
   getPlaceExists,
   getPlaceExistsValidation,
@@ -85,6 +87,15 @@ router
 router
   .route("/:id/rating/:provider")
   .get(express.json(), getThirdPartyRatingValidation, getThirdPartyRating);
+
+router
+  .route("/:id/lists")
+  .get(
+    express.json(),
+    authMiddleware,
+    getExistInListsValidation,
+    getExistInLists
+  );
 
 router
   .route("/:id")
