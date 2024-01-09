@@ -220,6 +220,56 @@ export async function deleteList(
   }
 }
 
+export const editListValidation: ValidationChain[] = [
+  param("id").isMongoId(),
+  body("name").optional().isString(),
+  body("icon").optional().isString(),
+  body("isPrivate").optional().isBoolean(),
+];
+
+export async function editList(
+  req: Request,
+  res: Response,
+  next: NextFunction
+) {
+  try {
+    handleInputErrors(req);
+
+    const { id: authId } = req.user!;
+    const { id } = req.params;
+    const { name, icon, isPrivate } = req.body;
+    const list = (await List.findById(id)) as IList;
+
+    if (!list) {
+      throw createError(
+        dynamicMessage(ds.notFound, "List"),
+        StatusCodes.NOT_FOUND
+      );
+    }
+    if (list.owner.toString() !== authId) {
+      throw createError("UNAUTHORIZED", 403);
+    }
+
+    // Update list with new values, if they are provided
+    if (name !== undefined) {
+      list.name = name;
+    }
+    if (icon !== undefined) {
+      list.icon = icon;
+    }
+    if (isPrivate !== undefined) {
+      list.isPrivate = isPrivate;
+    }
+
+    // Save the updated list
+    const editedList = await list.save();
+
+    return res.status(StatusCodes.OK).json({ success: true, list: editedList });
+  } catch (err) {
+    next(err);
+  }
+}
+
 export const addToListValidation: ValidationChain[] = [
   param("id").isMongoId(),
   param("placeId").isMongoId(),

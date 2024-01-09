@@ -12,6 +12,8 @@ import {
   deleteListValidation,
   editCollaboratorAccess,
   editCollaboratorAccessValidation,
+  editList,
+  editListValidation,
   getList,
   getListValidation,
   removeFromCollaborators,
@@ -28,10 +30,12 @@ router.use(authMiddleware);
 router.route("/").post(createListValidation, createList);
 
 // Get a list ✅
+// Edit a list
 // Delete a list ✅
 router
   .route("/:id")
   .get(getListValidation, getList)
+  .put(editListValidation, editList)
   .delete(deleteListValidation, deleteList);
 
 // Add to list ✅
