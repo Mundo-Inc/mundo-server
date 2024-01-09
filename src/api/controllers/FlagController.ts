@@ -1,11 +1,12 @@
 import type { NextFunction, Request, Response } from "express";
-import { ValidationChain, body, param } from "express-validator";
+import { type ValidationChain, body, param } from "express-validator";
 import { StatusCodes } from "http-status-codes";
 
 import Comment from "../../models/Comment";
 import Flag, { FlagTypeEnum, IFlag } from "../../models/Flag";
 import Review from "../../models/Review";
 import { createError, handleInputErrors } from "../../utilities/errorHandlers";
+import { sendSlackMessage } from "./SlackController";
 
 export const createFlagReviewValidation: ValidationChain[] = [
   param("id").isMongoId(),
@@ -38,7 +39,17 @@ export async function createFlagReview(
       note,
     });
     await newFlag.save();
-    res.status(StatusCodes.CREATED).json({ flag: newFlag }); // Send the ID of the created list as response
+
+    try {
+      sendSlackMessage(
+        "phantomAssistant",
+        `Review flagged!\nFlag type: ${flagType}\nNote: ${note}`
+      );
+    } catch (error) {
+      console.log(error);
+    }
+
+    res.status(StatusCodes.CREATED).json({ success: true, data: newFlag }); // Send the ID of the created list as response
   } catch (err) {
     next(err);
   }
@@ -75,7 +86,17 @@ export async function createFlagComment(
       note,
     });
     await newFlag.save();
-    res.status(StatusCodes.CREATED).json({ flag: newFlag }); // Send the ID of the created list as response
+
+    try {
+      sendSlackMessage(
+        "phantomAssistant",
+        `Comment flagged!\nFlag type: ${flagType}\nNote: ${note}`
+      );
+    } catch (error) {
+      console.log(error);
+    }
+
+    res.status(StatusCodes.CREATED).json({ success: true, data: newFlag }); // Send the ID of the created list as response
   } catch (err) {
     next(err);
   }

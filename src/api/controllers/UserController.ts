@@ -1,13 +1,10 @@
 import { DeleteObjectCommand } from "@aws-sdk/client-s3";
-import axios from "axios";
 import bcrypt from "bcryptjs";
 import type { NextFunction, Request, Response } from "express";
 import { body, param, query, type ValidationChain } from "express-validator";
 import { getAuth } from "firebase-admin/auth";
 import { StatusCodes } from "http-status-codes";
-import jwt from "jsonwebtoken";
 
-import { config } from "../../config";
 import Block from "../../models/Block";
 import CheckIn from "../../models/CheckIn";
 import Follow from "../../models/Follow";
@@ -18,11 +15,7 @@ import User, {
   type IUser,
   type UserDevice,
 } from "../../models/User";
-import strings, {
-  dStrings,
-  dStrings as ds,
-  dynamicMessage,
-} from "../../strings";
+import strings, { dStrings as ds, dynamicMessage } from "../../strings";
 import { createError, handleInputErrors } from "../../utilities/errorHandlers";
 import { bucketName, s3 } from "../../utilities/storage";
 import { type EditUserDto } from "../dto/user/edit-user.dto";
@@ -30,12 +23,10 @@ import {
   PrivateReadUserDto,
   privateReadUserProjection,
 } from "../dto/user/read-user-private.dto";
-import {
-  publicReadUserProjection,
-  type PublicReadUserDto,
-} from "../dto/user/read-user-public.dto";
+import { publicReadUserProjection } from "../dto/user/read-user-public.dto";
 import { handleSignUp } from "../lib/profile-handlers";
 import { calcRemainingXP } from "../services/reward/helpers/levelCalculations";
+import { sendSlackMessage } from "./SlackController";
 import validate from "./validators";
 
 const FIREBASE_WEB_API_KEY = process.env.FIREBASE_WEB_API_KEY;
@@ -167,15 +158,7 @@ export async function createUser(
     newUser.accepted_eula = new Date();
     await newUser.save();
 
-    const token = jwt.sign(
-      { userId: newUser._id, role: newUser.role },
-      config.JWT_SECRET,
-      {
-        expiresIn: "30d",
-      }
-    ); // this is the old way of token sending to the user
-
-    const firebaseUserRecord = await getAuth().createUser({
+    await getAuth().createUser({
       uid: newUser._id.toString(),
       email: email.toLowerCase(),
       emailVerified: false,
@@ -183,26 +166,30 @@ export async function createUser(
       disabled: false,
     });
 
+    try {
+      sendSlackMessage(
+        "phantomAssistant",
+        `New user: ${newUser.name || "- - -"}\n${newUser.username} (${
+          newUser.email.address
+        })`
+      );
+    } catch (error) {
+      console.log(error);
+    }
+
     // Sign in to get the Firebase ID token
-    const signInResponse = await axios.post(
-      `https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${FIREBASE_WEB_API_KEY}`,
-      {
-        email: email.toLowerCase(),
-        password: password,
-        returnSecureToken: true,
-      }
-    );
-    const fbasetoken = signInResponse.data.idToken;
+    // const signInResponse = await axios.post(
+    //   `https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${FIREBASE_WEB_API_KEY}`,
+    //   {
+    //     email: email.toLowerCase(),
+    //     password: password,
+    //     returnSecureToken: true,
+    //   }
+    // );
+    // const fbasetoken = signInResponse.data.idToken;
 
-    res.cookie("token", token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV !== "development",
-      maxAge: +process.env.JWT_MAX_AGE!,
-      sameSite: "strict",
-      path: "/",
-    });
-
-    res.status(StatusCodes.CREATED).json({ userId: newUser._id, token });
+    // TODO: Response data is unused, can be removed on later app versions (0.43.0+)
+    res.status(StatusCodes.CREATED).send({ userId: newUser._id, token: "" });
   } catch (err) {
     next(err);
   }
@@ -314,7 +301,7 @@ export async function getUser(req: Request, res: Response, next: NextFunction) {
     }
     if (!user) {
       throw createError(
-        dynamicMessage(dStrings.notFound, "User"),
+        dynamicMessage(ds.notFound, "User"),
         StatusCodes.NOT_FOUND
       );
     }

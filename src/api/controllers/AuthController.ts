@@ -119,9 +119,9 @@ export async function firebaseSync(
         try {
           sendSlackMessage(
             "phantomAssistant",
-            `New user:\nName: ${
-              userData.displayName || "- - -"
-            }\n${username} (${userData.email})`,
+            `New user: ${userData.displayName || "- - -"}\n${username} (${
+              userData.email
+            })`,
             userData.photoURL || undefined
           );
         } catch (error) {
