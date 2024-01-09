@@ -235,7 +235,14 @@ export async function addToList(
     const { id, placeId } = req.params;
     const { id: authId } = req.user!;
     const list = (await List.findById(id)) as IList;
-    if (!list) return res.status(StatusCodes.NOT_FOUND).json({ id: id });
+
+    if (!list) {
+      throw createError(
+        dynamicMessage(ds.notFound, "List"),
+        StatusCodes.NOT_FOUND
+      );
+    }
+
     // checking user's access level
     if (!list.collaborators || list.collaborators.length === 0) {
       throw createError(
@@ -267,7 +274,7 @@ export async function addToList(
       });
 
     await list.save();
-    return res.status(200).json({ list });
+    return res.status(StatusCodes.OK).json({ list });
   } catch (err) {
     next(err);
   }
@@ -288,7 +295,14 @@ export async function removeFromList(
     const { id, placeId } = req.params;
     const { id: authId } = req.user!;
     const list = (await List.findById(id)) as IList;
-    if (!list) return res.status(StatusCodes.NOT_FOUND).json({ id: id });
+
+    if (!list) {
+      throw createError(
+        dynamicMessage(ds.notFound, "List"),
+        StatusCodes.NOT_FOUND
+      );
+    }
+
     // checking user's access level
     if (!list.collaborators || list.collaborators.length === 0) {
       throw createError(
@@ -342,7 +356,13 @@ export async function addCollaborator(
     const { access } = req.body;
 
     const list = (await List.findById(id)) as IList;
-    if (!list) return res.status(StatusCodes.NOT_FOUND).json({ id: id });
+
+    if (!list) {
+      throw createError(
+        dynamicMessage(ds.notFound, "List"),
+        StatusCodes.NOT_FOUND
+      );
+    }
 
     if (!list.collaborators || list.collaborators.length === 0) {
       throw createError(
@@ -368,7 +388,7 @@ export async function addCollaborator(
     });
 
     await list.save();
-    return res.status(200).json({ list });
+    return res.status(StatusCodes.OK).json({ list });
   } catch (err) {
     next(err);
   }
@@ -389,7 +409,14 @@ export async function removeFromCollaborators(
     const { id, userId } = req.params;
     const { id: authId } = req.user!;
     const list = (await List.findById(id)) as IList;
-    if (!list) return res.status(StatusCodes.NOT_FOUND).json({ id: id });
+
+    if (!list) {
+      throw createError(
+        dynamicMessage(ds.notFound, "List"),
+        StatusCodes.NOT_FOUND
+      );
+    }
+
     // checking user's access level
     if (!list.collaborators || list.collaborators.length === 0) {
       throw createError(
@@ -400,6 +427,12 @@ export async function removeFromCollaborators(
 
     if (list.owner.toString() !== authId) {
       throw createError("UNAUTHORIZED", StatusCodes.UNAUTHORIZED);
+    }
+    if (list.owner.toString() === userId) {
+      throw createError(
+        "you can't remove the owner of the list",
+        StatusCodes.BAD_REQUEST
+      );
     }
 
     if (!list.collaborators?.find((c) => c.user.toString() === userId)) {
@@ -439,7 +472,13 @@ export async function editCollaboratorAccess(
     const { access } = req.body;
 
     const list = (await List.findById(id)) as IList;
-    if (!list) return res.status(StatusCodes.NOT_FOUND).json({ id: id });
+
+    if (!list) {
+      throw createError(
+        dynamicMessage(ds.notFound, "List"),
+        StatusCodes.NOT_FOUND
+      );
+    }
 
     // checking user's access level
     if (!list.collaborators || list.collaborators.length === 0) {

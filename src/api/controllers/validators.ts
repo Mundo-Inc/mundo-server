@@ -14,7 +14,7 @@ const validate = {
   name: (start: ValidationChain) =>
     start.trim().isLength({ min: 1 }).withMessage("Name is required").escape(),
 
-  bio: (start: ValidationChain) => start.trim().escape(),
+  bio: (start: ValidationChain) => start.trim(),
 
   isForYou: (start: ValidationChain) =>
     start.isBoolean().withMessage("isForYou must be a boolean"),
@@ -60,8 +60,7 @@ const validate = {
       start
         .trim()
         .isLength({ min: 1, max: 500 })
-        .withMessage("Description must be between 1 and 500 characters long")
-        .escape(),
+        .withMessage("Description must be between 1 and 500 characters long"),
 
     priceRange: (start: ValidationChain) =>
       start
