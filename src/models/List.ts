@@ -20,6 +20,8 @@ export interface IList extends Document {
   }[];
   type: string;
   isPrivate: boolean;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 const ListSchema = new Schema<IList>(

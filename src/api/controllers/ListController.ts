@@ -262,9 +262,25 @@ export async function editList(
     }
 
     // Save the updated list
-    const editedList = await list.save();
+    let editedList = await list.save();
 
-    return res.status(StatusCodes.OK).json({ success: true, list: editedList });
+    await editedList.populate("owner", readUserCompactProjection);
+
+    editedList = editedList.toObject();
+
+    return res.status(StatusCodes.OK).json({
+      success: true,
+      list: {
+        _id: editedList._id,
+        name: editedList.name,
+        owner: editedList.owner,
+        icon: editedList.icon,
+        isPrivate: editedList.isPrivate,
+        createdAt: editedList.createdAt,
+        collaboratorsCount: editedList.collaborators.length,
+        placesCount: editedList.places.length,
+      },
+    });
   } catch (err) {
     next(err);
   }
