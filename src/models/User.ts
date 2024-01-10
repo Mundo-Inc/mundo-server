@@ -29,6 +29,25 @@ export type UserDevice = {
   platform: string;
 };
 
+export interface IDailyReward {
+  streak: number;
+  lastClaim?: Date;
+}
+
+const dailyRewardSchema = new Schema<IDailyReward>(
+  {
+    streak: {
+      type: Number,
+      default: 0,
+    },
+    lastClaim: {
+      type: Date,
+      required: false,
+    },
+  },
+  { _id: false }
+);
+
 export interface IUser extends Document {
   accepted_eula: Date;
   uid: string;
@@ -64,7 +83,10 @@ export interface IUser extends Document {
   createdAt: Date;
   updatedAt: Date;
   verified?: boolean;
-  coins: number;
+  phantomCoins: {
+    balance: number;
+    daily: IDailyReward;
+  };
   latestPlace?: mongoose.Types.ObjectId;
 }
 
@@ -187,9 +209,12 @@ const UserSchema = new Schema<IUser>(
       type: Boolean,
       default: false,
     },
-    coins: {
-      type: Number,
-      default: 0,
+    phantomCoins: {
+      balance: {
+        type: Number,
+        default: 0,
+      },
+      daily: dailyRewardSchema,
     },
     latestPlace: {
       type: Schema.Types.ObjectId,

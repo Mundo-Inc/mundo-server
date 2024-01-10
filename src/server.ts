@@ -29,6 +29,7 @@ import { config } from "./config";
 import { connectDatabase } from "./config/database";
 import router from "./router";
 import { errorHandler } from "./utilities/errorHandlers";
+import { updateUsersPhantomCoin } from "./api/controllers/RewardController";
 
 const app: Express = express();
 
@@ -63,6 +64,9 @@ async function main() {
   if (process.env.NODE_ENV === "production") {
     await import("./cronjobs/notification");
   }
+
+  // will update all users that are missing phantomCoins field in their USER's schema
+  updateUsersPhantomCoin();
 }
 
 main();

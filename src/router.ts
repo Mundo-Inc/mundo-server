@@ -16,6 +16,7 @@ import feedRouter from "./api/v1/feedRouter";
 import notificationRouter from "./api/v1/notificationRouter";
 import listRouter from "./api/v1/listRouter";
 import devRouter from "./api/v1/devRouter";
+import rewardRouter from "./api/v1/rewardRouter";
 import adminRouter from "./api/v1/adminRouter";
 
 const router = express.Router();
@@ -35,6 +36,8 @@ router.use("/map", mapRouter);
 router.use("/feeds", feedRouter);
 router.use("/notifications", notificationRouter);
 router.use("/lists", listRouter);
+router.use("/rewards", rewardRouter);
+
 router.use("/dev", devRouter);
 router.use("/admin", adminRouter);
 
