@@ -83,6 +83,7 @@ export interface IUser extends Document {
   createdAt: Date;
   updatedAt: Date;
   verified?: boolean;
+  coins: number;
   phantomCoins: {
     balance: number;
     daily: IDailyReward;
@@ -208,6 +209,10 @@ const UserSchema = new Schema<IUser>(
     verified: {
       type: Boolean,
       default: false,
+    },
+    coins: {
+      type: Number,
+      default: 0,
     },
     phantomCoins: {
       balance: {
