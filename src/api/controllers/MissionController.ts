@@ -92,7 +92,10 @@ export async function getMissions(
     const limit = parseInt(req.query.limit as string) || 10; // Default to 10 items per page
     const skip = (page - 1) * limit;
 
-    const query = { expiresAt: { $lte: new Date() } };
+    const query = {
+      expiresAt: { $gte: new Date() },
+      startsAt: { $lte: new Date() },
+    };
     const missionsQuery = Mission.find(query)
       .sort({ createdAt: -1 })
       .skip(skip)
@@ -102,13 +105,15 @@ export async function getMissions(
     // Get the total count for pagination
     const totalMissions = await Mission.countDocuments(query);
 
-    const missions = ((await missionsQuery) as IMission[]).map((mission) => {
-      return populateMissionProgress(mission, user);
-    });
+    const missions = (await missionsQuery) as IMission[];
+    let populatedMissions = [];
+    for (const mission of missions) {
+      populatedMissions.push(await populateMissionProgress(mission, user));
+    }
 
     res.status(200).json({
       success: true,
-      data: missions,
+      data: { missions: populatedMissions },
       pagination: {
         page: page,
         limit: limit,
@@ -121,7 +126,64 @@ export async function getMissions(
   }
 }
 
-// this route is for admins to see older missions as well
+export const claimMissionRewardValidation: ValidationChain[] = [
+  param("id").isMongoId(),
+];
+
+export async function claimMissionReward(
+  req: Request,
+  res: Response,
+  next: NextFunction
+) {
+  const { id } = req.params;
+  const { id: authId } = req.user!;
+  try {
+    const user = (await User.findById(authId)) as IUser;
+    const mission = (await Mission.findById(id)) as IMission;
+    const missionWithProgress = await populateMissionProgress(mission, user);
+
+    if (!user) {
+      throw createError("user not found", 404);
+    }
+    if (!mission) {
+      throw createError("mission not found", 404);
+    }
+
+    const isClaimable =
+      missionWithProgress.progress.completed >=
+      missionWithProgress.progress.total;
+
+    if (!isClaimable) {
+      throw createError("Mission requirements are not done yet", 403);
+    }
+
+    const gotRewardBefore =
+      (await CoinReward.countDocuments({
+        userId: authId,
+        missionId: id,
+      })) > 0;
+
+    if (gotRewardBefore) {
+      throw createError("You have already got rewarded for this mission", 403);
+    }
+
+    const coinReward = await CoinReward.create({
+      userId: authId,
+      amount: mission.rewardAmount,
+      coinRewardType: CoinRewardTypeEnum.mission,
+      missionId: id,
+    });
+
+    user.phantomCoins.balance = user.phantomCoins.balance + coinReward.amount;
+    await user.save();
+
+    res.status(200).json({ success: true, data: { user } });
+  } catch (error) {
+    next(error);
+  }
+}
+
+// admin only
 export async function getAllMissions(
   req: Request,
   res: Response,
@@ -162,6 +224,7 @@ export const deleteMissionValidation: ValidationChain[] = [
   param("id").isMongoId(),
 ];
 
+// admin only
 export async function deleteMission(
   req: Request,
   res: Response,
@@ -171,53 +234,6 @@ export async function deleteMission(
   try {
     await Mission.deleteOne({ _id: id });
     res.status(204);
-  } catch (error) {
-    next(error);
-  }
-}
-
-export const claimMissionRewardValidation: ValidationChain[] = [
-  param("id").isMongoId(),
-];
-
-export async function claimMissionReward(
-  req: Request,
-  res: Response,
-  next: NextFunction
-) {
-  const { id } = req.params;
-  const { id: authId } = req.user!;
-  try {
-    const user = (await User.findById(authId)) as IUser;
-    const mission = (await Mission.findById(id)) as IMission;
-    const missionWithProgress = await populateMissionProgress(mission, user);
-
-    if (!user) {
-      throw createError("user not found", 404);
-    }
-    if (!mission) {
-      throw createError("mission not found", 404);
-    }
-
-    const isClaimable =
-      missionWithProgress.progress.completed >=
-      missionWithProgress.progress.total;
-
-    if (!isClaimable) {
-      throw createError("Mission requirements are not done yet", 403);
-    }
-
-    const coinReward = await CoinReward.create({
-      userId: authId,
-      amount: mission.rewardAmount,
-      coinRewardType: CoinRewardTypeEnum.mission,
-      missionId: id,
-    });
-
-    user.phantomCoins.balance = user.phantomCoins.balance + coinReward.amount;
-    await user.save();
-
-    res.status(200).json({ success: true, data: { user } });
   } catch (error) {
     next(error);
   }
