@@ -430,7 +430,7 @@ export async function deleteUser(
 
     await user.deleteOne();
 
-    res.status(StatusCodes.NO_CONTENT);
+    res.sendStatus(StatusCodes.NO_CONTENT);
   } catch (err) {
     next(err);
   }
@@ -617,7 +617,7 @@ export async function usernameAvailability(
       throw createError(strings.user.usernameTaken, StatusCodes.CONFLICT);
     }
 
-    res.status(StatusCodes.NO_CONTENT).end();
+    res.sendStatus(StatusCodes.NO_CONTENT);
   } catch (err) {
     next(err);
   }

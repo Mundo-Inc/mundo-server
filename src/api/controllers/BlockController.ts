@@ -45,7 +45,8 @@ export async function unblock(req: Request, res: Response, next: NextFunction) {
     if (!block)
       throw createError(strings.blocks.notFound, StatusCodes.NOT_FOUND);
     await block.deleteOne();
-    res.status(StatusCodes.NO_CONTENT).json({ success: true });
+
+    res.sendStatus(StatusCodes.NO_CONTENT);
   } catch (error) {
     next(error);
   }
