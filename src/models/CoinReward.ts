@@ -9,7 +9,7 @@ export interface ICoinReward extends Document {
   userId: mongoose.Types.ObjectId;
   amount: number;
   coinRewardType: string;
-  mission?: mongoose.Types.ObjectId;
+  missionId?: mongoose.Types.ObjectId;
   createdAt: Date;
 }
 
@@ -21,7 +21,7 @@ const CoinRewardSchema: Schema = new Schema<ICoinReward>({
     enum: Object.values(CoinRewardTypeEnum),
     required: true,
   },
-  mission: {
+  missionId: {
     type: Schema.Types.ObjectId,
     ref: "Mission",
     required: false,
