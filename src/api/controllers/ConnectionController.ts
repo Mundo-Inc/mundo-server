@@ -96,14 +96,21 @@ export async function createUserConnection(
     const targetUser = (await User.findById(id)) as IUser;
 
     if (targetUser.isPrivate) {
-      const followRequest = await FollowRequest.create({
+      const existingFollowRequest = await FollowRequest.findOne({
         user: authId,
         target: id,
       });
 
-      res
-        .status(StatusCodes.CREATED)
-        .json({ success: true, data: followRequest });
+      if (existingFollowRequest) {
+        throw createError("You have already sent a follow request", 403);
+      }
+
+      await FollowRequest.create({
+        user: authId,
+        target: id,
+      });
+
+      res.status(StatusCodes.NO_CONTENT);
 
       //TODO: Send Notification to Target that they have a follow request
     } else {
