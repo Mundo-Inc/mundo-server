@@ -1,11 +1,11 @@
 import type { NextFunction, Request, Response } from "express";
 import { body, query, type ValidationChain } from "express-validator";
 import { StatusCodes } from "http-status-codes";
-import mongoose from "mongoose";
+import mongoose, { FilterQuery } from "mongoose";
 
 import CheckIn, { ICheckIn } from "../../models/CheckIn";
 import Place from "../../models/Place";
-import User from "../../models/User";
+import User, { IUser } from "../../models/User";
 import { ActivityPrivacyTypeEnum } from "../../models/UserActivity";
 import { createError, handleInputErrors } from "../../utilities/errorHandlers";
 import { readFormattedPlaceLocationProjection } from "../dto/place/place-dto";
@@ -16,7 +16,7 @@ import logger from "../services/logger";
 import { addReward } from "../services/reward/reward.service";
 import { addCheckinActivity } from "../services/user.activity.service";
 import validate from "./validators";
-import Follow from "../../models/Follow";
+import Follow, { IFollow } from "../../models/Follow";
 import Notification, {
   NotificationType,
   ResourceTypes,
@@ -54,7 +54,17 @@ export async function getCheckins(
     const skip = (page - 1) * limit;
     const matchPipeline: any[] = [];
     if (user) {
-      // TODO: check to see if user checkins are public
+      //PRIVACY
+      const userObject = (await User.findById(user)) as IUser;
+      if (userObject) {
+        const isFollowed = await Follow.countDocuments({
+          user: userId,
+          target: userObject._id,
+        });
+        if (!isFollowed && userObject.isPrivate) {
+          throw createError("UNAUTHORIZED", 401);
+        }
+      }
       matchPipeline.push({
         $match: { user: new mongoose.Types.ObjectId(user as string) },
       });
@@ -64,6 +74,7 @@ export async function getCheckins(
       });
     }
     if (place) {
+      // TODO: Add privacy check here
       matchPipeline.push({
         $match: { place: new mongoose.Types.ObjectId(place as string) },
       });

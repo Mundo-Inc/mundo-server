@@ -10,6 +10,8 @@ import strings from "../../strings";
 import { createError, handleInputErrors } from "../../utilities/errorHandlers";
 import logger from "../services/logger";
 import validate from "./validators";
+import mongoose, { FilterQuery } from "mongoose";
+import Follow, { IFollow } from "../../models/Follow";
 
 const API_KEY = process.env.GOOGLE_GEO_API_KEY!;
 
@@ -137,6 +139,21 @@ export async function getGeoActivities(
 ) {
   try {
     handleInputErrors(req);
+    const { id: authId } = req.user!;
+
+    const followingsObj: FilterQuery<IFollow> = await Follow.find(
+      {
+        user: authId,
+      },
+      {
+        target: 1,
+      }
+    );
+    const followingsIdsStr = [
+      ...followingsObj.map((f: IFollow) => f.target),
+      new mongoose.Types.ObjectId(authId),
+    ];
+
     const { northEastLat, northEastLng, southWestLat, southWestLng, zoom } =
       req.query;
     const northEast = {
@@ -175,7 +192,7 @@ export async function getGeoActivities(
     const activities = await Promise.all(
       places.map(async (place) => {
         const checkins = await CheckIn.find({ place: place._id })
-          .populate("user", "profileImage name")
+          .populate("user", "profileImage name isPrivate")
           .select("user")
           .limit(10) // Limit the number of checkins
           .lean();
@@ -184,7 +201,7 @@ export async function getGeoActivities(
           place: place._id,
           source: { $nin: ["yelp", "google"] },
         })
-          .populate("writer", "profileImage name")
+          .populate("writer", "profileImage name isPrivate")
           .select("writer")
           .limit(10) // Limit the number of reviews
           .lean();
@@ -195,13 +212,18 @@ export async function getGeoActivities(
             (uData) => uData._id === checkin.user._id.toString()
           );
           if (!found) {
-            usersData.push({
-              _id: checkin.user._id.toString(),
-              name: checkin.user.name,
-              profileImage: checkin.user.profileImage,
-              checkinsCount: 1,
-              reviewsCount: 0,
-            });
+            if (
+              !checkin.user.isPrivate ||
+              followingsIdsStr.includes(checkin.user._id.toString())
+            ) {
+              usersData.push({
+                _id: checkin.user._id.toString(),
+                name: checkin.user.name,
+                profileImage: checkin.user.profileImage,
+                checkinsCount: 1,
+                reviewsCount: 0,
+              });
+            }
           } else {
             found.checkinsCount++;
           }
@@ -212,13 +234,18 @@ export async function getGeoActivities(
             (uData) => uData._id === review.writer._id.toString()
           );
           if (!found) {
-            usersData.push({
-              _id: review.writer._id.toString(),
-              name: review.writer.name,
-              profileImage: review.writer.profileImage,
-              checkinsCount: 0,
-              reviewsCount: 1,
-            });
+            if (
+              !review.writer.isPrivate ||
+              followingsIdsStr.includes(review.writer._id.toString())
+            ) {
+              usersData.push({
+                _id: review.writer._id.toString(),
+                name: review.writer.name,
+                profileImage: review.writer.profileImage,
+                checkinsCount: 0,
+                reviewsCount: 1,
+              });
+            }
           } else {
             found.reviewsCount++;
           }

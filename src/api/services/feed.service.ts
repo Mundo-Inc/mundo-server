@@ -12,6 +12,7 @@ import Reaction from "../../models/Reaction";
 import Review from "../../models/Review";
 import User from "../../models/User";
 import UserActivity, {
+  ActivityPrivacyTypeEnum,
   ResourceTypeEnum,
   type IUserActivity,
 } from "../../models/UserActivity";
@@ -533,6 +534,18 @@ export const getUserFeed = async (
           $nin: blocked.map((b: IBlock) => b.user),
         },
         hasMedia: true,
+        // Either should be public or it should be followed by the viewer or be the viewer's itself
+        $or: [
+          { privacyType: ActivityPrivacyTypeEnum.PUBLIC },
+          {
+            userId: {
+              $in: [
+                ...followings.map((f: IFollow) => f.target),
+                new mongoose.Types.ObjectId(userId),
+              ],
+            },
+          },
+        ],
       };
     }
 

@@ -89,6 +89,7 @@ export interface IUser extends Document {
     daily: IDailyReward;
   };
   latestPlace?: mongoose.Types.ObjectId;
+  isPrivate: boolean;
 }
 
 const UserSchema = new Schema<IUser>(
@@ -242,7 +243,9 @@ const UserSchema = new Schema<IUser>(
         },
       ],
     },
+    isPrivate: { type: Boolean, default: false },
   },
+
   { timestamps: true }
 );
 

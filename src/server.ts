@@ -30,6 +30,7 @@ import { connectDatabase } from "./config/database";
 import router from "./router";
 import { errorHandler } from "./utilities/errorHandlers";
 import { updateUsersPhantomCoin } from "./api/controllers/RewardController";
+import { updateUsersPrivacy } from "./api/controllers/ConnectionController";
 
 const app: Express = express();
 
@@ -67,6 +68,7 @@ async function main() {
 
   // will update all users that are missing phantomCoins field in their USER's schema
   updateUsersPhantomCoin();
+  updateUsersPrivacy();
 }
 
 main();

@@ -1,11 +1,11 @@
 import { NextFunction, Request, Response } from "express";
-import { ValidationChain, param, query } from "express-validator";
+import { ValidationChain, body, param, query } from "express-validator";
 import { StatusCodes } from "http-status-codes";
 import mongoose from "mongoose";
 
-import Follow from "../../models/Follow";
+import Follow, { IFollow } from "../../models/Follow";
 import Notification, { ResourceTypes } from "../../models/Notification";
-import User from "../../models/User";
+import User, { IUser } from "../../models/User";
 import UserActivity, {
   ActivityTypeEnum,
   ResourceTypeEnum,
@@ -16,6 +16,7 @@ import { publicReadUserProjection } from "../dto/user/read-user-public.dto";
 import logger from "../services/logger";
 import { addNewFollowingActivity } from "../services/user.activity.service";
 import validate from "./validators";
+import FollowRequest, { IFollowRequest } from "../../models/FollowRequest";
 
 export const connectionFollowStatusValidation: ValidationChain[] = [
   param("id").isMongoId(),
@@ -40,10 +41,16 @@ export async function connectionFollowStatus(
         user: id,
         target: authId,
       })) !== null;
+    const isRequestPending =
+      (await FollowRequest.exists({
+        user: authId,
+        target: id,
+      })) !== null;
     return res.json({
       success: true,
       data: {
         isFollowing,
+        isRequestPending,
         isFollower,
       },
     });
@@ -86,15 +93,87 @@ export async function createUserConnection(
       throw createError(strings.follows.alreadyExists, StatusCodes.CONFLICT);
     }
 
-    // Create new follow relationship
-    const follow = await Follow.create({ user: authId, target: id });
+    const targetUser = (await User.findById(id)) as IUser;
 
-    // Log new following activity
-    await logFollowingActivity(authId, id);
+    if (targetUser.isPrivate) {
+      const followRequest = await FollowRequest.create({
+        user: authId,
+        target: id,
+      });
 
-    res.status(StatusCodes.CREATED).json({ success: true, data: follow });
+      res
+        .status(StatusCodes.CREATED)
+        .json({ success: true, data: followRequest });
+
+      //TODO: Send Notification to Target that they have a follow request
+    } else {
+      // Create new follow relationship
+      const follow = await Follow.create({ user: authId, target: id });
+      // Log new following activity
+      await logFollowingActivity(authId, id);
+      res.status(StatusCodes.CREATED).json({ success: true, data: follow });
+    }
   } catch (err) {
     next(err); // Pass any errors to the error handling middleware
+  }
+}
+
+export const getPendingConnectionsValidation: ValidationChain[] = [];
+
+export async function getPendingConnections(
+  req: Request,
+  res: Response,
+  next: NextFunction
+) {
+  try {
+    handleInputErrors(req);
+    const { id: authId } = req.user!;
+
+    const followRequests = await FollowRequest.find({
+      target: authId,
+    }).populate("user", publicReadUserProjection);
+
+    res
+      .status(StatusCodes.CREATED)
+      .json({ success: true, data: followRequests });
+  } catch (error) {
+    next(error);
+  }
+}
+
+export const acceptConnectionRequestValidation: ValidationChain[] = [
+  body("id").isMongoId(),
+];
+
+export async function acceptConnectionRequest(
+  req: Request,
+  res: Response,
+  next: NextFunction
+) {
+  try {
+    handleInputErrors(req);
+    const { id } = req.body;
+    const { id: authId } = req.user!;
+
+    const followRequest = (await FollowRequest.findOne({
+      _id: id,
+      target: authId,
+    })) as IFollowRequest;
+
+    if (!followRequest) {
+      throw createError(strings.followRequest.notFound, StatusCodes.NOT_FOUND);
+    }
+
+    const follow = await Follow.create({
+      user: followRequest.user,
+      target: followRequest.target,
+    });
+
+    await followRequest.deleteOne();
+    //TODO: Send notification to follow.user that your follow request got accepted
+    res.status(StatusCodes.CREATED).json({ success: true, data: follow });
+  } catch (error) {
+    next(error);
   }
 }
 
@@ -241,5 +320,27 @@ export async function getUserConnections(
     });
   } catch (err) {
     next(err);
+  }
+}
+
+export async function updateUsersPrivacy() {
+  try {
+    // Find all users who don't have the 'phantomCoins' field
+    const usersWithoutPrivacy = await User.find({
+      isPrivate: { $exists: false },
+    });
+
+    // Iterate over these users and update them
+    const updatePromises = usersWithoutPrivacy.map((user) => {
+      user.isPrivate = false;
+      return user.save(); // Save each updated user
+    });
+
+    // Wait for all updates to complete
+    await Promise.all(updatePromises);
+
+    logger.verbose("Updated all users missing isPrivate field.");
+  } catch (error) {
+    console.error("Error updating users: ", error);
   }
 }

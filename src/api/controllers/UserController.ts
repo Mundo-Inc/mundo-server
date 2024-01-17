@@ -3,7 +3,7 @@ import bcrypt from "bcryptjs";
 import type { NextFunction, Request, Response } from "express";
 import { body, param, query, type ValidationChain } from "express-validator";
 import { getAuth } from "firebase-admin/auth";
-import { StatusCodes } from "http-status-codes";
+import { StatusCodes, UNAUTHORIZED } from "http-status-codes";
 
 import Block from "../../models/Block";
 import CheckIn from "../../models/CheckIn";
@@ -28,6 +28,8 @@ import { handleSignUp } from "../lib/profile-handlers";
 import { calcRemainingXP } from "../services/reward/helpers/levelCalculations";
 import { sendSlackMessage } from "./SlackController";
 import validate from "./validators";
+import { STATUS_CODES } from "http";
+import FollowRequest, { IFollowRequest } from "../../models/FollowRequest";
 
 const FIREBASE_WEB_API_KEY = process.env.FIREBASE_WEB_API_KEY;
 
@@ -429,6 +431,49 @@ export async function deleteUser(
     if (!user) throw createError(strings.user.notFound, StatusCodes.NOT_FOUND);
 
     await user.deleteOne();
+
+    res.sendStatus(StatusCodes.NO_CONTENT);
+  } catch (err) {
+    next(err);
+  }
+}
+
+export const userPrivacyValidation: ValidationChain[] = [
+  param("id").isMongoId(),
+  body("isPrivate").isBoolean(),
+];
+export async function putUserPrivacy(
+  req: Request,
+  res: Response,
+  next: NextFunction
+) {
+  try {
+    handleInputErrors(req);
+
+    const { id } = req.params;
+    const { isPrivate } = req.body;
+    const { id: authId, role: authRole } = req.user!;
+
+    if (id !== authId && authRole !== "admin") {
+      throw createError("UNAUTHORIZED", 401);
+    }
+
+    const user = (await User.findById(id)) as IUser;
+
+    if (user.isPrivate && !isPrivate) {
+      const followReqs = (await FollowRequest.find({
+        target: authId,
+      })) as IFollowRequest[];
+      for (const followReq of followReqs) {
+        await Follow.create({
+          user: followReq.user,
+          target: followReq.target,
+        });
+      }
+    }
+
+    user.isPrivate = isPrivate;
+    await user.save();
 
     res.sendStatus(StatusCodes.NO_CONTENT);
   } catch (err) {

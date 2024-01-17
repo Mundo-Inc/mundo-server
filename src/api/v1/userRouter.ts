@@ -15,7 +15,9 @@ import {
   getUsers,
   getUsersValidation,
   leaderBoardValidation,
+  putUserPrivacy,
   putUserSettings,
+  userPrivacyValidation,
   userSettingsValidation,
   usernameAvailability,
   usernameAvailabilityValidation,
@@ -34,12 +36,16 @@ import {
   unblock,
 } from "../controllers/BlockController";
 import {
+  acceptConnectionRequest,
+  acceptConnectionRequestValidation,
   connectionFollowStatus,
   connectionFollowStatusValidation,
   createUserConnection,
   createUserConnectionValidation,
   deleteUserConnection,
   deleteUserConnectionValidation,
+  getPendingConnections,
+  getPendingConnectionsValidation,
   getUserConnections,
   getUserConnectionsValidation,
 } from "../controllers/ConnectionController";
@@ -70,11 +76,32 @@ router.get(
   usernameAvailability
 );
 
+router.post(
+  "/acceptConnection",
+  authMiddleware,
+  acceptConnectionRequestValidation,
+  acceptConnectionRequest
+);
+
+router.get(
+  "/pendingConnections",
+  authMiddleware,
+  getPendingConnectionsValidation,
+  getPendingConnections
+);
+
 router
   .route("/:id")
   .put(authMiddleware, editUserValidation, editUser)
   .get(authMiddleware, getUserValidation, getUser)
   .delete(authMiddleware, deleteUserValidation, deleteUser);
+
+router.put(
+  "/:id/privacy",
+  authMiddleware,
+  userPrivacyValidation,
+  putUserPrivacy
+);
 
 router.put(
   "/:id/settings",
