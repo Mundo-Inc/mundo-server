@@ -1,11 +1,12 @@
-import { NextFunction, Request, Response } from "express";
-import { ValidationChain, body, param, query } from "express-validator";
+import type { NextFunction, Request, Response } from "express";
+import { body, param, query, type ValidationChain } from "express-validator";
 import { StatusCodes } from "http-status-codes";
 import mongoose from "mongoose";
 
-import Follow, { IFollow } from "../../models/Follow";
+import Follow from "../../models/Follow";
+import FollowRequest, { type IFollowRequest } from "../../models/FollowRequest";
 import Notification, { ResourceTypes } from "../../models/Notification";
-import User, { IUser } from "../../models/User";
+import User, { type IUser } from "../../models/User";
 import UserActivity, {
   ActivityTypeEnum,
   ResourceTypeEnum,
@@ -16,7 +17,6 @@ import { publicReadUserProjection } from "../dto/user/read-user-public.dto";
 import logger from "../services/logger";
 import { addNewFollowingActivity } from "../services/user.activity.service";
 import validate from "./validators";
-import FollowRequest, { IFollowRequest } from "../../models/FollowRequest";
 
 export const connectionFollowStatusValidation: ValidationChain[] = [
   param("id").isMongoId(),
@@ -102,7 +102,10 @@ export async function createUserConnection(
       });
 
       if (existingFollowRequest) {
-        throw createError("You have already sent a follow request", 403);
+        throw createError(
+          "You have already sent a follow request",
+          StatusCodes.BAD_REQUEST
+        );
       }
 
       await FollowRequest.create({
@@ -256,7 +259,7 @@ export async function getUserConnections(
 
     const userExists = await User.findById(theUserId).lean();
     if (!userExists) {
-      throw createError(strings.user.notFound, 404);
+      throw createError(strings.user.notFound, StatusCodes.NOT_FOUND);
     }
 
     const data = await Follow.aggregate([
@@ -320,7 +323,7 @@ export async function getUserConnections(
       },
     ]);
 
-    res.status(200).json({
+    res.status(StatusCodes.OK).json({
       success: true,
       data: data[0]?.connections || [],
       total: data[0]?.total || 0,

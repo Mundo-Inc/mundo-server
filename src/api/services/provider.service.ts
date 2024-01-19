@@ -1,7 +1,8 @@
 import axios from "axios";
-import { IPlace } from "../../models/Place";
+
+import type { IPlace } from "../../models/Place";
+import type { IGPPlaceDetails } from "../../types/googleplaces.interface";
 import { createError } from "../../utilities/errorHandlers";
-import { IGPPlaceDetails } from "../../types/googleplaces.interface";
 import logger from "./logger";
 
 const YELP_FUSION_API_KEY = process.env.YELP_FUSION_API_KEY;

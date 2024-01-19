@@ -44,12 +44,18 @@ export async function authPost(
         "email.address": { $regex: new RegExp(email, "i") },
       });
       if (!user) {
-        throw createError(strings.authorization.invalidCredentials, 401);
+        throw createError(
+          strings.authorization.invalidCredentials,
+          StatusCodes.UNAUTHORIZED
+        );
       }
 
       const isPasswordCorrect = await bcrypt.compare(password, user.password);
       if (!isPasswordCorrect) {
-        throw createError(strings.authorization.invalidCredentials, 401);
+        throw createError(
+          strings.authorization.invalidCredentials,
+          StatusCodes.UNAUTHORIZED
+        );
       }
 
       const token = generateJwtToken(user);
@@ -62,13 +68,13 @@ export async function authPost(
         path: "/",
       });
 
-      res.status(200).json({ userId: user._id, token });
+      res.status(StatusCodes.OK).json({ userId: user._id, token });
     } else if (action === "signout") {
       res.clearCookie("token");
 
       res.sendStatus(StatusCodes.NO_CONTENT);
     } else {
-      throw createError(strings.server.invalidAction, 400);
+      throw createError(strings.server.invalidAction, StatusCodes.BAD_REQUEST);
     }
   } catch (err) {
     next(err);
@@ -129,10 +135,10 @@ export async function firebaseSync(
         }
       }
 
-      res.status(200).send("User data received");
+      res.status(StatusCodes.OK).send("User data received");
     } else {
       // Respond with an error or ignore the request
-      res.status(403).send("Unauthorized");
+      res.status(StatusCodes.FORBIDDEN).send("Unauthorized");
     }
   } catch (error) {
     next(error);

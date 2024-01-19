@@ -1,11 +1,16 @@
 import type { NextFunction, Request, Response } from "express";
 import { body, query, type ValidationChain } from "express-validator";
 import { StatusCodes } from "http-status-codes";
-import mongoose, { FilterQuery } from "mongoose";
+import mongoose from "mongoose";
 
-import CheckIn, { ICheckIn } from "../../models/CheckIn";
+import CheckIn, { type ICheckIn } from "../../models/CheckIn";
+import Follow from "../../models/Follow";
+import Notification, {
+  NotificationType,
+  ResourceTypes,
+} from "../../models/Notification";
 import Place from "../../models/Place";
-import User, { IUser } from "../../models/User";
+import User, { type IUser } from "../../models/User";
 import { ActivityPrivacyTypeEnum } from "../../models/UserActivity";
 import { createError, handleInputErrors } from "../../utilities/errorHandlers";
 import { readFormattedPlaceLocationProjection } from "../dto/place/place-dto";
@@ -16,11 +21,6 @@ import logger from "../services/logger";
 import { addReward } from "../services/reward/reward.service";
 import { addCheckinActivity } from "../services/user.activity.service";
 import validate from "./validators";
-import Follow, { IFollow } from "../../models/Follow";
-import Notification, {
-  NotificationType,
-  ResourceTypes,
-} from "../../models/Notification";
 
 const checkinWaitTime = 1; // minutes
 
@@ -62,7 +62,7 @@ export async function getCheckins(
           target: userObject._id,
         });
         if (!isFollowed && userObject.isPrivate) {
-          throw createError("UNAUTHORIZED", 401);
+          throw createError("UNAUTHORIZED", StatusCodes.UNAUTHORIZED);
         }
       }
       matchPipeline.push({

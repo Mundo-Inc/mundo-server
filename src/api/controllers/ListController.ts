@@ -247,7 +247,7 @@ export async function editList(
       );
     }
     if (list.owner.toString() !== authId) {
-      throw createError("UNAUTHORIZED", 403);
+      throw createError("UNAUTHORIZED", StatusCodes.FORBIDDEN);
     }
 
     // Update list with new values, if they are provided
@@ -382,7 +382,7 @@ export async function removeFromList(
     );
 
     if (!collaborator) {
-      throw createError("UNAUTHORIZED", 403);
+      throw createError("UNAUTHORIZED", StatusCodes.FORBIDDEN);
     }
 
     if (!list.places?.find((p) => p.place.toString() === placeId)) {

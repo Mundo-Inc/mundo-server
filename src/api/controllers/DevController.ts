@@ -409,7 +409,7 @@ export async function importAllUsersToFirebase(
         console.log("Error importing users :", error);
       });
 
-    res.status(200).send("All users imported successfully");
+    res.status(StatusCodes.OK).send("All users imported successfully");
   } catch (error: any) {
     console.error("Error during user import:", error);
     res.status(500).send("Error importing users");

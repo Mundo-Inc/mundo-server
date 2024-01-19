@@ -3,11 +3,12 @@ import bcrypt from "bcryptjs";
 import type { NextFunction, Request, Response } from "express";
 import { body, param, query, type ValidationChain } from "express-validator";
 import { getAuth } from "firebase-admin/auth";
-import { StatusCodes, UNAUTHORIZED } from "http-status-codes";
+import { StatusCodes } from "http-status-codes";
 
 import Block from "../../models/Block";
 import CheckIn from "../../models/CheckIn";
 import Follow from "../../models/Follow";
+import FollowRequest, { IFollowRequest } from "../../models/FollowRequest";
 import Place, { type IPlace } from "../../models/Place";
 import Review from "../../models/Review";
 import User, {
@@ -28,8 +29,6 @@ import { handleSignUp } from "../lib/profile-handlers";
 import { calcRemainingXP } from "../services/reward/helpers/levelCalculations";
 import { sendSlackMessage } from "./SlackController";
 import validate from "./validators";
-import { STATUS_CODES } from "http";
-import FollowRequest, { IFollowRequest } from "../../models/FollowRequest";
 
 const FIREBASE_WEB_API_KEY = process.env.FIREBASE_WEB_API_KEY;
 
@@ -256,7 +255,7 @@ export async function getUser(req: Request, res: Response, next: NextFunction) {
       if (user) {
         id = user._id.toString();
       } else {
-        throw createError("user not found", 404);
+        throw createError("user not found", StatusCodes.NOT_FOUND);
       }
     }
 
@@ -455,7 +454,7 @@ export async function putUserPrivacy(
     const { id: authId, role: authRole } = req.user!;
 
     if (id !== authId && authRole !== "admin") {
-      throw createError("UNAUTHORIZED", 401);
+      throw createError("UNAUTHORIZED", StatusCodes.FORBIDDEN);
     }
 
     const user = (await User.findById(id)) as IUser;

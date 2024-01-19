@@ -140,16 +140,17 @@ export async function claimMissionReward(
   const { id } = req.params;
   const { id: authId } = req.user!;
   try {
-    const user = (await User.findById(authId)) as IUser;
-    const mission = (await Mission.findById(id)) as IMission;
-    const missionWithProgress = await populateMissionProgress(mission, user);
-
+    const user: IUser | null = await User.findById(authId);
     if (!user) {
       throw createError("user not found", StatusCodes.NOT_FOUND);
     }
+
+    const mission: IMission | null = await Mission.findById(id);
     if (!mission) {
       throw createError("mission not found", StatusCodes.NOT_FOUND);
     }
+
+    const missionWithProgress = await populateMissionProgress(mission, user);
 
     const isClaimable =
       missionWithProgress.progress.completed >=

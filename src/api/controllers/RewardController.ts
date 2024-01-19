@@ -1,7 +1,10 @@
-import { NextFunction, Request, Response } from "express";
-import { ValidationChain } from "express-validator";
+import type { NextFunction, Request, Response } from "express";
+import type { ValidationChain } from "express-validator";
+import { StatusCodes } from "http-status-codes";
+
+import { dailyCoinsCFG } from "../../config/dailyCoins";
+import User, { type IUser } from "../../models/User";
 import { createError, handleInputErrors } from "../../utilities/errorHandlers";
-import User, { IUser } from "../../models/User";
 import logger from "../services/logger";
 import {
   applyDailyStreakResetIfNeeded,
@@ -10,7 +13,6 @@ import {
   saveCoinReward,
   updateUserCoinsAndStreak,
 } from "../services/reward/coinReward.service";
-import { dailyCoinsCFG } from "../../config/dailyCoins";
 
 export const dailyCoinInformationValidation: ValidationChain[] = [];
 export async function dailyCoinInformation(
@@ -20,17 +22,20 @@ export async function dailyCoinInformation(
 ) {
   try {
     const { id: authId } = req.user!;
-    let user = (await User.findById(authId)) as IUser;
+    let user: IUser | null = await User.findById(authId);
+
+    if (!user) {
+      throw createError("User not found", StatusCodes.NOT_FOUND);
+    }
+
     user = await applyDailyStreakResetIfNeeded(user);
-    res
-      .status(200)
-      .json({
-        success: true,
-        data: {
-          phantomCoins: user.phantomCoins,
-          dailyRewards: dailyCoinsCFG.rewards,
-        },
-      });
+    res.status(StatusCodes.OK).json({
+      success: true,
+      data: {
+        phantomCoins: user.phantomCoins,
+        dailyRewards: dailyCoinsCFG.rewards,
+      },
+    });
   } catch (error) {
     next(error);
   }
@@ -46,13 +51,18 @@ export async function claimDailyCoins(
   try {
     handleInputErrors(req);
     const { id: authId } = req.user!;
-    let user = (await User.findById(authId)) as IUser;
+    let user: IUser | null = await User.findById(authId);
+
+    if (!user) {
+      throw createError("User not found", StatusCodes.NOT_FOUND);
+    }
+
     const isEligible = checkEligibleForDailyReward(user.phantomCoins.daily);
 
     if (!isEligible) {
       throw createError(
         "You are ineligible to claim at this time, try again later.",
-        400
+        StatusCodes.BAD_REQUEST
       );
     }
     user = await applyDailyStreakResetIfNeeded(user);
@@ -63,7 +73,7 @@ export async function claimDailyCoins(
     await saveCoinReward(user, rewardAmount);
 
     res
-      .status(200)
+      .status(StatusCodes.OK)
       .json({ success: true, data: { phantomCoins: user.phantomCoins } });
   } catch (error) {
     next(error);

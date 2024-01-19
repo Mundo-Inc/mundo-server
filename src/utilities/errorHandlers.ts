@@ -1,5 +1,7 @@
 import type { NextFunction, Request, Response } from "express";
-import { type ValidationError, validationResult } from "express-validator";
+import { validationResult, type ValidationError } from "express-validator";
+import { StatusCodes } from "http-status-codes";
+
 import logger from "../api/services/logger";
 
 interface ErrorOptions {
@@ -95,7 +97,7 @@ export function handleInputErrors(req: Request) {
     );
 
     throw createError("Validation failed", {
-      statusCode: 400,
+      statusCode: StatusCodes.BAD_REQUEST,
       validation: errors.array(),
     });
   }
