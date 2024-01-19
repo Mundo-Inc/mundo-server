@@ -10,6 +10,7 @@ import {
   saveCoinReward,
   updateUserCoinsAndStreak,
 } from "../services/reward/coinReward.service";
+import { dailyCoinsCFG } from "../../config/dailyCoins";
 
 export const dailyCoinInformationValidation: ValidationChain[] = [];
 export async function dailyCoinInformation(
@@ -23,7 +24,13 @@ export async function dailyCoinInformation(
     user = await applyDailyStreakResetIfNeeded(user);
     res
       .status(200)
-      .json({ success: true, data: { phantomCoins: user.phantomCoins } });
+      .json({
+        success: true,
+        data: {
+          phantomCoins: user.phantomCoins,
+          dailyRewards: dailyCoinsCFG.rewards,
+        },
+      });
   } catch (error) {
     next(error);
   }
