@@ -1,10 +1,12 @@
-import { NextFunction, Request, Response } from "express";
-import { ValidationChain, body, param, query } from "express-validator";
-import { createError, handleInputErrors } from "../../utilities/errorHandlers";
-import Mission, { IMission, TaskTypeEnum } from "../../models/Mission";
-import User, { IUser } from "../../models/User";
-import { populateMissionProgress } from "../services/reward/coinReward.service";
+import type { NextFunction, Request, Response } from "express";
+import { body, param, query, type ValidationChain } from "express-validator";
+import { StatusCodes } from "http-status-codes";
+
 import CoinReward, { CoinRewardTypeEnum } from "../../models/CoinReward";
+import Mission, { TaskTypeEnum, type IMission } from "../../models/Mission";
+import User, { type IUser } from "../../models/User";
+import { createError, handleInputErrors } from "../../utilities/errorHandlers";
+import { populateMissionProgress } from "../services/reward/coinReward.service";
 
 export const createMissionValidation: ValidationChain[] = [
   body("title").isString(),
@@ -55,9 +57,9 @@ export async function createMission(
 
     await mission.save();
 
-    res.status(200).json({
+    res.status(StatusCodes.OK).json({
       success: true,
-      data: { mission },
+      data: mission,
     });
   } catch (error) {
     next(error);
@@ -111,9 +113,9 @@ export async function getMissions(
       populatedMissions.push(await populateMissionProgress(mission, user));
     }
 
-    res.status(200).json({
+    res.status(StatusCodes.OK).json({
       success: true,
-      data: { missions: populatedMissions },
+      data: populatedMissions,
       pagination: {
         page: page,
         limit: limit,
@@ -143,10 +145,10 @@ export async function claimMissionReward(
     const missionWithProgress = await populateMissionProgress(mission, user);
 
     if (!user) {
-      throw createError("user not found", 404);
+      throw createError("user not found", StatusCodes.NOT_FOUND);
     }
     if (!mission) {
-      throw createError("mission not found", 404);
+      throw createError("mission not found", StatusCodes.NOT_FOUND);
     }
 
     const isClaimable =
@@ -154,7 +156,10 @@ export async function claimMissionReward(
       missionWithProgress.progress.total;
 
     if (!isClaimable) {
-      throw createError("Mission requirements are not done yet", 403);
+      throw createError(
+        "Mission requirements are not done yet",
+        StatusCodes.FORBIDDEN
+      );
     }
 
     const gotRewardBefore =
@@ -164,7 +169,10 @@ export async function claimMissionReward(
       })) > 0;
 
     if (gotRewardBefore) {
-      throw createError("You have already got rewarded for this mission", 403);
+      throw createError(
+        "You have already got rewarded for this mission",
+        StatusCodes.FORBIDDEN
+      );
     }
 
     const coinReward = await CoinReward.create({
@@ -177,7 +185,7 @@ export async function claimMissionReward(
     user.phantomCoins.balance = user.phantomCoins.balance + coinReward.amount;
     await user.save();
 
-    res.status(200).json({ success: true, data: { user } });
+    res.status(StatusCodes.OK).json({ success: true, data: user });
   } catch (error) {
     next(error);
   }
@@ -205,7 +213,7 @@ export async function getAllMissions(
     // Get the total count for pagination
     const totalMissions = await Mission.countDocuments({});
     const missions = await missionsQuery;
-    res.status(200).json({
+    res.status(StatusCodes.OK).json({
       success: true,
       data: missions,
       pagination: {
@@ -233,7 +241,7 @@ export async function deleteMission(
   const { id } = req.params;
   try {
     await Mission.deleteOne({ _id: id });
-    res.status(204);
+    res.sendStatus(StatusCodes.NO_CONTENT);
   } catch (error) {
     next(error);
   }
