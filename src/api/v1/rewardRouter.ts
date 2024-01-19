@@ -1,14 +1,5 @@
 import express from "express";
-import {
-  adminAuthMiddleware,
-  authMiddleware,
-} from "../middlewares/authMiddleWare";
-import {
-  claimDailyCoins,
-  claimDailyCoinsValidation,
-  dailyCoinInformation,
-  dailyCoinInformationValidation,
-} from "../controllers/RewardController";
+
 import {
   claimMissionReward,
   claimMissionRewardValidation,
@@ -20,6 +11,16 @@ import {
   getMissions,
   getMissionsValidation,
 } from "../controllers/MissionController";
+import {
+  claimDailyCoins,
+  claimDailyCoinsValidation,
+  dailyCoinInformation,
+  dailyCoinInformationValidation,
+} from "../controllers/RewardController";
+import {
+  adminAuthMiddleware,
+  authMiddleware,
+} from "../middlewares/authMiddleWare";
 
 const router = express.Router();
 router.use(express.json());
@@ -32,7 +33,7 @@ router.route("/daily/claim").post(claimDailyCoinsValidation, claimDailyCoins);
 
 router
   .route("/missions")
-  .get(authMiddleware, getMissionsValidation, getMissions)
+  .get(getMissionsValidation, getMissions)
   .post(adminAuthMiddleware, createMissionValidation, createMission);
 
 router
@@ -46,4 +47,5 @@ router
 router
   .route("/missions/:id/claim")
   .post(claimMissionRewardValidation, claimMissionReward);
+
 export default router;
