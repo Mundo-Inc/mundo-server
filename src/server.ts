@@ -64,6 +64,7 @@ async function main() {
 
   if (process.env.NODE_ENV === "production") {
     await import("./cronjobs/notification");
+    await import("./cronjobs/backup");
   }
 
   // will update all users that are missing phantomCoins field in their USER's schema
