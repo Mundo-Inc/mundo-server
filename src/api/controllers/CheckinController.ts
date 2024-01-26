@@ -224,8 +224,8 @@ export const createCheckinValidation: ValidationChain[] = [
   body("place").exists().isMongoId().withMessage("Invalid place id"),
   body("privacyType").optional().isIn(Object.values(ActivityPrivacyTypeEnum)),
   body("caption").optional().isString(),
-  body("images").optional().isArray(),
-  body("images.*.uploadId").optional().isMongoId(),
+  body("image").optional().isArray(),
+  body("image.uploadId").optional().isMongoId(),
   body("tags").optional().isArray(),
   body("tags.*").optional().isMongoId(),
 ];
