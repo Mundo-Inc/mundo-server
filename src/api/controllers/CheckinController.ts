@@ -5,13 +5,16 @@ import mongoose from "mongoose";
 
 import CheckIn, { type ICheckIn } from "../../models/CheckIn";
 import Follow from "../../models/Follow";
+import Media, { MediaTypeEnum } from "../../models/Media";
 import Notification, {
   NotificationType,
   ResourceTypes,
 } from "../../models/Notification";
 import Place from "../../models/Place";
+import Upload from "../../models/Upload";
 import User, { type IUser } from "../../models/User";
 import { ActivityPrivacyTypeEnum } from "../../models/UserActivity";
+import strings, { dStrings, dynamicMessage } from "../../strings";
 import { createError, handleInputErrors } from "../../utilities/errorHandlers";
 import { readFormattedPlaceLocationProjection } from "../dto/place/place-dto";
 import { readPlaceBriefProjection } from "../dto/place/read-place-brief.dto";
@@ -21,9 +24,6 @@ import logger from "../services/logger";
 import { addReward } from "../services/reward/reward.service";
 import { addCheckinActivity } from "../services/user.activity.service";
 import validate from "./validators";
-import Upload from "../../models/Upload";
-import strings, { dStrings, dynamicMessage } from "../../strings";
-import Media, { MediaTypeEnum } from "../../models/Media";
 
 const checkinWaitTime = 1; // minutes
 
@@ -220,15 +220,6 @@ export async function getCheckins(
   }
 }
 
-export const createCheckinValidation: ValidationChain[] = [
-  body("place").exists().isMongoId().withMessage("Invalid place id"),
-  body("privacyType").optional().isIn(Object.values(ActivityPrivacyTypeEnum)),
-  body("caption").optional().isString(),
-  body("image").optional().isMongoId(),
-  body("tags").optional().isArray(),
-  body("tags.*").optional().isMongoId(),
-];
-
 async function enforceCheckinInterval(authId: string, authRole: string) {
   if (authRole !== "admin") {
     const lastCheckIn = await CheckIn.findOne({ user: authId }).sort(
@@ -246,22 +237,6 @@ async function enforceCheckinInterval(authId: string, authRole: string) {
       }
     }
   }
-}
-
-async function createNewCheckin(
-  authId: string,
-  place: string,
-  caption: string,
-  tags: string[],
-  mediaId: string
-) {
-  return CheckIn.create({
-    user: authId,
-    place: place,
-    image: mediaId,
-    caption: caption,
-    tags: tags,
-  });
 }
 
 async function addCheckinReward(authId: string, checkin: ICheckIn) {
@@ -320,6 +295,15 @@ async function sendNotificiationToFollowers(authId: string, checkin: ICheckIn) {
   }
 }
 
+export const createCheckinValidation: ValidationChain[] = [
+  body("place").exists().isMongoId().withMessage("Invalid place id"),
+  body("privacyType").optional().isIn(Object.values(ActivityPrivacyTypeEnum)),
+  body("caption").optional().isString(),
+  body("image").optional().isMongoId(),
+  body("tags").optional().isArray(),
+  body("tags.*").optional().isMongoId(),
+];
+
 export async function createCheckin(
   req: Request,
   res: Response,
@@ -336,45 +320,51 @@ export async function createCheckin(
     logger.verbose("validate tags");
     if (tags) {
       for (const userId of tags) {
-        const taggedUser = await User.findById(userId).lean();
+        const taggedUser = await User.exists({ _id: userId });
         if (!taggedUser) {
           throw createError(
-            `User ${taggedUser} that tagged has not been found`,
-            404
+            "Tagged user does not exist",
+            StatusCodes.NOT_FOUND
           );
         }
       }
     }
 
-    logger.verbose("validate image");
-    const upload = await Upload.findById(image);
-    if (!upload) {
-      throw createError(
-        dynamicMessage(dStrings.notFound, "Uploaded image"),
-        StatusCodes.NOT_FOUND
-      );
-    }
-    const media = await Media.create({
-      type: MediaTypeEnum.image,
-      user: authId,
-      place,
-      caption: caption,
-      src: upload.src,
-    });
-    if (upload.user.toString() !== authId) {
-      throw createError(strings.authorization.otherUser, StatusCodes.FORBIDDEN);
-    }
-    if (upload.type !== "image") {
-      throw createError(strings.upload.invalidType, StatusCodes.BAD_REQUEST);
+    let media;
+    if (image) {
+      logger.verbose("validate image");
+      const upload = await Upload.findById(image);
+      if (!upload) {
+        throw createError(
+          dynamicMessage(dStrings.notFound, "Uploaded image"),
+          StatusCodes.NOT_FOUND
+        );
+      }
+      media = await Media.create({
+        type: MediaTypeEnum.image,
+        user: authId,
+        place,
+        caption: caption,
+        src: upload.src,
+      });
+      if (upload.user.toString() !== authId) {
+        throw createError(
+          strings.authorization.otherUser,
+          StatusCodes.FORBIDDEN
+        );
+      }
+      if (upload.type !== "image") {
+        throw createError(strings.upload.invalidType, StatusCodes.BAD_REQUEST);
+      }
     }
 
-    const checkin = await createNewCheckin(
-      authId,
-      place,
-      caption,
-      tags,
-      media._id
-    );
+    const checkin = await CheckIn.create({
+      user: authId,
+      place: place,
+      image: media?._id,
+      caption: caption,
+      tags: tags,
+    });
 
     await processCheckinActivities(authId, checkin, place, privacyType);
 
@@ -389,7 +379,7 @@ export async function createCheckin(
 
     logger.verbose("check-in successful!");
     res
-      .status(StatusCodes.OK)
+      .status(StatusCodes.CREATED)
       .json({ success: true, data: checkin, reward: reward });
   } catch (err) {
     next(err);
