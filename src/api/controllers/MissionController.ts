@@ -7,6 +7,7 @@ import Mission, { TaskTypeEnum, type IMission } from "../../models/Mission";
 import User, { type IUser } from "../../models/User";
 import { createError, handleInputErrors } from "../../utilities/errorHandlers";
 import { populateMissionProgress } from "../services/reward/coinReward.service";
+import Prize from "../../models/Prize";
 
 export const createMissionValidation: ValidationChain[] = [
   body("title").isString(),
@@ -192,6 +193,21 @@ export async function claimMissionReward(
   }
 }
 
+export const getPrizesValidation: ValidationChain[] = [];
+
+export async function getPrizes(
+  req: Request,
+  res: Response,
+  next: NextFunction
+) {
+  try {
+    const prizes = await Prize.find({}).lean();
+    res.status(200).json({ success: true, data: prizes });
+  } catch (error) {
+    next(error);
+  }
+}
+
 // admin only
 export async function getAllMissions(
   req: Request,
@@ -243,6 +259,37 @@ export async function deleteMission(
   try {
     await Mission.deleteOne({ _id: id });
     res.sendStatus(StatusCodes.NO_CONTENT);
+  } catch (error) {
+    next(error);
+  }
+}
+
+export const createPrizeValidation: ValidationChain[] = [
+  body("title").isString(),
+  body("thumbnail").isURL(),
+  body("amount").isNumeric(),
+  body("count").optional().isNumeric(),
+];
+
+// admin only
+export async function createPrize(
+  req: Request,
+  res: Response,
+  next: NextFunction
+) {
+  try {
+    handleInputErrors(req);
+    const { title, tumbnail, amount, count } = req.body;
+    const prize = await Prize.create({
+      title,
+      tumbnail,
+      amount,
+      count,
+    });
+    res.status(200).json({
+      succss: true,
+      data: prize,
+    });
   } catch (error) {
     next(error);
   }

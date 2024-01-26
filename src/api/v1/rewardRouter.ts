@@ -5,11 +5,15 @@ import {
   claimMissionRewardValidation,
   createMission,
   createMissionValidation,
+  createPrize,
+  createPrizeValidation,
   deleteMission,
   deleteMissionValidation,
   getAllMissions,
   getMissions,
   getMissionsValidation,
+  getPrizes,
+  getPrizesValidation,
 } from "../controllers/MissionController";
 import {
   claimDailyCoins,
@@ -47,5 +51,10 @@ router
 router
   .route("/missions/:id/claim")
   .post(claimMissionRewardValidation, claimMissionReward);
+
+router
+  .route("/prizes")
+  .get(getPrizesValidation, getPrizes)
+  .post(adminAuthMiddleware, createPrizeValidation, createPrize);
 
 export default router;
