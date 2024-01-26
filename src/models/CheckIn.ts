@@ -6,6 +6,9 @@ import Place from "./Place";
 export interface ICheckIn extends Document {
   user: mongoose.Types.ObjectId;
   place: mongoose.Types.ObjectId;
+  image?: mongoose.Types.ObjectId;
+  tags?: mongoose.Types.ObjectId[];
+  caption?: string;
   createdAt: Date;
   userActivityId?: mongoose.Types.ObjectId;
 }
@@ -13,6 +16,9 @@ export interface ICheckIn extends Document {
 const CheckInSchema: Schema = new Schema<ICheckIn>({
   user: { type: Schema.Types.ObjectId, ref: "User", required: true },
   place: { type: Schema.Types.ObjectId, ref: "Place", required: true },
+  image: { type: Schema.Types.ObjectId, ref: "Media", required: false },
+  caption: { type: String, required: false },
+  tags: [{ type: Schema.Types.ObjectId, ref: "User" }],
   createdAt: { type: Date, default: Date.now },
   userActivityId: { type: Schema.Types.ObjectId, ref: "UserActivity" },
 });

@@ -39,6 +39,10 @@ function generateFileKey(
       name = `${crypto.randomBytes(16).toString("hex")}.${ext}`;
       key = `${userId}/${ext === "jpg" ? imagesDir : videosDir}/${name}`;
       break;
+    case "checkin":
+      name = `${crypto.randomBytes(16).toString("hex")}.${ext}`;
+      key = `${userId}/${ext === "jpg" ? imagesDir : videosDir}/${name}`;
+      break;
     default:
       name = `${crypto.randomBytes(16).toString("hex")}.${ext}`;
       key = `${userId}/${usecase}/${name}`;

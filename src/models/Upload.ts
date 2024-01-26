@@ -1,6 +1,6 @@
 import mongoose, { Schema, type Document } from "mongoose";
 
-export type UploadUsecase = "profileImage" | "placeReview";
+export type UploadUsecase = "profileImage" | "placeReview" | "checkin";
 
 export interface IUpload extends Document {
   user: mongoose.Types.ObjectId;
