@@ -107,7 +107,7 @@ export async function getPlaceOverview(
           amenity: 1,
           otherNames: 1,
           thumbnail: 1,
-          media: 1,
+          media: 1, // TODO: should we keep this?
           scores: 1,
           reviewCount: 1,
           priceRange: 1,
