@@ -11,7 +11,7 @@ import {
   getPlacesWithinBoundariesValidation,
   getThirdPartyRating,
   getThirdPartyRatingValidation,
-  importPlaces,
+  // importPlaces,
 } from "../controllers/PlaceController";
 import {
   searchPlaces,
@@ -65,7 +65,7 @@ router
   .route("/search")
   .get(express.json(), searchPlacesValidation, searchPlaces);
 
-router.route("/import").post(express.json(), adminAuthMiddleware, importPlaces);
+// router.route("/import").post(express.json(), adminAuthMiddleware, importPlaces);
 
 router
   .route("/:id/media")
