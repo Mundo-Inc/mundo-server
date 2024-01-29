@@ -1,4 +1,5 @@
 import mongoose, { CallbackError, Schema, type Document } from "mongoose";
+
 import Achievement from "./Achievement";
 import ActivitySeen from "./ActivitySeen";
 import CheckIn from "./CheckIn";
@@ -220,7 +221,12 @@ const UserSchema = new Schema<IUser>(
         type: Number,
         default: 0,
       },
-      daily: dailyRewardSchema,
+      daily: {
+        type: dailyRewardSchema,
+        default: {
+          streak: 0,
+        },
+      },
     },
     latestPlace: {
       type: Schema.Types.ObjectId,
