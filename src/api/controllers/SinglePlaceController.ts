@@ -3,8 +3,9 @@ import { param, query, type ValidationChain } from "express-validator";
 import { StatusCodes } from "http-status-codes";
 import mongoose from "mongoose";
 
+import List from "../../models/List";
 import Media from "../../models/Media";
-import Place, { IPlace } from "../../models/Place";
+import Place, { type IPlace } from "../../models/Place";
 import Review from "../../models/Review";
 import { dStrings, dynamicMessage } from "../../strings";
 import { createError, handleInputErrors } from "../../utilities/errorHandlers";
@@ -18,9 +19,8 @@ import {
   getYelpData,
   getYelpReviews,
 } from "../services/provider.service";
-import { IGPReview } from "./../../types/googleplaces.interface";
+import type { IGPReview } from "./../../types/googleplaces.interface";
 import validate from "./validators";
-import List, { IList } from "../../models/List";
 
 export const getPlaceValidation: ValidationChain[] = [
   param("id").isMongoId().withMessage("Invalid place id"),
@@ -29,6 +29,7 @@ export const getPlaceValidation: ValidationChain[] = [
     .isIn(["newest", "oldest"])
     .withMessage("Invalid review sort"),
 ];
+
 export async function getPlace(
   req: Request,
   res: Response,
@@ -47,6 +48,102 @@ export async function getPlace(
     res.status(StatusCodes.OK).json({
       success: true,
       data: response,
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
+export const getPlaceOverviewValidation: ValidationChain[] = [
+  param("id").isMongoId().withMessage("Invalid place id"),
+];
+
+export async function getPlaceOverview(
+  req: Request,
+  res: Response,
+  next: NextFunction
+) {
+  try {
+    handleInputErrors(req);
+
+    const { id } = req.params;
+
+    const response = await Place.aggregate([
+      {
+        $match: {
+          _id: new mongoose.Types.ObjectId(id as string),
+        },
+      },
+      {
+        $lookup: {
+          from: "media",
+          localField: "_id",
+          foreignField: "place",
+          as: "media",
+          pipeline: [
+            {
+              // Prioritizing videos over images
+              $sort: {
+                type: -1,
+              },
+            },
+            {
+              $limit: 5,
+            },
+            {
+              $project: {
+                _id: 1,
+                src: 1,
+                caption: 1,
+                type: 1,
+              },
+            },
+          ],
+        },
+      },
+      {
+        $project: {
+          name: 1,
+          amenity: 1,
+          otherNames: 1,
+          thumbnail: 1,
+          media: 1,
+          scores: 1,
+          reviewCount: 1,
+          priceRange: 1,
+          description: 1,
+          location: {
+            geoLocation: {
+              lng: {
+                $arrayElemAt: ["$location.geoLocation.coordinates", 0],
+              },
+              lat: {
+                $arrayElemAt: ["$location.geoLocation.coordinates", 1],
+              },
+            },
+            address: 1,
+            city: 1,
+            state: 1,
+            country: 1,
+            zip: 1,
+          },
+          phone: 1,
+          website: 1,
+          categories: 1,
+        },
+      },
+    ]);
+
+    if (response.length === 0) {
+      throw createError(
+        dynamicMessage(dStrings.notFound, "Place"),
+        StatusCodes.NOT_FOUND
+      );
+    }
+
+    res.status(StatusCodes.OK).json({
+      success: true,
+      data: response[0],
     });
   } catch (err) {
     next(err);
@@ -420,6 +517,7 @@ export const getPlaceMediaValidation: ValidationChain[] = [
   validate.limit(query("limit").optional(), 1, 30),
   validate.page(query("page").optional(), 50),
 ];
+
 export async function getPlaceMedia(
   req: Request,
   res: Response,

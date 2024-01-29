@@ -13,7 +13,10 @@ import {
   getThirdPartyRatingValidation,
   importPlaces,
 } from "../controllers/PlaceController";
-
+import {
+  searchPlaces,
+  searchPlacesValidation,
+} from "../controllers/PlaceSearchController";
 import {
   getExistInLists,
   getExistInListsValidation,
@@ -22,20 +25,17 @@ import {
   getPlaceExistsValidation,
   getPlaceMedia,
   getPlaceMediaValidation,
+  getPlaceOverview,
+  getPlaceOverviewValidation,
   getPlaceReviews,
   getPlaceReviewsValidation,
   getPlaceValidation,
 } from "../controllers/SinglePlaceController";
-
 import {
   adminAuthMiddleware,
   authMiddleware,
   optionalAuthMiddleware,
 } from "../middlewares/authMiddleWare";
-import {
-  searchPlaces,
-  searchPlacesValidation,
-} from "../controllers/PlaceSearchController";
 
 const router = express.Router();
 
@@ -97,6 +97,12 @@ router
     getExistInLists
   );
 
+// Place overview
+router
+  .route("/:id/overview")
+  .get(express.json(), getPlaceOverviewValidation, getPlaceOverview);
+
+// Detailed place info
 router
   .route("/:id")
   .get(express.json(), optionalAuthMiddleware, getPlaceValidation, getPlace);
