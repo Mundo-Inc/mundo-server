@@ -279,10 +279,10 @@ export async function createPrize(
 ) {
   try {
     handleInputErrors(req);
-    const { title, tumbnail, amount, count } = req.body;
+    const { title, thumbnail, amount, count } = req.body;
     const prize = await Prize.create({
       title,
-      tumbnail,
+      thumbnail,
       amount,
       count,
     });

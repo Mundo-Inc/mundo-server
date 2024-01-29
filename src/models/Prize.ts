@@ -4,7 +4,7 @@ export interface IPrize extends Document {
   title: string;
   thumbnail: string;
   amount: number;
-  count?: number;
+  count: number;
   createdAt: Date;
 }
 

@@ -1,5 +1,5 @@
 import type { NextFunction, Request, Response } from "express";
-import type { ValidationChain } from "express-validator";
+import { param, type ValidationChain } from "express-validator";
 import { StatusCodes } from "http-status-codes";
 
 import { dailyCoinsCFG } from "../../config/dailyCoins";
@@ -13,6 +13,9 @@ import {
   saveCoinReward,
   updateUserCoinsAndStreak,
 } from "../services/reward/coinReward.service";
+import strings from "../../strings";
+import Prize, { IPrize } from "../../models/Prize";
+import PrizeRedemption from "../../models/PrizeRedemption";
 
 export const dailyCoinInformationValidation: ValidationChain[] = [];
 export async function dailyCoinInformation(
@@ -75,6 +78,57 @@ export async function claimDailyCoins(
     res
       .status(StatusCodes.OK)
       .json({ success: true, data: { phantomCoins: user.phantomCoins } });
+  } catch (error) {
+    next(error);
+  }
+}
+
+export const redeemPrizeValidation: ValidationChain[] = [
+  param("id").isMongoId(),
+];
+export async function redeemPrize(
+  req: Request,
+  res: Response,
+  next: NextFunction
+) {
+  try {
+    handleInputErrors(req);
+    const { id: authId } = req.user!;
+    const { id } = req.params;
+    const user = (await User.findById(authId)) as IUser;
+    if (!user) {
+      throw createError(strings.user.notFound, StatusCodes.NOT_FOUND);
+    }
+    const prize = (await Prize.findById(id)) as IPrize;
+    if (!prize) {
+      throw createError("prize not found", StatusCodes.NOT_FOUND);
+    }
+
+    if (prize.count <= 0) {
+      throw createError("prize was finished", StatusCodes.BAD_REQUEST);
+    }
+
+    if (
+      !user.phantomCoins.balance ||
+      user.phantomCoins.balance < prize.amount
+    ) {
+      throw createError("insufficient balance", StatusCodes.BAD_REQUEST);
+    }
+
+    user.phantomCoins.balance = user.phantomCoins.balance - prize.amount;
+    await user.save();
+
+    const prizeRedemption = await PrizeRedemption.create({
+      userId: user._id,
+      prizeId: prize._id,
+    });
+
+    await prizeRedemption.save();
+
+    res.status(200).json({
+      success: true,
+      data: prizeRedemption,
+    });
   } catch (error) {
     next(error);
   }

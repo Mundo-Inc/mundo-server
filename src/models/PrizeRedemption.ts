@@ -18,7 +18,11 @@ const PrizeRedemptionSchema: Schema = new Schema<IPrizeRedemption>(
   {
     userId: { type: Schema.Types.ObjectId, ref: "user" },
     prizeId: { type: Schema.Types.ObjectId, ref: "Prize" },
-    status: { type: String, enum: Object.values(PrizeRedemptionStatusType) },
+    status: {
+      type: String,
+      enum: Object.values(PrizeRedemptionStatusType),
+      default: PrizeRedemptionStatusType.PENDING,
+    },
     createdAt: { type: Date, default: Date.now },
     updatedAt: { type: Date, default: Date.now },
   },
