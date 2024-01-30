@@ -41,6 +41,7 @@ export const addCheckinActivity = async (
   checkinId: string,
   placeId: string | null = null,
   privacyType: string = ActivityPrivacyTypeEnum.PUBLIC,
+  hasMedia: boolean,
   createdAt?: Date
 ) => {
   const activityParams: {
@@ -51,6 +52,7 @@ export const addCheckinActivity = async (
     resourceType: ResourceTypeEnum.CHECKIN,
     resourceId: checkinId,
     placeId,
+    hasMedia,
     privacyType,
   };
   if (createdAt) {

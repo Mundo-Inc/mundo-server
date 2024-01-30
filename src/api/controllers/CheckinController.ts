@@ -243,12 +243,13 @@ async function processCheckinActivities(
     if (!populatedPlace) {
       throw new Error("Place is missing");
     }
-
+    const hasMedia = Boolean(checkin.image);
     const activity = await addCheckinActivity(
       authId,
       checkin._id,
       place,
-      privacyType || ActivityPrivacyTypeEnum.PUBLIC
+      privacyType || ActivityPrivacyTypeEnum.PUBLIC,
+      hasMedia
     );
     checkin.userActivityId = activity._id;
     await checkin.save();

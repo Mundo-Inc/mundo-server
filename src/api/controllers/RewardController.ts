@@ -1,6 +1,6 @@
 import type { NextFunction, Request, Response } from "express";
-import { param, type ValidationChain } from "express-validator";
-import { StatusCodes } from "http-status-codes";
+import { body, param, query, type ValidationChain } from "express-validator";
+import { BAD_REQUEST, NOT_FOUND, StatusCodes } from "http-status-codes";
 
 import { dailyCoinsCFG } from "../../config/dailyCoins";
 import User, { type IUser } from "../../models/User";
@@ -15,7 +15,13 @@ import {
 } from "../services/reward/coinReward.service";
 import strings from "../../strings";
 import Prize, { IPrize } from "../../models/Prize";
-import PrizeRedemption from "../../models/PrizeRedemption";
+import PrizeRedemption, {
+  IPrizeRedemption,
+  PrizeRedemptionStatusType,
+} from "../../models/PrizeRedemption";
+import validate from "./validators";
+import { publicReadUserProjection } from "../dto/user/read-user-public.dto";
+import { privateReadUserProjection } from "../dto/user/read-user-private.dto";
 
 export const dailyCoinInformationValidation: ValidationChain[] = [];
 export async function dailyCoinInformation(
@@ -118,6 +124,9 @@ export async function redeemPrize(
     user.phantomCoins.balance = user.phantomCoins.balance - prize.amount;
     await user.save();
 
+    prize.count = prize.count - 1;
+    await prize.save();
+
     const prizeRedemption = await PrizeRedemption.create({
       userId: user._id,
       prizeId: prize._id,
@@ -128,6 +137,130 @@ export async function redeemPrize(
     res.status(200).json({
       success: true,
       data: prizeRedemption,
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
+export const getPrizeRedemptionHistoryValidation: ValidationChain[] = [
+  validate.page(query("page").optional(), 50),
+  validate.limit(query("limit").optional(), 1, 50),
+];
+export async function getPrizeRedemptionHistory(
+  req: Request,
+  res: Response,
+  next: NextFunction
+) {
+  try {
+    const { id: authId } = req.user!;
+    let user: IUser | null = await User.findById(authId);
+    const { page: reqPage, limit: reqLimit } = req.query;
+    const page = parseInt(reqPage as string) || 1;
+    const limit = parseInt(reqLimit as string) || 500;
+    const skip = (page - 1) * limit;
+
+    if (!user) {
+      throw createError("User not found", StatusCodes.NOT_FOUND);
+    }
+
+    const redemptions = await PrizeRedemption.find({
+      userId: user._id,
+    })
+      .populate("userId", publicReadUserProjection)
+      .sort({ _id: -1 })
+      .skip(skip)
+      .limit(limit);
+
+    res.status(200).json({ success: true, data: redemptions });
+  } catch (error) {
+    next(error);
+  }
+}
+
+export const getAllPrizeRedemptionHistoryValidation: ValidationChain[] = [
+  validate.page(query("page").optional(), 50),
+  validate.limit(query("limit").optional(), 1, 50),
+];
+export async function getAllPrizeRedemptionHistory(
+  req: Request,
+  res: Response,
+  next: NextFunction
+) {
+  try {
+    const { page: reqPage, limit: reqLimit } = req.query;
+    const page = parseInt(reqPage as string) || 1;
+    const limit = parseInt(reqLimit as string) || 500;
+    const skip = (page - 1) * limit;
+
+    let redemptions = await PrizeRedemption.find({})
+      .populate("userId", privateReadUserProjection)
+      .populate("prizeId")
+      .sort({ _id: -1 })
+      .skip(skip)
+      .limit(limit)
+      .lean();
+
+    res.status(200).json({ success: true, data: redemptions });
+  } catch (error) {
+    next(error);
+  }
+}
+
+export const reviewRedemptionValidation: ValidationChain[] = [
+  query("id").isMongoId(),
+  body("validation").isIn(Object.values(PrizeRedemptionStatusType)),
+  body("note").optional().isString(),
+];
+export async function reviewRedemption(
+  req: Request,
+  res: Response,
+  next: NextFunction
+) {
+  try {
+    const { id } = req.params;
+    const { validation, note } = req.body;
+    const { id: authId } = req.user!;
+
+    const redemption = (await PrizeRedemption.findById(id)) as IPrizeRedemption;
+    if (!redemption) {
+      throw createError("Prize Redemption Not Found", NOT_FOUND);
+    }
+    if (redemption.status !== PrizeRedemptionStatusType.PENDING) {
+      throw createError(
+        "Prize Redemption Is Already Verified as " + redemption.status,
+        BAD_REQUEST
+      );
+    }
+
+    const prize = (await Prize.findById(redemption.prizeId)) as IPrize;
+
+    const user = (await User.findById(redemption.userId)) as IUser;
+    if (!user) {
+      throw createError("USER NOT FOUND", 404);
+    }
+
+    switch (validation) {
+      case PrizeRedemptionStatusType.SUCCESSFUL:
+        //TODO: send notification to the user that you have received the reward
+        if (note) {
+          redemption.note = note;
+        }
+        break;
+
+      case PrizeRedemptionStatusType.DECLINED:
+        user.phantomCoins.balance = user.phantomCoins.balance + prize.amount;
+        prize.count = prize.count + 1;
+        await user.save();
+        await prize.save();
+        break;
+    }
+    redemption.status = validation;
+    await redemption.save();
+
+    res.status(200).json({
+      success: true,
+      data: redemption,
     });
   } catch (error) {
     next(error);

@@ -20,8 +20,14 @@ import {
   claimDailyCoinsValidation,
   dailyCoinInformation,
   dailyCoinInformationValidation,
+  getAllPrizeRedemptionHistory,
+  getAllPrizeRedemptionHistoryValidation,
+  getPrizeRedemptionHistory,
+  getPrizeRedemptionHistoryValidation,
   redeemPrize,
   redeemPrizeValidation,
+  reviewRedemption,
+  reviewRedemptionValidation,
 } from "../controllers/RewardController";
 import {
   adminAuthMiddleware,
@@ -59,5 +65,20 @@ router
   .get(getPrizesValidation, getPrizes)
   .post(adminAuthMiddleware, createPrizeValidation, createPrize);
 
-router.route("/prizes/:id").post(redeemPrizeValidation, redeemPrize);
+router.route("/prizes/:id/redeem").post(redeemPrizeValidation, redeemPrize);
+
+router
+  .route("/redemptions")
+  .get(getPrizeRedemptionHistoryValidation, getPrizeRedemptionHistory);
+router
+  .route("/redemptions/all")
+  .get(
+    adminAuthMiddleware,
+    getAllPrizeRedemptionHistoryValidation,
+    getAllPrizeRedemptionHistory
+  );
+router
+  .route("/redemptions/:id/review")
+  .post(adminAuthMiddleware, reviewRedemptionValidation, reviewRedemption);
+
 export default router;
