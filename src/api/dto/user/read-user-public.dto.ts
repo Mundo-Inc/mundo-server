@@ -8,9 +8,6 @@ export type PublicReadUserDto = {
   followingCount: number;
   reviewsCount: number;
   verified: boolean;
-  xp?: number;
-  level?: number;
-  coins?: number;
   progress: {
     xp: number;
     level: number;
@@ -33,8 +30,18 @@ export const publicReadUserProjection: {
   followingCount: true,
   reviewsCount: true,
   verified: true,
-  xp: true,
-  level: true,
-  coins: true,
   progress: true,
+};
+
+export const publicReadUserEssentialProjection: {
+  [Property in keyof PublicReadUserDto]?: any;
+} = {
+  _id: true,
+  name: true,
+  profileImage: true,
+  username: true,
+  verified: true,
+  progress: {
+    level: true,
+  },
 };

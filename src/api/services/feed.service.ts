@@ -18,7 +18,7 @@ import UserActivity, {
 } from "../../models/UserActivity";
 import { readFormattedPlaceLocationProjection } from "../dto/place/place-dto";
 import { readPlaceDetailProjection } from "../dto/place/read-place-detail.dto";
-import { publicReadUserProjection } from "../dto/user/read-user-public.dto";
+import { publicReadUserEssentialProjection } from "../dto/user/read-user-public.dto";
 import logger from "./logger";
 
 export type IMedia = {
@@ -99,10 +99,8 @@ export const getResourceInfo = async (activity: IUserActivity) => {
   let placeInfo;
   const userInfo = await User.findOne(
     { _id: activity.userId },
-    publicReadUserProjection
-  )
-    .populate("progress.achievements")
-    .lean();
+    publicReadUserEssentialProjection
+  ).lean();
   if (activity.resourceType === ResourceTypeEnum.PLACE) {
     resourceInfo = await Place.findById(
       activity.resourceId,
@@ -124,15 +122,7 @@ export const getResourceInfo = async (activity: IUserActivity) => {
           as: "writer",
           pipeline: [
             {
-              $lookup: {
-                from: "achievements",
-                localField: "progress.achievements",
-                foreignField: "_id",
-                as: "progress.achievements",
-              },
-            },
-            {
-              $project: publicReadUserProjection,
+              $project: publicReadUserEssentialProjection,
             },
           ],
         },
@@ -295,19 +285,6 @@ export const getResourceInfo = async (activity: IUserActivity) => {
                 localField: "user",
                 foreignField: "_id",
                 as: "user",
-                pipeline: [
-                  {
-                    $lookup: {
-                      from: "achievements",
-                      localField: "progress.achievements",
-                      foreignField: "_id",
-                      as: "progress.achievements",
-                    },
-                  },
-                  {
-                    $project: publicReadUserProjection,
-                  },
-                ],
               },
             },
             {
@@ -327,6 +304,37 @@ export const getResourceInfo = async (activity: IUserActivity) => {
               },
             },
             {
+              $lookup: {
+                from: "media",
+                localField: "image",
+                foreignField: "_id",
+                as: "image",
+                pipeline: [
+                  {
+                    $project: {
+                      _id: 1,
+                      src: 1,
+                      caption: 1,
+                      type: 1,
+                    },
+                  },
+                ],
+              },
+            },
+            {
+              $lookup: {
+                from: "users",
+                localField: "tags",
+                foreignField: "_id",
+                as: "tags",
+                pipeline: [
+                  {
+                    $project: publicReadUserEssentialProjection,
+                  },
+                ],
+              },
+            },
+            {
               $unwind: "$user",
             },
             {
@@ -336,8 +344,11 @@ export const getResourceInfo = async (activity: IUserActivity) => {
               $project: {
                 _id: 1,
                 createdAt: 1,
-                user: publicReadUserProjection,
+                user: publicReadUserEssentialProjection,
                 place: readPlaceDetailProjection,
+                image: { $arrayElemAt: ["$image", 0] },
+                caption: 1,
+                tags: 1,
               },
             },
           ],
@@ -355,7 +366,7 @@ export const getResourceInfo = async (activity: IUserActivity) => {
   } else if (activity.resourceType === ResourceTypeEnum.USER) {
     resourceInfo = await User.findById(
       activity.resourceId,
-      publicReadUserProjection
+      publicReadUserEssentialProjection
     )
       .populate("progress.achievements")
       .lean();
@@ -644,15 +655,7 @@ export const getUserFeed = async (
             as: "author",
             pipeline: [
               {
-                $lookup: {
-                  from: "achievements",
-                  localField: "progress.achievements",
-                  foreignField: "_id",
-                  as: "progress.achievements",
-                },
-              },
-              {
-                $project: publicReadUserProjection,
+                $project: publicReadUserEssentialProjection,
               },
             ],
           },

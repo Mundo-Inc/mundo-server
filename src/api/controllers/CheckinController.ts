@@ -18,7 +18,7 @@ import strings, { dStrings, dynamicMessage } from "../../strings";
 import { createError, handleInputErrors } from "../../utilities/errorHandlers";
 import { readFormattedPlaceLocationProjection } from "../dto/place/place-dto";
 import { readPlaceBriefProjection } from "../dto/place/read-place-brief.dto";
-import { publicReadUserProjection } from "../dto/user/read-user-public.dto";
+import { publicReadUserEssentialProjection } from "../dto/user/read-user-public.dto";
 import { checkinEarning } from "../services/earning.service";
 import logger from "../services/logger";
 import { addReward } from "../services/reward/reward.service";
@@ -110,15 +110,7 @@ export async function getCheckins(
                 as: "user",
                 pipeline: [
                   {
-                    $lookup: {
-                      from: "achievements",
-                      localField: "progress.achievements",
-                      foreignField: "_id",
-                      as: "progress.achievements",
-                    },
-                  },
-                  {
-                    $project: publicReadUserProjection,
+                    $project: publicReadUserEssentialProjection,
                   },
                 ],
               },
@@ -165,15 +157,7 @@ export async function getCheckins(
                 as: "taggedUsers",
                 pipeline: [
                   {
-                    $lookup: {
-                      from: "achievements",
-                      localField: "progress.achievements",
-                      foreignField: "_id",
-                      as: "progress.achievements",
-                    },
-                  },
-                  {
-                    $project: publicReadUserProjection,
+                    $project: publicReadUserEssentialProjection,
                   },
                 ],
               },
