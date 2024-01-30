@@ -547,12 +547,6 @@ export const getUserFeed = async (
           },
         ],
       };
-      console.log({
-        $in: [
-          ...followings.map((f: IFollow) => f.target),
-          new mongoose.Types.ObjectId(userId),
-        ],
-      });
     }
 
     let sortBy: { [key: string]: SortOrder } = { createdAt: -1 };
