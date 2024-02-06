@@ -238,22 +238,27 @@ const PlaceSchema: Schema = new Schema<IPlace>(
     },
     otherSources: {
       OSM: {
-        _id: String,
-        tags: {
-          air_conditioning: String,
-          amenity: String,
-          brand: String,
-          instagram: String,
-          phone: String,
-          website: String,
-          cuisine: String,
-          delivery: String,
-          internet_access: String,
-          opening_hours: String,
-          takeaway: String,
-          wheelchair: String,
+        type: {
+          _id: String,
+          tags: {
+            air_conditioning: String,
+            amenity: String,
+            brand: String,
+            instagram: String,
+            phone: String,
+            website: String,
+            cuisine: String,
+            delivery: String,
+            internet_access: String,
+            opening_hours: String,
+            takeaway: String,
+            wheelchair: String,
+          },
+          updatedAt: Date,
         },
-        updatedAt: Date,
+        default: {
+          _id: "",
+        },
       },
       googlePlaces: {
         type: {
@@ -273,7 +278,9 @@ const PlaceSchema: Schema = new Schema<IPlace>(
           categories: [String],
           updatedAt: Date,
         },
-        default: {},
+        default: {
+          _id: "",
+        },
       },
       yelp: {
         type: {
@@ -284,7 +291,9 @@ const PlaceSchema: Schema = new Schema<IPlace>(
           rating: Number,
           updatedAt: Date,
         },
-        default: {},
+        default: {
+          _id: "",
+        },
       },
     },
     activities: {
@@ -413,35 +422,6 @@ const PlaceSchema: Schema = new Schema<IPlace>(
     },
   }
 );
-
-PlaceSchema.pre("save", function (next) {
-  // Check if OSM subdocument exists and _id is empty, undefined, or null
-  if (
-    this.otherSources.OSM &&
-    (!this.otherSources.OSM._id || this.otherSources.OSM._id.trim() === "")
-  ) {
-    this.otherSources.OSM._id = "";
-  }
-
-  // Check if googlePlaces subdocument exists and _id is empty, undefined, or null
-  if (
-    this.otherSources.googlePlaces &&
-    (!this.otherSources.googlePlaces._id ||
-      this.otherSources.googlePlaces._id.trim() === "")
-  ) {
-    this.otherSources.googlePlaces._id = "";
-  }
-
-  // Check if yelp subdocument exists and _id is empty, undefined, or null
-  if (
-    this.otherSources.yelp &&
-    (!this.otherSources.yelp._id || this.otherSources.yelp._id.trim() === "")
-  ) {
-    this.otherSources.yelp._id = "";
-  }
-
-  next();
-});
 
 PlaceSchema.index({ "location.geoLocation": "2dsphere" });
 PlaceSchema.index({ "scores.overall": -1 });
