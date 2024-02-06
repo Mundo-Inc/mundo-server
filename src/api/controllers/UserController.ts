@@ -74,14 +74,25 @@ export async function getUsers(
           $limit: limit,
         },
         {
-          $project: publicReadUserEssentialProjection,
+          $lookup: {
+            from: "achievements",
+            localField: "progress.achievements",
+            foreignField: "_id",
+            as: "progress.achievements",
+          },
+        },
+        {
+          $project: publicReadUserProjection,
         },
       ]);
     } else {
       const followings = await Follow.find({ user: authId })
         .populate({
           path: "target",
-          select: publicReadUserEssentialProjection,
+          select: publicReadUserProjection,
+          populate: {
+            path: "progress.achievements",
+          },
         })
         .skip(skip)
         .limit(limit)
@@ -94,7 +105,10 @@ export async function getUsers(
       const followers = await Follow.find({ target: authId })
         .populate({
           path: "user",
-          select: publicReadUserEssentialProjection,
+          select: publicReadUserProjection,
+          populate: {
+            path: "progress.achievements",
+          },
         })
         .skip(skip)
         .limit(limit)
