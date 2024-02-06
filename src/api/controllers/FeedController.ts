@@ -11,7 +11,7 @@ import Reaction from "../../models/Reaction";
 import UserActivity from "../../models/UserActivity";
 import { dStrings, dynamicMessage } from "../../strings";
 import { createError, handleInputErrors } from "../../utilities/errorHandlers";
-import { publicReadUserProjection } from "../dto/user/read-user-public.dto";
+import { publicReadUserEssentialProjection } from "../dto/user/read-user-public.dto";
 import { getResourceInfo, getUserFeed } from "../services/feed.service";
 import validate from "./validators";
 
@@ -158,15 +158,7 @@ export async function getActivity(
           as: "author",
           pipeline: [
             {
-              $lookup: {
-                from: "achievements",
-                localField: "progress.achievements",
-                foreignField: "_id",
-                as: "progress.achievements",
-              },
-            },
-            {
-              $project: publicReadUserProjection,
+              $project: publicReadUserEssentialProjection,
             },
           ],
         },
@@ -300,15 +292,7 @@ export async function getComments(
           as: "author",
           pipeline: [
             {
-              $lookup: {
-                from: "achievements",
-                localField: "progress.achievements",
-                foreignField: "_id",
-                as: "progress.achievements",
-              },
-            },
-            {
-              $project: publicReadUserProjection,
+              $project: publicReadUserEssentialProjection,
             },
           ],
         },

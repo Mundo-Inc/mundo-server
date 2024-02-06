@@ -13,7 +13,7 @@ import UserActivity, {
 } from "../../models/UserActivity";
 import strings from "../../strings";
 import { createError, handleInputErrors } from "../../utilities/errorHandlers";
-import { publicReadUserProjection } from "../dto/user/read-user-public.dto";
+import { publicReadUserEssentialProjection } from "../dto/user/read-user-public.dto";
 import logger from "../services/logger";
 import { addNewFollowingActivity } from "../services/user.activity.service";
 import validate from "./validators";
@@ -141,7 +141,7 @@ export async function getPendingConnections(
 
     const followRequests = await FollowRequest.find({
       target: authId,
-    }).populate("user", publicReadUserProjection);
+    }).populate("user", publicReadUserEssentialProjection);
 
     res
       .status(StatusCodes.CREATED)
@@ -291,12 +291,7 @@ export async function getUserConnections(
                 as: "user",
                 pipeline: [
                   {
-                    $lookup: {
-                      from: "achievements",
-                      localField: "progress.achievements",
-                      foreignField: "_id",
-                      as: "progress.achievements",
-                    },
+                    $project: publicReadUserEssentialProjection,
                   },
                 ],
               },
@@ -306,7 +301,7 @@ export async function getUserConnections(
             },
             {
               $project: {
-                user: publicReadUserProjection,
+                user: 1,
                 createdAt: 1,
               },
             },

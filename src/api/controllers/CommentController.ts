@@ -8,7 +8,7 @@ import User from "../../models/User";
 import UserActivity from "../../models/UserActivity";
 import strings, { dStrings as ds, dynamicMessage } from "../../strings";
 import { createError, handleInputErrors } from "../../utilities/errorHandlers";
-import { publicReadUserProjection } from "../dto/user/read-user-public.dto";
+import { publicReadUserEssentialProjection } from "../dto/user/read-user-public.dto";
 import { addReward } from "../services/reward/reward.service";
 
 export const createCommentValidation: ValidationChain[] = [
@@ -26,9 +26,8 @@ export async function createComment(
     const { content, activity } = req.body;
     const { id: authId } = req.user!;
 
-    const user = await User.findById(authId, publicReadUserProjection).populate(
-      "progress.achievements"
-    );
+    const user = await User.findById(authId, publicReadUserEssentialProjection);
+
     if (!user) {
       throw createError(
         dynamicMessage(ds.notFound, "User"),
@@ -146,10 +145,7 @@ export async function likeComment(
 
     await comment.populate({
       path: "author",
-      select: publicReadUserProjection,
-      populate: {
-        path: "progress.achievements",
-      },
+      select: publicReadUserEssentialProjection,
     });
 
     res.status(StatusCodes.OK).json({
@@ -201,10 +197,7 @@ export async function deleteCommentLike(
 
     await comment.populate({
       path: "author",
-      select: publicReadUserProjection,
-      populate: {
-        path: "progress.achievements",
-      },
+      select: publicReadUserEssentialProjection,
     });
 
     // update comments count in user activity

@@ -7,7 +7,7 @@ import Comment from "../../models/Comment";
 import Reaction from "../../models/Reaction";
 import UserActivity from "../../models/UserActivity";
 import { handleInputErrors } from "../../utilities/errorHandlers";
-import { publicReadUserProjection } from "../dto/user/read-user-public.dto";
+import { publicReadUserEssentialProjection } from "../dto/user/read-user-public.dto";
 import { getResourceInfo } from "../services/feed.service";
 import validate from "./validators";
 
@@ -129,15 +129,7 @@ export async function getActivitiesOfaUser(
             as: "author",
             pipeline: [
               {
-                $lookup: {
-                  from: "achievements",
-                  localField: "progress.achievements",
-                  foreignField: "_id",
-                  as: "progress.achievements",
-                },
-              },
-              {
-                $project: publicReadUserProjection,
+                $project: publicReadUserEssentialProjection,
               },
             ],
           },

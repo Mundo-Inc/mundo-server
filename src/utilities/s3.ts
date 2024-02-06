@@ -1,5 +1,8 @@
-import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
+import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
+import { StatusCodes } from "http-status-codes";
 import { v4 as uuidv4 } from "uuid";
+
+import { createError } from "./errorHandlers";
 
 const s3Client = new S3Client({
   credentials: {
@@ -19,20 +22,26 @@ const uploadToS3 = async (
   // Check file size
   const fileSizeInMB = file.size / (1024 * 1024);
   if (fileSizeInMB > maxSizeInMB) {
-    throw new Error("File size exceeds the allowed limit.");
+    throw createError(
+      "File size exceeds the allowed limit.",
+      StatusCodes.BAD_REQUEST
+    );
   }
 
   // Check file extension
   const fileExtension = file.name.split(".").pop()?.toLowerCase() || "";
   if (!allowedExtensions.includes(fileExtension)) {
-    throw new Error("File type not allowed.");
+    throw createError("File type not allowed.", StatusCodes.BAD_REQUEST);
   }
 
   // Check video length if it's a video file
   if (file.type.startsWith("video/")) {
     const videoDuration = await getVideoDuration(file);
     if (videoDuration > maxVideoLengthInSeconds) {
-      throw new Error("Video length exceeds the allowed limit.");
+      throw createError(
+        "Video length exceeds the allowed limit.",
+        StatusCodes.BAD_REQUEST
+      );
     }
   }
 

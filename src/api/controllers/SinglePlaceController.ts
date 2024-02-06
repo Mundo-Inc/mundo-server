@@ -8,9 +8,10 @@ import Media from "../../models/Media";
 import Place, { type IPlace } from "../../models/Place";
 import Review from "../../models/Review";
 import { dStrings, dynamicMessage } from "../../strings";
+import type { IYelpPlaceDetails } from "../../types/yelpPlace.interface";
 import { createError, handleInputErrors } from "../../utilities/errorHandlers";
 import { extractComponentFromGoogleAddressComponents } from "../../utilities/providersHelper";
-import { publicReadUserProjection } from "../dto/user/read-user-public.dto";
+import { publicReadUserEssentialProjection } from "../dto/user/read-user-public.dto";
 import logger from "../services/logger";
 import {
   findGooglePlacesId,
@@ -211,15 +212,7 @@ export async function getDetailedPlace(
               as: "writer",
               pipeline: [
                 {
-                  $lookup: {
-                    from: "users",
-                    localField: "progress.achievements",
-                    foreignField: "_id",
-                    as: "progress.achievements",
-                  },
-                },
-                {
-                  $project: publicReadUserProjection,
+                  $project: publicReadUserEssentialProjection,
                 },
               ],
             },
@@ -321,15 +314,7 @@ export async function getDetailedPlace(
                     as: "author",
                     pipeline: [
                       {
-                        $lookup: {
-                          from: "users",
-                          localField: "progress.achievements",
-                          foreignField: "_id",
-                          as: "progress.achievements",
-                        },
-                      },
-                      {
-                        $project: publicReadUserProjection,
+                        $project: publicReadUserEssentialProjection,
                       },
                     ],
                   },
@@ -448,11 +433,26 @@ export async function getDetailedPlace(
     );
   }
 
-  const thirdPartyData = await fetchThirdPartiesData(id);
+  const place = await Place.findById(id);
 
-  if (!response[0].scores.phantom) {
-    //TODO: add update condition for outdated scores
-    //updatePhantomScore()
+  const thirdPartyData = await fetchThirdPartiesData(place);
+
+  // Update place with thirdparty data
+  const now = new Date();
+  place.otherSources.googlePlaces.rating = thirdPartyData.google?.rating;
+  place.otherSources.googlePlaces.updatedAt = now;
+  place.otherSources.yelp.rating = thirdPartyData.yelp?.rating;
+  place.otherSources.yelp.updatedAt = now;
+  await place.save();
+
+  if (
+    !place.scores.phantom ||
+    !place.scores.updatedAt ||
+    (place.scores.updatedAt &&
+      now.getTime() - place.scores.updatedAt.getTime() > 604800000)
+  ) {
+    // Run if place doesn't have phantom scores or it's been more than a week since the last update
+    await place.processReviews();
   }
 
   if (response[0].reviewCount < 4) {
@@ -477,22 +477,23 @@ export async function getDetailedPlace(
   return response[0];
 }
 
-async function fetchThirdPartiesData(id: string) {
+async function fetchThirdPartiesData(place: IPlace) {
   try {
-    const place = await Place.findById(id);
     const results = await Promise.all([
       fetchGoogle(place, true),
       fetchYelp(place, true),
     ]);
-    if (results[0].google?.reviewCount)
-      place.popularity.googlePlacesReviewCount = results[0].google?.reviewCount;
-    if (results[1].yelp?.reviewCount)
-      place.popularity.yelpReviewCount = results[1].yelp?.reviewCount;
-    await place.save();
-    return { ...results[0], ...results[1] };
+
+    return {
+      ...results[0],
+      ...results[1],
+    };
   } catch (error) {
-    console.error("An error occurred:", error);
-    throw error; // Re-throw the error after logging it
+    console.error(error);
+    throw createError(
+      "Something went wrong",
+      StatusCodes.INTERNAL_SERVER_ERROR
+    );
   }
 }
 
@@ -574,15 +575,7 @@ export async function getPlaceMedia(
                 as: "user",
                 pipeline: [
                   {
-                    $lookup: {
-                      from: "users",
-                      localField: "progress.achievements",
-                      foreignField: "_id",
-                      as: "progress.achievements",
-                    },
-                  },
-                  {
-                    $project: publicReadUserProjection,
+                    $project: publicReadUserEssentialProjection,
                   },
                 ],
               },
@@ -709,15 +702,7 @@ export async function getPlaceReviews(
           as: "writer",
           pipeline: [
             {
-              $lookup: {
-                from: "users",
-                localField: "progress.achievements",
-                foreignField: "_id",
-                as: "progress.achievements",
-              },
-            },
-            {
-              $project: publicReadUserProjection,
+              $project: publicReadUserEssentialProjection,
             },
           ],
         },
@@ -819,15 +804,7 @@ export async function getPlaceReviews(
                 as: "author",
                 pipeline: [
                   {
-                    $lookup: {
-                      from: "users",
-                      localField: "progress.achievements",
-                      foreignField: "_id",
-                      as: "progress.achievements",
-                    },
-                  },
-                  {
-                    $project: publicReadUserProjection,
+                    $project: publicReadUserEssentialProjection,
                   },
                 ],
               },
@@ -918,16 +895,11 @@ export async function getExistInLists(
 async function fetchYelp(place: IPlace, getReviews: boolean) {
   try {
     let yelpId = place.otherSources?.yelp?._id;
+    let yelpData: IYelpPlaceDetails | undefined;
     let reviews = [];
-    let rating = -1;
-    let reviewCount = 0;
-    let thumbnail = "";
 
     if (typeof yelpId === "string" && yelpId !== "") {
-      const yelpData = await getYelpData(yelpId);
-      rating = yelpData.rating;
-      reviewCount = yelpData.reviewCount;
-      thumbnail = yelpData.thumbnail;
+      yelpData = await getYelpData(yelpId);
     } else {
       // Getting the yelpId
       yelpId = await findYelpId(place);
@@ -936,22 +908,37 @@ async function fetchYelp(place: IPlace, getReviews: boolean) {
         place.otherSources.yelp = { _id: yelpId };
         await place.save();
         // Returning the yelpRating
-        const yelpData = await getYelpData(yelpId);
-        rating = yelpData.rating;
-        reviewCount = yelpData.reviewCount;
-        thumbnail = yelpData.thumbnail;
+        yelpData = await getYelpData(yelpId);
       }
     }
 
     if (getReviews && typeof yelpId === "string" && yelpId !== "") {
       reviews = (await getYelpReviews(yelpId)).reviews;
     }
+
+    if (!yelpData) {
+      return { yelp: null };
+    }
+
+    if (yelpData.review_count) {
+      place.popularity.yelpReviewCount = yelpData.review_count;
+    }
+
+    await place.save();
+
     return {
       yelp: {
-        rating,
-        reviewCount,
+        id: yelpData.id,
+        url: yelpData.url,
+        rating: parseFloat(yelpData.rating || "-1"),
+        reviewCount: yelpData.review_count,
+        thumbnail: yelpData.image_url || "",
+        photos: yelpData.photos || [],
+        categories: yelpData.categories,
+        transactions: yelpData.transactions,
+        phone: yelpData.display_phone,
+        price: yelpData.price,
         reviews,
-        thumbnail,
       },
     };
   } catch (error) {
@@ -1011,7 +998,9 @@ async function fetchGoogle(place: IPlace, getReviews: boolean) {
           true
         ); // Use short format
         address = `${streetNumber} ${streetName}`;
-        if (googlePlacesData.types) categories = [...googlePlacesData.types];
+        if (googlePlacesData.types) {
+          categories = [...googlePlacesData.types];
+        }
       }
     } else {
       // Getting the googlePlacesId
@@ -1064,7 +1053,6 @@ async function fetchGoogle(place: IPlace, getReviews: boolean) {
 
     if (thumbnail) {
       place.thumbnail = thumbnail;
-      await place.save();
     }
 
     if (getReviews) {
@@ -1078,8 +1066,13 @@ async function fetchGoogle(place: IPlace, getReviews: boolean) {
       place.location.state = state;
       place.location.zip = zip;
       place.location.country = country;
-      await place.save();
     }
+
+    if (reviewCount) {
+      place.popularity.googlePlacesReviewCount = reviewCount;
+    }
+
+    await place.save();
 
     return {
       google: {

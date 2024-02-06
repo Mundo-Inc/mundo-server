@@ -1,4 +1,7 @@
+import { StatusCodes } from "http-status-codes";
+
 import { IReview } from "../../../../models/Review";
+import { createError } from "../../../../utilities/errorHandlers";
 import { getLevelThresholds } from "../utils/levelupThresholds";
 import { rewards_amounts } from "../utils/rewardsAmounts";
 
@@ -34,8 +37,9 @@ export const calcRemainingXP = (currentXP: number): number => {
 
   const nextLevelThreshold = getLevelThresholds()[currentLevel + 1];
   if (nextLevelThreshold === undefined) {
-    throw new Error(
-      `XP threshold for level ${currentLevel + 1} is not defined.`
+    throw createError(
+      `XP threshold for level ${currentLevel + 1} is not defined.`,
+      StatusCodes.INTERNAL_SERVER_ERROR
     );
   }
 

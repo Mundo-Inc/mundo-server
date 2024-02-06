@@ -1,5 +1,8 @@
+import { StatusCodes } from "http-status-codes";
 import OpenAI from "openai";
+
 import { predefinedTags } from "../models/Review";
+import { createError } from "./errorHandlers";
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -82,7 +85,7 @@ export async function openAiAnalyzeReview(
 
     try {
       if (!response.choices) {
-        throw new Error("notValidResponse");
+        throw createError("parseError", StatusCodes.INTERNAL_SERVER_ERROR);
       }
 
       const responseText = response.choices[0].message?.content!;
@@ -134,7 +137,7 @@ export function formatOpenAiResponse(
     !Array.isArray(ratings) ||
     ratings.length !== (fullScores ? 5 : 2)
   ) {
-    throw new Error("parseError");
+    throw createError("parseError", StatusCodes.INTERNAL_SERVER_ERROR);
   }
 
   const scores = fullScores

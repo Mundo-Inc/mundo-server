@@ -7,7 +7,7 @@ import Comment from "../../models/Comment";
 import Reaction from "../../models/Reaction";
 import { IUser } from "../../models/User";
 import { handleInputErrors } from "../../utilities/errorHandlers";
-import { publicReadUserProjection } from "../dto/user/read-user-public.dto";
+import { publicReadUserEssentialProjection } from "../dto/user/read-user-public.dto";
 import validate from "./validators";
 
 export const getEngagementsValidation: ValidationChain[] = [
@@ -98,15 +98,7 @@ async function getComments(
         as: "author",
         pipeline: [
           {
-            $lookup: {
-              from: "achievements",
-              localField: "progress.achievements",
-              foreignField: "_id",
-              as: "progress.achievements",
-            },
-          },
-          {
-            $project: publicReadUserProjection,
+            $project: publicReadUserEssentialProjection,
           },
         ],
       },
@@ -164,15 +156,7 @@ async function getReactions(
         as: "user",
         pipeline: [
           {
-            $lookup: {
-              from: "achievements",
-              localField: "progress.achievements",
-              foreignField: "_id",
-              as: "progress.achievements",
-            },
-          },
-          {
-            $project: publicReadUserProjection,
+            $project: publicReadUserEssentialProjection,
           },
         ],
       },

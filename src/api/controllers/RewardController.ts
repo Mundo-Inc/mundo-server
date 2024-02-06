@@ -1,10 +1,18 @@
 import type { NextFunction, Request, Response } from "express";
 import { body, param, query, type ValidationChain } from "express-validator";
-import { BAD_REQUEST, NOT_FOUND, StatusCodes } from "http-status-codes";
+import { StatusCodes } from "http-status-codes";
 
 import { dailyCoinsCFG } from "../../config/dailyCoins";
+import Prize, { IPrize } from "../../models/Prize";
+import PrizeRedemption, {
+  IPrizeRedemption,
+  PrizeRedemptionStatusType,
+} from "../../models/PrizeRedemption";
 import User, { type IUser } from "../../models/User";
+import strings from "../../strings";
 import { createError, handleInputErrors } from "../../utilities/errorHandlers";
+import { privateReadUserProjection } from "../dto/user/read-user-private.dto";
+import { publicReadUserEssentialProjection } from "../dto/user/read-user-public.dto";
 import logger from "../services/logger";
 import {
   applyDailyStreakResetIfNeeded,
@@ -13,15 +21,7 @@ import {
   saveCoinReward,
   updateUserCoinsAndStreak,
 } from "../services/reward/coinReward.service";
-import strings from "../../strings";
-import Prize, { IPrize } from "../../models/Prize";
-import PrizeRedemption, {
-  IPrizeRedemption,
-  PrizeRedemptionStatusType,
-} from "../../models/PrizeRedemption";
 import validate from "./validators";
-import { publicReadUserProjection } from "../dto/user/read-user-public.dto";
-import { privateReadUserProjection } from "../dto/user/read-user-private.dto";
 
 export const dailyCoinInformationValidation: ValidationChain[] = [];
 export async function dailyCoinInformation(
@@ -167,12 +167,13 @@ export async function getPrizeRedemptionHistory(
     const redemptions = await PrizeRedemption.find({
       userId: user._id,
     })
-      .populate("userId", publicReadUserProjection)
+      .populate("userId", publicReadUserEssentialProjection)
       .sort({ _id: -1 })
       .skip(skip)
-      .limit(limit);
+      .limit(limit)
+      .lean();
 
-    res.status(200).json({ success: true, data: redemptions });
+    res.status(StatusCodes.OK).json({ success: true, data: redemptions });
   } catch (error) {
     next(error);
   }
@@ -224,12 +225,12 @@ export async function reviewRedemption(
 
     const redemption = (await PrizeRedemption.findById(id)) as IPrizeRedemption;
     if (!redemption) {
-      throw createError("Prize Redemption Not Found", NOT_FOUND);
+      throw createError("Prize Redemption Not Found", StatusCodes.NOT_FOUND);
     }
     if (redemption.status !== PrizeRedemptionStatusType.PENDING) {
       throw createError(
         "Prize Redemption Is Already Verified as " + redemption.status,
-        BAD_REQUEST
+        StatusCodes.BAD_REQUEST
       );
     }
 

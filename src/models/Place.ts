@@ -3,13 +3,30 @@ import Review from "./Review";
 
 const GOOGLE_PLACES_PERCENTAGE = 0.3;
 
-type Categories =
-  | "bar"
-  | "restaurant"
-  | "cafe"
-  | "bakery"
-  | "meal_delivery"
-  | "meal_takeaway";
+interface IScores {
+  overall: number;
+  drinkQuality: number;
+  foodQuality: number;
+  atmosphere: number;
+  service: number;
+  value: number;
+  phantom: number;
+  updatedAt: Date;
+}
+
+const scoresSchema = new Schema<IScores>(
+  {
+    overall: { type: Number, min: 0, max: 5 },
+    drinkQuality: { type: Number, min: 0, max: 5 },
+    foodQuality: { type: Number, min: 0, max: 5 },
+    atmosphere: { type: Number, min: 0, max: 5 },
+    service: { type: Number, min: 0, max: 5 },
+    value: { type: Number, min: 0, max: 5 },
+    phantom: { type: Number },
+    updatedAt: { type: Date },
+  },
+  { _id: false }
+);
 
 export interface IPlace extends Document {
   name: string;
@@ -30,15 +47,7 @@ export interface IPlace extends Document {
     house_number: string;
     zip: string;
   };
-  scores: {
-    overall: number;
-    drinkQuality: number;
-    foodQuality: number;
-    atmosphere: number;
-    service: number;
-    value: number;
-    phantom: number;
-  };
+  scores: IScores;
   popularity: {
     googlePlacesReviewCount?: number;
     yelpReviewCount?: number;
@@ -189,21 +198,7 @@ const PlaceSchema: Schema = new Schema<IPlace>(
       default: 0,
     },
     scores: {
-      type: {
-        overall: {
-          type: Number,
-          min: 0,
-          max: 5,
-        },
-        drinkQuality: { type: Number, min: 0, max: 5 },
-        foodQuality: { type: Number, min: 0, max: 5 },
-        atmosphere: { type: Number, min: 0, max: 5 },
-        service: { type: Number, min: 0, max: 5 },
-        value: { type: Number, min: 0, max: 5 },
-        phantom: {
-          type: Number,
-        },
-      },
+      type: scoresSchema,
       default: {},
     },
     phone: {
@@ -268,16 +263,16 @@ const PlaceSchema: Schema = new Schema<IPlace>(
             index: true,
           },
           rating: Number,
+          streetNumber: String,
+          streetName: String,
+          city: String,
+          state: String,
+          zip: String,
+          country: String,
+          address: String,
+          categories: [String],
           updatedAt: Date,
         },
-        streetNumber: String,
-        streetName: String,
-        city: String,
-        state: String,
-        zip: String,
-        country: String,
-        address: String,
-        categories: [String],
         default: {},
       },
       yelp: {
@@ -407,12 +402,11 @@ const PlaceSchema: Schema = new Schema<IPlace>(
                 GOOGLE_PLACES_PERCENTAGE +
               scores[0].phantom * (1 - GOOGLE_PLACES_PERCENTAGE);
           }
-        }
 
-        if (scores[0]) {
           this.reviewCount = scores[0].count;
           delete scores[0].count;
           this.scores = scores[0];
+          this.scores.updatedAt = new Date();
           await this.save();
         }
       },

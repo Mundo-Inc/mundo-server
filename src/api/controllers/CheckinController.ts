@@ -241,7 +241,10 @@ async function processCheckinActivities(
     await checkinEarning(authId, checkin);
     const populatedPlace = await Place.findById(place);
     if (!populatedPlace) {
-      throw new Error("Place is missing");
+      throw createError(
+        dynamicMessage(dStrings.notFound, "Place"),
+        StatusCodes.NOT_FOUND
+      );
     }
     const hasMedia = Boolean(checkin.image);
     const activity = await addCheckinActivity(

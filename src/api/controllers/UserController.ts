@@ -24,7 +24,10 @@ import {
   PrivateReadUserDto,
   privateReadUserProjection,
 } from "../dto/user/read-user-private.dto";
-import { publicReadUserProjection } from "../dto/user/read-user-public.dto";
+import {
+  publicReadUserEssentialProjection,
+  publicReadUserProjection,
+} from "../dto/user/read-user-public.dto";
 import { handleSignUp } from "../lib/profile-handlers";
 import { calcRemainingXP } from "../services/reward/helpers/levelCalculations";
 import { sendSlackMessage } from "./SlackController";
@@ -71,25 +74,14 @@ export async function getUsers(
           $limit: limit,
         },
         {
-          $lookup: {
-            from: "achievements",
-            localField: "progress.achievements",
-            foreignField: "_id",
-            as: "progress.achievements",
-          },
-        },
-        {
-          $project: publicReadUserProjection,
+          $project: publicReadUserEssentialProjection,
         },
       ]);
     } else {
       const followings = await Follow.find({ user: authId })
         .populate({
           path: "target",
-          select: publicReadUserProjection,
-          populate: {
-            path: "progress.achievements",
-          },
+          select: publicReadUserEssentialProjection,
         })
         .skip(skip)
         .limit(limit)
@@ -102,10 +94,7 @@ export async function getUsers(
       const followers = await Follow.find({ target: authId })
         .populate({
           path: "user",
-          select: publicReadUserProjection,
-          populate: {
-            path: "progress.achievements",
-          },
+          select: publicReadUserEssentialProjection,
         })
         .skip(skip)
         .limit(limit)
@@ -223,15 +212,7 @@ export async function getLeaderBoard(
       { $skip: skip },
       { $limit: limit },
       {
-        $lookup: {
-          from: "achievements",
-          localField: "progress.achievements",
-          foreignField: "_id",
-          as: "progress.achievements",
-        },
-      },
-      {
-        $project: publicReadUserProjection,
+        $project: publicReadUserEssentialProjection,
       },
     ]);
 

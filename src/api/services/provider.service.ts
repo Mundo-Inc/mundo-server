@@ -1,7 +1,9 @@
 import axios from "axios";
+import { StatusCodes } from "http-status-codes";
 
 import type { IPlace } from "../../models/Place";
 import type { IGPPlaceDetails } from "../../types/googleplaces.interface";
+import type { IYelpPlaceDetails } from "../../types/yelpPlace.interface";
 import { createError } from "../../utilities/errorHandlers";
 import logger from "./logger";
 
@@ -26,7 +28,7 @@ export const findYelpId = async (place: IPlace) => {
       if (yelpResult.data.businesses.length >= 1) {
         return yelpResult.data.businesses[0].id;
       } else {
-        throw createError(`Yelp place not found!`);
+        throw createError(`Yelp place not found!`, StatusCodes.NOT_FOUND);
       }
     } else {
       logger.debug("yelp result", { yelpResult });
@@ -35,15 +37,18 @@ export const findYelpId = async (place: IPlace) => {
         yelpResult.status
       );
     }
-  } catch (error) {
-    logger.error("Internal server error", { error });
-    throw error; // or return a default/fallback value if preferred
+  } catch (error: any) {
+    console.error("Error fetching Yelp id for placeId:", place.id, error);
+    throw createError(
+      `Invalid third party data.`,
+      StatusCodes.INTERNAL_SERVER_ERROR
+    );
   }
 };
 
-export const getYelpData = async (yelpId: string) => {
+export async function getYelpData(yelpId: string) {
   try {
-    const yelpResult = await axios({
+    const yelpResult = await axios<IYelpPlaceDetails>({
       method: "get",
       url: `https://api.yelp.com/v3/businesses/${yelpId}`, // fixed extra }
       headers: {
@@ -53,20 +58,19 @@ export const getYelpData = async (yelpId: string) => {
     });
 
     if (yelpResult.status === 200) {
-      return {
-        rating: yelpResult.data.rating,
-        reviewCount: yelpResult.data.review_count,
-        thumbnail: yelpResult.data.image_url,
-      };
+      return yelpResult.data;
     } else {
       logger.debug("yelp result", { yelpResult });
-      throw new Error(`Unexpected response. Status: ${yelpResult.status}`);
+      throw createError("Unexpected response. Status", yelpResult.status);
     }
   } catch (error) {
     console.error("Error fetching Yelp rating:", error);
-    throw error; // or return a default/fallback value if preferred
+    throw createError(
+      "Something went wrong",
+      StatusCodes.INTERNAL_SERVER_ERROR
+    );
   }
-};
+}
 
 export const getYelpReviews = async (yelpId: string) => {
   try {
@@ -85,11 +89,14 @@ export const getYelpReviews = async (yelpId: string) => {
       };
     } else {
       logger.debug("yelp result", { yelpResult });
-      throw new Error(`Unexpected response. Status: ${yelpResult.status}`);
+      throw createError("Unexpected response.", yelpResult.status);
     }
   } catch (error) {
     console.error("Error fetching Yelp rating:", error);
-    throw error; // or return a default/fallback value if preferred
+    throw createError(
+      "Something went wrong",
+      StatusCodes.INTERNAL_SERVER_ERROR
+    );
   }
 };
 
@@ -121,11 +128,14 @@ export const findGooglePlacesId = async (
       console.error("No matching places found");
       return null;
     } else {
-      throw new Error(`Unexpected response. Status: ${response.status}`);
+      throw createError("Unexpected response.", response.status);
     }
   } catch (error) {
     console.error("Error fetching Google id:", error);
-    throw error;
+    throw createError(
+      "Something went wrong",
+      StatusCodes.INTERNAL_SERVER_ERROR
+    );
   }
 };
 
@@ -146,11 +156,14 @@ export const getGooglePlacesData = async (googlePlacesId: string) => {
       }
       return res;
     } else {
-      throw new Error(`Unexpected response. Status: ${placeRes.status}`);
+      throw createError("Unexpected response.", placeRes.status);
     }
   } catch (error) {
     console.error("Error fetching Google rating:", error);
-    throw error; // or return a default/fallback value if preferred
+    throw createError(
+      "Something went wrong",
+      StatusCodes.INTERNAL_SERVER_ERROR
+    );
   }
 };
 
@@ -182,7 +195,10 @@ export const findFoursquareId = async (place: IPlace) => {
     }
   } catch (error) {
     console.error("Error:", error);
-    throw error; // or return a default/fallback value if preferred
+    throw createError(
+      "Something went wrong",
+      StatusCodes.INTERNAL_SERVER_ERROR
+    );
   }
 };
 export const getFoursquareRating = async (foursquareId: string) => {

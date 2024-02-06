@@ -3,7 +3,12 @@ import { body, param, query, type ValidationChain } from "express-validator";
 import { StatusCodes } from "http-status-codes";
 import mongoose from "mongoose";
 
+import Follow from "../../models/Follow";
 import Media, { MediaTypeEnum } from "../../models/Media";
+import Notification, {
+  NotificationType,
+  ResourceTypes,
+} from "../../models/Notification";
 import Place from "../../models/Place";
 import Review from "../../models/Review";
 import Upload from "../../models/Upload";
@@ -11,7 +16,7 @@ import User from "../../models/User";
 import strings, { dStrings as ds, dynamicMessage } from "../../strings";
 import { createError, handleInputErrors } from "../../utilities/errorHandlers";
 import { openAiAnalyzeReview } from "../../utilities/openAi";
-import { publicReadUserProjection } from "../dto/user/read-user-public.dto";
+import { publicReadUserEssentialProjection } from "../dto/user/read-user-public.dto";
 import { reviewEarning } from "../services/earning.service";
 import logger from "../services/logger";
 import { addReward } from "../services/reward/reward.service";
@@ -20,11 +25,6 @@ import {
   addReviewActivity,
 } from "../services/user.activity.service";
 import validate from "./validators";
-import Notification, {
-  NotificationType,
-  ResourceTypes,
-} from "../../models/Notification";
-import Follow from "../../models/Follow";
 
 export const getReviewsValidation: ValidationChain[] = [
   query("writer").optional().isMongoId(),
@@ -108,15 +108,7 @@ export async function getReviews(
           as: "writer",
           pipeline: [
             {
-              $lookup: {
-                from: "achievements",
-                localField: "progress.achievements",
-                foreignField: "_id",
-                as: "progress.achievements",
-              },
-            },
-            {
-              $project: publicReadUserProjection,
+              $project: publicReadUserEssentialProjection,
             },
           ],
         },
@@ -549,15 +541,7 @@ export async function getReview(
           as: "writer",
           pipeline: [
             {
-              $lookup: {
-                from: "achievements",
-                localField: "progress.achievements",
-                foreignField: "_id",
-                as: "progress.achievements",
-              },
-            },
-            {
-              $project: publicReadUserProjection,
+              $project: publicReadUserEssentialProjection,
             },
           ],
         },

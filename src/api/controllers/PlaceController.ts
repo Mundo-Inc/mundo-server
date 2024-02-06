@@ -12,7 +12,7 @@ import { dStrings, dynamicMessage } from "../../strings";
 import { createError, handleInputErrors } from "../../utilities/errorHandlers";
 import { bucketName, parseForm, region, s3 } from "../../utilities/storage";
 import { areSimilar, areStrictlySimilar } from "../../utilities/stringHelper";
-import { publicReadUserProjection } from "../dto/user/read-user-public.dto";
+import { publicReadUserEssentialProjection } from "../dto/user/read-user-public.dto";
 import {
   findFoursquareId,
   findTripAdvisorId,
@@ -24,7 +24,7 @@ import {
 import { getDetailedPlace } from "./SinglePlaceController";
 import validate from "./validators";
 
-var levenshtein = require("fast-levenshtein");
+// var levenshtein = require("fast-levenshtein");
 var country = require("countrystatesjs");
 var iso3311a2 = require("iso-3166-1-alpha-2");
 
@@ -295,15 +295,7 @@ export async function getPlaces(
                 as: "user",
                 pipeline: [
                   {
-                    $lookup: {
-                      from: "achievements",
-                      localField: "progress.achievements",
-                      foreignField: "_id",
-                      as: "progress.achievements",
-                    },
-                  },
-                  {
-                    $project: publicReadUserProjection,
+                    $project: publicReadUserEssentialProjection,
                   },
                 ],
               },
@@ -402,8 +394,8 @@ export async function getThirdPartyRating(
         const yelpId = place.otherSources?.yelp?._id;
         if (typeof yelpId === "string" && yelpId !== "") {
           const yelpData = await getYelpData(yelpId);
-          rating = yelpData.rating;
-          reviewCount = yelpData.reviewCount;
+          rating = parseFloat(yelpData.rating ?? "-1");
+          reviewCount = yelpData.review_count;
         } else {
           // Getting the yelpId
           const yelpId = await findYelpId(place);
@@ -412,8 +404,8 @@ export async function getThirdPartyRating(
           await place.save();
           // Returning the yelpRating
           const yelpData = await getYelpData(yelpId);
-          rating = yelpData.rating;
-          reviewCount = yelpData.reviewCount;
+          rating = parseFloat(yelpData.rating ?? "-1");
+          reviewCount = yelpData.review_count;
         }
         break;
       case "tripAdvisor":
@@ -883,9 +875,7 @@ export async function getPlacesByContext(
       // If the place is new and doesn't exist on Google, delete it
       const place = await Place.findById(matchedPlace?._id);
       await place.deleteOne();
-      res.status(StatusCodes.NOT_FOUND).json({
-        success: false,
-      });
+      throw createError("Place doesn't exist", StatusCodes.NOT_FOUND);
     } else {
       res.status(StatusCodes.OK).json({
         success: true,

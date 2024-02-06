@@ -1,3 +1,4 @@
+import { StatusCodes } from "http-status-codes";
 import { dailyCoinsCFG } from "../../../config/dailyCoins";
 import CheckIn from "../../../models/CheckIn";
 import CoinReward, { CoinRewardTypeEnum } from "../../../models/CoinReward";
@@ -6,6 +7,8 @@ import Reaction from "../../../models/Reaction";
 import Review from "../../../models/Review";
 import { IDailyReward, IUser } from "../../../models/User";
 import UserActivity, { ResourceTypeEnum } from "../../../models/UserActivity";
+import { dStrings, dynamicMessage } from "../../../strings";
+import { createError } from "../../../utilities/errorHandlers";
 
 const DAY_HOURS = 24;
 
@@ -33,7 +36,10 @@ export async function updateUserCoinsAndStreak(
   rewardAmount: number
 ) {
   if (!user) {
-    throw new Error("User not found");
+    throw createError(
+      dynamicMessage(dStrings.notFound, "User"),
+      StatusCodes.NOT_FOUND
+    );
   }
   user.phantomCoins.balance += rewardAmount;
   const now = new Date();
