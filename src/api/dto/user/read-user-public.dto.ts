@@ -43,5 +43,6 @@ export const publicReadUserEssentialProjection: {
   verified: true,
   progress: {
     level: true,
+    xp: true,
   },
 };

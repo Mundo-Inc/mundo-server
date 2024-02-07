@@ -24,10 +24,7 @@ import {
   PrivateReadUserDto,
   privateReadUserProjection,
 } from "../dto/user/read-user-private.dto";
-import {
-  publicReadUserEssentialProjection,
-  publicReadUserProjection,
-} from "../dto/user/read-user-public.dto";
+import { publicReadUserProjection } from "../dto/user/read-user-public.dto";
 import { handleSignUp } from "../lib/profile-handlers";
 import { calcRemainingXP } from "../services/reward/helpers/levelCalculations";
 import { sendSlackMessage } from "./SlackController";
