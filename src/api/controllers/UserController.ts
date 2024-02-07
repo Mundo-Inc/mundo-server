@@ -226,7 +226,15 @@ export async function getLeaderBoard(
       { $skip: skip },
       { $limit: limit },
       {
-        $project: publicReadUserEssentialProjection,
+        $lookup: {
+          from: "achievements",
+          localField: "progress.achievements",
+          foreignField: "_id",
+          as: "progress.achievements",
+        },
+      },
+      {
+        $project: publicReadUserProjection,
       },
     ]);
 
