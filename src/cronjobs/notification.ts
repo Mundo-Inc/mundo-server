@@ -1,6 +1,10 @@
 import apn from "@parse/node-apn";
 import cron from "node-cron";
+
+import { publicReadUserEssentialProjection } from "../api/dto/user/read-user-public.dto";
+import logger from "../api/services/logger";
 import apnProvider from "../config/apn";
+import CheckIn from "../models/CheckIn";
 import Comment from "../models/Comment";
 import Follow from "../models/Follow";
 import Notification, {
@@ -8,11 +12,8 @@ import Notification, {
   type INotification,
 } from "../models/Notification";
 import Reaction from "../models/Reaction";
-import User, { type UserDevice } from "../models/User";
-import logger from "../api/services/logger";
 import Review from "../models/Review";
-import { readUserCompactProjection } from "../api/dto/user/read-user-compact-dto";
-import CheckIn from "../models/CheckIn";
+import User, { type UserDevice } from "../models/User";
 
 cron.schedule("*/30 * * * * *", async () => {
   const notifications = await Notification.find({
@@ -141,7 +142,7 @@ export async function getNotificationContent(notification: INotification) {
       await Review.findById(notification.resources![0]._id)
         .populate({
           path: "writer",
-          select: readUserCompactProjection,
+          select: publicReadUserEssentialProjection,
         })
         .populate("place")
         .then((review) => {
@@ -157,7 +158,7 @@ export async function getNotificationContent(notification: INotification) {
       await CheckIn.findById(notification.resources![0]._id)
         .populate({
           path: "user",
-          select: readUserCompactProjection,
+          select: publicReadUserEssentialProjection,
         })
         .populate("place")
         .then((checkin) => {

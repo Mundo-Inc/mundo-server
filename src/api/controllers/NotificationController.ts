@@ -3,6 +3,7 @@ import { body, query, type ValidationChain } from "express-validator";
 import { StatusCodes } from "http-status-codes";
 import mongoose from "mongoose";
 
+import CheckIn from "../../models/CheckIn";
 import Comment from "../../models/Comment";
 import Follow from "../../models/Follow";
 import Notification, {
@@ -10,12 +11,10 @@ import Notification, {
   type INotification,
 } from "../../models/Notification";
 import Reaction from "../../models/Reaction";
+import Review from "../../models/Review";
 import { handleInputErrors } from "../../utilities/errorHandlers";
+import { publicReadUserEssentialProjection } from "../dto/user/read-user-public.dto";
 import validate from "./validators";
-import Review, { IReview } from "../../models/Review";
-import CheckIn from "../../models/CheckIn";
-import logger from "../services/logger";
-import { readUserCompactProjection } from "../dto/user/read-user-compact-dto";
 
 async function handleResourceNotFound(notification: INotification) {
   await Notification.findByIdAndDelete(notification._id);
@@ -35,7 +34,7 @@ async function getNotificationContent(notification: INotification) {
       await Comment.findById(notification.resources![0]._id)
         .populate({
           path: "author",
-          select: readUserCompactProjection,
+          select: publicReadUserEssentialProjection,
         })
         .then((comment) => {
           if (!comment) {
@@ -56,7 +55,7 @@ async function getNotificationContent(notification: INotification) {
         // .populate("user")
         .populate({
           path: "user",
-          select: readUserCompactProjection,
+          select: publicReadUserEssentialProjection,
         })
         .then((follow) => {
           if (!follow) {
@@ -74,7 +73,7 @@ async function getNotificationContent(notification: INotification) {
       await Comment.findById(notification.resources![0]._id)
         .populate({
           path: "author",
-          select: readUserCompactProjection,
+          select: publicReadUserEssentialProjection,
         })
         .then((comment) => {
           if (!comment) {
@@ -94,7 +93,7 @@ async function getNotificationContent(notification: INotification) {
       await Reaction.findById(notification.resources![0]._id)
         .populate({
           path: "user",
-          select: readUserCompactProjection,
+          select: publicReadUserEssentialProjection,
         })
         .then((reaction) => {
           if (!reaction) {
@@ -128,7 +127,7 @@ async function getNotificationContent(notification: INotification) {
       await Review.findById(notification.resources![0]._id)
         .populate({
           path: "writer",
-          select: readUserCompactProjection,
+          select: publicReadUserEssentialProjection,
         })
         .populate("place")
         .then((review) => {
@@ -152,7 +151,7 @@ async function getNotificationContent(notification: INotification) {
       await CheckIn.findById(notification.resources![0]._id)
         .populate({
           path: "user",
-          select: readUserCompactProjection,
+          select: publicReadUserEssentialProjection,
         })
         .populate("place")
         .then((checkin) => {
