@@ -30,7 +30,7 @@ import { calcRemainingXP } from "../services/reward/helpers/levelCalculations";
 import { sendSlackMessage } from "./SlackController";
 import validate from "./validators";
 
-const FIREBASE_WEB_API_KEY = process.env.FIREBASE_WEB_API_KEY;
+// const FIREBASE_WEB_API_KEY = process.env.FIREBASE_WEB_API_KEY;
 
 export const getUsersValidation: ValidationChain[] = [
   validate.q(query("q").optional()),
@@ -242,20 +242,53 @@ export async function getLeaderBoard(
 }
 
 export const getUserValidation: ValidationChain[] = [
-  param("id").isString(),
+  param("id").custom((value, { req }) => {
+    const objectIdRegex = /^[0-9a-fA-F]{24}$/;
+    if (objectIdRegex.test(value) || value.includes("@")) {
+      return true; // Indicate that the validation is successful
+    } else {
+      if (req.query?.idType !== "uid") {
+        throw new Error('The id must be a valid ObjectId or must include "@"');
+      } else {
+        return true;
+      }
+    }
+  }),
   query("idType").optional().isIn(["oid", "uid"]),
 ];
 export async function getUser(req: Request, res: Response, next: NextFunction) {
   try {
     handleInputErrors(req);
+
     let { id } = req.params;
-    // if id type is uid -> get userby uid -> id = user._id
+
+    if (id[0] == "@") {
+      const user: IUser | null = await User.findOne({
+        username: {
+          $regex: `^${id.slice(1)}$`,
+          $options: "i",
+        },
+      }).lean();
+      if (user) {
+        id = user._id.toString();
+      } else {
+        throw createError(
+          dynamicMessage(ds.notFound, "User"),
+          StatusCodes.NOT_FOUND
+        );
+      }
+    }
+
+    // if id type is uid -> get user by uid -> id = user._id
     if (req.query && req.query.idType && req.query.idType === "uid") {
       const user: IUser | null = await User.findOne({ uid: id }).lean();
       if (user) {
         id = user._id.toString();
       } else {
-        throw createError("user not found", StatusCodes.NOT_FOUND);
+        throw createError(
+          dynamicMessage(ds.notFound, "User"),
+          StatusCodes.NOT_FOUND
+        );
       }
     }
 
@@ -300,9 +333,10 @@ export async function getUser(req: Request, res: Response, next: NextFunction) {
         (await Follow.findOne({ user: req.user!.id, target: id }).lean()) !=
         null;
     }
+
     if (!user) {
       throw createError(
-        dynamicMessage(ds.notFound, "User"),
+        dynamicMessage(dynamicMessage(ds.notFound, "User"), "User"),
         StatusCodes.NOT_FOUND
       );
     }
