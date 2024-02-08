@@ -84,7 +84,7 @@ export async function getActivity(
 
     if (!activity) {
       throw createError(
-        dynamicMessage(dStrings.notFound, "Activity"),
+        "Either the activity does not exist or you do not have permission to view it",
         StatusCodes.NOT_FOUND
       );
     }
