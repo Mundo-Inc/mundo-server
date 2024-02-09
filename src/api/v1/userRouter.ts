@@ -1,6 +1,33 @@
 import express from "express";
 
 import {
+  block,
+  blockValidation,
+  unblock,
+} from "../controllers/BlockController";
+import {
+  acceptConnectionRequest,
+  acceptConnectionRequestValidation,
+  connectionFollowStatus,
+  connectionFollowStatusValidation,
+  createUserConnection,
+  createUserConnectionValidation,
+  deleteUserConnection,
+  deleteUserConnectionValidation,
+  getPendingConnections,
+  getPendingConnectionsValidation,
+  getUserConnections,
+  getUserConnectionsValidation,
+} from "../controllers/ConnectionController";
+import {
+  getUserLists,
+  getUserListsValidation,
+} from "../controllers/ListController";
+import {
+  getActivitiesOfaUser,
+  getActivitiesOfaUserValidation,
+} from "../controllers/UserActivityController";
+import {
   createUser,
   createUserValidation,
   deleteUser,
@@ -26,33 +53,6 @@ import {
   authMiddleware,
   optionalAuthMiddleware,
 } from "../middlewares/authMiddleWare";
-import {
-  getActivitiesOfaUser,
-  getActivitiesOfaUserValidation,
-} from "../controllers/UserActivityController";
-import {
-  block,
-  blockValidation,
-  unblock,
-} from "../controllers/BlockController";
-import {
-  acceptConnectionRequest,
-  acceptConnectionRequestValidation,
-  connectionFollowStatus,
-  connectionFollowStatusValidation,
-  createUserConnection,
-  createUserConnectionValidation,
-  deleteUserConnection,
-  deleteUserConnectionValidation,
-  getPendingConnections,
-  getPendingConnectionsValidation,
-  getUserConnections,
-  getUserConnectionsValidation,
-} from "../controllers/ConnectionController";
-import {
-  getUserLists,
-  getUserListsValidation,
-} from "../controllers/ListController";
 
 const router = express.Router();
 router.use(express.json());
@@ -92,8 +92,8 @@ router.get(
 
 router
   .route("/:id")
+  .get(optionalAuthMiddleware, getUserValidation, getUser)
   .put(authMiddleware, editUserValidation, editUser)
-  .get(authMiddleware, getUserValidation, getUser)
   .delete(authMiddleware, deleteUserValidation, deleteUser);
 
 router.put(

@@ -367,9 +367,7 @@ export const getResourceInfo = async (activity: IUserActivity) => {
     resourceInfo = await User.findById(
       activity.resourceId,
       publicReadUserEssentialProjection
-    )
-      .populate("progress.achievements")
-      .lean();
+    ).lean();
     if (activity.placeId) {
       placeInfo = await Place.findById(
         activity.placeId,

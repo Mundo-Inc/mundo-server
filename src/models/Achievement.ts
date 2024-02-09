@@ -33,21 +33,25 @@ export enum AchievementTypeEnum {
 export interface IAchievement extends Document {
   userId: mongoose.Types.ObjectId;
   type: AchievementTypeEnum;
-  createdAt?: Date;
-  updatedAt?: Date;
+  createdAt: Date;
 }
 
-const AchievementSchema: Schema = new Schema<IAchievement>(
-  {
-    userId: { type: Schema.Types.ObjectId, ref: "User", required: true },
-    type: {
-      type: String,
-      enum: Object.values(AchievementTypeEnum),
-      required: true,
-    },
+const AchievementSchema: Schema = new Schema<IAchievement>({
+  userId: {
+    type: Schema.Types.ObjectId,
+    ref: "User",
+    required: true,
   },
-  { timestamps: true }
-);
+  type: {
+    type: String,
+    enum: Object.values(AchievementTypeEnum),
+    required: true,
+  },
+  createdAt: {
+    type: Date,
+    default: Date.now,
+  },
+});
 
 export default mongoose.models.Achievement ||
   mongoose.model<IAchievement>("Achievement", AchievementSchema);

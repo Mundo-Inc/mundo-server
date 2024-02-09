@@ -4,6 +4,7 @@ import type { NextFunction, Request, Response } from "express";
 import { body, param, query, type ValidationChain } from "express-validator";
 import { getAuth } from "firebase-admin/auth";
 import { StatusCodes } from "http-status-codes";
+import mongoose from "mongoose";
 
 import Block from "../../models/Block";
 import CheckIn from "../../models/CheckIn";
@@ -112,6 +113,26 @@ export async function getUsers(
         .lean();
 
       result = followers.map((follower) => follower.user);
+    }
+
+    for (const user of result) {
+      const achievements: any = {};
+      if (user) {
+        for (const achievement of user.progress.achievements) {
+          if (achievement.type in achievements) {
+            achievements[achievement.type].createdAt = achievement.createdAt;
+            achievements[achievement.type].count++;
+          } else {
+            achievements[achievement.type] = {
+              _id: achievement.type,
+              type: achievement.type,
+              createdAt: achievement.createdAt,
+              count: 1,
+            };
+          }
+        }
+      }
+      user.progress.achievements = Object.values(achievements);
     }
 
     res.status(StatusCodes.OK).json({ success: true, data: result });
@@ -235,6 +256,26 @@ export async function getLeaderBoard(
       },
     ]);
 
+    for (const user of leaderboard) {
+      const achievements: any = {};
+      if (user) {
+        for (const achievement of user.progress.achievements) {
+          if (achievement.type in achievements) {
+            achievements[achievement.type].createdAt = achievement.createdAt;
+            achievements[achievement.type].count++;
+          } else {
+            achievements[achievement.type] = {
+              _id: achievement.type,
+              type: achievement.type,
+              createdAt: achievement.createdAt,
+              count: 1,
+            };
+          }
+        }
+      }
+      user.progress.achievements = Object.values(achievements);
+    }
+
     res.status(StatusCodes.OK).json({ success: true, data: leaderboard });
   } catch (err) {
     next(err);
@@ -255,20 +296,38 @@ export const getUserValidation: ValidationChain[] = [
     }
   }),
   query("idType").optional().isIn(["oid", "uid"]),
+  query("view").optional().isIn(["basic", "contextual"]),
 ];
 export async function getUser(req: Request, res: Response, next: NextFunction) {
   try {
     handleInputErrors(req);
 
+    const authId = req.user?.id;
     let { id } = req.params;
+    const { idType } = req.query;
+    const view = req.query.view || "contextual";
 
-    if (id[0] == "@") {
+    if (idType === "uid") {
+      // if id type is uid -> get user by uid
+      const user: IUser | null = await User.findOne({ uid: id }).lean();
+
+      if (user) {
+        id = user._id.toString();
+      } else {
+        throw createError(
+          dynamicMessage(ds.notFound, "User"),
+          StatusCodes.NOT_FOUND
+        );
+      }
+    } else if (id[0] == "@") {
+      // if id starts with @ -> get user by username
       const user: IUser | null = await User.findOne({
         username: {
           $regex: `^${id.slice(1)}$`,
           $options: "i",
         },
       }).lean();
+
       if (user) {
         id = user._id.toString();
       } else {
@@ -279,38 +338,48 @@ export async function getUser(req: Request, res: Response, next: NextFunction) {
       }
     }
 
-    // if id type is uid -> get user by uid -> id = user._id
-    if (req.query && req.query.idType && req.query.idType === "uid") {
-      const user: IUser | null = await User.findOne({ uid: id }).lean();
-      if (user) {
-        id = user._id.toString();
-      } else {
-        throw createError(
-          dynamicMessage(ds.notFound, "User"),
-          StatusCodes.NOT_FOUND
-        );
-      }
-    }
+    let user: any;
+    let isFollower, isFollowing;
 
-    const followersCount = await Follow.countDocuments({ target: id });
-    const followingCount = await Follow.countDocuments({ user: id });
-    const reviewsCount = await Review.countDocuments({ writer: id });
+    if (authId && id === authId) {
+      // own profile
 
-    let user: any, isFollower, isFollowing;
-    if (id === req.user!.id) {
       user = await User.findById(id, privateReadUserProjection)
-        .populate("progress.achievements")
+        .populate({
+          path: "progress.achievements",
+          select: "type createdAt",
+        })
         .lean();
-    } else {
+
+      const achievements: any = {};
+      if (user) {
+        for (const achievement of user.progress.achievements) {
+          if (achievement.type in achievements) {
+            achievements[achievement.type].createdAt = achievement.createdAt;
+            achievements[achievement.type].count++;
+          } else {
+            achievements[achievement.type] = {
+              _id: achievement.type,
+              type: achievement.type,
+              createdAt: achievement.createdAt,
+              count: 1,
+            };
+          }
+        }
+      }
+      user.progress.achievements = Object.values(achievements);
+    } else if (authId && view === "contextual") {
+      // contextual view
+
       const isBlocked = await Block.findOne({
         $or: [
-          { user: id, target: req.user!.id },
-          { user: req.user!.id, target: id },
+          { user: id, target: authId },
+          { user: authId, target: id },
         ],
       });
 
       if (isBlocked) {
-        if (isBlocked.user.toString() === req.user!.id) {
+        if (isBlocked.user.toString() === authId) {
           throw createError(
             strings.blocks.user.isBlocked,
             StatusCodes.FORBIDDEN
@@ -322,21 +391,74 @@ export async function getUser(req: Request, res: Response, next: NextFunction) {
           );
         }
       }
+
       user = await User.findById(id, publicReadUserProjection)
-        .populate("progress.achievements")
+        .populate({
+          path: "progress.achievements",
+          select: "type createdAt",
+        })
         .lean();
 
+      const achievements: any = {};
+      if (user) {
+        for (const achievement of user.progress.achievements) {
+          if (achievement.type in achievements) {
+            achievements[achievement.type].createdAt = achievement.createdAt;
+            achievements[achievement.type].count++;
+          } else {
+            achievements[achievement.type] = {
+              _id: achievement.type,
+              type: achievement.type,
+              createdAt: achievement.createdAt,
+              count: 1,
+            };
+          }
+        }
+      }
+      user.progress.achievements = Object.values(achievements);
+
       isFollower =
-        (await Follow.findOne({ user: id, target: req.user!.id }).lean()) !=
-        null;
+        (await Follow.findOne({ user: id, target: authId }).lean()) != null;
+
       isFollowing =
-        (await Follow.findOne({ user: req.user!.id, target: id }).lean()) !=
-        null;
+        (await Follow.findOne({ user: authId, target: id }).lean()) != null;
+    } else if (view === "basic") {
+      // basic view
+
+      user = await User.findById(id, publicReadUserProjection)
+        .populate({
+          path: "progress.achievements",
+          select: "type createdAt",
+        })
+        .lean();
+
+      const achievements: any = {};
+      if (user) {
+        for (const achievement of user.progress.achievements) {
+          if (achievement.type in achievements) {
+            achievements[achievement.type].createdAt = achievement.createdAt;
+            achievements[achievement.type].count++;
+          } else {
+            achievements[achievement.type] = {
+              _id: achievement.type,
+              type: achievement.type,
+              createdAt: achievement.createdAt,
+              count: 1,
+            };
+          }
+        }
+      }
+      user.progress.achievements = Object.values(achievements);
+    } else {
+      throw createError(
+        strings.authorization.loginRequired,
+        StatusCodes.FORBIDDEN
+      );
     }
 
     if (!user) {
       throw createError(
-        dynamicMessage(dynamicMessage(ds.notFound, "User"), "User"),
+        dynamicMessage(ds.notFound, "User"),
         StatusCodes.NOT_FOUND
       );
     }
@@ -350,9 +472,12 @@ export async function getUser(req: Request, res: Response, next: NextFunction) {
       createdAt: -1,
     });
 
+    const followersCount = await Follow.countDocuments({ target: id });
+    const followingCount = await Follow.countDocuments({ user: id });
+    const reviewsCount = await Review.countDocuments({ writer: id });
     const totalCheckins = await CheckIn.countDocuments({ user: id });
 
-    const result = {
+    const result: any = {
       ...user,
       followersCount,
       followingCount,
@@ -362,7 +487,7 @@ export async function getUser(req: Request, res: Response, next: NextFunction) {
       remainingXp: calcRemainingXP((user.progress && user.progress.xp) || 0),
     };
 
-    if (id !== req.user!.id) {
+    if (view === "contextual") {
       result.isFollower = isFollower;
       result.isFollowing = isFollowing;
     }
@@ -429,9 +554,27 @@ export async function editUser(
       }
     });
 
-    const updatedUser = await User.findById(id, privateReadUserProjection)
+    const updatedUser: any = await User.findById(id, privateReadUserProjection)
       .populate("progress.achievements")
       .lean();
+
+    const achievements: any = {};
+    if (updatedUser) {
+      for (const achievement of updatedUser.progress.achievements) {
+        if (achievement.type in achievements) {
+          achievements[achievement.type].createdAt = achievement.createdAt;
+          achievements[achievement.type].count++;
+        } else {
+          achievements[achievement.type] = {
+            _id: achievement.type,
+            type: achievement.type,
+            createdAt: achievement.createdAt,
+            count: 1,
+          };
+        }
+      }
+    }
+    updatedUser.progress.achievements = Object.values(achievements);
 
     res.status(StatusCodes.OK).json({
       success: true,
