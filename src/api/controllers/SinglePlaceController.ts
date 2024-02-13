@@ -455,7 +455,7 @@ export async function getDetailedPlace(
     await place.processReviews();
   }
 
-  if (response[0].reviewCount < 4) {
+  if (response[0].reviewCount < 4 && response[0].scores) {
     delete response[0].scores.phantom;
   }
 
@@ -474,27 +474,20 @@ export async function getDetailedPlace(
     response[0].location.country = thirdPartyData.google?.country;
     response[0].categories = thirdPartyData.google?.categories;
   }
+
   return response[0];
 }
 
 async function fetchThirdPartiesData(place: IPlace) {
-  try {
-    const results = await Promise.all([
-      fetchGoogle(place, true),
-      fetchYelp(place, true),
-    ]);
+  const results = await Promise.all([
+    fetchGoogle(place, true),
+    fetchYelp(place, true),
+  ]);
 
-    return {
-      ...results[0],
-      ...results[1],
-    };
-  } catch (error) {
-    console.error(error);
-    throw createError(
-      "Something went wrong",
-      StatusCodes.INTERNAL_SERVER_ERROR
-    );
-  }
+  return {
+    ...results[0],
+    ...results[1],
+  };
 }
 
 export const getPlaceMediaValidation: ValidationChain[] = [
@@ -979,15 +972,18 @@ async function fetchGoogle(place: IPlace, getReviews: boolean) {
           googlePlacesData.address_components,
           "route"
         );
-        city = extractComponentFromGoogleAddressComponents(
-          googlePlacesData.address_components,
-          "locality"
-        );
         state = extractComponentFromGoogleAddressComponents(
           googlePlacesData.address_components,
           "administrative_area_level_1",
           true
         ); // Use short format
+        city = extractComponentFromGoogleAddressComponents(
+          googlePlacesData.address_components,
+          "locality"
+        );
+        if (!city || city === "") {
+          city = state;
+        }
         zip = extractComponentFromGoogleAddressComponents(
           googlePlacesData.address_components,
           "postal_code"
@@ -1021,15 +1017,18 @@ async function fetchGoogle(place: IPlace, getReviews: boolean) {
             googlePlacesData.address_components,
             "route"
           );
-          city = extractComponentFromGoogleAddressComponents(
-            googlePlacesData.address_components,
-            "locality"
-          );
           state = extractComponentFromGoogleAddressComponents(
             googlePlacesData.address_components,
             "administrative_area_level_1",
             true
           ); // Use short format
+          city = extractComponentFromGoogleAddressComponents(
+            googlePlacesData.address_components,
+            "locality"
+          );
+          if (!city || city === "") {
+            city = state;
+          }
           zip = extractComponentFromGoogleAddressComponents(
             googlePlacesData.address_components,
             "postal_code"

@@ -855,7 +855,7 @@ export async function getPlacesByContext(
     }
 
     if (!matchedPlace) {
-      const place = new Place({
+      matchedPlace = await Place.create({
         name: title,
         location: {
           geoLocation: {
@@ -864,7 +864,6 @@ export async function getPlacesByContext(
           },
         },
       });
-      matchedPlace = await place.save();
     }
 
     // combine it with detailed data

@@ -59,7 +59,7 @@ router.use(express.json());
 
 router
   .route("/")
-  .get(authMiddleware, getUsersValidation, getUsers)
+  .get(optionalAuthMiddleware, getUsersValidation, getUsers)
   .post(createUserValidation, createUser);
 
 router.get(

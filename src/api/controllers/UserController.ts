@@ -4,7 +4,6 @@ import type { NextFunction, Request, Response } from "express";
 import { body, param, query, type ValidationChain } from "express-validator";
 import { getAuth } from "firebase-admin/auth";
 import { StatusCodes } from "http-status-codes";
-import mongoose from "mongoose";
 
 import Block from "../../models/Block";
 import CheckIn from "../../models/CheckIn";
@@ -46,17 +45,17 @@ export async function getUsers(
   try {
     handleInputErrors(req);
 
-    const { id: authId } = req.user!;
+    const authId = req.user?.id;
 
     const { q } = req.query;
     const page = Number(req.query.page) || 1;
     const limit = Number(req.query.limit) || 10;
     const skip = (page - 1) * limit;
 
-    let result;
+    let users = [];
 
     if (q) {
-      result = await User.aggregate([
+      users = await User.aggregate([
         {
           $match: {
             $or: [
@@ -83,7 +82,7 @@ export async function getUsers(
           $project: publicReadUserProjection,
         },
       ]);
-    } else {
+    } else if (authId) {
       const followings = await Follow.find({ user: authId })
         .populate({
           path: "target",
@@ -96,10 +95,10 @@ export async function getUsers(
         .limit(limit)
         .lean();
 
-      result = followings.map((following) => following.target);
+      users = followings.map((following) => following.target);
     }
 
-    if (result.length === 0) {
+    if (users.length === 0 && authId) {
       const followers = await Follow.find({ target: authId })
         .populate({
           path: "user",
@@ -112,10 +111,10 @@ export async function getUsers(
         .limit(limit)
         .lean();
 
-      result = followers.map((follower) => follower.user);
+      users = followers.map((follower) => follower.user);
     }
 
-    for (const user of result) {
+    for (const user of users) {
       const achievements: any = {};
       if (user) {
         for (const achievement of user.progress.achievements) {
@@ -135,7 +134,7 @@ export async function getUsers(
       user.progress.achievements = Object.values(achievements);
     }
 
-    res.status(StatusCodes.OK).json({ success: true, data: result });
+    res.status(StatusCodes.OK).json({ success: true, data: users });
   } catch (err) {
     next(err);
   }

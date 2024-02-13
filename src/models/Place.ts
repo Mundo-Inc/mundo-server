@@ -199,7 +199,9 @@ const PlaceSchema: Schema = new Schema<IPlace>(
     },
     scores: {
       type: scoresSchema,
-      default: {},
+      default: {
+        updatedAt: new Date(),
+      },
     },
     phone: {
       type: String,
