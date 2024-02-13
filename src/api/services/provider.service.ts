@@ -11,7 +11,8 @@ const YELP_FUSION_API_KEY = process.env.YELP_FUSION_API_KEY;
 const FOURSQUARE_API_KEY = process.env.FOURSQUARE_API_KEY;
 
 const GOOGLE_PLACES_API_KEY = process.env.GOOGLE_PLACES_API_KEY;
-export const findYelpId = async (place: IPlace) => {
+
+export async function findYelpId(place: IPlace) {
   const url = new URL(
     `https://api.yelp.com/v3/businesses/matches?name=${place.name}&address1=${place.location.address}&city=${place.location.city}&state=${place.location.state}&country=${place.location.country}&latitude=${place.location.geoLocation.coordinates[1]}&longitude=${place.location.geoLocation.coordinates[0]}`.replaceAll(
       "#",
@@ -28,20 +29,12 @@ export const findYelpId = async (place: IPlace) => {
     },
   });
 
-  if (yelpResult.status === 200) {
-    if (yelpResult.data.businesses.length >= 1) {
-      return yelpResult.data.businesses[0].id;
-    } else {
-      throw createError(`Yelp place not found!`, StatusCodes.NOT_FOUND);
-    }
+  if (yelpResult.status === 200 && yelpResult.data.businesses.length >= 1) {
+    return yelpResult.data.businesses[0].id;
   } else {
-    logger.debug("yelp result", { yelpResult });
-    throw createError(
-      `Unexpected response. Status: ${yelpResult.status}`,
-      yelpResult.status
-    );
+    throw createError(`Yelp place not found!`, StatusCodes.NOT_FOUND);
   }
-};
+}
 
 export async function getYelpData(yelpId: string) {
   try {
