@@ -145,6 +145,7 @@ export const createUserValidation: ValidationChain[] = [
   validate.password(body("password")),
   validate.name(body("name")),
   validate.username(body("username").optional()),
+  body("referrer").optional().isMongoId(),
 ];
 export async function createUser(
   req: Request,
@@ -154,7 +155,7 @@ export async function createUser(
   try {
     handleInputErrors(req);
 
-    const { name, username, email, password } = req.body;
+    const { name, username, email, password, referrer } = req.body;
 
     const existingUser = await User.findOne({
       "email.address": { $regex: new RegExp(email, "i") },
@@ -167,6 +168,24 @@ export async function createUser(
       );
     }
 
+    if (referrer) {
+      const referredBy = await User.findById(referrer);
+      if (!referredBy) {
+        throw createError(
+          dynamicMessage(ds.notFound, "Referrer"),
+          StatusCodes.NOT_FOUND
+        );
+      }
+
+      referredBy.phantomCoins.balance += 250;
+      await referredBy.save();
+      await CoinReward.create({
+        userId: referredBy._id,
+        amount: 250,
+        coinRewardType: CoinRewardTypeEnum.referral,
+      });
+    }
+
     const hashedPassword = await bcrypt.hash(password, 10);
     const newUser = await handleSignUp(
       email.toLowerCase(),
@@ -175,6 +194,16 @@ export async function createUser(
       SignupMethodEnum.traditional,
       hashedPassword
     );
+
+    if (referrer) {
+      newUser.referredBy = referrer;
+      newUser.phantomCoins.balance += 250;
+      await CoinReward.create({
+        userId: newUser._id,
+        amount: 250,
+        coinRewardType: CoinRewardTypeEnum.referral,
+      });
+    }
 
     newUser.accepted_eula = new Date();
     await newUser.save();
@@ -549,18 +578,18 @@ export async function editUser(
         );
       }
 
-      user.referredBy = referrer;
-      user.phantomCoins.balance += 250;
-      await CoinReward.create({
-        userId: user._id,
-        amount: 250,
-        coinRewardType: CoinRewardTypeEnum.referral,
-      });
-
       referredBy.phantomCoins.balance += 250;
       await referredBy.save();
       await CoinReward.create({
         userId: referredBy._id,
+        amount: 250,
+        coinRewardType: CoinRewardTypeEnum.referral,
+      });
+
+      user.referredBy = referrer;
+      user.phantomCoins.balance += 250;
+      await CoinReward.create({
+        userId: user._id,
         amount: 250,
         coinRewardType: CoinRewardTypeEnum.referral,
       });
