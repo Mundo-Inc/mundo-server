@@ -327,25 +327,3 @@ export async function getUserConnections(
     next(err);
   }
 }
-
-export async function updateUsersPrivacy() {
-  try {
-    // Find all users who don't have the 'phantomCoins' field
-    const usersWithoutPrivacy = await User.find({
-      isPrivate: { $exists: false },
-    });
-
-    // Iterate over these users and update them
-    const updatePromises = usersWithoutPrivacy.map((user) => {
-      user.isPrivate = false;
-      return user.save(); // Save each updated user
-    });
-
-    // Wait for all updates to complete
-    await Promise.all(updatePromises);
-
-    logger.verbose("Updated all users missing isPrivate field.");
-  } catch (error) {
-    console.error("Error updating users: ", error);
-  }
-}

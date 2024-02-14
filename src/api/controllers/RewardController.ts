@@ -267,29 +267,3 @@ export async function reviewRedemption(
     next(error);
   }
 }
-
-//TODO: REMOVE THIS FUNC
-export async function updateUsersPhantomCoin() {
-  try {
-    // Find all users who don't have the 'phantomCoins' field
-    const usersWithoutPhantomCoins = await User.find({
-      phantomCoins: { $exists: false },
-    });
-
-    // Iterate over these users and update them
-    const updatePromises = usersWithoutPhantomCoins.map((user) => {
-      user.phantomCoins = {
-        balance: 0,
-        daily: { streak: 0 },
-      };
-      return user.save(); // Save each updated user
-    });
-
-    // Wait for all updates to complete
-    await Promise.all(updatePromises);
-
-    logger.verbose("Updated all users missing phantomCoins field.");
-  } catch (error) {
-    console.error("Error updating users: ", error);
-  }
-}

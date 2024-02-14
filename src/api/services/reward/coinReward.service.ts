@@ -4,7 +4,6 @@ import CheckIn from "../../../models/CheckIn";
 import CoinReward, { CoinRewardTypeEnum } from "../../../models/CoinReward";
 import { IMission, TaskTypeEnum } from "../../../models/Mission";
 import Reaction from "../../../models/Reaction";
-import Review from "../../../models/Review";
 import { IDailyReward, IUser } from "../../../models/User";
 import UserActivity, { ResourceTypeEnum } from "../../../models/UserActivity";
 import { dStrings, dynamicMessage } from "../../../strings";
@@ -49,13 +48,11 @@ export async function updateUserCoinsAndStreak(
 }
 
 export async function saveCoinReward(user: IUser, rewardAmount: number) {
-  const reward = await CoinReward.create({
+  await CoinReward.create({
     userId: user._id,
     amount: rewardAmount,
     coinRewardType: CoinRewardTypeEnum.daily,
   });
-
-  await reward.save();
 }
 
 export async function applyDailyStreakResetIfNeeded(user: IUser) {

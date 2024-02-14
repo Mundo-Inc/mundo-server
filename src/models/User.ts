@@ -91,6 +91,7 @@ export interface IUser extends Document {
   };
   latestPlace?: mongoose.Types.ObjectId;
   isPrivate: boolean;
+  referredBy?: mongoose.Types.ObjectId;
 }
 
 const UserSchema = new Schema<IUser>(
@@ -250,6 +251,10 @@ const UserSchema = new Schema<IUser>(
       ],
     },
     isPrivate: { type: Boolean, default: false },
+    referredBy: {
+      type: Schema.Types.ObjectId,
+      ref: "User",
+    },
   },
 
   { timestamps: true }

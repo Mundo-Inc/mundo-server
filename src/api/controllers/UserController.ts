@@ -19,7 +19,6 @@ import User, {
 import strings, { dStrings as ds, dynamicMessage } from "../../strings";
 import { createError, handleInputErrors } from "../../utilities/errorHandlers";
 import { bucketName, s3 } from "../../utilities/storage";
-import { type EditUserDto } from "../dto/user/edit-user.dto";
 import {
   PrivateReadUserDto,
   privateReadUserProjection,
@@ -29,6 +28,7 @@ import { handleSignUp } from "../lib/profile-handlers";
 import { calcRemainingXP } from "../services/reward/helpers/levelCalculations";
 import { sendSlackMessage } from "./SlackController";
 import validate from "./validators";
+import CoinReward, { CoinRewardTypeEnum } from "../../models/CoinReward";
 
 // const FIREBASE_WEB_API_KEY = process.env.FIREBASE_WEB_API_KEY;
 
@@ -503,6 +503,7 @@ export const editUserValidation: ValidationChain[] = [
   validate.bio(body("bio").optional()),
   validate.username(body("username").optional()),
   body("eula").optional().isBoolean(),
+  body("referrer").optional().isMongoId(),
   body("removeProfileImage").optional().isBoolean(),
 ];
 export async function editUser(
@@ -521,24 +522,65 @@ export async function editUser(
       );
     }
 
-    const { name, bio, username, removeProfileImage, eula } = req.body;
+    const user = await User.findById(id);
 
-    const editUserDto: EditUserDto = {};
+    const { name, bio, username, removeProfileImage, eula, referrer } =
+      req.body;
+
+    if (referrer) {
+      if (user.accepted_eula) {
+        throw createError(
+          "Cannot set referrer after signing up",
+          StatusCodes.BAD_REQUEST
+        );
+      }
+      if (user.referrer) {
+        throw createError("Referrer already set", StatusCodes.BAD_REQUEST);
+      }
+      if (!eula) {
+        throw createError("EULA must be accepted", StatusCodes.BAD_REQUEST);
+      }
+
+      const referredBy = await User.findById(referrer);
+      if (!referredBy) {
+        throw createError(
+          dynamicMessage(ds.notFound, "Referrer"),
+          StatusCodes.NOT_FOUND
+        );
+      }
+
+      user.referredBy = referrer;
+      user.phantomCoins.balance += 250;
+      await CoinReward.create({
+        userId: user._id,
+        amount: 250,
+        coinRewardType: CoinRewardTypeEnum.referral,
+      });
+
+      referredBy.phantomCoins.balance += 250;
+      await referredBy.save();
+      await CoinReward.create({
+        userId: referredBy._id,
+        amount: 250,
+        coinRewardType: CoinRewardTypeEnum.referral,
+      });
+    }
+
     if (name) {
-      editUserDto.name = name;
+      user.name = name;
     }
     if (bio) {
-      editUserDto.bio = bio;
+      user.bio = bio;
     }
     if (username) {
-      editUserDto.username = username;
+      user.username = username;
     }
     if (eula) {
-      editUserDto.accepted_eula = new Date();
+      user.accepted_eula = new Date();
     }
 
     if (removeProfileImage === true) {
-      editUserDto.profileImage = "";
+      user.profileImage = "";
       s3.send(
         new DeleteObjectCommand({
           Bucket: bucketName,
@@ -547,11 +589,13 @@ export async function editUser(
       );
     }
 
-    await User.updateOne({ _id: id }, editUserDto).catch((err) => {
+    try {
+      await user.save();
+    } catch (err: any) {
       if (err.code === 11000) {
         throw createError(strings.user.usernameTaken, StatusCodes.CONFLICT);
       }
-    });
+    }
 
     const updatedUser: any = await User.findById(id, privateReadUserProjection)
       .populate("progress.achievements")
@@ -577,7 +621,7 @@ export async function editUser(
 
     res.status(StatusCodes.OK).json({
       success: true,
-      data: updatedUser as PrivateReadUserDto,
+      data: updatedUser,
     });
   } catch (err) {
     next(err);

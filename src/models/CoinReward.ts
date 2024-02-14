@@ -3,6 +3,7 @@ import mongoose, { Schema, Document } from "mongoose";
 export enum CoinRewardTypeEnum {
   daily = "DAILY",
   mission = "MISSION",
+  referral = "REFERRAL",
 }
 
 export interface ICoinReward extends Document {
