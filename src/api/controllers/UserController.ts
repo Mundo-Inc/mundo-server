@@ -197,12 +197,6 @@ export async function createUser(
 
     if (referrer) {
       newUser.referredBy = referrer;
-      newUser.phantomCoins.balance += 250;
-      await CoinReward.create({
-        userId: newUser._id,
-        amount: 250,
-        coinRewardType: CoinRewardTypeEnum.referral,
-      });
     }
 
     newUser.accepted_eula = new Date();
@@ -587,12 +581,6 @@ export async function editUser(
       });
 
       user.referredBy = referrer;
-      user.phantomCoins.balance += 250;
-      await CoinReward.create({
-        userId: user._id,
-        amount: 250,
-        coinRewardType: CoinRewardTypeEnum.referral,
-      });
     }
 
     if (name) {
