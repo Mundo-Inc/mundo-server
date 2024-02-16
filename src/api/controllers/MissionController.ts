@@ -4,11 +4,10 @@ import { StatusCodes } from "http-status-codes";
 
 import CoinReward, { CoinRewardTypeEnum } from "../../models/CoinReward";
 import Mission, { TaskTypeEnum, type IMission } from "../../models/Mission";
+import Prize from "../../models/Prize";
 import User, { type IUser } from "../../models/User";
 import { createError, handleInputErrors } from "../../utilities/errorHandlers";
 import { populateMissionProgress } from "../services/reward/coinReward.service";
-import Prize from "../../models/Prize";
-import mongoose from "mongoose";
 
 export const createMissionValidation: ValidationChain[] = [
   body("title").isString(),
@@ -219,14 +218,22 @@ export async function getPrizes(
           preserveNullAndEmptyArrays: true,
         },
       },
-      // {
-      //   $match: {
-      //     $or: [
-      //       { "redemptionDetails.userId": new mongoose.Types.ObjectId(authId) },
-      //       { redemptionDetails: { $exists: false } },
-      //     ],
-      //   },
-      // },
+      {
+        $group: {
+          _id: "$_id",
+          title: { $first: "$title" },
+          thumbnail: { $first: "$thumbnail" },
+          amount: { $first: "$amount" },
+          count: { $first: "$count" },
+          createdAt: { $first: "$createdAt" },
+          isRedeemed: {
+            $first: {
+              $cond: { if: "$redemptionDetails", then: true, else: false },
+            },
+          },
+          status: { $first: "$redemptionDetails.status" },
+        },
+      },
       {
         $project: {
           title: 1,
@@ -234,10 +241,8 @@ export async function getPrizes(
           amount: 1,
           count: 1,
           createdAt: 1,
-          isRedeemed: {
-            $cond: { if: "$redemptionDetails", then: true, else: false },
-          },
-          status: "$redemptionDetails.status",
+          isRedeemed: 1,
+          status: 1,
         },
       },
     ]);
