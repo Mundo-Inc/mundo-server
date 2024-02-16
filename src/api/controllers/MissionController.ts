@@ -8,6 +8,7 @@ import User, { type IUser } from "../../models/User";
 import { createError, handleInputErrors } from "../../utilities/errorHandlers";
 import { populateMissionProgress } from "../services/reward/coinReward.service";
 import Prize from "../../models/Prize";
+import mongoose from "mongoose";
 
 export const createMissionValidation: ValidationChain[] = [
   body("title").isString(),
@@ -201,7 +202,43 @@ export async function getPrizes(
   next: NextFunction
 ) {
   try {
-    const prizes = await Prize.find({}).lean();
+    const { id: authId } = req.user!;
+
+    const prizes = await Prize.aggregate([
+      {
+        $lookup: {
+          from: "prizeredemptions", // This should be the collection name of PrizeRedemption in your MongoDB
+          localField: "_id", // Field in Prize collection
+          foreignField: "prizeId", // Field in PrizeRedemption collection
+          as: "redemptionDetails", // Alias for the output array containing the joined documents
+        },
+      },
+      {
+        $unwind: {
+          path: "$redemptionDetails",
+          preserveNullAndEmptyArrays: true, 
+        },
+      },
+      {
+        $match: {
+          $or: [
+            { "redemptionDetails.userId": new mongoose.Types.ObjectId(authId) }, 
+            { "redemptionDetails": { $exists: false } },
+          ],
+        },
+      },
+      {
+        $project: {
+          title: 1, 
+          thumbnail: 1,
+          amount: 1,
+          count: 1,
+          createdAt: 1,
+          isRedeemed: { $cond: { if: "$redemptionDetails", then: true, else: false } },
+          status: "$redemptionDetails.status",
+        },
+      },
+    ]);
     res.status(200).json({ success: true, data: prizes });
   } catch (error) {
     next(error);
