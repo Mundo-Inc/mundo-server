@@ -216,25 +216,27 @@ export async function getPrizes(
       {
         $unwind: {
           path: "$redemptionDetails",
-          preserveNullAndEmptyArrays: true, 
+          preserveNullAndEmptyArrays: true,
         },
       },
-      {
-        $match: {
-          $or: [
-            { "redemptionDetails.userId": new mongoose.Types.ObjectId(authId) }, 
-            { "redemptionDetails": { $exists: false } },
-          ],
-        },
-      },
+      // {
+      //   $match: {
+      //     $or: [
+      //       { "redemptionDetails.userId": new mongoose.Types.ObjectId(authId) },
+      //       { redemptionDetails: { $exists: false } },
+      //     ],
+      //   },
+      // },
       {
         $project: {
-          title: 1, 
+          title: 1,
           thumbnail: 1,
           amount: 1,
           count: 1,
           createdAt: 1,
-          isRedeemed: { $cond: { if: "$redemptionDetails", then: true, else: false } },
+          isRedeemed: {
+            $cond: { if: "$redemptionDetails", then: true, else: false },
+          },
           status: "$redemptionDetails.status",
         },
       },
