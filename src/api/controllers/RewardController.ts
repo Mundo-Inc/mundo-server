@@ -267,3 +267,49 @@ export async function reviewRedemption(
     next(error);
   }
 }
+
+export const paginationValidation: ValidationChain[] = [
+  query("page")
+    .optional()
+    .isInt({ min: 1 })
+    .withMessage("Page must be at least 1"),
+  query("limit")
+    .optional()
+    .isInt({ min: 1 })
+    .withMessage("Limit must be at least 1"),
+];
+
+export async function getLatestReferredUsers(
+  req: Request,
+  res: Response,
+  next: NextFunction
+) {
+  try {
+    const { id: authId } = req.user!;
+
+    const page = Number(req.query.page) || 1;
+    const limit = Number(req.query.limit) || 20;
+    const skip = (page - 1) * limit;
+
+    const latestReferredUsers = await User.find({ referredBy: authId })
+      .sort({ createdAt: -1 })
+      .select(publicReadUserEssentialProjection)
+      .skip(skip)
+      .limit(limit);
+
+    const total = await User.countDocuments({ referredBy: authId });
+
+    res.json({
+      success: true,
+      data: latestReferredUsers,
+      pagination: {
+        total,
+        page: skip / limit + 1,
+        limit,
+        pages: Math.ceil(total / limit),
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+}

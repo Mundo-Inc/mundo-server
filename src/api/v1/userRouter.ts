@@ -53,6 +53,10 @@ import {
   authMiddleware,
   optionalAuthMiddleware,
 } from "../middlewares/authMiddleWare";
+import {
+  getLatestReferredUsers,
+  paginationValidation,
+} from "../controllers/RewardController";
 
 const router = express.Router();
 router.use(express.json());
@@ -88,6 +92,13 @@ router.get(
   authMiddleware,
   getPendingConnectionsValidation,
   getPendingConnections
+);
+
+router.get(
+  "/latestReferrals",
+  authMiddleware,
+  paginationValidation,
+  getLatestReferredUsers
 );
 
 router

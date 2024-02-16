@@ -37,7 +37,6 @@ router.use("/feeds", feedRouter);
 router.use("/notifications", notificationRouter);
 router.use("/lists", listRouter);
 router.use("/rewards", rewardRouter);
-
 router.use("/dev", devRouter);
 router.use("/admin", adminRouter);
 

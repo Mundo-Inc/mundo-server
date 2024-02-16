@@ -8,6 +8,7 @@ export type PublicReadUserDto = {
   followingCount: number;
   reviewsCount: number;
   verified: boolean;
+  createdAt: Date;
   progress: {
     xp: number;
     level: number;
@@ -41,6 +42,7 @@ export const publicReadUserEssentialProjection: {
   profileImage: true,
   username: true,
   verified: true,
+  createdAt: true,
   progress: {
     level: true,
     xp: true,
