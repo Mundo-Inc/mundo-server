@@ -161,11 +161,6 @@ async function notifyReferrer(
         amount,
         newUserName,
       },
-      resources: [
-        {
-          amount: amount,
-        },
-      ],
       importance: 2,
     });
 
