@@ -35,6 +35,7 @@ import Notification, {
   INotification,
   NotificationType,
 } from "../../models/Notification";
+import logger from "../services/logger";
 
 // const FIREBASE_WEB_API_KEY = process.env.FIREBASE_WEB_API_KEY;
 
@@ -182,9 +183,13 @@ async function notifyReferrer(
       }
     );
   } catch (error) {
-    throw createError(
-      "Something happened during sending the reward notification",
-      500
+    logger.error(error);
+
+    logger.error(
+      referredBy.email.address,
+      referredBy.name,
+      amount,
+      newUserName
     );
   }
 }
