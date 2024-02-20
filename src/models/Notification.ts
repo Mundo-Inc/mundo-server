@@ -11,6 +11,7 @@ export enum NotificationType {
   NEW_REVIEW = "NEW_REVIEW",
   FOLLOWING_CHECKIN = "FOLLOWING_CHECKIN",
   FOLLOWING_REVIEW = "FOLLOWING_REVIEW",
+  REFERRAL_REWARD = "REFERRAL_REWARD",
 }
 
 export enum ResourceTypes {
@@ -25,6 +26,7 @@ export enum ResourceTypes {
 interface Resources {
   _id: mongoose.Types.ObjectId;
   type: ResourceTypes;
+  amount: number;
   date: Date;
 }
 

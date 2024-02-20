@@ -29,6 +29,12 @@ import { calcRemainingXP } from "../services/reward/helpers/levelCalculations";
 import { sendSlackMessage } from "./SlackController";
 import validate from "./validators";
 import CoinReward, { CoinRewardTypeEnum } from "../../models/CoinReward";
+import { BrevoService } from "../services/brevo.service";
+import { STATUS_CODES } from "http";
+import Notification, {
+  INotification,
+  NotificationType,
+} from "../../models/Notification";
 
 // const FIREBASE_WEB_API_KEY = process.env.FIREBASE_WEB_API_KEY;
 
@@ -140,6 +146,49 @@ export async function getUsers(
   }
 }
 
+async function notifyReferrer(
+  referredBy: IUser,
+  newUserName: string,
+  amount: number
+) {
+  try {
+    // Sending app notification
+    await Notification.create({
+      user: referredBy,
+      type: NotificationType.REFERRAL_REWARD,
+      resources: [
+        {
+          amount: amount,
+        },
+      ],
+      importance: 2,
+    });
+
+    // Sending email notification
+    const receivers = [{ email: referredBy.email.address }];
+    const sender = { email: "admin@phantomphood.com", name: "Phantom Phood" };
+    const subject = "PhantomPhood - Referral Reward";
+    const brevoService = new BrevoService();
+    const referredByName = referredBy.name;
+    await brevoService.sendTemplateEmail(
+      receivers,
+      subject,
+      sender,
+      "referral-reward.handlebars",
+      {
+        referredByName,
+        newUserName,
+        amount,
+      }
+    );
+  } catch (error) {
+    throw createError(
+      "Something happened during sending the reward notification",
+      500
+    );
+  }
+}
+
 export const createUserValidation: ValidationChain[] = [
   validate.email(body("email")),
   validate.password(body("password")),
@@ -176,14 +225,16 @@ export async function createUser(
           StatusCodes.NOT_FOUND
         );
       }
-
-      referredBy.phantomCoins.balance += 250;
+      const amount = 250;
+      referredBy.phantomCoins.balance += amount;
       await referredBy.save();
       await CoinReward.create({
         userId: referredBy._id,
-        amount: 250,
+        amount: amount,
         coinRewardType: CoinRewardTypeEnum.referral,
       });
+
+      await notifyReferrer(referredBy, name, amount);
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);

@@ -166,6 +166,12 @@ export async function getNotificationContent(notification: INotification) {
           content = `${checkin.user.name} checked into ${checkin.place.name}`;
         });
       break;
+    case NotificationType.REFERRAL_REWARD:
+      title = "Referral Reward";
+      content = `Congratulations! You've been credited with ${
+        notification.resources![0].amount
+      } Phantom Coins for successfully referring a friend to our app. Thanks for sharing!`;
+      break;
     default:
       break;
   }
