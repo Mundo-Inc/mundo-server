@@ -19,10 +19,7 @@ import User, {
 import strings, { dStrings as ds, dynamicMessage } from "../../strings";
 import { createError, handleInputErrors } from "../../utilities/errorHandlers";
 import { bucketName, s3 } from "../../utilities/storage";
-import {
-  PrivateReadUserDto,
-  privateReadUserProjection,
-} from "../dto/user/read-user-private.dto";
+import { privateReadUserProjection } from "../dto/user/read-user-private.dto";
 import { publicReadUserProjection } from "../dto/user/read-user-public.dto";
 import { handleSignUp } from "../lib/profile-handlers";
 import { calcRemainingXP } from "../services/reward/helpers/levelCalculations";
@@ -30,11 +27,7 @@ import { sendSlackMessage } from "./SlackController";
 import validate from "./validators";
 import CoinReward, { CoinRewardTypeEnum } from "../../models/CoinReward";
 import { BrevoService } from "../services/brevo.service";
-import { STATUS_CODES } from "http";
-import Notification, {
-  INotification,
-  NotificationType,
-} from "../../models/Notification";
+import Notification, { NotificationType } from "../../models/Notification";
 import logger from "../services/logger";
 
 // const FIREBASE_WEB_API_KEY = process.env.FIREBASE_WEB_API_KEY;

@@ -22,6 +22,7 @@ import {
   updateUserCoinsAndStreak,
 } from "../services/reward/coinReward.service";
 import validate from "./validators";
+import { BrevoService } from "../services/brevo.service";
 
 export const dailyCoinInformationValidation: ValidationChain[] = [];
 export async function dailyCoinInformation(
@@ -89,6 +90,32 @@ export async function claimDailyCoins(
   }
 }
 
+async function notifyRedemptionInProgress(user: IUser, prize: IPrize) {
+  try {
+    // Sending email notification
+    const receivers = [{ email: user.email.address }];
+    const sender = { email: "admin@phantomphood.com", name: "Phantom Phood" };
+    const subject = "PhantomPhood - Prize Redemption";
+    const brevoService = new BrevoService();
+    const prizeTitle = prize.title;
+    const prizeAmount = prize.amount;
+    const name = user.name;
+    await brevoService.sendTemplateEmail(
+      receivers,
+      subject,
+      sender,
+      "redemption-in-progress.handlebars",
+      {
+        name,
+        prizeTitle,
+        prizeAmount,
+      }
+    );
+  } catch (error) {
+    logger.error("error while sending email for redemption");
+  }
+}
+
 export const redeemPrizeValidation: ValidationChain[] = [
   param("id").isMongoId(),
 ];
@@ -133,6 +160,9 @@ export async function redeemPrize(
     });
 
     await prizeRedemption.save();
+
+    // notify them that they redemption is in verification progress
+    await notifyRedemptionInProgress(user, prize);
 
     res.status(200).json({
       success: true,
