@@ -157,6 +157,10 @@ async function notifyReferrer(
     await Notification.create({
       user: referredBy,
       type: NotificationType.REFERRAL_REWARD,
+      additionalData: {
+        amount,
+        newUserName,
+      },
       resources: [
         {
           amount: amount,

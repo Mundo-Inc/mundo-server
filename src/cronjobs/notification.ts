@@ -168,9 +168,14 @@ export async function getNotificationContent(notification: INotification) {
       break;
     case NotificationType.REFERRAL_REWARD:
       title = "Referral Reward";
-      content = `Congratulations! You've been credited with ${
-        notification.resources![0].amount
-      } Phantom Coins for successfully referring a friend to our app. Thanks for sharing!`;
+      const friendName =
+        "(" + notification.additionalData?.newUserName + ") " || "";
+      content =
+        `Congratulations! You've been credited with ${
+          notification.additionalData?.amount || 250
+        } Phantom Coins for successfully referring your frined ` +
+        friendName +
+        `to our app. Thanks for sharing!`;
       break;
     default:
       break;

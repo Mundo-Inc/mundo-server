@@ -43,6 +43,10 @@ export interface INotification extends Document {
   failReason?: string;
   importance: 0 | 1 | 2 | 3;
   resources?: Resources[];
+  additionalData?: {
+    amount?: number;
+    newUserName?: string;
+  };
   batchCount: number;
   content?: string | null;
   metadata?: Metadata;
@@ -103,6 +107,16 @@ const NotificationSchema: Schema = new Schema<INotification>(
         },
       ],
       default: [],
+    },
+    additionalData: {
+      amount: {
+        type: Number,
+        required: false,
+      },
+      newUserName: {
+        type: String,
+        required: false,
+      },
     },
     batchCount: {
       type: Number,
