@@ -166,6 +166,17 @@ async function getNotificationContent(notification: INotification) {
           activity = checkin.userActivityId;
         });
       break;
+    case NotificationType.REFERRAL_REWARD:
+      title = "Referral Reward";
+      const friendName =
+        "(" + notification.additionalData?.newUserName + ") " || "";
+      content =
+        `Congratulations! You've been credited with ${
+          notification.additionalData?.amount || 250
+        } Phantom Coins for successfully referring your frined ` +
+        friendName +
+        `to our app. Thanks for sharing!`;
+      break;
     default:
       break;
   }
