@@ -562,10 +562,6 @@ export async function getUser(req: Request, res: Response, next: NextFunction) {
       result.isFollowing = isFollowing;
     }
 
-    if (result.user.profileImage === "") {
-      result.user.profileImage = null;
-    }
-
     res.status(StatusCodes.OK).json({ success: true, data: result });
   } catch (err) {
     next(err);
