@@ -13,26 +13,47 @@ const FOURSQUARE_API_KEY = process.env.FOURSQUARE_API_KEY;
 const GOOGLE_PLACES_API_KEY = process.env.GOOGLE_PLACES_API_KEY;
 
 export async function findYelpId(place: IPlace) {
-  const url = new URL(
-    `https://api.yelp.com/v3/businesses/matches?name=${place.name}&address1=${place.location.address}&city=${place.location.city}&state=${place.location.state}&country=${place.location.country}&latitude=${place.location.geoLocation.coordinates[1]}&longitude=${place.location.geoLocation.coordinates[0]}`.replaceAll(
-      "#",
-      ""
-    )
-  );
+  try {
+    const url = new URL(
+      `https://api.yelp.com/v3/businesses/matches?name=${place.name}&address1=${place.location.address}&city=${place.location.city}&state=${place.location.state}&country=${place.location.country}&latitude=${place.location.geoLocation.coordinates[1]}&longitude=${place.location.geoLocation.coordinates[0]}`.replaceAll(
+        "#",
+        ""
+      )
+    );
 
-  const yelpResult = await axios({
-    method: "get",
-    url: url.href,
-    headers: {
-      Authorization: `Bearer ${YELP_FUSION_API_KEY}`,
-      Accept: "application/json",
-    },
-  });
+    const yelpResult = await axios({
+      method: "get",
+      url: url.href,
+      headers: {
+        Authorization: `Bearer ${YELP_FUSION_API_KEY}`,
+        Accept: "application/json",
+      },
+    });
 
-  if (yelpResult.status === 200 && yelpResult.data.businesses.length >= 1) {
-    return yelpResult.data.businesses[0].id;
-  } else {
-    throw createError(`Yelp place not found!`, StatusCodes.NOT_FOUND);
+    if (yelpResult.status === 200 && yelpResult.data.businesses.length >= 1) {
+      return yelpResult.data.businesses[0].id;
+    } else {
+      throw createError(`Yelp place not found!`, StatusCodes.NOT_FOUND);
+    }
+  } catch (error) {
+    const url = new URL(
+      `https://api.yelp.com/v3/businesses/search?latitude=${place.location.geoLocation.coordinates[1]}&longitude=${place.location.geoLocation.coordinates[0]}&term=${place.name}`
+    );
+
+    const yelpResult = await axios({
+      method: "get",
+      url: url.href,
+      headers: {
+        Authorization: `Bearer ${YELP_FUSION_API_KEY}`,
+        Accept: "application/json",
+      },
+    });
+
+    if (yelpResult.status === 200 && yelpResult.data.businesses.length >= 1) {
+      return yelpResult.data.businesses[0].id;
+    } else {
+      throw createError(`Yelp place not found!`, StatusCodes.NOT_FOUND);
+    }
   }
 }
 

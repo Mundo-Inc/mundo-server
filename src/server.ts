@@ -1,7 +1,7 @@
 import cookieParser from "cookie-parser";
 import cors from "cors";
 import "dotenv/config";
-import express, { type Express } from "express";
+import express from "express";
 import rateLimit from "express-rate-limit";
 import helmet from "helmet";
 import logger from "./api/services/logger";
@@ -30,7 +30,7 @@ import { connectDatabase } from "./config/database";
 import router from "./router";
 import { errorHandler } from "./utilities/errorHandlers";
 
-const app: Express = express();
+const app = express();
 
 app.set("trust proxy", 1); // If there's one proxy in front of your app
 
