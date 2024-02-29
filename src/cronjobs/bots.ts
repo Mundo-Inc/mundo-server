@@ -9,7 +9,7 @@ import UserActivity, {
 import Reaction from "../models/Reaction";
 
 function getDateHoursAgo(hours: number) {
-  var now = new Date();
+  let now = new Date();
   now.setHours(now.getHours() - hours);
   return now;
 }

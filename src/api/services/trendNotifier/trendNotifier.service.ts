@@ -5,7 +5,7 @@ import logger from "../logger";
 import { thresholds } from "../reward/utils/threshold";
 
 function getPreviousDate(hours: number) {
-  var now = new Date();
+  let now = new Date();
   now.setHours(now.getHours() - hours);
   return now;
 }

@@ -1,18 +1,15 @@
 import axios from "axios";
 import type { NextFunction, Request, Response } from "express";
 import { query, type ValidationChain } from "express-validator";
+import levenshtein from "fast-levenshtein";
+import haversine from "haversine-distance";
 import { StatusCodes } from "http-status-codes";
 
+import Place, { type IPlace } from "../../models/Place";
 import { createError, handleInputErrors } from "../../utilities/errorHandlers";
-
-var levenshtein = require("fast-levenshtein");
+import logger from "../services/logger";
 
 const API_KEY = process.env.GOOGLE_PLACES_API_KEY;
-
-import haversine from "haversine-distance";
-
-import Place, { IPlace } from "../../models/Place";
-import logger from "../services/logger";
 
 const RADIUS = 10000; // In meters, adjust as necessary
 const INTEREST_TYPES = [

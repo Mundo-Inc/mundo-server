@@ -1,5 +1,5 @@
-var levenshtein = require("fast-levenshtein");
-var unorm = require("unorm");
+import levenshtein from "fast-levenshtein";
+import unorm from "unorm";
 
 export function cleanAndSort(str: string) {
   return str.split(" ").sort().join(" ").toLowerCase();

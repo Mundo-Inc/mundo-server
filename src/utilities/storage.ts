@@ -1,11 +1,11 @@
 import { S3 } from "@aws-sdk/client-s3";
+import { path } from "@ffmpeg-installer/ffmpeg";
 import { type Request } from "express";
 import ffmpeg from "fluent-ffmpeg";
 import formidable, { type Fields, type Files } from "formidable";
 import * as fs from "fs";
-const ffmpegPath = require("@ffmpeg-installer/ffmpeg").path;
 
-ffmpeg.setFfmpegPath(ffmpegPath);
+ffmpeg.setFfmpegPath(path);
 
 export const s3 = new S3({
   region: process.env.AWS_S3_REGION,
@@ -30,17 +30,16 @@ export const allowedMimeTypes = [
   "video/x-quicktime",
 ];
 
-export const ensureDirectoryExists = (directoryPath: string) => {
-  if (!fs.existsSync(directoryPath)) {
-    fs.mkdirSync(directoryPath, { recursive: true });
-  }
-};
-
 export async function parseForm(
   req: Request
 ): Promise<{ fields: Fields; files: Files }> {
   const uploadDir = `./tmp`;
-  ensureDirectoryExists(uploadDir);
+
+  // Ensure the upload directory exists
+  if (!fs.existsSync(uploadDir)) {
+    fs.mkdirSync(uploadDir, { recursive: true });
+  }
+
   const form = formidable({
     uploadDir,
     keepExtensions: true,

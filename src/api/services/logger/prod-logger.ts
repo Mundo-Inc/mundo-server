@@ -49,9 +49,3 @@ export default function buildProdLogger(): Logger {
     ],
   });
 }
-
-// USAGE:
-// logger.error("Error occurred", {
-//     error: new Error("yo error"),
-//     additionalData: "Some additional info",
-//   });

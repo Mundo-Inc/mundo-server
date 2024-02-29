@@ -1,11 +1,5 @@
 import express from "express";
 
-import {
-  addPlaceActivities,
-  engagements,
-  fixPlaces,
-  importAllUsersToFirebase,
-} from "../controllers/DevController";
 import { adminAuthMiddleware } from "../middlewares/authMiddleWare";
 
 // Admin Only
@@ -14,12 +8,8 @@ router.use(express.json());
 router.use(adminAuthMiddleware);
 
 // Routes
-router.get("/fixPlaces", fixPlaces);
-
-router.get("/engagements", engagements);
-
-router.post("/importAllUsersToFirebase", importAllUsersToFirebase);
-
-router.get("/addPlaceActivities", addPlaceActivities);
+router.get("/hello", (req, res) => {
+  res.send("Hello, Admin!");
+});
 
 export default router;

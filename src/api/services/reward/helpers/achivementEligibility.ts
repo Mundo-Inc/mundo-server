@@ -1,3 +1,6 @@
+import moment from "moment-timezone";
+import tzlookup from "tz-lookup";
+
 import Achievement, {
   AchievementTypeEnum,
   IAchievement,
@@ -8,8 +11,7 @@ import Review from "../../../../models/Review";
 import User from "../../../../models/User";
 import logger from "../../logger";
 import { thresholds } from "../utils/threshold";
-const tzlookup = require("tz-lookup");
-const moment = require("moment-timezone");
+
 export const eligibleForAchivement = async (
   userId: string,
   AchievementType: string

@@ -1,5 +1,4 @@
 import { PutObjectCommand } from "@aws-sdk/client-s3";
-import axios from "axios";
 import type { NextFunction, Request, Response } from "express";
 import { param, query, type ValidationChain } from "express-validator";
 import { type File } from "formidable";
@@ -11,7 +10,7 @@ import Place, { type IPlace } from "../../models/Place";
 import { dStrings, dynamicMessage } from "../../strings";
 import { createError, handleInputErrors } from "../../utilities/errorHandlers";
 import { bucketName, parseForm, region, s3 } from "../../utilities/storage";
-import { areSimilar, areStrictlySimilar } from "../../utilities/stringHelper";
+import { areStrictlySimilar } from "../../utilities/stringHelper";
 import { publicReadUserEssentialProjection } from "../dto/user/read-user-public.dto";
 import {
   findFoursquareId,
@@ -24,17 +23,12 @@ import {
 import { getDetailedPlace } from "./SinglePlaceController";
 import validate from "./validators";
 
-// var levenshtein = require("fast-levenshtein");
-var country = require("countrystatesjs");
-var iso3311a2 = require("iso-3166-1-alpha-2");
-
 export const createPlaceValidation: ValidationChain[] = [
   // validate.name(body("name")),
   // validate.place.description(body("description").optional()),
   // validate.place.priceRange(body("priceRange").optional()),
   // validate.place.categories(body("categories").optional()),
 ];
-
 export async function createPlace(
   req: Request,
   res: Response,
@@ -121,37 +115,6 @@ export async function createPlace(
   }
 }
 
-export interface Location {
-  geoLocation: {
-    type: string;
-    coordinates: number[];
-  };
-  address: string;
-  city: string;
-  state: string;
-  country: string;
-  zip: string;
-}
-
-export interface Scores {
-  overall: number;
-  drinkQuality: number;
-  foodQuality: number;
-  atmosphere: number;
-  service: number;
-  value: number;
-  phantom: number;
-}
-
-const categories: string[] = [
-  "restaurant",
-  "bar",
-  "cafe",
-  "bakery",
-  "meal_delivery",
-  "meal_takeaway",
-];
-
 export const getPlacesValidation: ValidationChain[] = [
   validate.lat(query("lat").optional()),
   validate.lng(query("lng").optional()),
@@ -171,7 +134,6 @@ export const getPlacesValidation: ValidationChain[] = [
       }
       throw new Error("Invalid radius");
     }),
-  query("category").optional().isIn(categories),
   query("sort")
     .optional()
     .isIn(["distance", "score", "phantomScore", "priceRange"]),
@@ -186,7 +148,7 @@ export async function getPlaces(
   try {
     handleInputErrors(req);
 
-    const { lat, lng, q, images, order, radius, category } = req.query;
+    const { lat, lng, q, images, order, radius } = req.query;
     const sort = req.query.sort
       ? req.query.sort === "distance"
         ? lat && lng
@@ -375,7 +337,6 @@ export const getThirdPartyRatingValidation: ValidationChain[] = [
     .isIn(["googlePlaces", "tripAdvisor", "yelp", "foursquare", "phantomphood"])
     .withMessage("Invalid Third Party Provider"),
 ];
-
 export async function getThirdPartyRating(
   req: Request,
   res: Response,
@@ -451,243 +412,9 @@ export async function getThirdPartyRating(
   }
 }
 
-function sleep(ms: number) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
-export async function importPlaces(
-  req: Request,
-  res: Response,
-  next: NextFunction
-) {
-  try {
-    handleInputErrors(req);
-    const onlyUpdate = req.query.onlyUpdate === "true" ? true : false;
-
-    const places = require("../data/osm_places_3.json");
-    let count = 1;
-    for (const p of places) {
-      if (!p.tags) continue;
-      const id = p.id;
-      const lat = p.lat;
-      const lon = p.lon;
-      const amenity = p.tags["amenity"];
-      const name =
-        p.tags["name"] ||
-        p.tags["name:en"] ||
-        p.tags["old_name"] ||
-        p.tags["short_name"];
-      console.log(name);
-
-      if (count % 20 === 0) {
-        console.log(" >" + count + "/" + places.length);
-      }
-
-      count++;
-      const tags = {
-        ...(p.tags["air_conditioning"] && {
-          air_conditioning: p.tags["air_conditioning"],
-        }),
-        ...(p.tags["amenity"] && { amenity: p.tags["amenity"] }),
-        ...(p.tags["brand"] && { brand: p.tags["brand"] }),
-        ...(p.tags["contact:instagram"] && {
-          instagram: p.tags["contact:instagram"],
-        }),
-        ...((p.tags["contact:phone"] || p.tags["phone"]) && {
-          phone: p.tags["contact:phone"] || p.tags["phone"],
-        }),
-        ...(p.tags["contact:email"] && { email: p.tags["contact:email"] }),
-        ...((p.tags["contact:website"] || p.tags["website"]) && {
-          website: p.tags["contact:website"] || p.tags["website"],
-        }),
-        ...(p.tags["cuisine"] && { cuisine: p.tags["cuisine"] }),
-        ...(p.tags["delivery"] && { delivery: p.tags["delivery"] }),
-        ...(p.tags["drive_through"] && {
-          drive_through: p.tags["drive_through"],
-        }),
-        ...(p.tags["internet_access"] && {
-          internet_access: p.tags["internet_access"],
-        }),
-        ...(p.tags["opening_hours"] && {
-          opening_hours: p.tags["opening_hours"],
-        }),
-        ...(p.tags["takeaway"] && { takeaway: p.tags["takeaway"] }),
-        ...(p.tags["wheelchair"] && { wheelchair: p.tags["wheelchair"] }),
-      };
-
-      if (!name || !lat || !lon) {
-        console.log("missing crusial info skipping");
-        continue;
-      }
-
-      const nearbyPlaces = await Place.find({
-        "location.geoLocation": {
-          $nearSphere: {
-            $geometry: {
-              type: "Point",
-              coordinates: [lon, lat],
-            },
-            $maxDistance: 30, // in meters
-          },
-        },
-      });
-
-      let placeExists = false;
-
-      for (const place of nearbyPlaces) {
-        if (areSimilar(name, place.name)) {
-          // found -> update
-          place.otherSources.OSM = {
-            _id: id,
-            tags: tags,
-          };
-          place.amenity = amenity;
-          if (p.tags["cuisine"]) place.cuisine = p.tags["cuisine"].split(";");
-          await place.save();
-          placeExists = true;
-          break; // Break the loop if found
-        }
-      }
-
-      if (!placeExists && name && amenity && !onlyUpdate) {
-        // not found -> insert
-        // Check if the amenity has a name at least and is valid
-        await sleep(100);
-        const MAX_RETRIES = 6; // Adjust as needed
-        let retries = 0;
-
-        while (retries < MAX_RETRIES) {
-          try {
-            console.log("fetching");
-            const geoResponse = await axios(
-              `https://geocode.maps.co/reverse?lat=${lat}&lon=${lon}`
-            );
-            const addressData = geoResponse.data.address;
-            if (name && amenity) {
-              if (
-                country.state(
-                  iso3311a2.getCode(addressData.country),
-                  addressData.state
-                )
-              ) {
-                let location = {
-                  geoLocation: {
-                    type: "Point",
-                    coordinates: [Number(lon), Number(lat)],
-                  },
-                  address: addressData.road,
-                  city:
-                    addressData.city ||
-                    addressData.town ||
-                    addressData.suburb ||
-                    addressData.village ||
-                    addressData.county,
-                  country: iso3311a2.getCode(addressData.country),
-                  state: country.state(
-                    iso3311a2.getCode(addressData.country),
-                    addressData.state
-                  ).abbreviation,
-                  house_number: addressData.house_number,
-                  zip: addressData.postcode,
-                };
-
-                if (!location.city) {
-                  console.log("no city");
-                  break;
-                }
-                let newPlace = new Place({
-                  name: name,
-                  location: location,
-                });
-                newPlace.otherSources.OSM = {
-                  _id: id,
-                  tags: tags,
-                };
-                newPlace.amenity = p.tags["amenity"];
-                if (p.tags["cuisine"])
-                  newPlace.cuisine = p.tags["cuisine"].split(";");
-                console.log("saving");
-                await newPlace.save();
-              }
-            }
-            break;
-          } catch (error: any) {
-            retries++;
-            console.error(
-              "Error fetching geolocation data, attempt:",
-              retries,
-              error.message
-            );
-
-            if (retries >= MAX_RETRIES) {
-              console.error("Max retries reached, moving to the next place.");
-              break;
-            }
-
-            await sleep(3000); // Sleep for dynamic seconds based on retries
-          }
-        }
-      }
-    }
-
-    res.status(StatusCodes.OK).json({
-      success: true,
-      data: {},
-    });
-  } catch (err) {
-    next(err);
-  }
-}
-
-function getDistance(cluster1: any, cluster2: any) {
-  const latDiff = cluster1.latitude - cluster2.latitude;
-  const lngDiff = cluster1.longitude - cluster2.longitude;
-  return Math.sqrt(latDiff * latDiff + lngDiff * lngDiff);
-}
-
-function mergeClusters(clusters: any) {
-  while (clusters.length > 8) {
-    let minDistance = Infinity;
-    let pair = [0, 1];
-
-    // Find the closest pair of clusters
-    for (let i = 0; i < clusters.length; i++) {
-      for (let j = i + 1; j < clusters.length; j++) {
-        const distance = getDistance(clusters[i], clusters[j]);
-        if (distance < minDistance) {
-          minDistance = distance;
-          pair = [i, j];
-        }
-      }
-    }
-
-    // Merge clusters
-    const [a, b] = pair;
-    const totalCount = clusters[a].count + clusters[b].count;
-    clusters[a].latitude =
-      (clusters[a].latitude * clusters[a].count +
-        clusters[b].latitude * clusters[b].count) /
-      totalCount;
-    clusters[a].longitude =
-      (clusters[a].longitude * clusters[a].count +
-        clusters[b].longitude * clusters[b].count) /
-      totalCount;
-    clusters[a].count = totalCount;
-    clusters[a].places = (clusters[a].places || []).concat(
-      clusters[b].places || []
-    );
-
-    // Remove the merged cluster
-    clusters.splice(b, 1);
-  }
-
-  return clusters;
-}
-
 async function getClusteredPlaces(
   northEast: { lat: number; lng: number },
-  southWest: { lat: number; lng: number },
-  zoom: number
+  southWest: { lat: number; lng: number }
 ) {
   const TOP_PLACES_LIMIT = 40;
 
@@ -743,39 +470,12 @@ async function getClusteredPlaces(
     clusters: [],
   };
 }
-
 export const getPlacesWithinBoundariesValidation: ValidationChain[] = [
-  query("zoom").optional().isNumeric().withMessage("Invalid zoom"),
-
-  query("northEastLat")
-    .isNumeric()
-    .withMessage("Invalid northEastLat")
-    .bail() // proceed to next validator only if the previous one passes
-    .custom((value) => value >= -90 && value <= 90)
-    .withMessage("northEastLat should be between -90 and 90"),
-
-  query("northEastLng")
-    .isNumeric()
-    .withMessage("Invalid northEastLng")
-    .bail()
-    .custom((value) => value >= -180 && value <= 180)
-    .withMessage("northEastLng should be between -180 and 180"),
-
-  query("southWestLat")
-    .isNumeric()
-    .withMessage("Invalid southWestLat")
-    .bail()
-    .custom((value) => value >= -90 && value <= 90)
-    .withMessage("southWestLat should be between -90 and 90"),
-
-  query("southWestLng")
-    .isNumeric()
-    .withMessage("Invalid southWestLng")
-    .bail()
-    .custom((value) => value >= -180 && value <= 180)
-    .withMessage("southWestLng should be between -180 and 180"),
+  validate.lat(query("northEastLat")),
+  validate.lng(query("northEastLng")),
+  validate.lat(query("southWestLat")),
+  validate.lng(query("southWestLng")),
 ];
-
 export async function getPlacesWithinBoundaries(
   req: Request,
   res: Response,
@@ -783,7 +483,7 @@ export async function getPlacesWithinBoundaries(
 ) {
   try {
     handleInputErrors(req);
-    const { northEastLat, northEastLng, southWestLat, southWestLng, zoom } =
+    const { northEastLat, northEastLng, southWestLat, southWestLng } =
       req.query;
     const northEast = {
       lat: Number(northEastLat),
@@ -794,7 +494,7 @@ export async function getPlacesWithinBoundaries(
       lng: Number(southWestLng),
     };
 
-    const result = await getClusteredPlaces(northEast, southWest, Number(zoom));
+    const result = await getClusteredPlaces(northEast, southWest);
 
     res.status(StatusCodes.OK).json({
       success: true,
@@ -806,11 +506,10 @@ export async function getPlacesWithinBoundaries(
 }
 
 export const getPlacesByContextValidation: ValidationChain[] = [
-  query("lat").isNumeric().withMessage("Invalid lat"),
-  query("lng").isNumeric().withMessage("Invalid lng"),
-  query("title").isString().withMessage("Invalid title"),
+  validate.lat(query("lat")),
+  validate.lng(query("lng")),
+  query("title").isString().notEmpty().withMessage("title cannot be empty"),
 ];
-
 export async function getPlacesByContext(
   req: Request,
   res: Response,
