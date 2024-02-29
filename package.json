@@ -18,6 +18,9 @@
     "url": "https://github.com/PhantomPhood-Inc/genz-server/issues"
   },
   "homepage": "https://github.com/PhantomPhood-Inc/genz-server#readme",
+  "engines": {
+    "node": ">=18.0.0"
+  },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.525.0",
     "@ffmpeg-installer/ffmpeg": "^1.1.0",
@@ -52,11 +55,9 @@
     "winston-mongodb": "^5.1.1"
   },
   "devDependencies": {
-    "@types/async": "^3.2.24",
     "@types/bcryptjs": "^2.4.6",
     "@types/cookie-parser": "^1.4.7",
     "@types/cors": "^2.8.17",
-    "@types/country-list": "^2.1.4",
     "@types/express": "^4.17.21",
     "@types/fast-levenshtein": "^0.0.4",
     "@types/fluent-ffmpeg": "^2.1.24",
