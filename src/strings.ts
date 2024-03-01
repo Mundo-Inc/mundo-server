@@ -19,7 +19,7 @@ const strings = {
   },
   authorization: {
     adminOnly: "This route is only for admin users",
-    otherUser: "Only admins can change other users' data",
+    otherUser: "Not authorized to perform this action for other user",
     userOnly: "Not authorized to perform this action",
     loginRequired: "Login required",
     accessDenied: "Access denied",

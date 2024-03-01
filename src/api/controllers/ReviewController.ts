@@ -10,7 +10,7 @@ import Notification, {
   ResourceTypes,
 } from "../../models/Notification";
 import Place from "../../models/Place";
-import Review from "../../models/Review";
+import Review, { type IReview } from "../../models/Review";
 import Upload from "../../models/Upload";
 import User from "../../models/User";
 import strings, { dStrings as ds, dynamicMessage } from "../../strings";
@@ -710,6 +710,41 @@ export async function getReview(
     }
 
     res.status(StatusCodes.OK).json({ success: true, data: reviews[0] });
+  } catch (err) {
+    next(err);
+  }
+}
+
+export const removeReviewValidation: ValidationChain[] = [
+  param("id").isMongoId(),
+];
+export async function removeReview(
+  req: Request,
+  res: Response,
+  next: NextFunction
+) {
+  try {
+    handleInputErrors(req);
+
+    const { id } = req.params;
+    const { id: authId } = req.user!;
+
+    const review: IReview | null = await Review.findById(id);
+
+    if (!review) {
+      throw createError(
+        dynamicMessage(ds.notFound, "Review"),
+        StatusCodes.NOT_FOUND
+      );
+    }
+
+    if (review.writer.toString() !== authId) {
+      throw createError(strings.authorization.otherUser, StatusCodes.FORBIDDEN);
+    }
+
+    await review.deleteOne();
+
+    res.sendStatus(StatusCodes.NO_CONTENT);
   } catch (err) {
     next(err);
   }

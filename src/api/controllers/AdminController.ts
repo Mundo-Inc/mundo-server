@@ -8,6 +8,7 @@ import Comment from "../../models/Comment";
 import Flag from "../../models/Flag";
 import Review from "../../models/Review";
 import User from "../../models/User";
+import { dStrings as ds, dynamicMessage } from "../../strings";
 import { createError, handleInputErrors } from "../../utilities/errorHandlers";
 import { adminReadUserProjection } from "../dto/user/read-user-admin.dto";
 import { privateReadUserProjection } from "../dto/user/read-user-private.dto";
@@ -158,7 +159,6 @@ export const resolveFlagValidation: ValidationChain[] = [
   body("note").optional().isString(),
 ];
 
-//TODO: if resolved as delete, apply the delete effect to all the flags with the same target
 export async function resolveFlag(
   req: Request,
   res: Response,
@@ -172,7 +172,10 @@ export async function resolveFlag(
 
     const flag = await Flag.findById(id).populate("target");
     if (!flag) {
-      throw createError("Flag not found", StatusCodes.NOT_FOUND);
+      throw createError(
+        dynamicMessage(ds.notFound, "Flag"),
+        StatusCodes.NOT_FOUND
+      );
     }
 
     if (flag.adminAction) {

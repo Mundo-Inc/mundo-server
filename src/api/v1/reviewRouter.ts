@@ -1,18 +1,20 @@
 import express from "express";
 
 import {
+  createFlagReview,
+  createFlagReviewValidation,
+} from "../controllers/FlagController";
+import {
   createReview,
   createReviewValidation,
   getReview,
   getReviewValidation,
   getReviews,
   getReviewsValidation,
+  removeReview,
+  removeReviewValidation,
 } from "../controllers/ReviewController";
 import { authMiddleware } from "../middlewares/authMiddleWare";
-import {
-  createFlagReview,
-  createFlagReviewValidation,
-} from "../controllers/FlagController";
 
 const router = express.Router();
 router.use(express.json());
@@ -22,7 +24,10 @@ router
   .get(authMiddleware, getReviewsValidation, getReviews)
   .post(authMiddleware, createReviewValidation, createReview);
 
-router.route("/:id").get(authMiddleware, getReviewValidation, getReview);
+router
+  .route("/:id")
+  .get(authMiddleware, getReviewValidation, getReview)
+  .delete(authMiddleware, removeReviewValidation, removeReview);
 
 router
   .route("/:id/flag")

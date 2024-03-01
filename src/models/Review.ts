@@ -4,6 +4,7 @@ import Reaction from "./Reaction";
 import Comment from "./Comment";
 import UserActivity from "./UserActivity";
 import logger from "../api/services/logger";
+import Media from "./Media";
 
 export const predefinedTags = [
   "gourmet_cuisine",
@@ -153,6 +154,20 @@ async function removeReviewDependencies(review: IReview) {
   // remove the userActivity related to the review
   const userActivity = await UserActivity.findById(review.userActivityId);
   if (userActivity) await userActivity.deleteOne();
+
+  // remove all media related to the review
+  if (review.videos && review.videos.length > 0) {
+    for (const video of review.videos) {
+      const media = await Media.findById(video);
+      await media.deleteOne();
+    }
+  }
+  if (review.images && review.images.length > 0) {
+    for (const image of review.images) {
+      const media = await Media.findById(image);
+      await media.deleteOne();
+    }
+  }
 }
 
 // Query middleware (for Comment.deleteOne(), Comment.deleteMany(), etc.)
