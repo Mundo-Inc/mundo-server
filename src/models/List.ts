@@ -1,4 +1,4 @@
-import mongoose, { Schema, Document, Mongoose } from "mongoose";
+import mongoose, { Schema, type Document } from "mongoose";
 
 export enum AccessEnum {
   view = "view",

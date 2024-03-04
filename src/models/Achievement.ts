@@ -1,4 +1,4 @@
-import mongoose, { Schema, Document } from "mongoose";
+import mongoose, { Schema, type Document } from "mongoose";
 
 // Define the achievement types as string literals
 export enum AchievementTypeEnum {

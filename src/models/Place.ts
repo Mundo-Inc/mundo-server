@@ -1,4 +1,5 @@
 import mongoose, { Schema, type Document } from "mongoose";
+
 import Review from "./Review";
 
 const GOOGLE_PLACES_PERCENTAGE = 0.3;

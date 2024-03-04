@@ -1,7 +1,8 @@
-import mongoose, { Schema, type Document, CallbackError } from "mongoose";
+import mongoose, { Schema, type CallbackError, type Document } from "mongoose";
+
+import logger from "../api/services/logger";
 import Notification, { NotificationType, ResourceTypes } from "./Notification";
 import UserActivity from "./UserActivity";
-import logger from "../api/services/logger";
 
 export interface IReaction extends Document {
   user: mongoose.Types.ObjectId;

@@ -1,4 +1,4 @@
-import mongoose, { CallbackError, Schema, type Document } from "mongoose";
+import mongoose, { Schema, type CallbackError, type Document } from "mongoose";
 
 import Achievement from "./Achievement";
 import ActivitySeen from "./ActivitySeen";

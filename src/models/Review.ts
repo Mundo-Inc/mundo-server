@@ -1,10 +1,11 @@
-import mongoose, { Schema, type Document, CallbackError } from "mongoose";
+import mongoose, { Schema, type CallbackError, type Document } from "mongoose";
+
+import logger from "../api/services/logger";
+import Comment from "./Comment";
+import Media from "./Media";
 import Place from "./Place";
 import Reaction from "./Reaction";
-import Comment from "./Comment";
 import UserActivity from "./UserActivity";
-import logger from "../api/services/logger";
-import Media from "./Media";
 
 export const predefinedTags = [
   "gourmet_cuisine",
@@ -157,6 +158,7 @@ async function removeReviewDependencies(review: IReview) {
 
   // remove all media related to the review
   if (review.videos && review.videos.length > 0) {
+    console.log(review.videos);
     for (const video of review.videos) {
       const media = await Media.findById(video);
       // if (media) {
@@ -165,6 +167,7 @@ async function removeReviewDependencies(review: IReview) {
     }
   }
   if (review.images && review.images.length > 0) {
+    console.log(review.images);
     for (const image of review.images) {
       const media = await Media.findById(image);
       // if (media) {
@@ -174,49 +177,63 @@ async function removeReviewDependencies(review: IReview) {
   }
 }
 
-// Query middleware (for Comment.deleteOne(), Comment.deleteMany(), etc.)
+// Middleware for review.deleteOne (document)
 ReviewSchema.pre<IReview>(
   "deleteOne",
   { document: true, query: false },
   async function (next) {
-    console.log("A");
-    console.log(this);
-    logger.debug("deleteOne review");
     try {
-      const review = this as IReview;
-      await removeReviewDependencies(review);
+      await removeReviewDependencies(this);
 
-      logger.verbose("decreasing review count of the place");
-      const placeObject = await Place.findById(review.place);
-      placeObject.activities.reviewCount =
-        placeObject.activities.reviewCount - 1;
+      const placeObject = await Place.findById(this.place);
+      if (!placeObject) {
+        logger.warn(
+          `Place with ID ${this.place} not found. failed to reduce review count`
+        );
+        return next();
+      }
+      placeObject.activities.reviewCount -= 1;
       await placeObject.save();
 
       next();
     } catch (error) {
+      logger.error(`Error in deleteOne middleware for document: ${error}`);
       next(error as CallbackError);
     }
   }
 );
 
-ReviewSchema.pre("deleteOne", async function (next) {
-  try {
-    console.log("B");
-    console.log(this);
-    logger.debug("deleteOne review");
-    const review = await this.model.findOne(this.getQuery());
-    await removeReviewDependencies(review);
+// Middleware for Review.deleteOne (query)
+ReviewSchema.pre(
+  "deleteOne",
+  { query: true, document: false },
+  async function (next) {
+    try {
+      const review = await this.model.findOne(this.getQuery());
+      if (!review) {
+        logger.warn("Review not found in deleteOne query middleware.");
+        return next();
+      }
 
-    logger.verbose("decreasing review count of the place");
-    const placeObject = await Place.findById(review.place);
-    placeObject.activities.reviewCount = placeObject.activities.reviewCount - 1;
-    await placeObject.save();
+      await removeReviewDependencies(review);
 
-    next();
-  } catch (error) {
-    next(error as CallbackError);
+      const placeObject = await Place.findById(review.place);
+      if (!placeObject) {
+        logger.warn(
+          `Place with ID ${review.place} not found. failed to reduce review count`
+        );
+        return next();
+      }
+      placeObject.activities.reviewCount -= 1;
+      await placeObject.save();
+
+      next();
+    } catch (error) {
+      logger.error(`Error in deleteOne middleware for query: ${error}`);
+      next(error as CallbackError);
+    }
   }
-});
+);
 
 export default mongoose.models.Review ||
   mongoose.model<IReview>("Review", ReviewSchema);

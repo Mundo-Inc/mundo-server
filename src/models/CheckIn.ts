@@ -1,7 +1,8 @@
-import mongoose, { Schema, type Document, CallbackError } from "mongoose";
-import UserActivity from "./UserActivity";
+import mongoose, { Schema, type CallbackError, type Document } from "mongoose";
+
 import logger from "../api/services/logger";
 import Place from "./Place";
+import UserActivity from "./UserActivity";
 
 export interface ICheckIn extends Document {
   user: mongoose.Types.ObjectId;
