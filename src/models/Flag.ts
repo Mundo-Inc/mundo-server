@@ -1,4 +1,4 @@
-import mongoose, { Document, Schema } from "mongoose"; // Corrected the import statement
+import mongoose, { Schema, type Document } from "mongoose"; // Corrected the import statement
 
 // Flag reasons
 export enum FlagTypeEnum {

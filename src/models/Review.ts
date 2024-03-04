@@ -7,69 +7,6 @@ import Place from "./Place";
 import Reaction from "./Reaction";
 import UserActivity from "./UserActivity";
 
-export const predefinedTags = [
-  "gourmet_cuisine",
-  "local_ingredients",
-  "organic_food",
-  "extensive_wine_list",
-  "craft_beers",
-  "innovative_cocktails",
-  "delicious_desserts",
-  "fresh_seafood",
-  "authentic_cuisine",
-  "romantic_setting",
-  "family_friendly",
-  "business_meetings",
-  "outdoor_seating",
-  "live_music",
-  "waterfront_view",
-  "rooftop",
-  "cozy_atmosphere",
-  "highend_luxury",
-  "trendy_spot",
-  "rustic_charm",
-  "excellent_service",
-  "friendly_staff",
-  "knowledgeable_sommelier",
-  "quick_service",
-  "personalized_service",
-  "late_night",
-  "brunch_spot",
-  "happy_hour",
-  "pet_friendly",
-  "wheelchair_accessible",
-  "vegan_options",
-  "gluten_free_options",
-  "private_dining",
-  "chefs_table",
-  "tasting_menu",
-  "budget_friendly",
-  "midrange_pricing",
-  "fine_dining",
-  "city_center",
-  "off_the_beaten_path",
-  "scenic_location",
-  "neighborhood_gem",
-  "italian",
-  "french",
-  "asian",
-  "mexican",
-  "mediterranean",
-  "seafood",
-  "steakhouse",
-  "fusion",
-  "bbq",
-  "vegan",
-  "slow_service",
-  "limited_menu",
-  "overpriced",
-  "crowded",
-  "noisy_environment",
-  "limited_vegan_options",
-  "limited_drink_selection",
-  "poor_accessibility",
-];
-
 export interface IReview extends Document {
   writer: mongoose.Types.ObjectId;
   place: mongoose.Types.ObjectId;
@@ -154,25 +91,25 @@ async function removeReviewDependencies(review: IReview) {
 
   // remove the userActivity related to the review
   const userActivity = await UserActivity.findById(review.userActivityId);
-  if (userActivity) await userActivity.deleteOne();
+  if (userActivity) {
+    await userActivity.deleteOne();
+  }
 
   // remove all media related to the review
   if (review.videos && review.videos.length > 0) {
-    console.log(review.videos);
     for (const video of review.videos) {
       const media = await Media.findById(video);
-      // if (media) {
-      await media.deleteOne();
-      // }
+      if (media) {
+        await media.deleteOne();
+      }
     }
   }
   if (review.images && review.images.length > 0) {
-    console.log(review.images);
     for (const image of review.images) {
       const media = await Media.findById(image);
-      // if (media) {
-      await media.deleteOne();
-      // }
+      if (media) {
+        await media.deleteOne();
+      }
     }
   }
 }

@@ -494,15 +494,10 @@ export async function createReview(
     }
 
     if (content && content.length > 8) {
-      openAiAnalyzeReview(content).then(async ({ error, scores, tags }) => {
+      openAiAnalyzeReview(content).then(async ({ error, tags }) => {
         if (error) {
-          // TODO: handle error -> return something to the user!
-          logger.error("Error analyzing review", { error });
+          logger.error("Error analyzing review with OpenAI", { error });
         }
-        review.scores = {
-          ...scores,
-          ...review.scores,
-        };
         review.tags = tags;
         await review.save();
         populatedPlace.processReviews();
