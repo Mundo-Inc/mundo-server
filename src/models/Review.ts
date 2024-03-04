@@ -159,17 +159,17 @@ async function removeReviewDependencies(review: IReview) {
   if (review.videos && review.videos.length > 0) {
     for (const video of review.videos) {
       const media = await Media.findById(video);
-      if (media) {
-        await media.deleteOne();
-      }
+      // if (media) {
+      await media.deleteOne();
+      // }
     }
   }
   if (review.images && review.images.length > 0) {
     for (const image of review.images) {
       const media = await Media.findById(image);
-      if (media) {
-        await media.deleteOne();
-      }
+      // if (media) {
+      await media.deleteOne();
+      // }
     }
   }
 }
@@ -179,6 +179,8 @@ ReviewSchema.pre<IReview>(
   "deleteOne",
   { document: true, query: false },
   async function (next) {
+    console.log("A");
+    console.log(this);
     logger.debug("deleteOne review");
     try {
       const review = this as IReview;
@@ -199,6 +201,8 @@ ReviewSchema.pre<IReview>(
 
 ReviewSchema.pre("deleteOne", async function (next) {
   try {
+    console.log("B");
+    console.log(this);
     logger.debug("deleteOne review");
     const review = await this.model.findOne(this.getQuery());
     await removeReviewDependencies(review);
