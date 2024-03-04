@@ -32,10 +32,6 @@ cron.schedule("*/30 * * * * *", async () => {
         notification
       );
 
-      logger.warn(
-        `title:[${title}] content:[${content}] subtitle:[${subtitle}]`
-      );
-
       const user = await User.findById(notification.user, "devices");
 
       if (user.devices.length > 0) {
