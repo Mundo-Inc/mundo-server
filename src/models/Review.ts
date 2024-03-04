@@ -159,13 +159,17 @@ async function removeReviewDependencies(review: IReview) {
   if (review.videos && review.videos.length > 0) {
     for (const video of review.videos) {
       const media = await Media.findById(video);
-      await media.deleteOne();
+      if (media) {
+        await media.deleteOne();
+      }
     }
   }
   if (review.images && review.images.length > 0) {
     for (const image of review.images) {
       const media = await Media.findById(image);
-      await media.deleteOne();
+      if (media) {
+        await media.deleteOne();
+      }
     }
   }
 }
