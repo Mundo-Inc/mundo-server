@@ -23,7 +23,7 @@ cron.schedule("*/30 * * * * *", async () => {
   });
 
   if (notifications.length > 0) {
-    logger.info(`Sending ${notifications.length} notifications.`);
+    logger.verbose(`Sending ${notifications.length} notifications.`);
 
     for (const notification of notifications) {
       let failReason: string | null = null;

@@ -105,34 +105,10 @@ export async function getGeoLocation(
 }
 
 export const getGeoActivitiesValidation: ValidationChain[] = [
-  query("zoom").optional().isNumeric().withMessage("Invalid zoom"),
-  query("northEastLat")
-    .isNumeric()
-    .withMessage("Invalid northEastLat")
-    .bail() // proceed to next validator only if the previous one passes
-    .custom((value) => value >= -90 && value <= 90)
-    .withMessage("northEastLat should be between -90 and 90"),
-
-  query("northEastLng")
-    .isNumeric()
-    .withMessage("Invalid northEastLng")
-    .bail()
-    .custom((value) => value >= -180 && value <= 180)
-    .withMessage("northEastLng should be between -180 and 180"),
-
-  query("southWestLat")
-    .isNumeric()
-    .withMessage("Invalid southWestLat")
-    .bail()
-    .custom((value) => value >= -90 && value <= 90)
-    .withMessage("southWestLat should be between -90 and 90"),
-
-  query("southWestLng")
-    .isNumeric()
-    .withMessage("Invalid southWestLng")
-    .bail()
-    .custom((value) => value >= -180 && value <= 180)
-    .withMessage("southWestLng should be between -180 and 180"),
+  validate.lat(query("northEastLat")),
+  validate.lng(query("northEastLng")),
+  validate.lat(query("southWestLat")),
+  validate.lng(query("southWestLng")),
 ];
 
 export async function getGeoActivities(
@@ -142,6 +118,7 @@ export async function getGeoActivities(
 ) {
   try {
     handleInputErrors(req);
+
     const { id: authId } = req.user!;
 
     const followingsObj: FilterQuery<IFollow> = await Follow.find(
@@ -157,7 +134,7 @@ export async function getGeoActivities(
       new mongoose.Types.ObjectId(authId),
     ];
 
-    const { northEastLat, northEastLng, southWestLat, southWestLng, zoom } =
+    const { northEastLat, northEastLng, southWestLat, southWestLng } =
       req.query;
     const northEast = {
       lat: Number(northEastLat),
@@ -167,7 +144,6 @@ export async function getGeoActivities(
       lat: Number(southWestLat),
       lng: Number(southWestLng),
     };
-    const zoomLevel = Number(zoom);
 
     // Define the bounding box for the geo query
     const boundingBox = [
@@ -277,8 +253,7 @@ export async function getGeoActivities(
       success: true,
       data: { activities: activities },
     });
-  } catch (error) {
-    logger.error("Error while getting map activities", { error });
+  } catch (error: any) {
     next(error);
   }
 }

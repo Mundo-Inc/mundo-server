@@ -86,8 +86,7 @@ export function handleInputErrors(req: Request) {
       })
       .join("\n");
 
-    // Log the formatted errors with additional context
-    logger.error(
+    logger.verbose(
       `Failed to validate inputs on ${req.path}:\n${formattedErrors}`,
       {
         route: req.path,
