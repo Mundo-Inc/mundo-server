@@ -1,33 +1,13 @@
 import mongoose, { Schema, type Document } from "mongoose";
 
+import { AppleMapsSchema, type IAppleMaps } from "./Place/AppleMaps";
+import { GooglePlacesSchema, type IGooglePlaces } from "./Place/GooglePlaces";
+import { OSMSchema, type IOSM } from "./Place/OSM";
+import { ScoresSchema, type IScores } from "./Place/Scores";
+import { YelpSchema, type IYelp } from "./Place/Yelp";
 import Review from "./Review";
 
 const GOOGLE_PLACES_PERCENTAGE = 0.3;
-
-interface IScores {
-  overall: number;
-  drinkQuality: number;
-  foodQuality: number;
-  atmosphere: number;
-  service: number;
-  value: number;
-  phantom: number;
-  updatedAt: Date;
-}
-
-const scoresSchema = new Schema<IScores>(
-  {
-    overall: { type: Number, min: 0, max: 5 },
-    drinkQuality: { type: Number, min: 0, max: 5 },
-    foodQuality: { type: Number, min: 0, max: 5 },
-    atmosphere: { type: Number, min: 0, max: 5 },
-    service: { type: Number, min: 0, max: 5 },
-    value: { type: Number, min: 0, max: 5 },
-    phantom: { type: Number },
-    updatedAt: { type: Date },
-  },
-  { _id: false }
-);
 
 export interface IPlace extends Document {
   name: string;
@@ -35,7 +15,6 @@ export interface IPlace extends Document {
   description: string;
   thumbnail?: string;
   priceRange?: number;
-  reviewCount: number;
   location: {
     geoLocation: {
       type: string;
@@ -60,7 +39,6 @@ export interface IPlace extends Document {
   cuisine: string[];
   owner?: mongoose.Types.ObjectId;
   isActive: boolean;
-  yelpId?: string;
   createdAt: Date;
   updatedAt: Date;
   addedBy?: mongoose.Types.ObjectId;
@@ -69,74 +47,10 @@ export interface IPlace extends Document {
     checkinCount: number;
   };
   otherSources: {
-    OSM: {
-      _id?: {
-        type: string;
-        unique: true;
-      };
-      tags: {
-        air_conditioning?: boolean;
-        amenity?: string;
-        brand?: string;
-        instagram?: string;
-        phone?: string;
-        website?: string;
-        cuisine?: string;
-        delivery?: boolean;
-        internet_access?: boolean;
-        opening_hours?: string;
-        takeaway?: boolean;
-        wheelchair?: boolean;
-      };
-      updatedAt?: Date;
-    };
-    appleMaps: {
-      _id?: {
-        type: string;
-        unique: true;
-      };
-      updatedAt?: Date;
-    };
-    googlePlaces: {
-      _id?: {
-        type: string;
-        unique: true;
-      };
-      streetNumber?: string;
-      streetName?: string;
-      city?: string;
-      state?: string;
-      zip?: string;
-      country?: string;
-      address?: string;
-      categories?: string[];
-      rating?: number;
-      updatedAt?: Date;
-    };
-    yelp: {
-      _id?: {
-        type: string;
-        unique: true;
-      };
-      rating?: number;
-      updatedAt?: Date;
-    };
-    tripadvisor: {
-      _id?: {
-        type: string;
-        unique: true;
-      };
-      rating?: number;
-      updatedAt?: Date;
-    };
-    foursquare: {
-      _id?: {
-        type: string;
-        unique: true;
-      };
-      rating?: number;
-      updatedAt?: Date;
-    };
+    OSM: IOSM;
+    appleMaps: IAppleMaps;
+    googlePlaces: IGooglePlaces;
+    yelp: IYelp;
   };
 }
 
@@ -201,15 +115,8 @@ const PlaceSchema: Schema = new Schema<IPlace>(
         trim: true,
       },
     },
-    reviewCount: {
-      type: Number,
-      default: 0,
-    },
     scores: {
-      type: scoresSchema,
-      default: {
-        updatedAt: new Date(),
-      },
+      type: ScoresSchema,
     },
     phone: {
       type: String,
@@ -231,85 +138,22 @@ const PlaceSchema: Schema = new Schema<IPlace>(
       type: Boolean,
       default: true,
     },
-    yelpId: {
-      type: String,
-    },
-    createdAt: {
-      type: Date,
-      default: Date.now,
-    },
-    updatedAt: {
-      type: Date,
-      default: Date.now,
-    },
     addedBy: {
       type: Schema.Types.ObjectId,
       ref: "User",
     },
     otherSources: {
       OSM: {
-        type: {
-          _id: String,
-          tags: {
-            air_conditioning: String,
-            amenity: String,
-            brand: String,
-            instagram: String,
-            phone: String,
-            website: String,
-            cuisine: String,
-            delivery: String,
-            internet_access: String,
-            opening_hours: String,
-            takeaway: String,
-            wheelchair: String,
-          },
-          updatedAt: Date,
-        },
-        default: {
-          _id: "",
-        },
+        type: OSMSchema,
       },
       appleMaps: {
-        type: {
-          _id: String,
-          updatedAt: Date,
-        },
+        type: AppleMapsSchema,
       },
       googlePlaces: {
-        type: {
-          _id: {
-            type: String,
-            default: "",
-            index: true,
-          },
-          rating: Number,
-          streetNumber: String,
-          streetName: String,
-          city: String,
-          state: String,
-          zip: String,
-          country: String,
-          address: String,
-          categories: [String],
-          updatedAt: Date,
-        },
-        default: {
-          _id: "",
-        },
+        type: GooglePlacesSchema,
       },
       yelp: {
-        type: {
-          _id: {
-            type: String,
-            default: "",
-          },
-          rating: Number,
-          updatedAt: Date,
-        },
-        default: {
-          _id: "",
-        },
+        type: YelpSchema,
       },
     },
     activities: {
@@ -428,7 +272,7 @@ const PlaceSchema: Schema = new Schema<IPlace>(
               scores[0].phantom * (1 - GOOGLE_PLACES_PERCENTAGE);
           }
 
-          this.reviewCount = scores[0].count;
+          this.activities.reviewCount = scores[0].count;
           delete scores[0].count;
           this.scores = scores[0];
           this.scores.updatedAt = new Date();
@@ -439,10 +283,12 @@ const PlaceSchema: Schema = new Schema<IPlace>(
   }
 );
 
+PlaceSchema.index({ name: "text" });
 PlaceSchema.index({ "location.geoLocation": "2dsphere" });
 PlaceSchema.index({ "scores.overall": -1 });
 PlaceSchema.index({ "scores.phantom": -1 });
-PlaceSchema.index({ name: 1, priceRange: 1 });
+PlaceSchema.index({ "otherSources.appleMaps._id": 1 });
+PlaceSchema.index({ "otherSources.googlePlaces._id": 1 });
 
 export default mongoose.models.Place ||
   mongoose.model<IPlace>("Place", PlaceSchema);

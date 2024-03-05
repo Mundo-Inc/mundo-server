@@ -156,7 +156,7 @@ export async function getReviews(
                     },
                   },
                 },
-                reviewCount: 1,
+                activities: 1,
               },
             },
           ],
@@ -234,6 +234,11 @@ export async function getReviews(
     );
 
     const reviews = await Review.aggregate(pipeline);
+
+    // TODO: remove after app update
+    for (const review of reviews) {
+      review.place.reviewCount = review.place.activities.reviewCount;
+    }
 
     res.status(StatusCodes.OK).json({ success: true, data: reviews });
   } catch (err) {
@@ -620,7 +625,7 @@ export async function getReview(
                     },
                   },
                 },
-                reviewCount: 1,
+                activities: 1,
               },
             },
           ],
@@ -703,6 +708,9 @@ export async function getReview(
         StatusCodes.NOT_FOUND
       );
     }
+
+    // TODO: remove after app update
+    reviews[0].place.reviewCount = reviews[0].place.activities.reviewCount;
 
     res.status(StatusCodes.OK).json({ success: true, data: reviews[0] });
   } catch (err) {

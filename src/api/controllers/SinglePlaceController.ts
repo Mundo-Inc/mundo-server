@@ -104,7 +104,7 @@ export async function getPlaceOverview(
           thumbnail: 1,
           media: 1, // TODO: should we keep this?
           scores: 1,
-          reviewCount: 1,
+          activities: 1,
           priceRange: 1,
           description: 1,
           location: {
@@ -135,6 +135,9 @@ export async function getPlaceOverview(
         StatusCodes.NOT_FOUND
       );
     }
+
+    // TODO: remove after app update
+    response[0].reviewCount = response[0].activities.reviewCount;
 
     res.status(StatusCodes.OK).json({
       success: true,
@@ -208,7 +211,7 @@ export async function getDetailedPlace(id: string, userId: string | undefined) {
         thumbnail: 1,
         media: 1,
         scores: 1,
-        reviewCount: 1,
+        activities: 1,
         priceRange: 1,
         description: 1,
         location: {
@@ -262,7 +265,7 @@ export async function getDetailedPlace(id: string, userId: string | undefined) {
     await place.processReviews();
   }
 
-  if (response[0].reviewCount < 4 && response[0].scores) {
+  if (response[0].activities.reviewCount < 4 && response[0].scores) {
     delete response[0].scores.phantom;
   }
 

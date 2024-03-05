@@ -305,7 +305,7 @@ export async function getPlaces(
           website: 1,
           categories: 1,
           priceRange: 1,
-          reviewCount: 1,
+          activities: 1,
           images: 1,
         },
       },
@@ -324,6 +324,11 @@ export async function getPlaces(
       ...lookupPipeline,
       ...projectPipeline,
     ]);
+
+    // TODO: remove after app update
+    for (const place of places) {
+      place.reviewCount = place.activities.reviewCount;
+    }
 
     res.status(StatusCodes.OK).json({ success: true, places: places });
   } catch (err) {
