@@ -40,6 +40,9 @@ export async function getPlace(
 
     const response = await getDetailedPlace(id, authId);
 
+    // TODO: remove after app update
+    response.reviewCount = response.activities.reviewCount;
+
     res.status(StatusCodes.OK).json({
       success: true,
       data: response,
