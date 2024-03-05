@@ -1,23 +1,23 @@
 import express from "express";
 
+import adminRouter from "./api/v1/adminRouter";
 import authRouter from "./api/v1/authRouter";
 import checkinRouter from "./api/v1/checkinRouter";
 import commentRouter from "./api/v1/commentRouter";
+import devRouter from "./api/v1/devRouter";
+import feedRouter from "./api/v1/feedRouter";
 import generalRouter from "./api/v1/generalRouter";
+import listRouter from "./api/v1/listRouter";
 import mailRouter from "./api/v1/mailRouter";
 import mapRouter from "./api/v1/mapRouter";
 import mediaRouter from "./api/v1/mediaRouter";
-import uploadRouter from "./api/v1/uploadRouter";
+import notificationRouter from "./api/v1/notificationRouter";
 import placeRouter from "./api/v1/placeRouter";
 import reactionRouter from "./api/v1/reactionRouter";
 import reviewRouter from "./api/v1/reviewRouter";
-import userRouter from "./api/v1/userRouter";
-import feedRouter from "./api/v1/feedRouter";
-import notificationRouter from "./api/v1/notificationRouter";
-import listRouter from "./api/v1/listRouter";
-import devRouter from "./api/v1/devRouter";
 import rewardRouter from "./api/v1/rewardRouter";
-import adminRouter from "./api/v1/adminRouter";
+import uploadRouter from "./api/v1/uploadRouter";
+import userRouter from "./api/v1/userRouter";
 
 const router = express.Router();
 

@@ -3,16 +3,17 @@ import { body, param, query, type ValidationChain } from "express-validator";
 import { StatusCodes } from "http-status-codes";
 
 import { dailyCoinsCFG } from "../../config/dailyCoins";
-import Prize, { IPrize } from "../../models/Prize";
+import Prize, { type IPrize } from "../../models/Prize";
 import PrizeRedemption, {
-  IPrizeRedemption,
-  PrizeRedemptionStatusType,
+  PrizeRedemptionStatusTypeEnum,
+  type IPrizeRedemption,
 } from "../../models/PrizeRedemption";
 import User, { type IUser } from "../../models/User";
 import strings from "../../strings";
 import { createError, handleInputErrors } from "../../utilities/errorHandlers";
 import { privateReadUserProjection } from "../dto/user/read-user-private.dto";
 import { publicReadUserEssentialProjection } from "../dto/user/read-user-public.dto";
+import { BrevoService } from "../services/brevo.service";
 import logger from "../services/logger";
 import {
   applyDailyStreakResetIfNeeded,
@@ -22,7 +23,6 @@ import {
   updateUserCoinsAndStreak,
 } from "../services/reward/coinReward.service";
 import validate from "./validators";
-import { BrevoService } from "../services/brevo.service";
 
 export const dailyCoinInformationValidation: ValidationChain[] = [];
 export async function dailyCoinInformation(
@@ -240,7 +240,7 @@ export async function getAllPrizeRedemptionHistory(
 
 export const reviewRedemptionValidation: ValidationChain[] = [
   query("id").isMongoId(),
-  body("validation").isIn(Object.values(PrizeRedemptionStatusType)),
+  body("validation").isIn(Object.values(PrizeRedemptionStatusTypeEnum)),
   body("note").optional().isString(),
 ];
 export async function reviewRedemption(
@@ -257,7 +257,7 @@ export async function reviewRedemption(
     if (!redemption) {
       throw createError("Prize Redemption Not Found", StatusCodes.NOT_FOUND);
     }
-    if (redemption.status !== PrizeRedemptionStatusType.PENDING) {
+    if (redemption.status !== PrizeRedemptionStatusTypeEnum.PENDING) {
       throw createError(
         "Prize Redemption Is Already Verified as " + redemption.status,
         StatusCodes.BAD_REQUEST
@@ -272,14 +272,14 @@ export async function reviewRedemption(
     }
 
     switch (validation) {
-      case PrizeRedemptionStatusType.SUCCESSFUL:
+      case PrizeRedemptionStatusTypeEnum.SUCCESSFUL:
         //TODO: send notification to the user that you have received the reward
         if (note) {
           redemption.note = note;
         }
         break;
 
-      case PrizeRedemptionStatusType.DECLINED:
+      case PrizeRedemptionStatusTypeEnum.DECLINED:
         user.phantomCoins.balance = user.phantomCoins.balance + prize.amount;
         prize.count = prize.count + 1;
         await user.save();

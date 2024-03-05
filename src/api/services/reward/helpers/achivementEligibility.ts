@@ -3,7 +3,7 @@ import tzlookup from "tz-lookup";
 
 import Achievement, {
   AchievementTypeEnum,
-  IAchievement,
+  type IAchievement,
 } from "../../../../models/Achievement";
 import CheckIn from "../../../../models/CheckIn";
 import Reaction from "../../../../models/Reaction";

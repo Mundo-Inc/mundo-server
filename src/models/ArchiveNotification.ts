@@ -1,7 +1,7 @@
 import mongoose, { Schema } from "mongoose";
 import {
-  NotificationType,
-  ResourceTypes,
+  NotificationTypeEnum,
+  ResourceTypeEnum,
   type INotification,
 } from "./Notification";
 
@@ -19,7 +19,7 @@ const ArchiveNotificationSchema: Schema = new Schema<IArchiveNotification>({
   type: {
     type: String,
     required: true,
-    enum: Object.values(NotificationType),
+    enum: Object.values(NotificationTypeEnum),
   },
   readAt: {
     type: Date,
@@ -46,7 +46,7 @@ const ArchiveNotificationSchema: Schema = new Schema<IArchiveNotification>({
         },
         type: {
           type: String,
-          enum: Object.values(ResourceTypes),
+          enum: Object.values(ResourceTypeEnum),
           required: true,
         },
         date: {

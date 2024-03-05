@@ -1,7 +1,10 @@
 import mongoose, { Schema, type CallbackError, type Document } from "mongoose";
 
 import logger from "../api/services/logger";
-import Notification, { NotificationType, ResourceTypes } from "./Notification";
+import Notification, {
+  NotificationTypeEnum,
+  ResourceTypeEnum,
+} from "./Notification";
 import UserActivity from "./UserActivity";
 
 export interface IReaction extends Document {
@@ -52,7 +55,7 @@ async function removeDependencies(reaction: IReaction) {
     resources: {
       $elemMatch: {
         _id: reaction._id,
-        type: ResourceTypes.REACTION,
+        type: ResourceTypeEnum.REACTION,
       },
     },
   });
@@ -93,9 +96,9 @@ ReactionSchema.post("save", async function (doc, next) {
   if (activity) {
     await Notification.create({
       user: activity.userId,
-      type: NotificationType.REACTION,
+      type: NotificationTypeEnum.REACTION,
       resources: [
-        { _id: doc._id, type: ResourceTypes.REACTION, date: doc.createdAt },
+        { _id: doc._id, type: ResourceTypeEnum.REACTION, date: doc.createdAt },
       ],
       importance: 1,
     });

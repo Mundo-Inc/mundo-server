@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+
 import { config } from ".";
 import logger from "../api/services/logger";
 

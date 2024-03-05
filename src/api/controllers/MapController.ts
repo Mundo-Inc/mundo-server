@@ -5,12 +5,11 @@ import { StatusCodes } from "http-status-codes";
 import mongoose, { type FilterQuery } from "mongoose";
 
 import CheckIn from "../../models/CheckIn";
-import Follow, { IFollow } from "../../models/Follow";
+import Follow, { type IFollow } from "../../models/Follow";
 import Place from "../../models/Place";
 import Review from "../../models/Review";
 import strings from "../../strings";
 import { createError, handleInputErrors } from "../../utilities/errorHandlers";
-import logger from "../services/logger";
 import validate from "./validators";
 
 const API_KEY = process.env.GOOGLE_GEO_API_KEY!;

@@ -1,9 +1,10 @@
-import { Request, Response, NextFunction } from "express";
-import jwt from "jsonwebtoken";
-import { config } from "../../config";
-import { StatusCodes } from "http-status-codes";
-import User, { type IUser } from "../../models/User";
+import type { NextFunction, Request, Response } from "express";
 import { getAuth } from "firebase-admin/auth";
+import { StatusCodes } from "http-status-codes";
+import jwt from "jsonwebtoken";
+
+import { config } from "../../config";
+import User, { type IUser } from "../../models/User";
 
 interface DecodedUser {
   userId: string;

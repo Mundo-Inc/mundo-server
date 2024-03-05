@@ -1,11 +1,12 @@
 import type { NextFunction, Request, Response } from "express";
-import { type ValidationChain, body, param } from "express-validator";
+import { body, param, type ValidationChain } from "express-validator";
 import { StatusCodes } from "http-status-codes";
 
 import Comment from "../../models/Comment";
-import Flag, { FlagTypeEnum, IFlag } from "../../models/Flag";
+import Flag, { FlagTypeEnum, type IFlag } from "../../models/Flag";
 import Review from "../../models/Review";
 import { createError, handleInputErrors } from "../../utilities/errorHandlers";
+import logger from "../services/logger";
 import { sendSlackMessage } from "./SlackController";
 
 export const createFlagReviewValidation: ValidationChain[] = [
@@ -46,7 +47,7 @@ export async function createFlagReview(
         `Review flagged!\nFlag type: ${flagType}\nNote: ${note}`
       );
     } catch (error) {
-      console.log(error);
+      logger.error("Error sending slack message", { error });
     }
 
     res.status(StatusCodes.CREATED).json({ success: true, data: newFlag }); // Send the ID of the created list as response
@@ -93,7 +94,7 @@ export async function createFlagComment(
         `Comment flagged!\nFlag type: ${flagType}\nNote: ${note}`
       );
     } catch (error) {
-      console.log(error);
+      logger.error("Error sending slack message", { error });
     }
 
     res.status(StatusCodes.CREATED).json({ success: true, data: newFlag }); // Send the ID of the created list as response

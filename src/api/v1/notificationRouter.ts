@@ -1,12 +1,12 @@
 import express from "express";
 
-import { authMiddleware } from "../middlewares/authMiddleWare";
 import {
   getNotifications,
   getNotificationsValidation,
   readNotifications,
   readNotificationsValidation,
 } from "../controllers/NotificationController";
+import { authMiddleware } from "../middlewares/authMiddleWare";
 
 const router = express.Router();
 router.use(express.json());

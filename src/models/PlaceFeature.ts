@@ -1,4 +1,5 @@
 import mongoose, { Schema, type Document } from "mongoose";
+
 import { MATCHING_FEATURES } from "../data/matching/categories";
 
 type IFeatureCategory = Record<string, number>;

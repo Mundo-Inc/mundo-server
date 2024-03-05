@@ -5,11 +5,11 @@ import mongoose from "mongoose";
 
 import Follow from "../../models/Follow";
 import FollowRequest, { type IFollowRequest } from "../../models/FollowRequest";
-import Notification, { ResourceTypes } from "../../models/Notification";
+import Notification, { ResourceTypeEnum } from "../../models/Notification";
 import User, { type IUser } from "../../models/User";
 import UserActivity, {
+  ActivityResourceTypeEnum,
   ActivityTypeEnum,
-  ResourceTypeEnum,
 } from "../../models/UserActivity";
 import strings from "../../strings";
 import { createError, handleInputErrors } from "../../utilities/errorHandlers";
@@ -212,20 +212,27 @@ export async function deleteUserConnection(
     );
 
     try {
-      await UserActivity.findOneAndDelete({
+      await UserActivity.deleteOne({
         userId: new mongoose.Types.ObjectId(authId),
         resourceId: new mongoose.Types.ObjectId(id as string),
         activityType: ActivityTypeEnum.FOLLOWING,
-        resourceType: ResourceTypeEnum.USER,
+        resourceType: ActivityResourceTypeEnum.USER,
       });
+    } catch (e) {
+      logger.error("Error while deleting user connection", { error: e });
+    }
 
-      await Notification.findOneAndDelete({
+    try {
+      await Notification.deleteOne({
         resources: {
-          $elemMatch: { _id: deletedDoc._id, type: ResourceTypes.FOLLOW },
+          $elemMatch: { _id: deletedDoc._id, type: ResourceTypeEnum.FOLLOW },
         },
       });
     } catch (e) {
-      console.log(`Error deleting "Follow": ${e}`);
+      logger.error(
+        "Error while deleting notification after deleting user connection",
+        { error: e }
+      );
     }
 
     res.sendStatus(StatusCodes.NO_CONTENT);

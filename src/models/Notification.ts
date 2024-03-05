@@ -1,6 +1,6 @@
 import mongoose, { Schema, type Document } from "mongoose";
 
-export enum NotificationType {
+export enum NotificationTypeEnum {
   REACTION = "REACTION",
   COMMENT = "COMMENT",
   FOLLOW = "FOLLOW",
@@ -14,7 +14,7 @@ export enum NotificationType {
   REFERRAL_REWARD = "REFERRAL_REWARD",
 }
 
-export enum ResourceTypes {
+export enum ResourceTypeEnum {
   REACTION = "Reaction",
   COMMENT = "Comment",
   USER = "User",
@@ -25,7 +25,7 @@ export enum ResourceTypes {
 
 interface Resources {
   _id: mongoose.Types.ObjectId;
-  type: ResourceTypes;
+  type: ResourceTypeEnum;
   amount: number;
   date: Date;
 }
@@ -37,7 +37,7 @@ interface Metadata {
 
 export interface INotification extends Document {
   user: mongoose.Types.ObjectId;
-  type: NotificationType;
+  type: NotificationTypeEnum;
   readAt: Date | null;
   sent: boolean;
   failReason?: string;
@@ -65,7 +65,7 @@ const NotificationSchema: Schema = new Schema<INotification>(
     type: {
       type: String,
       required: true,
-      enum: Object.values(NotificationType),
+      enum: Object.values(NotificationTypeEnum),
     },
     readAt: {
       type: Date,
@@ -97,7 +97,7 @@ const NotificationSchema: Schema = new Schema<INotification>(
           },
           type: {
             type: String,
-            enum: Object.values(ResourceTypes),
+            enum: Object.values(ResourceTypeEnum),
             required: true,
           },
           date: {

@@ -1,11 +1,11 @@
-import { NextFunction, Request, Response } from "express";
-import { ValidationChain, param, query } from "express-validator";
+import type { NextFunction, Request, Response } from "express";
+import { param, query, type ValidationChain } from "express-validator";
 import mongoose from "mongoose";
 
 import Block from "../../models/Block";
 import Comment from "../../models/Comment";
 import Reaction from "../../models/Reaction";
-import { IUser } from "../../models/User";
+import type { IUser } from "../../models/User";
 import { handleInputErrors } from "../../utilities/errorHandlers";
 import { publicReadUserEssentialProjection } from "../dto/user/read-user-public.dto";
 import validate from "./validators";

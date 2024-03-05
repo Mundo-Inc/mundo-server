@@ -6,8 +6,8 @@ import mongoose from "mongoose";
 import Follow from "../../models/Follow";
 import Media, { MediaTypeEnum } from "../../models/Media";
 import Notification, {
-  NotificationType,
-  ResourceTypes,
+  NotificationTypeEnum,
+  ResourceTypeEnum,
 } from "../../models/Notification";
 import Place from "../../models/Place";
 import Review, { type IReview } from "../../models/Review";
@@ -451,11 +451,11 @@ export async function createReview(
     for (const follower of followers) {
       await Notification.create({
         user: follower.user,
-        type: NotificationType.FOLLOWING_REVIEW,
+        type: NotificationTypeEnum.FOLLOWING_REVIEW,
         resources: [
           {
             _id: review._id,
-            type: ResourceTypes.REVIEW,
+            type: ResourceTypeEnum.REVIEW,
             date: review.createdAt,
           },
         ],

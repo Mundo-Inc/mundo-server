@@ -7,7 +7,7 @@ import CheckIn from "../../models/CheckIn";
 import Comment from "../../models/Comment";
 import Follow from "../../models/Follow";
 import Notification, {
-  NotificationType,
+  NotificationTypeEnum,
   type INotification,
 } from "../../models/Notification";
 import Reaction from "../../models/Reaction";
@@ -30,7 +30,7 @@ async function getNotificationContent(notification: INotification) {
   let error = false;
 
   switch (notification.type) {
-    case NotificationType.COMMENT:
+    case NotificationTypeEnum.COMMENT:
       await Comment.findById(notification.resources![0]._id)
         .populate({
           path: "author",
@@ -50,7 +50,7 @@ async function getNotificationContent(notification: INotification) {
           }
         });
       break;
-    case NotificationType.FOLLOW:
+    case NotificationTypeEnum.FOLLOW:
       await Follow.findById(notification.resources![0]._id)
         // .populate("user")
         .populate({
@@ -69,7 +69,7 @@ async function getNotificationContent(notification: INotification) {
           }
         });
       break;
-    case NotificationType.COMMENT_MENTION:
+    case NotificationTypeEnum.COMMENT_MENTION:
       await Comment.findById(notification.resources![0]._id)
         .populate({
           path: "author",
@@ -89,7 +89,7 @@ async function getNotificationContent(notification: INotification) {
           }
         });
       break;
-    case NotificationType.REACTION:
+    case NotificationTypeEnum.REACTION:
       await Reaction.findById(notification.resources![0]._id)
         .populate({
           path: "user",
@@ -111,19 +111,19 @@ async function getNotificationContent(notification: INotification) {
           }
         });
       break;
-    case NotificationType.XP:
+    case NotificationTypeEnum.XP:
       title = "XP Gain!";
       content = `You gained ${notification.content} XP.`;
       image = "XPGain";
       user = null;
       break;
-    case NotificationType.LEVEL_UP:
+    case NotificationTypeEnum.LEVEL_UP:
       title = "Level Up!";
       content = `You reached level ${notification.content}!`;
       image = "LevelUp";
       user = null;
       break;
-    case NotificationType.FOLLOWING_REVIEW:
+    case NotificationTypeEnum.FOLLOWING_REVIEW:
       await Review.findById(notification.resources![0]._id)
         .populate({
           path: "writer",
@@ -147,7 +147,7 @@ async function getNotificationContent(notification: INotification) {
           }
         });
       break;
-    case NotificationType.FOLLOWING_CHECKIN:
+    case NotificationTypeEnum.FOLLOWING_CHECKIN:
       await CheckIn.findById(notification.resources![0]._id)
         .populate({
           path: "user",
@@ -166,7 +166,7 @@ async function getNotificationContent(notification: INotification) {
           activity = checkin.userActivityId;
         });
       break;
-    case NotificationType.REFERRAL_REWARD:
+    case NotificationTypeEnum.REFERRAL_REWARD:
       title = "Referral Reward";
       const friendName =
         "(" + notification.additionalData?.newUserName + ") " || "";

@@ -1,12 +1,12 @@
 import express from "express";
 
-import { authMiddleware } from "../middlewares/authMiddleWare";
 import {
   createCheckin,
   createCheckinValidation,
   getCheckins,
   getCheckinsValidation,
 } from "../controllers/CheckinController";
+import { authMiddleware } from "../middlewares/authMiddleWare";
 
 const router = express.Router();
 router.use(express.json());

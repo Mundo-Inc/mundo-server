@@ -1,5 +1,5 @@
-import Achievement, { IAchievement } from "../../../../models/Achievement";
-import { IUser } from "../../../../models/User";
+import Achievement, { type IAchievement } from "../../../../models/Achievement";
+import type { IUser } from "../../../../models/User";
 import logger from "../../logger";
 
 type LevelupAcivement = {

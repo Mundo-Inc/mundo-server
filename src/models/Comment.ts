@@ -1,7 +1,10 @@
 import mongoose, { Schema, type CallbackError, type Document } from "mongoose";
 
 import logger from "../api/services/logger";
-import Notification, { NotificationType, ResourceTypes } from "./Notification";
+import Notification, {
+  NotificationTypeEnum,
+  ResourceTypeEnum,
+} from "./Notification";
 import UserActivity, { type IUserActivity } from "./UserActivity";
 
 export interface IComment extends Document {
@@ -80,9 +83,9 @@ CommentSchema.post("save", async function (doc, next) {
     if (activity) {
       await Notification.create({
         user: activity.userId,
-        type: NotificationType.COMMENT,
+        type: NotificationTypeEnum.COMMENT,
         resources: [
-          { _id: doc._id, type: ResourceTypes.COMMENT, date: doc.createdAt },
+          { _id: doc._id, type: ResourceTypeEnum.COMMENT, date: doc.createdAt },
         ],
         importance: 2,
       });
@@ -91,11 +94,11 @@ CommentSchema.post("save", async function (doc, next) {
       for (const mention of doc.mentions) {
         await Notification.create({
           user: mention.user,
-          type: NotificationType.COMMENT_MENTION,
+          type: NotificationTypeEnum.COMMENT_MENTION,
           resources: [
             {
               _id: doc._id,
-              type: ResourceTypes.COMMENT,
+              type: ResourceTypeEnum.COMMENT,
               date: doc.createdAt,
             },
           ],
@@ -113,7 +116,7 @@ async function removeCommentDependencies(comment: IComment) {
     resources: {
       $elemMatch: {
         _id: comment._id,
-        type: ResourceTypes.COMMENT,
+        type: ResourceTypeEnum.COMMENT,
       },
     },
   });

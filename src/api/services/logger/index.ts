@@ -1,4 +1,4 @@
-import { Logger } from "winston";
+import type { Logger } from "winston";
 
 import buildDevLogger from "./dev-logger";
 import buildProdLogger from "./prod-logger";

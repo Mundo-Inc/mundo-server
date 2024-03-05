@@ -1,12 +1,12 @@
 import express from "express";
 
-import { authMiddleware } from "../middlewares/authMiddleWare";
 import {
   createReaction,
   createReactionValidation,
   deleteReaction,
   deleteReactionValidation,
 } from "../controllers/ReactionController";
+import { authMiddleware } from "../middlewares/authMiddleWare";
 
 const router = express.Router();
 router.use(express.json());

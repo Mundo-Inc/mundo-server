@@ -1,8 +1,8 @@
-import { NextFunction, Request, Response } from "express";
-import { ValidationChain, body, param } from "express-validator";
+import type { NextFunction, Request, Response } from "express";
+import { body, param, type ValidationChain } from "express-validator";
 
 import { createCron } from "../../cronjobs/bots";
-import Bot, { IBotTarget, IBotType } from "../../models/Bot";
+import Bot, { IBotTargetEnum, IBotTypeEnum } from "../../models/Bot";
 import User, { SignupMethodEnum, UserRoleEnum } from "../../models/User";
 import { createError, handleInputErrors } from "../../utilities/errorHandlers";
 import validate from "./validators";
@@ -81,8 +81,8 @@ export async function getBot(req: Request, res: Response, next: NextFunction) {
 
 export const createDutyValidation: ValidationChain[] = [
   param("id").isMongoId(),
-  body("target").isIn(Object.values(IBotTarget)),
-  body("type").isIn(Object.values(IBotType)),
+  body("target").isIn(Object.values(IBotTargetEnum)),
+  body("type").isIn(Object.values(IBotTypeEnum)),
   body("targetThresholdHours").optional().isNumeric(),
   body("interval").isString(),
   body("reactions").optional().isArray(),

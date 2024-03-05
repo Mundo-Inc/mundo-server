@@ -1,7 +1,7 @@
 import UserActivity, {
   ActivityPrivacyTypeEnum,
+  ActivityResourceTypeEnum,
   ActivityTypeEnum,
-  ResourceTypeEnum,
 } from "../../models/UserActivity";
 
 const addActivity = async (params: any, existCheck: boolean = false) => {
@@ -25,7 +25,7 @@ export const addNewPlaceActivity = async (
   } = {
     userId,
     activityType: ActivityTypeEnum.ADD_PLACE,
-    resourceType: ResourceTypeEnum.PLACE,
+    resourceType: ActivityResourceTypeEnum.PLACE,
     resourceId: placeId,
     placeId,
     privacyType,
@@ -49,7 +49,7 @@ export const addCheckinActivity = async (
   } = {
     userId,
     activityType: ActivityTypeEnum.NEW_CHECKIN,
-    resourceType: ResourceTypeEnum.CHECKIN,
+    resourceType: ActivityResourceTypeEnum.CHECKIN,
     resourceId: checkinId,
     placeId,
     hasMedia,
@@ -74,7 +74,7 @@ export const addReviewActivity = async (
   } = {
     userId,
     activityType: ActivityTypeEnum.NEW_REVIEW,
-    resourceType: ResourceTypeEnum.REVIEW,
+    resourceType: ActivityResourceTypeEnum.REVIEW,
     resourceId: reviewId,
     placeId,
     hasMedia,
@@ -95,7 +95,7 @@ export const addRecommendActivity = async (
   const activityParams = {
     userId,
     activityType: ActivityTypeEnum.NEW_RECOMMEND,
-    resourceType: ResourceTypeEnum.REVIEW,
+    resourceType: ActivityResourceTypeEnum.REVIEW,
     resourceId: reviewId,
     placeId,
     privacyType,
@@ -115,7 +115,7 @@ export const addReactionToPlaceActivity = async (
   } = {
     userId,
     activityType: ActivityTypeEnum.REACT_TO_PLACE,
-    resourceType: ResourceTypeEnum.REACTION,
+    resourceType: ActivityResourceTypeEnum.REACTION,
     resourceId: reactionId,
     placeId,
     privacyType,
@@ -138,7 +138,7 @@ export const addCreateDealActivity = async (
   } = {
     userId,
     activityType: ActivityTypeEnum.CREATE_DEAL,
-    resourceType: ResourceTypeEnum.DEAL,
+    resourceType: ActivityResourceTypeEnum.DEAL,
     resourceId: dealId,
     placeId,
     privacyType,
@@ -156,7 +156,7 @@ export const addGotBadgeActivity = async (
   const activityParams = {
     userId,
     activityType: ActivityTypeEnum.GOT_BADGE,
-    resourceType: ResourceTypeEnum.USER,
+    resourceType: ActivityResourceTypeEnum.USER,
     resourceId: userId,
     privacyType,
   };
@@ -171,7 +171,7 @@ export const addLevelUpActivity = async (
   const activityParams = {
     userId,
     activityType: ActivityTypeEnum.LEVEL_UP,
-    resourceType: ResourceTypeEnum.USER,
+    resourceType: ActivityResourceTypeEnum.USER,
     resourceId: userId,
     privacyType,
     newLevel,
@@ -190,7 +190,7 @@ export const addNewFollowingActivity = async (
   } = {
     userId,
     activityType: ActivityTypeEnum.FOLLOWING,
-    resourceType: ResourceTypeEnum.USER,
+    resourceType: ActivityResourceTypeEnum.USER,
     resourceId: targetId,
     privacyType,
   };

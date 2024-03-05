@@ -1,4 +1,4 @@
-import { createLogger, format, transports, Logger } from "winston";
+import { createLogger, format, transports, type Logger } from "winston";
 import "winston-mongodb";
 import { config } from "../../../config";
 

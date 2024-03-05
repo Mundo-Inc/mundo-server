@@ -1,11 +1,14 @@
 import { StatusCodes } from "http-status-codes";
+
 import { dailyCoinsCFG } from "../../../config/dailyCoins";
 import CheckIn from "../../../models/CheckIn";
 import CoinReward, { CoinRewardTypeEnum } from "../../../models/CoinReward";
-import { IMission, TaskTypeEnum } from "../../../models/Mission";
+import { TaskTypeEnum, type IMission } from "../../../models/Mission";
 import Reaction from "../../../models/Reaction";
-import { IDailyReward, IUser } from "../../../models/User";
-import UserActivity, { ResourceTypeEnum } from "../../../models/UserActivity";
+import type { IDailyReward, IUser } from "../../../models/User";
+import UserActivity, {
+  ActivityResourceTypeEnum,
+} from "../../../models/UserActivity";
 import { dStrings, dynamicMessage } from "../../../strings";
 import { createError } from "../../../utilities/errorHandlers";
 
@@ -156,7 +159,7 @@ export async function populateMissionProgress(mission: IMission, user: IUser) {
   if (mission.task.type === TaskTypeEnum.REVIEW) {
     const completedCount = await UserActivity.countDocuments({
       userId: user._id,
-      resourceType: ResourceTypeEnum.REVIEW,
+      resourceType: ActivityResourceTypeEnum.REVIEW,
       createdAt: {
         $gte: mission.startsAt,
         $lte: mission.expiresAt,

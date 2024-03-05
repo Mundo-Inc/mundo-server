@@ -1,4 +1,5 @@
 import mongoose, { Schema, type Document } from "mongoose";
+
 import { weights } from "../config/trendFactors";
 
 export enum ActivityTypeEnum {
@@ -20,7 +21,7 @@ export enum ActivityPrivacyTypeEnum {
   FOLLOWING = "FOLLOWING",
 }
 
-export enum ResourceTypeEnum {
+export enum ActivityResourceTypeEnum {
   PLACE = "Place",
   REVIEW = "Review",
   DEAL = "Deal",
@@ -33,7 +34,7 @@ export enum ResourceTypeEnum {
 export interface IUserActivity extends Document {
   userId: mongoose.Types.ObjectId;
   activityType: ActivityTypeEnum;
-  resourceType: ResourceTypeEnum;
+  resourceType: ActivityResourceTypeEnum;
   resourceId: mongoose.Types.ObjectId;
   placeId?: mongoose.Types.ObjectId;
   privacyType: ActivityPrivacyTypeEnum;
@@ -58,7 +59,7 @@ const UserActivitySchema: Schema = new Schema<IUserActivity>(
     },
     resourceType: {
       type: String,
-      enum: Object.values(ResourceTypeEnum),
+      enum: Object.values(ActivityResourceTypeEnum),
       required: true,
     },
     resourceId: {

@@ -1,6 +1,6 @@
 import mongoose, { Schema, type Document } from "mongoose";
 
-export enum PrizeRedemptionStatusType {
+export enum PrizeRedemptionStatusTypeEnum {
   PENDING = "PENDING",
   DECLINED = "DECLINED",
   SUCCESSFUL = "SUCCESSFUL",
@@ -9,7 +9,7 @@ export enum PrizeRedemptionStatusType {
 export interface IPrizeRedemption extends Document {
   userId: mongoose.Types.ObjectId;
   prizeId: mongoose.Types.ObjectId;
-  status: PrizeRedemptionStatusType;
+  status: PrizeRedemptionStatusTypeEnum;
   note?: String;
   createdAt: Date;
   updatedAt: Date;
@@ -21,8 +21,8 @@ const PrizeRedemptionSchema: Schema = new Schema<IPrizeRedemption>(
     prizeId: { type: Schema.Types.ObjectId, ref: "Prize" },
     status: {
       type: String,
-      enum: Object.values(PrizeRedemptionStatusType),
-      default: PrizeRedemptionStatusType.PENDING,
+      enum: Object.values(PrizeRedemptionStatusTypeEnum),
+      default: PrizeRedemptionStatusTypeEnum.PENDING,
     },
     note: {
       type: String,

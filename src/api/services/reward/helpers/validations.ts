@@ -1,12 +1,11 @@
-import { ActivityPrivacyTypeEnum } from "./../../../../models/UserActivity";
-import Comment, { IComment } from "../../../../models/Comment";
-import { IReaction } from "../../../../models/Reaction";
-import Review, { IReview } from "../../../../models/Review";
+import type { ICheckIn } from "../../../../models/CheckIn";
+import type { IComment } from "../../../../models/Comment";
+import type { IReaction } from "../../../../models/Reaction";
+import type { IReview } from "../../../../models/Review";
 import Reward from "../../../../models/Reward";
-import { IUser } from "../../../../models/User";
-import { thresholds } from "../utils/threshold";
-import { ICheckIn } from "../../../../models/CheckIn";
+import type { IUser } from "../../../../models/User";
 import logger from "../../logger";
+import { thresholds } from "../utils/threshold";
 
 export const validateReviewReward = async (user: IUser, review: IReview) => {
   try {

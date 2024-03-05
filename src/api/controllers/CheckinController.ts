@@ -7,8 +7,8 @@ import CheckIn, { type ICheckIn } from "../../models/CheckIn";
 import Follow from "../../models/Follow";
 import Media, { MediaTypeEnum } from "../../models/Media";
 import Notification, {
-  NotificationType,
-  ResourceTypes,
+  NotificationTypeEnum,
+  ResourceTypeEnum,
 } from "../../models/Notification";
 import Place from "../../models/Place";
 import Upload from "../../models/Upload";
@@ -270,11 +270,11 @@ async function sendNotificiationToFollowers(authId: string, checkin: ICheckIn) {
   for (const follower of followers) {
     await Notification.create({
       user: follower.user,
-      type: NotificationType.FOLLOWING_CHECKIN,
+      type: NotificationTypeEnum.FOLLOWING_CHECKIN,
       resources: [
         {
           _id: checkin._id,
-          type: ResourceTypes.CHECKIN,
+          type: ResourceTypeEnum.CHECKIN,
           date: checkin.createdAt,
         },
       ],

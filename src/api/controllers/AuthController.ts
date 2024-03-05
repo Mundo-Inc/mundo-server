@@ -9,10 +9,11 @@ import User, { SignupMethodEnum } from "../../models/User";
 import strings from "../../strings";
 import { createError, handleInputErrors } from "../../utilities/errorHandlers";
 import { handleSignUp } from "../lib/profile-handlers";
+import logger from "../services/logger";
 import { sendSlackMessage } from "./SlackController";
 import validate from "./validators";
 
-const FIREBASE_WEB_API_KEY = process.env.FIREBASE_WEB_API_KEY;
+// const FIREBASE_WEB_API_KEY = process.env.FIREBASE_WEB_API_KEY;
 
 export const signinValidation: ValidationChain[] = [
   body("action").isIn(["signin", "signout"]),
@@ -131,7 +132,7 @@ export async function firebaseSync(
             userData.photoURL || undefined
           );
         } catch (error) {
-          console.log(error);
+          logger.error("Error sending slack message", error);
         }
       }
 

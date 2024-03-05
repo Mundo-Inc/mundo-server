@@ -24,6 +24,10 @@ import {
   getUserListsValidation,
 } from "../controllers/ListController";
 import {
+  getLatestReferredUsers,
+  paginationValidation,
+} from "../controllers/RewardController";
+import {
   getActivitiesOfaUser,
   getActivitiesOfaUserValidation,
 } from "../controllers/UserActivityController";
@@ -53,10 +57,6 @@ import {
   authMiddleware,
   optionalAuthMiddleware,
 } from "../middlewares/authMiddleWare";
-import {
-  getLatestReferredUsers,
-  paginationValidation,
-} from "../controllers/RewardController";
 
 const router = express.Router();
 router.use(express.json());

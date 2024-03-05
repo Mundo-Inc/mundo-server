@@ -1,8 +1,8 @@
-import mongoose, { SortOrder, type FilterQuery } from "mongoose";
+import mongoose, { type FilterQuery, type SortOrder } from "mongoose";
 
 import Achievement from "../../models/Achievement";
 import ActivitySeen, { type IActivitySeen } from "../../models/ActivitySeen";
-import Block, { IBlock } from "../../models/Block";
+import Block, { type IBlock } from "../../models/Block";
 import CheckIn from "../../models/CheckIn";
 import Comment from "../../models/Comment";
 import Deal from "../../models/Deal";
@@ -13,7 +13,7 @@ import Review from "../../models/Review";
 import User from "../../models/User";
 import UserActivity, {
   ActivityPrivacyTypeEnum,
-  ResourceTypeEnum,
+  ActivityResourceTypeEnum,
   type IUserActivity,
 } from "../../models/UserActivity";
 import { readFormattedPlaceLocationProjection } from "../dto/place/place-dto";
@@ -101,13 +101,13 @@ export const getResourceInfo = async (activity: IUserActivity) => {
     { _id: activity.userId },
     publicReadUserEssentialProjection
   ).lean();
-  if (activity.resourceType === ResourceTypeEnum.PLACE) {
+  if (activity.resourceType === ActivityResourceTypeEnum.PLACE) {
     resourceInfo = await Place.findById(
       activity.resourceId,
       readPlaceDetailProjection
     ).lean();
     placeInfo = resourceInfo;
-  } else if (activity.resourceType === ResourceTypeEnum.REVIEW) {
+  } else if (activity.resourceType === ActivityResourceTypeEnum.REVIEW) {
     const reviews = await Review.aggregate([
       {
         $match: {
@@ -253,13 +253,13 @@ export const getResourceInfo = async (activity: IUserActivity) => {
 
     resourceInfo = reviews[0];
     placeInfo = resourceInfo.place;
-  } else if (activity.resourceType === ResourceTypeEnum.DEAL) {
+  } else if (activity.resourceType === ActivityResourceTypeEnum.DEAL) {
     resourceInfo = await Deal.findById(activity.resourceId).lean();
     placeInfo = await Place.findById(
       resourceInfo.place,
       readPlaceDetailProjection
     ).lean();
-  } else if (activity.resourceType === ResourceTypeEnum.CHECKIN) {
+  } else if (activity.resourceType === ActivityResourceTypeEnum.CHECKIN) {
     const checkins = await CheckIn.aggregate([
       {
         $match: {
@@ -363,7 +363,7 @@ export const getResourceInfo = async (activity: IUserActivity) => {
       ...checkins[0].checkin[0],
     };
     placeInfo = resourceInfo.place;
-  } else if (activity.resourceType === ResourceTypeEnum.USER) {
+  } else if (activity.resourceType === ActivityResourceTypeEnum.USER) {
     resourceInfo = await User.findById(
       activity.resourceId,
       publicReadUserEssentialProjection
@@ -374,7 +374,7 @@ export const getResourceInfo = async (activity: IUserActivity) => {
         readPlaceDetailProjection
       ).lean();
     }
-  } else if (activity.resourceType === ResourceTypeEnum.ACHIEVEMET) {
+  } else if (activity.resourceType === ActivityResourceTypeEnum.ACHIEVEMET) {
     resourceInfo = await Achievement.findById(activity.resourceId);
     if (activity.placeId) {
       placeInfo = await Place.findById(

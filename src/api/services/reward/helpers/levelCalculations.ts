@@ -1,6 +1,6 @@
 import { StatusCodes } from "http-status-codes";
 
-import { IReview } from "../../../../models/Review";
+import type { IReview } from "../../../../models/Review";
 import { createError } from "../../../../utilities/errorHandlers";
 import { getLevelThresholds } from "../utils/levelupThresholds";
 import { rewards_amounts } from "../utils/rewardsAmounts";

@@ -1,5 +1,5 @@
 import type { NextFunction, Request, Response } from "express";
-import { ValidationChain, param, query } from "express-validator";
+import { param, query, type ValidationChain } from "express-validator";
 import { StatusCodes } from "http-status-codes";
 import mongoose from "mongoose";
 

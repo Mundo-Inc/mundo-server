@@ -8,7 +8,7 @@ import CheckIn from "../models/CheckIn";
 import Comment from "../models/Comment";
 import Follow from "../models/Follow";
 import Notification, {
-  NotificationType,
+  NotificationTypeEnum,
   type INotification,
 } from "../models/Notification";
 import Reaction from "../models/Reaction";
@@ -98,7 +98,7 @@ export async function getNotificationContent(notification: INotification) {
   let subtitle = undefined;
   let content = "You have a new notification.";
   switch (notification.type) {
-    case NotificationType.COMMENT:
+    case NotificationTypeEnum.COMMENT:
       await Comment.findById(notification.resources![0]._id)
         .populate("author", ["name", "profileImage"])
         .then((comment) => {
@@ -107,13 +107,13 @@ export async function getNotificationContent(notification: INotification) {
           content = comment.content;
         });
       break;
-    case NotificationType.FOLLOW:
+    case NotificationTypeEnum.FOLLOW:
       const follow = await Follow.findById(
         notification.resources![0]._id
       ).populate("user", ["name"]);
       content = `${follow.user.name} followed you.`;
       break;
-    case NotificationType.COMMENT_MENTION:
+    case NotificationTypeEnum.COMMENT_MENTION:
       await Comment.findById(notification.resources![0]._id)
         .populate("author", ["name", "profileImage"])
         .then((comment) => {
@@ -122,7 +122,7 @@ export async function getNotificationContent(notification: INotification) {
           content = comment.content;
         });
       break;
-    case NotificationType.REACTION:
+    case NotificationTypeEnum.REACTION:
       await Reaction.findById(notification.resources![0]._id)
         .populate("user", ["name", "profileImage"])
         .then((reaction) => {
@@ -134,7 +134,7 @@ export async function getNotificationContent(notification: INotification) {
           }
         });
       break;
-    case NotificationType.FOLLOWING_REVIEW:
+    case NotificationTypeEnum.FOLLOWING_REVIEW:
       await Review.findById(notification.resources![0]._id)
         .populate({
           path: "writer",
@@ -150,7 +150,7 @@ export async function getNotificationContent(notification: INotification) {
           subtitle = review.content;
         });
       break;
-    case NotificationType.FOLLOWING_CHECKIN:
+    case NotificationTypeEnum.FOLLOWING_CHECKIN:
       await CheckIn.findById(notification.resources![0]._id)
         .populate({
           path: "user",
@@ -162,7 +162,7 @@ export async function getNotificationContent(notification: INotification) {
           content = `${checkin.user.name} checked into ${checkin.place.name}`;
         });
       break;
-    case NotificationType.REFERRAL_REWARD:
+    case NotificationTypeEnum.REFERRAL_REWARD:
       title = "Referral Reward";
       const friendName =
         "(" + notification.additionalData?.newUserName + ") " || "";

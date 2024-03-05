@@ -2,8 +2,8 @@ import type { NextFunction, Request, Response } from "express";
 import { body, param, type ValidationChain } from "express-validator";
 import { StatusCodes } from "http-status-codes";
 
-import Notification, { ResourceTypes } from "../../models/Notification";
-import Reaction, { IReaction } from "../../models/Reaction";
+import Notification, { ResourceTypeEnum } from "../../models/Notification";
+import Reaction, { type IReaction } from "../../models/Reaction";
 import UserActivity from "../../models/UserActivity";
 import strings, { dStrings as ds, dynamicMessage } from "../../strings";
 import { createError, handleInputErrors } from "../../utilities/errorHandlers";
@@ -132,7 +132,7 @@ async function removeAssociatedNotifications(reactionId: string) {
   try {
     await Notification.deleteMany({
       resources: {
-        $elemMatch: { type: ResourceTypes.REACTION, _id: reactionId },
+        $elemMatch: { type: ResourceTypeEnum.REACTION, _id: reactionId },
       },
     });
   } catch (e) {

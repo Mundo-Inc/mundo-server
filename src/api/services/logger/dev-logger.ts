@@ -1,4 +1,4 @@
-import { format, createLogger, transports, Logger } from "winston";
+import { createLogger, format, transports, type Logger } from "winston";
 const { timestamp, colorize, printf, errors } = format;
 
 const customFormat = format.combine(

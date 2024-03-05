@@ -1,8 +1,15 @@
 import mongoose from "mongoose";
+
+import CheckIn from "../../../models/CheckIn";
+import Comment from "../../../models/Comment";
 import Reaction from "../../../models/Reaction";
 import Review from "../../../models/Review";
 import Reward from "../../../models/Reward";
-import User, { IUser } from "../../../models/User";
+import User, { type IUser } from "../../../models/User";
+import { createError } from "../../../utilities/errorHandlers";
+import logger from "../logger";
+import { addLevelUpActivity } from "../user.activity.service";
+import { eligibleForAchivement } from "./helpers/achivementEligibility";
 import { checkNewLevelupAchivements } from "./helpers/achivements";
 import { calcLevel, calcReviewReward } from "./helpers/levelCalculations";
 import {
@@ -12,13 +19,6 @@ import {
   validateReviewReward,
 } from "./helpers/validations";
 import { rewards_amounts } from "./utils/rewardsAmounts";
-import Comment from "../../../models/Comment";
-import CheckIn from "../../../models/CheckIn";
-import { AchievementTypeEnum } from "../../../models/Achievement";
-import { eligibleForAchivement } from "./helpers/achivementEligibility";
-import { addLevelUpActivity } from "../user.activity.service";
-import { createError } from "../../../utilities/errorHandlers";
-import logger from "../logger";
 
 const getValidatedEntity = async (
   refType: string,

@@ -1,6 +1,5 @@
 import express from "express";
 
-import { authMiddleware } from "../middlewares/authMiddleWare";
 import {
   createComment,
   createCommentValidation,
@@ -13,6 +12,7 @@ import {
   createFlagComment,
   createFlagCommentValidation,
 } from "../controllers/FlagController";
+import { authMiddleware } from "../middlewares/authMiddleWare";
 
 const router = express.Router();
 router.use(express.json());

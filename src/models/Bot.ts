@@ -1,12 +1,12 @@
 import mongoose, { Schema, type Document } from "mongoose";
 
-export enum IBotType {
+export enum IBotTypeEnum {
   REACT = "REACT",
   COMMENT = "COMMENT",
   REVIEW = "REVIEW",
 }
 
-export enum IBotTarget {
+export enum IBotTargetEnum {
   REVIEWS = "REVIEWS",
   CHECKINS = "CHECKINS",
   HAS_MEDIA = "HAS_MEDIA",
@@ -14,7 +14,7 @@ export enum IBotTarget {
 
 export interface IBot extends Document {
   userId: mongoose.Types.ObjectId;
-  type: IBotType;
+  type: IBotTypeEnum;
   target: String;
   targetThresholdHours: number;
   reactions: String[];
@@ -28,10 +28,14 @@ const BotSchema = new Schema<IBot>(
     userId: { type: Schema.Types.ObjectId, ref: "User", required: true },
     type: {
       type: String,
-      enum: Object.values(IBotType),
-      default: IBotType.REACT,
+      enum: Object.values(IBotTypeEnum),
+      default: IBotTypeEnum.REACT,
     },
-    target: { type: String, enum: Object.values(IBotTarget), required: true },
+    target: {
+      type: String,
+      enum: Object.values(IBotTargetEnum),
+      required: true,
+    },
     targetThresholdHours: { type: Number, default: 24 },
     reactions: {
       type: [String],

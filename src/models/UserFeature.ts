@@ -1,6 +1,7 @@
 import mongoose, { Schema, type Document } from "mongoose";
-import { IFeatureVector } from "./PlaceFeature";
+
 import { MATCHING_FEATURES } from "../data/matching/categories";
+import { type IFeatureVector } from "./PlaceFeature";
 
 export interface IUserFeature extends Document {
   user: mongoose.Types.ObjectId;

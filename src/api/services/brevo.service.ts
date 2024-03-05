@@ -1,8 +1,9 @@
 import * as SibApiV3Sdk from "@sendinblue/client";
 import { SendSmtpEmail, SendSmtpEmailTo } from "@sendinblue/client";
-import path from "path";
 import * as fs from "fs";
 import * as hbs from "handlebars";
+import path from "path";
+
 import logger from "./logger";
 
 export interface EmailSender {

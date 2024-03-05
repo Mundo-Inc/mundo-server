@@ -7,8 +7,10 @@ import { StatusCodes } from "http-status-codes";
 
 import Block from "../../models/Block";
 import CheckIn from "../../models/CheckIn";
+import CoinReward, { CoinRewardTypeEnum } from "../../models/CoinReward";
 import Follow from "../../models/Follow";
-import FollowRequest, { IFollowRequest } from "../../models/FollowRequest";
+import FollowRequest, { type IFollowRequest } from "../../models/FollowRequest";
+import Notification, { NotificationTypeEnum } from "../../models/Notification";
 import Place, { type IPlace } from "../../models/Place";
 import Review from "../../models/Review";
 import User, {
@@ -22,13 +24,11 @@ import { bucketName, s3 } from "../../utilities/storage";
 import { privateReadUserProjection } from "../dto/user/read-user-private.dto";
 import { publicReadUserProjection } from "../dto/user/read-user-public.dto";
 import { handleSignUp } from "../lib/profile-handlers";
+import { BrevoService } from "../services/brevo.service";
+import logger from "../services/logger";
 import { calcRemainingXP } from "../services/reward/helpers/levelCalculations";
 import { sendSlackMessage } from "./SlackController";
 import validate from "./validators";
-import CoinReward, { CoinRewardTypeEnum } from "../../models/CoinReward";
-import { BrevoService } from "../services/brevo.service";
-import Notification, { NotificationType } from "../../models/Notification";
-import logger from "../services/logger";
 
 // const FIREBASE_WEB_API_KEY = process.env.FIREBASE_WEB_API_KEY;
 
@@ -149,7 +149,7 @@ async function notifyReferrer(
     // Sending app notification
     await Notification.create({
       user: referredBy,
-      type: NotificationType.REFERRAL_REWARD,
+      type: NotificationTypeEnum.REFERRAL_REWARD,
       additionalData: {
         amount,
         newUserName,
@@ -266,7 +266,7 @@ export async function createUser(
         })`
       );
     } catch (error) {
-      console.log(error);
+      logger.error("Error sending slack message", { error });
     }
 
     // Sign in to get the Firebase ID token

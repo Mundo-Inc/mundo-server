@@ -1,8 +1,8 @@
-import { type ICheckIn } from "../../models/CheckIn";
-import { type IDeal } from "../../models/Deal";
+import type { ICheckIn } from "../../models/CheckIn";
+import type { IDeal } from "../../models/Deal";
 import Earning, { EarningTypeEnum } from "../../models/Earning";
-import { type IPlace } from "../../models/Place";
-import { type IReview } from "../../models/Review";
+import type { IPlace } from "../../models/Place";
+import type { IReview } from "../../models/Review";
 import User from "../../models/User";
 
 export const reviewCoins = { normalValue: 1, expLimit: 5, expMul: 10 };

@@ -6,7 +6,7 @@ import mongoose from "mongoose";
 import ActivitySeen from "../../models/ActivitySeen";
 import Block from "../../models/Block";
 import Comment from "../../models/Comment";
-import Follow, { IFollow } from "../../models/Follow";
+import Follow, { type IFollow } from "../../models/Follow";
 import Reaction from "../../models/Reaction";
 import UserActivity from "../../models/UserActivity";
 import { dStrings, dynamicMessage } from "../../strings";
