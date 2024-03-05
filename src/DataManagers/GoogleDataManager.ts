@@ -1,4 +1,5 @@
 import axios from "axios";
+import logger from "../api/services/logger";
 
 export class GoogleDataManager {
   private static BASE = "https://places.googleapis.com/v1";
@@ -115,6 +116,7 @@ export class GoogleDataManager {
     url.searchParams.append("key", GoogleDataManager.API_KEY);
 
     try {
+      logger.http("Getting google place details", { url: url.href });
       const data = await axios.get<GooglePlaceDetailsIDsOnly & T>(url.href);
       return data.data;
     } catch (error: any) {
@@ -125,9 +127,104 @@ export class GoogleDataManager {
           case 404:
             throw new Error(GooglePlacesDataManagerError.PLACE_NOT_FOUND);
           default:
+            logger.error("Error getting google place details", { error });
             throw new Error(GooglePlacesDataManagerError.SOMETHING_WENT_WRONG);
         }
       }
+      logger.error("Error getting google place details", { error });
+      throw new Error(GooglePlacesDataManagerError.SOMETHING_WENT_WRONG);
+    }
+  }
+
+  public static async getPlaceId(
+    textQuery: string,
+    locationBias: {
+      lat: number;
+      lng: number;
+      radius?: number;
+    } | null = null
+  ) {
+    if (!textQuery || textQuery === "") {
+      throw new Error("Text query cannot be empty");
+    }
+
+    const url = new URL(`${GoogleDataManager.BASE}/places:searchText`);
+
+    const headers = {
+      "Content-Type": "application/json",
+      "X-Goog-Api-Key": GoogleDataManager.API_KEY,
+      "X-Goog-FieldMask": "places.id",
+    };
+
+    const body: {
+      textQuery: string;
+      maxResultCount?: number;
+      locationBias?: {
+        circle: {
+          center: {
+            latitude: number;
+            longitude: number;
+          };
+          radius: number;
+        };
+      };
+    } = {
+      textQuery,
+      maxResultCount: 1,
+    };
+
+    if (locationBias) {
+      body["locationBias"] = {
+        circle: {
+          center: {
+            latitude: locationBias?.lat,
+            longitude: locationBias?.lng,
+          },
+          radius: locationBias?.radius || 50,
+        },
+      };
+    }
+
+    try {
+      const data = await axios.post<GooglePlaceTextSearchResponse>(
+        url.href,
+        body,
+        { headers }
+      );
+      return data.data.palces[0].id;
+    } catch (error: any) {
+      logger.error("Error getting google place id using Text Search", {
+        error,
+      });
+      throw new Error(GooglePlacesDataManagerError.SOMETHING_WENT_WRONG);
+    }
+  }
+
+  /**
+   * Retrieves a photo for a specific place using the Google Places API.
+   * @param name `places/....`
+   *             - Consists of `places/${placeId}/photos/${photoReference}`
+   * @param maxWidthPx default 1080
+   * @param maxHeightPx default 1920
+   * @returns {Promise<string>} A promise that resolves to a string containing the photo URI.
+   */
+  public static async getPhoto(
+    name: string,
+    maxWidthPx: number = 1080,
+    maxHeightPx: number = 1920
+  ): Promise<string> {
+    const url = new URL(`${GoogleDataManager.BASE}/${name}/media`);
+    url.searchParams.append("maxWidthPx", maxWidthPx.toString());
+    url.searchParams.append("maxHeightPx", maxHeightPx.toString());
+    url.searchParams.append("skipHttpRedirect", "true");
+    url.searchParams.append("key", GoogleDataManager.API_KEY);
+
+    try {
+      logger.http("Getting google photo", { url: url.href });
+      const data = await axios.get<GooglePhotoResponse>(url.href);
+      return data.data.photoUri;
+    } catch (error: any) {
+      logger.error("Error getting google photo", { error });
       throw new Error(GooglePlacesDataManagerError.SOMETHING_WENT_WRONG);
     }
   }
@@ -136,6 +233,17 @@ export class GoogleDataManager {
 enum GooglePlacesDataManagerError {
   PLACE_NOT_FOUND = "PLACE_NOT_FOUND",
   SOMETHING_WENT_WRONG = "SOMETHING_WENT_WRONG",
+}
+
+interface GooglePlaceTextSearchResponse {
+  palces: {
+    id: string;
+  }[];
+}
+
+interface GooglePhotoResponse {
+  name: string;
+  photoUri: string;
 }
 
 interface GooglePlaceDetailsIDsOnly {

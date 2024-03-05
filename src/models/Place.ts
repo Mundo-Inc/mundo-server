@@ -90,6 +90,13 @@ export interface IPlace extends Document {
       };
       updatedAt?: Date;
     };
+    appleMaps: {
+      _id?: {
+        type: string;
+        unique: true;
+      };
+      updatedAt?: Date;
+    };
     googlePlaces: {
       _id?: {
         type: string;
@@ -261,6 +268,12 @@ const PlaceSchema: Schema = new Schema<IPlace>(
         },
         default: {
           _id: "",
+        },
+      },
+      appleMaps: {
+        type: {
+          _id: String,
+          updatedAt: Date,
         },
       },
       googlePlaces: {
