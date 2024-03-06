@@ -168,6 +168,8 @@ export async function getDetailedPlace(id: string) {
 
   const thirdPartyData = await fetchThirdPartiesData(place);
 
+  console.log(234);
+
   // Update place with thirdparty data
   const now = new Date();
   if (!place.otherSources) {
@@ -789,6 +791,8 @@ async function fetchGoogle(place: IPlace) {
         lat: place.location.geoLocation.coordinates[1],
         lng: place.location.geoLocation.coordinates[0],
       });
+
+      console.log("ID", googlePlacesId);
 
       // Storing the googlePlaceId
       place.otherSources.googlePlaces = { _id: googlePlacesId };
