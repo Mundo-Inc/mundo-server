@@ -168,25 +168,30 @@ export async function getDetailedPlace(id: string) {
   const now = new Date();
   if (!place.otherSources) {
     place.otherSources = {};
-    if (thirdPartyData.google) {
+  }
+  if (thirdPartyData.google) {
+    if (!place.otherSources.googlePlaces) {
       place.otherSources.googlePlaces = {
         _id: thirdPartyData.google.id,
         rating: thirdPartyData.google.rating,
         updatedAt: now,
       };
+    } else {
+      place.otherSources.googlePlaces.rating = thirdPartyData.google.rating;
+      place.otherSources.googlePlaces.updatedAt = now;
     }
-    if (thirdPartyData.yelp) {
+  }
+  if (thirdPartyData.yelp) {
+    if (!place.otherSources.yelp) {
       place.otherSources.yelp = {
         _id: thirdPartyData.yelp.id,
         rating: thirdPartyData.yelp.rating,
         updatedAt: now,
       };
+    } else {
+      place.otherSources.yelp.rating = thirdPartyData.yelp.rating;
+      place.otherSources.yelp.updatedAt = now;
     }
-  } else {
-    place.otherSources.googlePlaces.rating = thirdPartyData.google?.rating;
-    place.otherSources.googlePlaces.updatedAt = now;
-    place.otherSources.yelp.rating = thirdPartyData.yelp?.rating;
-    place.otherSources.yelp.updatedAt = now;
   }
 
   await place.save();
