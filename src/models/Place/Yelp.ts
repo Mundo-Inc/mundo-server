@@ -7,10 +7,7 @@ export interface IYelp {
 }
 
 export const YelpSchema = new Schema<IYelp>({
-  _id: {
-    type: String,
-    default: null,
-  },
+  _id: String,
   rating: Number,
   updatedAt: Date,
 });

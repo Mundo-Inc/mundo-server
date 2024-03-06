@@ -366,6 +366,7 @@ export async function getThirdPartyRating(
           // Getting the yelpId
           const yelpId = await findYelpId(place);
           // Storing the yelpId
+          if (!place.otherSources) place.otherSources = {};
           place.otherSources.yelp = { _id: yelpId };
           await place.save();
           // Returning the yelpRating
@@ -382,6 +383,7 @@ export async function getThirdPartyRating(
           // Getting the tripAdvisorId
           const tripAdvisorId = await findTripAdvisorId(place);
           // Storing the tripAdvisorId
+          if (!place.otherSources) place.otherSources = {};
           place.otherSources.tripAdvisor = { _id: tripAdvisorId };
           await place.save();
           // Returning the tripAdvisorRating
@@ -396,6 +398,7 @@ export async function getThirdPartyRating(
           // Getting the id
           const foursquareId = await findFoursquareId(place);
           // Storing the id
+          if (!place.otherSources) place.otherSources = {};
           place.otherSources.foursquare = { _id: foursquareId };
           await place.save();
           // Returning the rating

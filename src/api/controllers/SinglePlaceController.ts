@@ -166,10 +166,29 @@ export async function getDetailedPlace(id: string) {
 
   // Update place with thirdparty data
   const now = new Date();
-  place.otherSources.googlePlaces.rating = thirdPartyData.google?.rating;
-  place.otherSources.googlePlaces.updatedAt = now;
-  place.otherSources.yelp.rating = thirdPartyData.yelp?.rating;
-  place.otherSources.yelp.updatedAt = now;
+  if (!place.otherSources) {
+    place.otherSources = {};
+    if (thirdPartyData.google) {
+      place.otherSources.googlePlaces = {
+        _id: thirdPartyData.google.id,
+        rating: thirdPartyData.google.rating,
+        updatedAt: now,
+      };
+    }
+    if (thirdPartyData.yelp) {
+      place.otherSources.yelp = {
+        _id: thirdPartyData.yelp.id,
+        rating: thirdPartyData.yelp.rating,
+        updatedAt: now,
+      };
+    }
+  } else {
+    place.otherSources.googlePlaces.rating = thirdPartyData.google?.rating;
+    place.otherSources.googlePlaces.updatedAt = now;
+    place.otherSources.yelp.rating = thirdPartyData.yelp?.rating;
+    place.otherSources.yelp.updatedAt = now;
+  }
+
   await place.save();
 
   if (
@@ -824,7 +843,7 @@ async function fetchGoogle(place: IPlace, getReviews: boolean) {
 
     return {
       google: {
-        _id: googlePlacesId,
+        id: googlePlacesId,
         rating,
         reviewCount,
         reviews,

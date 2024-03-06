@@ -15,10 +15,7 @@ export interface IGooglePlaces {
 }
 
 export const GooglePlacesSchema = new Schema<IGooglePlaces>({
-  _id: {
-    type: String,
-    default: null,
-  },
+  _id: String,
   rating: Number,
   streetNumber: String,
   streetName: String,

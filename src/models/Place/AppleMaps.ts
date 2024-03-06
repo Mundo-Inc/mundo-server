@@ -6,9 +6,6 @@ export interface IAppleMaps {
 }
 
 export const AppleMapsSchema = new Schema<IAppleMaps>({
-  _id: {
-    type: String,
-    default: null,
-  },
+  _id: String,
   updatedAt: Date,
 });

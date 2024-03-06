@@ -1,10 +1,7 @@
 import mongoose, { Schema, type Document } from "mongoose";
 
-import { AppleMapsSchema, type IAppleMaps } from "./Place/AppleMaps";
-import { GooglePlacesSchema, type IGooglePlaces } from "./Place/GooglePlaces";
-import { OSMSchema, type IOSM } from "./Place/OSM";
+import { OtherScoresSchema, type IOtherSources } from "./Place/OtherSources";
 import { ScoresSchema, type IScores } from "./Place/Scores";
-import { YelpSchema, type IYelp } from "./Place/Yelp";
 import Review from "./Review";
 
 const GOOGLE_PLACES_PERCENTAGE = 0.3;
@@ -46,12 +43,7 @@ export interface IPlace extends Document {
     reviewCount: number;
     checkinCount: number;
   };
-  otherSources: {
-    OSM: IOSM;
-    appleMaps: IAppleMaps;
-    googlePlaces: IGooglePlaces;
-    yelp: IYelp;
-  };
+  otherSources: IOtherSources;
 }
 
 const PlaceSchema: Schema = new Schema<IPlace>(
@@ -142,20 +134,7 @@ const PlaceSchema: Schema = new Schema<IPlace>(
       type: Schema.Types.ObjectId,
       ref: "User",
     },
-    otherSources: {
-      OSM: {
-        type: OSMSchema,
-      },
-      appleMaps: {
-        type: AppleMapsSchema,
-      },
-      googlePlaces: {
-        type: GooglePlacesSchema,
-      },
-      yelp: {
-        type: YelpSchema,
-      },
-    },
+    otherSources: OtherScoresSchema,
     activities: {
       reviewCount: {
         type: Number,
@@ -262,7 +241,7 @@ const PlaceSchema: Schema = new Schema<IPlace>(
             scores[0].phantom = Math.abs((scores[0].phantom * 5) / scoreCount);
           }
 
-          if (this.otherSources.googlePlaces.rating) {
+          if (this.otherSources.googlePlaces?.rating) {
             scores[0].overall = this.otherSources.googlePlaces.rating;
 
             scores[0].phantom =

@@ -2,7 +2,7 @@ import { Schema } from "mongoose";
 
 export interface IOSM {
   _id?: string;
-  tags: {
+  tags?: {
     air_conditioning?: boolean;
     amenity?: string;
     brand?: string;
@@ -20,10 +20,7 @@ export interface IOSM {
 }
 
 export const OSMSchema = new Schema<IOSM>({
-  _id: {
-    type: String,
-    default: null,
-  },
+  _id: String,
   tags: {
     air_conditioning: Boolean,
     amenity: String,
