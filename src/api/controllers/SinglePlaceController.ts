@@ -200,37 +200,8 @@ export async function getDetailedPlace(id: string) {
   placeObject.thumbnail =
     thirdPartyData.google?.thumbnail || thirdPartyData.yelp?.thumbnail;
 
-  // {
-  //   name: 1,
-  //   amenity: 1,
-  //   otherNames: 1,
-  //   thumbnail: 1,
-  //   media: 1,
-  //   scores: 1,
-  //   activities: 1,
-  //   priceRange: 1,
-  //   description: 1,
-  //   location: {
-  //     geoLocation: {
-  //       lng: {
-  //         $arrayElemAt: ["$location.geoLocation.coordinates", 0],
-  //       },
-  //       lat: {
-  //         $arrayElemAt: ["$location.geoLocation.coordinates", 1],
-  //       },
-  //     },
-  //     address: 1,
-  //     city: 1,
-  //     state: 1,
-  //     country: 1,
-  //     zip: 1,
-  //   },
-  //   phone: 1,
-  //   website: 1,
-  //   categories: 1,
-  // }
-
   const filteredPlace = filterObjectByConfig(placeObject, {
+    _id: true,
     name: true,
     amenity: true,
     otherNames: true,
