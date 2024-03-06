@@ -368,12 +368,14 @@ export const getResourceInfo = async (activity: IUserActivity) => {
       },
     ]);
 
-    if (!checkins[0]) return [null, null, userInfo];
+    if (!checkins[0]) {
+      return [null, null, userInfo];
+    }
 
     // TODO: remove after force update
-    if (checkins[0] && checkins[0].place) {
-      checkins[0].place.reviewCount =
-        checkins[0].place.activities?.reviewCount || 0;
+    if (checkins[0].checkin[0] && checkins[0].checkin[0].place) {
+      checkins[0].checkin[0].place.reviewCount =
+        checkins[0].checkin[0].place.activities?.reviewCount || 0;
     }
 
     resourceInfo = {
