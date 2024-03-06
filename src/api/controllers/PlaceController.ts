@@ -575,7 +575,7 @@ export async function getPlacesByContext(
 
     const result = await getDetailedPlace(matchedPlace?._id);
 
-    console.log(result);
+    console.log("result", result);
 
     // TODO: remove after app update
     result.reviewCount = result.activities.reviewCount;
