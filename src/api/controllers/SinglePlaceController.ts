@@ -168,8 +168,6 @@ export async function getDetailedPlace(id: string) {
 
   const thirdPartyData = await fetchThirdPartiesData(place);
 
-  console.log("thirdPartyData", thirdPartyData);
-
   // Update place with thirdparty data
   const now = new Date();
   if (!place.otherSources) {
@@ -230,8 +228,6 @@ export async function getDetailedPlace(id: string) {
 
   placeObject.thumbnail =
     thirdPartyData.google?.thumbnail || thirdPartyData.yelp?.thumbnail;
-
-  console.log("placeObject", placeObject);
 
   const filteredPlace = filterObjectByConfig(placeObject, {
     _id: true,
@@ -795,6 +791,7 @@ async function fetchGoogle(place: IPlace) {
       });
 
       // Storing the googlePlaceId
+      if (!place.otherSources) place.otherSources = {};
       place.otherSources.googlePlaces = { _id: googlePlacesId };
       await place.save();
 

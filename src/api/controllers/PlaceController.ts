@@ -575,12 +575,10 @@ export async function getPlacesByContext(
 
     const result = await getDetailedPlace(matchedPlace?._id);
 
-    console.log("result", result);
-
     // TODO: remove after app update
     result.reviewCount = result.activities.reviewCount;
 
-    if (!existing && !result.thirdParty.google?._id) {
+    if (!existing && !result.thirdParty.google?.id) {
       // If the place is new and doesn't exist on Google, delete it
       const place = await Place.findById(matchedPlace?._id);
       await place.deleteOne();
