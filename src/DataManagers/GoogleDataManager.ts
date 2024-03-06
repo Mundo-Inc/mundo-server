@@ -191,7 +191,7 @@ export class GoogleDataManager {
         body,
         { headers }
       );
-      return data.data.palces[0].id;
+      return data.data.places[0].id;
     } catch (error: any) {
       logger.error("Error getting google place id using Text Search", {
         error,
@@ -228,6 +228,76 @@ export class GoogleDataManager {
       throw new Error(GooglePlacesDataManagerError.SOMETHING_WENT_WRONG);
     }
   }
+
+  static getAddressesFromComponents(components: AddressComponent[]) {
+    if (!components || components.length === 0) {
+      return {
+        country: "",
+        state: "",
+        city: "",
+        streetNumber: "",
+        streetName: "",
+        postalCode: "",
+        address: "",
+      };
+    }
+
+    const country = this.extractComponentAddressComponents(
+      components,
+      "country",
+      true
+    );
+
+    const state = this.extractComponentAddressComponents(
+      components,
+      "administrative_area_level_1",
+      true
+    );
+
+    let city = this.extractComponentAddressComponents(components, "locality");
+    if (city === "") city = state;
+
+    const streetNumber = this.extractComponentAddressComponents(
+      components,
+      "street_number"
+    );
+
+    const streetName = this.extractComponentAddressComponents(
+      components,
+      "route"
+    );
+
+    const postalCode = this.extractComponentAddressComponents(
+      components,
+      "postal_code"
+    );
+
+    const address = `${streetNumber} ${streetName}`;
+
+    return {
+      country,
+      state,
+      city,
+      streetNumber,
+      streetName,
+      postalCode,
+      address,
+    };
+  }
+
+  private static extractComponentAddressComponents(
+    components: AddressComponent[],
+    type: string,
+    useShortName: boolean = false
+  ) {
+    const component = components.find((comp) => comp.types.includes(type));
+
+    if (component) {
+      return useShortName ? component.shortText : component.longText;
+    } else {
+      return "";
+    }
+  }
 }
 
 enum GooglePlacesDataManagerError {
@@ -236,7 +306,7 @@ enum GooglePlacesDataManagerError {
 }
 
 interface GooglePlaceTextSearchResponse {
-  palces: {
+  places: {
     id: string;
   }[];
 }
@@ -260,7 +330,7 @@ export interface GooglePlaceDetailsBasic {
   primaryTypeDisplayName: LocalizedText;
 }
 
-export interface GooglePlaceLocationOnly {
+export interface GooglePlaceDetailsLocationOnly {
   // Location Only
   addressComponents: AddressComponent[];
   location: LatLng;
@@ -331,7 +401,7 @@ type ParkingOptions = {
   paidGarageParking: boolean;
 };
 
-type OpeningHours = {
+export type OpeningHours = {
   openNow: boolean;
   weekdayDescriptions: string[];
   periods: Period[];
@@ -356,8 +426,8 @@ type Point = {
 };
 
 type AddressComponent = {
-  longName: string;
-  shortName: string;
+  longText: string;
+  shortText: string;
   types: string[];
   languageCode: string;
 };
@@ -371,7 +441,7 @@ type LocalizedText = {
   languageCode: string;
 };
 
-type GooglePlaceReview = {
+export type GooglePlaceReview = {
   name: string;
   relativePublishTimeDescription: string;
   text: LocalizedText;

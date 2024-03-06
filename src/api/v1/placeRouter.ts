@@ -30,10 +30,7 @@ import {
   getPlaceReviewsValidation,
   getPlaceValidation,
 } from "../controllers/SinglePlaceController";
-import {
-  authMiddleware,
-  optionalAuthMiddleware,
-} from "../middlewares/authMiddleWare";
+import { authMiddleware } from "../middlewares/authMiddleWare";
 
 const router = express.Router();
 
@@ -54,7 +51,7 @@ router
   .route("/context")
   .get(
     express.json(),
-    optionalAuthMiddleware,
+    authMiddleware,
     getPlacesByContextValidation,
     getPlacesByContext
   );
@@ -75,7 +72,7 @@ router
   .route("/:id/reviews")
   .get(
     express.json(),
-    optionalAuthMiddleware,
+    authMiddleware,
     getPlaceReviewsValidation,
     getPlaceReviews
   );
@@ -101,6 +98,6 @@ router
 // Detailed place info
 router
   .route("/:id")
-  .get(express.json(), optionalAuthMiddleware, getPlaceValidation, getPlace);
+  .get(express.json(), authMiddleware, getPlaceValidation, getPlace);
 
 export default router;

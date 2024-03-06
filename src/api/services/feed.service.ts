@@ -272,7 +272,7 @@ export const getResourceInfo = async (activity: IUserActivity) => {
       readPlaceDetailProjection
     ).lean();
   } else if (activity.resourceType === ActivityResourceTypeEnum.CHECKIN) {
-    const checkins = await CheckIn.aggregate([
+    const results = await CheckIn.aggregate([
       {
         $match: {
           user: activity.userId,
@@ -368,19 +368,19 @@ export const getResourceInfo = async (activity: IUserActivity) => {
       },
     ]);
 
-    if (!checkins[0]) {
+    if (!results[0]) {
       return [null, null, userInfo];
     }
 
     // TODO: remove after force update
-    if (checkins[0].checkin[0] && checkins[0].checkin[0].place) {
-      checkins[0].checkin[0].place.reviewCount =
-        checkins[0].checkin[0].place.activities?.reviewCount || 0;
+    if (results[0].checkin[0] && results[0].checkin[0].place) {
+      results[0].checkin[0].place.reviewCount =
+        results[0].checkin[0].place.activities?.reviewCount || 0;
     }
 
     resourceInfo = {
-      totalCheckins: checkins[0].total[0]?.total || 0,
-      ...checkins[0].checkin[0],
+      totalCheckins: results[0].total[0]?.total || 0,
+      ...results[0].checkin[0],
     };
     placeInfo = resourceInfo.place;
   } else if (activity.resourceType === ActivityResourceTypeEnum.USER) {
