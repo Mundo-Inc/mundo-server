@@ -766,7 +766,11 @@ async function fetchGoogle(place: IPlace) {
   try {
     let googlePlacesId = place.otherSources?.googlePlaces?._id;
     let googlePlacesData;
-    let openingHours: OpeningHours | null = null;
+    let openingHours:
+      | (OpeningHours & {
+          weekdayText?: string[];
+        })
+      | null = null;
     let categories;
 
     if (typeof googlePlacesId === "string" && googlePlacesId !== "") {
@@ -839,6 +843,7 @@ async function fetchGoogle(place: IPlace) {
 
     // TODO: remove after force update
     if (openingHours && openingHours.periods) {
+      openingHours.weekdayText = openingHours.weekdayDescriptions;
       openingHours.periods.map((period: any) => {
         if (period.open && period.close) {
           period.open.time = `${
