@@ -173,6 +173,7 @@ export async function getDetailedPlace(id: string) {
   await place.save();
 
   if (
+    !place.scores ||
     !place.scores.phantom ||
     !place.scores.updatedAt ||
     (place.scores.updatedAt &&
