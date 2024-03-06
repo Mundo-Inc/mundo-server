@@ -5,7 +5,10 @@ export type ReadPlaceDetailDto = {
   name: string;
   otherNames: string[];
   description: string;
-  reviewCount: number;
+  activities: {
+    reviewCount: number;
+    checkinCount: number;
+  };
   scores: {
     overall?: number;
     drinkQuality?: number;
@@ -49,5 +52,5 @@ export const readPlaceDetailProjection: {
   thumbnail: true,
   priceRange: true,
   scores: true,
-  reviewCount: true,
+  activities: true,
 };

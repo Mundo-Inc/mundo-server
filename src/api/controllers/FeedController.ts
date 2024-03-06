@@ -43,7 +43,9 @@ export async function getFeed(req: Request, res: Response, next: NextFunction) {
         : undefined
     );
 
-    res.status(StatusCodes.OK).json({ success: true, result: result || [] });
+    res
+      .status(StatusCodes.OK)
+      .json({ success: true, data: result || [], result: result || [] }); // TODO: remove result after force update
   } catch (err) {
     next(err);
   }
