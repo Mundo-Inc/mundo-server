@@ -80,6 +80,10 @@ export interface IUser extends Document {
     xp: number;
     achievements: mongoose.Types.ObjectId[];
   };
+  decorations: {
+    cover?: string;
+    frame?: string;
+  };
   source?: "yelp" | "google";
   createdAt: Date;
   updatedAt: Date;
@@ -249,6 +253,14 @@ const UserSchema = new Schema<IUser>(
           default: [],
         },
       ],
+    },
+    decorations: {
+      cover: {
+        type: String,
+      },
+      frame: {
+        type: String,
+      },
     },
     isPrivate: { type: Boolean, default: false },
     referredBy: {
