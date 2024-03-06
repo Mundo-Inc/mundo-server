@@ -22,6 +22,7 @@ import {
 } from "../services/provider.service";
 import type { IGPReview } from "./../../types/googleplaces.interface";
 import validate from "./validators";
+import { filterObjectByConfig } from "../../utilities/filtering";
 
 export const getPlaceValidation: ValidationChain[] = [
   param("id").isMongoId().withMessage("Invalid place id"),
@@ -38,7 +39,7 @@ export async function getPlace(
     const authId = req.user?.id;
     const { id } = req.params;
 
-    const response = await getDetailedPlace(id, authId);
+    const response = await getDetailedPlace(id);
 
     // TODO: remove after app update
     response.reviewCount = response.activities.reviewCount;
@@ -151,102 +152,15 @@ export async function getPlaceOverview(
   }
 }
 
-export async function getDetailedPlace(id: string, userId: string | undefined) {
-  let userReactionPipeline: any = {};
-  if (userId) {
-    userReactionPipeline = {
-      user: [
-        {
-          $match: {
-            user: new mongoose.Types.ObjectId(userId),
-          },
-        },
-        {
-          $project: {
-            _id: 1,
-            type: 1,
-            reaction: 1,
-            createdAt: 1,
-          },
-        },
-      ],
-    };
-  }
+export async function getDetailedPlace(id: string) {
+  const place = await Place.findById(id);
 
-  const response = await Place.aggregate([
-    {
-      $match: {
-        _id: new mongoose.Types.ObjectId(id as string),
-      },
-    },
-    {
-      $lookup: {
-        from: "media",
-        localField: "_id",
-        foreignField: "place",
-        as: "media",
-        pipeline: [
-          {
-            // Prioritizing videos over images
-            $sort: {
-              type: -1,
-            },
-          },
-          {
-            $limit: 5,
-          },
-          {
-            $project: {
-              _id: 1,
-              src: 1,
-              caption: 1,
-              type: 1,
-            },
-          },
-        ],
-      },
-    },
-    {
-      $project: {
-        name: 1,
-        amenity: 1,
-        otherNames: 1,
-        thumbnail: 1,
-        media: 1,
-        scores: 1,
-        activities: 1,
-        priceRange: 1,
-        description: 1,
-        location: {
-          geoLocation: {
-            lng: {
-              $arrayElemAt: ["$location.geoLocation.coordinates", 0],
-            },
-            lat: {
-              $arrayElemAt: ["$location.geoLocation.coordinates", 1],
-            },
-          },
-          address: 1,
-          city: 1,
-          state: 1,
-          country: 1,
-          zip: 1,
-        },
-        phone: 1,
-        website: 1,
-        categories: 1,
-      },
-    },
-  ]);
-
-  if (response.length === 0) {
+  if (!place) {
     throw createError(
       dynamicMessage(dStrings.notFound, "Place"),
       StatusCodes.NOT_FOUND
     );
   }
-
-  const place = await Place.findById(id);
 
   const thirdPartyData = await fetchThirdPartiesData(place);
 
@@ -268,27 +182,76 @@ export async function getDetailedPlace(id: string, userId: string | undefined) {
     await place.processReviews();
   }
 
-  if (response[0].activities.reviewCount < 4 && response[0].scores) {
-    delete response[0].scores.phantom;
+  const placeObject = place.toObject();
+
+  // get 5 media items
+  placeObject.media = await Media.find({ place: id })
+    .sort({ type: -1, createdAt: -1 })
+    .limit(5)
+    .select("src caption type");
+
+  // remove phantom scores if review count is less than 4
+  if (placeObject.activities.reviewCount < 4 && placeObject.scores) {
+    delete placeObject.scores.phantom;
   }
 
-  response[0].thirdParty = thirdPartyData;
+  placeObject.thirdParty = thirdPartyData;
 
-  response[0].thumbnail =
+  placeObject.thumbnail =
     thirdPartyData.google?.thumbnail || thirdPartyData.yelp?.thumbnail;
 
-  if (thirdPartyData.google) {
-    response[0].location.address = thirdPartyData.google?.address;
-    response[0].location.streetNumber = thirdPartyData.google?.streetNumber;
-    response[0].location.streetName = thirdPartyData.google?.streetName;
-    response[0].location.city = thirdPartyData.google?.city;
-    response[0].location.state = thirdPartyData.google?.state;
-    response[0].location.zip = thirdPartyData.google?.zip;
-    response[0].location.country = thirdPartyData.google?.country;
-    response[0].categories = thirdPartyData.google?.categories;
-  }
+  // {
+  //   name: 1,
+  //   amenity: 1,
+  //   otherNames: 1,
+  //   thumbnail: 1,
+  //   media: 1,
+  //   scores: 1,
+  //   activities: 1,
+  //   priceRange: 1,
+  //   description: 1,
+  //   location: {
+  //     geoLocation: {
+  //       lng: {
+  //         $arrayElemAt: ["$location.geoLocation.coordinates", 0],
+  //       },
+  //       lat: {
+  //         $arrayElemAt: ["$location.geoLocation.coordinates", 1],
+  //       },
+  //     },
+  //     address: 1,
+  //     city: 1,
+  //     state: 1,
+  //     country: 1,
+  //     zip: 1,
+  //   },
+  //   phone: 1,
+  //   website: 1,
+  //   categories: 1,
+  // }
 
-  return response[0];
+  const filteredPlace = filterObjectByConfig(placeObject, {
+    name: true,
+    amenity: true,
+    otherNames: true,
+    thumbnail: true,
+    media: true,
+    scores: true,
+    activities: true,
+    priceRange: true,
+    description: true,
+    location: true,
+    phone: true,
+    website: true,
+    categories: true,
+  });
+
+  filteredPlace.location.geoLocation = {
+    lng: filteredPlace.location.geoLocation.coordinates[0],
+    lat: filteredPlace.location.geoLocation.coordinates[1],
+  };
+
+  return filteredPlace;
 }
 
 async function fetchThirdPartiesData(place: IPlace) {

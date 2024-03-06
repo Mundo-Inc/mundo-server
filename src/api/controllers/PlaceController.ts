@@ -523,8 +523,6 @@ export async function getPlacesByContext(
   try {
     handleInputErrors(req);
 
-    const authId = req.user?.id;
-
     const { lat, lng, title } = req.query;
     const latitude = Number(lat);
     const longitude = Number(lng);
@@ -572,7 +570,10 @@ export async function getPlacesByContext(
 
     // combine it with detailed data
 
-    const result = await getDetailedPlace(matchedPlace?._id, authId);
+    const result = await getDetailedPlace(matchedPlace?._id);
+
+    // TODO: remove after app update
+    result.reviewCount = result.activities.reviewCount;
 
     if (!existing && !result.thirdParty.google?._id) {
       // If the place is new and doesn't exist on Google, delete it

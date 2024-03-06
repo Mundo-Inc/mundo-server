@@ -73,12 +73,6 @@ ReviewSchema.index({ place: 1 });
 
 // dependency removal function
 async function removeReviewDependencies(review: IReview) {
-  // reduce the place reviewCount by 1
-  await Place.updateOne(
-    { _id: review.place, reviewCount: { $gt: 0 } },
-    { $inc: { reviewCount: -1 } }
-  );
-
   // remove all reactions related to the review
   const reactions = await Reaction.find({ target: review.userActivityId });
   await Promise.all(reactions.map((reaction) => reaction.deleteOne()));

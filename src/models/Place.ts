@@ -257,11 +257,11 @@ const PlaceSchema: Schema = new Schema<IPlace>(
           }
         }
 
-        if (scoreCount < 5) {
-          scores[0].phantom = (scores[0].phantom * 5) / scoreCount;
-        }
-
         if (scores[0]) {
+          if (scoreCount < 5) {
+            scores[0].phantom = Math.abs((scores[0].phantom * 5) / scoreCount);
+          }
+
           if (this.otherSources.googlePlaces.rating) {
             scores[0].overall = this.otherSources.googlePlaces.rating;
 
