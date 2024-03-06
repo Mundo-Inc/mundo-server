@@ -215,6 +215,7 @@ export async function getDetailedPlace(id: string) {
     phone: true,
     website: true,
     categories: true,
+    thirdParty: true,
   });
 
   filteredPlace.location.geoLocation = {
