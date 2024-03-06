@@ -109,6 +109,9 @@ const PlaceSchema: Schema = new Schema<IPlace>(
     },
     scores: {
       type: ScoresSchema,
+      default: {
+        updatedAt: new Date(),
+      },
     },
     phone: {
       type: String,
