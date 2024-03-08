@@ -86,6 +86,29 @@ export const addReviewActivity = async (
   return await addActivity(activityParams, true);
 };
 
+export const addHomemadeActivity = async (
+  userId: string,
+  homemadeId: string,
+  hasMedia: boolean = true,
+  privacyType: string = ActivityPrivacyTypeEnum.PUBLIC,
+  createdAt?: Date
+) => {
+  const activityParams: {
+    [key: string]: any;
+  } = {
+    userId,
+    activityType: ActivityTypeEnum.NEW_HOMEMADE,
+    resourceType: ActivityResourceTypeEnum.HOMEMADE,
+    resourceId: homemadeId,
+    hasMedia,
+    privacyType,
+  };
+  if (createdAt) {
+    activityParams.createdAt = createdAt;
+  }
+  return await addActivity(activityParams, true);
+};
+
 export const addRecommendActivity = async (
   userId: string,
   reviewId: string,

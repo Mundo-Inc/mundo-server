@@ -18,6 +18,7 @@ import { reviewEarning } from "../services/earning.service";
 import logger from "../services/logger";
 import { addReward } from "../services/reward/reward.service";
 import {
+  addHomemadeActivity,
   addRecommendActivity,
   addReviewActivity,
 } from "../services/user.activity.service";
@@ -218,7 +219,11 @@ export async function createHomemadePost(
     const imageMediaIds: string[] = [];
     const videoMediaIds: string[] = [];
     let hasMedia = false;
-    if (images && images.length > 0) {
+
+    const hasAtLeastOneVid = videos && videos.length > 0;
+    const hasAtLeastOneImg = images && images.length > 0;
+
+    if (hasAtLeastOneImg) {
       hasMedia = true;
       for (const image of images) {
         const upload = await Upload.findById(image.uploadId);
@@ -253,7 +258,7 @@ export async function createHomemadePost(
         });
       }
     }
-    if (videos && videos.length > 0) {
+    if (hasAtLeastOneVid) {
       hasMedia = true;
       for (const video of videos) {
         const upload = await Upload.findById(video.uploadId);
@@ -287,6 +292,13 @@ export async function createHomemadePost(
           await Upload.findByIdAndDelete(video.uploadId);
         });
       }
+    }
+
+    if (!hasAtLeastOneImg && !hasAtLeastOneVid) {
+      throw createError(
+        "At least one media (img/vid) should be included",
+        StatusCodes.BAD_REQUEST
+      );
     }
 
     const homemade = await Homemade.create({
@@ -336,26 +348,19 @@ export async function createHomemadePost(
       logger.error("Internal server error on deleting upload(s)", { error: e });
     }
 
-    //TODO: ADD COIN REWARDS TO THE USERS IF APPROVED BY NABZ
-    /*
     try {
-      await reviewEarning(authId, review);
-      let _act;
-      if (!images && !videos && !content) {
-        _act = await addRecommendActivity(authId, review._id, place);
-      } else {
-        _act = await addReviewActivity(authId, review._id, place, hasMedia);
-      }
+      //TODO: ADD COIN REWARDS TO THE USERS IF APPROVED BY NABZ
+      // await reviewEarning(authId, review);
+      let _act = await addHomemadeActivity(authId, homemade._id);
       if (_act) {
-        review.userActivityId = _act._id;
-        await review.save();
+        homemade.userActivityId = _act._id;
+        await homemade.save();
       }
     } catch (e) {
       logger.error("Internal server error during creating the review", {
         error: e,
       });
     }
-    */
   } catch (err) {
     next(err);
   }

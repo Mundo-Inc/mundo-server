@@ -147,6 +147,28 @@ async function getNotificationContent(notification: INotification) {
           }
         });
       break;
+    case NotificationTypeEnum.FOLLOWING_HOMEMADE:
+      console.log("here");
+
+      await Review.findById(notification.resources![0]._id)
+        .populate({
+          path: "userId",
+          select: publicReadUserEssentialProjection,
+        })
+        .then((homemade) => {
+          if (!homemade) {
+            handleResourceNotFound(notification);
+            error = true;
+          } else {
+            title = homemade.userId.name;
+            user = homemade.userId;
+            image = homemade.userId.profileImage;
+            content = `${homemade.userId.name} has posted`;
+            activity = homemade.userActivityId;
+            subtitle = homemade.content;
+          }
+        });
+      break;
     case NotificationTypeEnum.FOLLOWING_CHECKIN:
       await CheckIn.findById(notification.resources![0]._id)
         .populate({

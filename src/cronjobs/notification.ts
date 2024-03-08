@@ -152,6 +152,8 @@ export async function getNotificationContent(notification: INotification) {
         });
       break;
     case NotificationTypeEnum.FOLLOWING_HOMEMADE:
+      console.log("here2");
+
       await Homemade.findById(notification.resources![0]._id)
         .populate({
           path: "userId",
