@@ -31,6 +31,7 @@ const checkinWaitTime = 1; // minutes
 export const getCheckinsValidation: ValidationChain[] = [
   query("user").optional().isMongoId().withMessage("Invalid user id"),
   query("place").optional().isMongoId().withMessage("Invalid place id"),
+  query("event").optional().isMongoId().withMessage("Invalid event id"),
   validate.page(query("page").optional(), 50),
   validate.limit(query("limit").optional(), 1, 50),
   query("count").optional().isBoolean().withMessage("Invalid count"),
@@ -38,6 +39,7 @@ export const getCheckinsValidation: ValidationChain[] = [
 /**
  * @query user    string      |     to get checkins of a user
  * @query place   string      |     to get checkins of a place
+ * @query event   string      |     to get checkins of an event
  * @query page    number      |     page
  * @query limit   number      |     limit
  * @query count   boolean     |     count
@@ -52,7 +54,7 @@ export async function getCheckins(
 
     const { id: userId } = req.user!;
 
-    const { user, place, page: reqPage, limit: reqLimit } = req.query;
+    const { user, place, event, page: reqPage, limit: reqLimit } = req.query;
     const page = parseInt(reqPage as string) || 1;
     const limit = parseInt(reqLimit as string) || 500;
     const skip = (page - 1) * limit;
@@ -81,6 +83,11 @@ export async function getCheckins(
       // TODO: Add privacy check here
       matchPipeline.push({
         $match: { place: new mongoose.Types.ObjectId(place as string) },
+      });
+    }
+    if (event) {
+      matchPipeline.push({
+        $match: { event: new mongoose.Types.ObjectId(event as string) },
       });
     }
 
