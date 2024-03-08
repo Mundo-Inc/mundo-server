@@ -7,6 +7,7 @@ import UserActivity from "./UserActivity";
 export interface ICheckIn extends Document {
   user: mongoose.Types.ObjectId;
   place: mongoose.Types.ObjectId;
+  event?: mongoose.Types.ObjectId;
   image?: mongoose.Types.ObjectId;
   tags?: mongoose.Types.ObjectId[];
   caption?: string;
@@ -17,8 +18,9 @@ export interface ICheckIn extends Document {
 const CheckInSchema: Schema = new Schema<ICheckIn>({
   user: { type: Schema.Types.ObjectId, ref: "User", required: true },
   place: { type: Schema.Types.ObjectId, ref: "Place", required: true },
-  image: { type: Schema.Types.ObjectId, ref: "Media", required: false },
-  caption: { type: String, required: false },
+  event: { type: Schema.Types.ObjectId, ref: "Event" },
+  image: { type: Schema.Types.ObjectId, ref: "Media" },
+  caption: { type: String },
   tags: [{ type: Schema.Types.ObjectId, ref: "User" }],
   createdAt: { type: Date, default: Date.now },
   userActivityId: { type: Schema.Types.ObjectId, ref: "UserActivity" },
