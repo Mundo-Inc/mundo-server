@@ -32,8 +32,8 @@ export async function getEvent(
       throw createError(dynamicMessage(dStrings.notFound, "Place"));
     } else {
       event.place.location.geoLocation = {
-        latitude: event.place.location.geoLocation.coordinates[1],
-        longitude: event.place.location.geoLocation.coordinates[0],
+        lat: event.place.location.geoLocation.coordinates[1],
+        lng: event.place.location.geoLocation.coordinates[0],
       };
     }
 
@@ -108,8 +108,8 @@ export async function createEvent(
     const eventPlaceObj = eventPlace.toObject();
 
     eventPlaceObj.location.geoLocation = {
-      latitude: eventPlaceObj.location.geoLocation.coordinates[1],
-      longitude: eventPlaceObj.location.geoLocation.coordinates[0],
+      lat: eventPlaceObj.location.geoLocation.coordinates[1],
+      lng: eventPlaceObj.location.geoLocation.coordinates[0],
     };
 
     const event = await Event.create({
@@ -152,8 +152,8 @@ export async function getEvents(
       } else {
         if ("coordinates" in event.place.location.geoLocation) {
           event.place.location.geoLocation = {
-            latitude: event.place.location.geoLocation.coordinates[1],
-            longitude: event.place.location.geoLocation.coordinates[0],
+            lat: event.place.location.geoLocation.coordinates[1],
+            lng: event.place.location.geoLocation.coordinates[0],
           };
         }
       }
