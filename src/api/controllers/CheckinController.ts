@@ -4,6 +4,7 @@ import { StatusCodes } from "http-status-codes";
 import mongoose from "mongoose";
 
 import CheckIn, { type ICheckIn } from "../../models/CheckIn";
+import Event, { type IEvent } from "../../models/Event";
 import Follow from "../../models/Follow";
 import Media, { MediaTypeEnum } from "../../models/Media";
 import Notification, {
@@ -284,7 +285,23 @@ async function sendNotificiationToFollowers(authId: string, checkin: ICheckIn) {
 }
 
 export const createCheckinValidation: ValidationChain[] = [
-  body("place").exists().isMongoId().withMessage("Invalid place id"),
+  body("place")
+    .custom((value, { req }) => {
+      if (value && req.body.event) {
+        throw createError(
+          "You can't check-in to both place and event at the same time",
+          StatusCodes.BAD_REQUEST
+        );
+      }
+      return true;
+    })
+    .if((_, { req }) => !req.body.event)
+    .isMongoId()
+    .withMessage("Invalid place id"),
+  body("event")
+    .if((_, { req }) => !req.body.place)
+    .isMongoId()
+    .withMessage("Invalid event id"),
   body("privacyType").optional().isIn(Object.values(ActivityPrivacyTypeEnum)),
   body("caption").optional().isString(),
   body("image").optional().isMongoId(),
@@ -301,7 +318,29 @@ export async function createCheckin(
     handleInputErrors(req);
 
     const { id: authId, role: authRole } = req.user!;
-    const { place, privacyType, caption, tags, image } = req.body;
+    const { place, event, privacyType, caption, tags, image } = req.body;
+
+    let placeId;
+    if (place) {
+      const placeExists = await Place.exists({ _id: place });
+      if (!placeExists) {
+        throw createError(
+          dynamicMessage(dStrings.notFound, "Place"),
+          StatusCodes.NOT_FOUND
+        );
+      }
+      placeId = place;
+    } else if (event) {
+      const theEvent: IEvent | null = await Event.findById(event).lean();
+      if (!theEvent) {
+        throw createError(
+          dynamicMessage(dStrings.notFound, "Event"),
+          StatusCodes.NOT_FOUND
+        );
+      }
+      placeId = theEvent.place;
+      logger.verbose("Check-in to event");
+    }
 
     await enforceCheckinInterval(authId, authRole);
 
@@ -328,13 +367,6 @@ export async function createCheckin(
           StatusCodes.NOT_FOUND
         );
       }
-      media = await Media.create({
-        type: MediaTypeEnum.image,
-        user: authId,
-        place,
-        caption: caption,
-        src: upload.src,
-      });
       if (upload.user.toString() !== authId) {
         throw createError(
           strings.authorization.otherUser,
@@ -344,21 +376,39 @@ export async function createCheckin(
       if (upload.type !== "image") {
         throw createError(strings.upload.invalidType, StatusCodes.BAD_REQUEST);
       }
+
+      const mediaBody: any = {
+        type: MediaTypeEnum.image,
+        user: authId,
+        place: placeId,
+        caption: caption,
+        src: upload.src,
+      };
+
+      if (event) {
+        mediaBody.event = event;
+      }
+
+      media = await Media.create(mediaBody);
     }
 
-    const checkin = await CheckIn.create({
+    const checkinBody: any = {
       user: authId,
-      place: place,
-      image: media?._id,
+      place: placeId,
       caption: caption,
       tags: tags,
-    });
+    };
 
-    await processCheckinActivities(authId, checkin, place, privacyType);
+    if (media) checkinBody.image = media._id;
+    if (event) checkinBody.event = event;
+
+    const checkin = await CheckIn.create(checkinBody);
+
+    await processCheckinActivities(authId, checkin, placeId, privacyType);
 
     const reward = await addCheckinReward(authId, checkin);
 
-    const placeObject = await Place.findById(place);
+    const placeObject = await Place.findById(placeId);
     placeObject.activities.checkinCount =
       placeObject.activities.checkinCount + 1;
     await placeObject.save();
@@ -366,6 +416,7 @@ export async function createCheckin(
     await sendNotificiationToFollowers(authId, checkin);
 
     logger.verbose("check-in successful!");
+
     res
       .status(StatusCodes.CREATED)
       .json({ success: true, data: checkin, reward: reward });

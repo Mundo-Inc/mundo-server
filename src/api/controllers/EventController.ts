@@ -3,10 +3,11 @@ import { body, param, type ValidationChain } from "express-validator";
 import { StatusCodes } from "http-status-codes";
 
 import Event from "../../models/Event";
+import Place from "../../models/Place";
 import { dStrings, dynamicMessage } from "../../strings";
 import { createError, handleInputErrors } from "../../utilities/errorHandlers";
+import { filterObjectByConfig } from "../../utilities/filtering";
 import { readPlaceBriefProjection } from "../dto/place/read-place-brief.dto";
-import Place from "../../models/Place";
 
 export const getEventValidation: ValidationChain[] = [param("id").isMongoId()];
 export async function getEvent(
@@ -19,7 +20,7 @@ export async function getEvent(
 
     const { id } = req.params;
 
-    const event = await Event.findById(id)
+    const event: any = await Event.findById(id)
       .populate("place", readPlaceBriefProjection)
       .lean();
 
@@ -27,7 +28,16 @@ export async function getEvent(
       throw createError(dynamicMessage(dStrings.notFound, "Event"));
     }
 
-    res.status(StatusCodes.CREATED).json({ success: true, data: event });
+    if (!event.place) {
+      throw createError(dynamicMessage(dStrings.notFound, "Place"));
+    } else {
+      event.place.location.geoLocation = {
+        latitude: event.place.location.geoLocation.coordinates[1],
+        longitude: event.place.location.geoLocation.coordinates[0],
+      };
+    }
+
+    res.status(StatusCodes.OK).json({ success: true, data: event });
   } catch (error) {
     next(error);
   }
@@ -37,21 +47,16 @@ export const createEventValidation: ValidationChain[] = [
   body("name").isString().notEmpty(),
   body("description").optional().isString(),
   body("logo").optional().isString(),
-  body("place").custom((value) => {
-    if (typeof value === "string") {
-      if (!value.match(/^[0-9a-fA-F]{24}$/)) {
-        throw new Error("Invalid place id");
-      }
-    } else if (typeof value === "object") {
-      if ("name" in value && "latitude" in value && "longitude" in value) {
-        return true;
-      } else {
-        throw new Error("Invalid place object");
-      }
-    } else {
-      throw new Error("Invalid place");
-    }
-  }),
+  body("place").isObject(),
+  body("place.id").optional().isMongoId(),
+  body("place.name").optional().isString(),
+  body("place.latitude").optional().isNumeric(),
+  body("place.longitude").optional().isNumeric(),
+  body("place.address").optional().isString(),
+  body("place.city").optional().isString(),
+  body("place.state").optional().isString(),
+  body("place.country").optional().isString(),
+  body("place.zip").optional().isString(),
 ];
 export async function createEvent(
   req: Request,
@@ -65,16 +70,25 @@ export async function createEvent(
 
     const { name, description, logo, place } = req.body;
 
-    let placeId: string;
-    if (typeof place === "string") {
-      const placeExists = await Event.exists({ _id: place });
-      if (!placeExists) {
+    let eventPlace;
+    if (place.id) {
+      eventPlace = await Place.findById(place.id);
+      if (!eventPlace) {
         throw createError(dynamicMessage(dStrings.notFound, "Place"));
       }
-      placeId = place;
     } else {
-      const { name: placeName, latitude, longitude } = place;
-      const newPlace = await Place.create({
+      const {
+        name: placeName,
+        latitude,
+        longitude,
+        address,
+        city,
+        state,
+        country,
+        zip,
+      } = place;
+
+      eventPlace = await Place.create({
         isCustom: true,
         name: placeName,
         location: {
@@ -82,20 +96,38 @@ export async function createEvent(
             type: "Point",
             coordinates: [longitude, latitude],
           },
+          address,
+          city,
+          state,
+          country,
+          zip,
         },
       });
-      placeId = newPlace._id;
     }
+
+    const eventPlaceObj = eventPlace.toObject();
+
+    eventPlaceObj.location.geoLocation = {
+      latitude: eventPlaceObj.location.geoLocation.coordinates[1],
+      longitude: eventPlaceObj.location.geoLocation.coordinates[0],
+    };
 
     const event = await Event.create({
       name,
       description,
       logo,
-      place: placeId,
+      place: eventPlace._id,
       createdBy: authId,
     });
 
-    res.status(StatusCodes.CREATED).json({ success: true, data: event });
+    const eventObj = event.toObject();
+
+    eventObj.place = filterObjectByConfig(
+      eventPlaceObj,
+      readPlaceBriefProjection
+    );
+
+    res.status(StatusCodes.CREATED).json({ success: true, data: eventObj });
   } catch (error) {
     next(error);
   }
@@ -114,7 +146,20 @@ export async function getEvents(
       .populate("place", readPlaceBriefProjection)
       .lean();
 
-    res.status(StatusCodes.CREATED).json({ success: true, data: events });
+    for (const event of events) {
+      if (!event.place) {
+        throw createError(dynamicMessage(dStrings.notFound, "Place"));
+      } else {
+        if ("coordinates" in event.place.location.geoLocation) {
+          event.place.location.geoLocation = {
+            latitude: event.place.location.geoLocation.coordinates[1],
+            longitude: event.place.location.geoLocation.coordinates[0],
+          };
+        }
+      }
+    }
+
+    res.status(StatusCodes.OK).json({ success: true, data: events });
   } catch (error) {
     next(error);
   }

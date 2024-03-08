@@ -9,6 +9,7 @@ export interface IMedia extends Document {
   src: string;
   caption?: string;
   place?: mongoose.Types.ObjectId;
+  event?: mongoose.Types.ObjectId;
   user: mongoose.Types.ObjectId;
   type: string;
 }
@@ -25,8 +26,10 @@ const MediaSchema = new Schema<IMedia>({
   place: {
     type: Schema.Types.ObjectId,
     ref: "Place",
-    required: false,
-    //TODO: MAKE SURE THAT IT DOES NOT PROVIDE ERRORS
+  },
+  event: {
+    type: Schema.Types.ObjectId,
+    ref: "Event",
   },
   user: {
     type: Schema.Types.ObjectId,

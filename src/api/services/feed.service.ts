@@ -610,12 +610,14 @@ export const getUserFeed = async (
           }
         ).lean();
 
-      const [resourceInfo, placeInfo, userInfo] = await getResourceInfo(_act);
+      const [resourceInfo, placeInfo, userInfo] = await getResourceInfo(
+        _act as IUserActivity
+      );
       if (!resourceInfo) continue;
       const score = await calculateScore(
         userId,
         _act.userId,
-        _act,
+        _act as IUserActivity,
         placeInfo,
         location && location
       );
