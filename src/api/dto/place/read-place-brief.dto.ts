@@ -1,6 +1,3 @@
-import type { Types } from "mongoose";
-import { readFormattedPlaceLocationProjection } from "./place-dto";
-
 export type ReadPlaceBriefDto = {
   _id: string;
   name: string;

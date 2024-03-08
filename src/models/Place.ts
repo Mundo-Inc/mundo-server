@@ -44,6 +44,7 @@ export interface IPlace extends Document {
     checkinCount: number;
   };
   otherSources: IOtherSources;
+  isCustom?: boolean;
 }
 
 const PlaceSchema: Schema = new Schema<IPlace>(
@@ -147,6 +148,9 @@ const PlaceSchema: Schema = new Schema<IPlace>(
         type: Number,
         default: 0,
       },
+    },
+    isCustom: {
+      type: Boolean,
     },
   },
   {
