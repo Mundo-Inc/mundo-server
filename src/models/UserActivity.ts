@@ -5,6 +5,7 @@ import { weights } from "../config/trendFactors";
 export enum ActivityTypeEnum {
   NEW_CHECKIN = "NEW_CHECKIN",
   NEW_REVIEW = "NEW_REVIEW",
+  NEW_HOMEMADE = "NEW_HOMEMADE",
   NEW_RECOMMEND = "NEW_RECOMMEND",
   REACT_TO_REVIEW = "REACT_TO_REVIEW",
   REACT_TO_PLACE = "REACT_TO_PLACE",
@@ -29,6 +30,7 @@ export enum ActivityResourceTypeEnum {
   USER = "User",
   REACTION = "Reaction",
   ACHIEVEMET = "Achievement",
+  HOMEMADE = "Homemade",
 }
 
 export interface IUserActivity extends Document {

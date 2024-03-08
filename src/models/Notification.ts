@@ -11,6 +11,7 @@ export enum NotificationTypeEnum {
   NEW_REVIEW = "NEW_REVIEW",
   FOLLOWING_CHECKIN = "FOLLOWING_CHECKIN",
   FOLLOWING_REVIEW = "FOLLOWING_REVIEW",
+  FOLLOWING_HOMEMADE = "FOLLOWING_HOMEMADE",
   REFERRAL_REWARD = "REFERRAL_REWARD",
 }
 
@@ -19,6 +20,7 @@ export enum ResourceTypeEnum {
   COMMENT = "Comment",
   USER = "User",
   REVIEW = "Review",
+  Homemade = "Homemade",
   CHECKIN = "CheckIn",
   FOLLOW = "Follow",
 }

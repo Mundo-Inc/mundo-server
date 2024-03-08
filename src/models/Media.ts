@@ -8,7 +8,7 @@ export enum MediaTypeEnum {
 export interface IMedia extends Document {
   src: string;
   caption?: string;
-  place: mongoose.Types.ObjectId;
+  place?: mongoose.Types.ObjectId;
   user: mongoose.Types.ObjectId;
   type: string;
 }
@@ -25,7 +25,8 @@ const MediaSchema = new Schema<IMedia>({
   place: {
     type: Schema.Types.ObjectId,
     ref: "Place",
-    required: true,
+    required: false,
+    //TODO: MAKE SURE THAT IT DOES NOT PROVIDE ERRORS
   },
   user: {
     type: Schema.Types.ObjectId,
@@ -39,7 +40,7 @@ const MediaSchema = new Schema<IMedia>({
   },
 });
 
-MediaSchema.index({ place: 1 });
+MediaSchema.index({ place: 1 }, { sparse: true });
 
 export default mongoose.models.Media ||
   mongoose.model<IMedia>("Media", MediaSchema);

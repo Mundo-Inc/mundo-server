@@ -14,6 +14,7 @@ import Notification, {
 import Reaction from "../models/Reaction";
 import Review from "../models/Review";
 import User, { type UserDevice } from "../models/User";
+import Homemade from "../models/Homemade";
 
 cron.schedule("*/30 * * * * *", async () => {
   const notifications = await Notification.find({
@@ -148,6 +149,18 @@ export async function getNotificationContent(notification: INotification) {
             content = `${review.writer.name} rated ${review.place.name} ${review.scores.overall}/5⭐️`;
           }
           subtitle = review.content;
+        });
+      break;
+    case NotificationTypeEnum.FOLLOWING_HOMEMADE:
+      await Homemade.findById(notification.resources![0]._id)
+        .populate({
+          path: "userId",
+          select: publicReadUserEssentialProjection,
+        })
+        .then((homemade) => {
+          title = homemade.userId.name;
+          content = `New post from ${homemade.userId.name}`;
+          subtitle = homemade.content;
         });
       break;
     case NotificationTypeEnum.FOLLOWING_CHECKIN:
