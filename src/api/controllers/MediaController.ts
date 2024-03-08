@@ -8,8 +8,11 @@ import { StatusCodes } from "http-status-codes";
 import mongoose from "mongoose";
 import path from "path";
 
+import { query, type ValidationChain } from "express-validator";
+import Event from "../../models/Event";
 import Media, { MediaTypeEnum } from "../../models/Media";
-import strings from "../../strings";
+import Place from "../../models/Place";
+import strings, { dStrings, dynamicMessage } from "../../strings";
 import { createError, handleInputErrors } from "../../utilities/errorHandlers";
 import {
   bucketName,
@@ -20,6 +23,8 @@ import {
   s3,
 } from "../../utilities/storage";
 import { type CreateMediaDto } from "../dto/media/create-media.dto";
+import { publicReadUserEssentialProjection } from "../dto/user/read-user-public.dto";
+import validate from "./validators";
 
 const imagesDirectory = "images";
 const videosDirectory = "videos";
@@ -126,6 +131,66 @@ export async function createMedia(
     } else {
       throw createError(strings.media.notProvided, StatusCodes.BAD_REQUEST);
     }
+  } catch (err) {
+    next(err);
+  }
+}
+
+export const getMediaValidation: ValidationChain[] = [
+  validate.page(query("page").optional()),
+  validate.limit(query("limit").optional(), 5, 20),
+  query("event")
+    .if((_, { req }) => !req.query?.place)
+    .isMongoId()
+    .withMessage("Invalid event id"),
+  query("place")
+    .if((_, { req }) => !req.query?.event)
+    .isMongoId()
+    .withMessage("Invalid place id"),
+];
+export async function getMedia(
+  req: Request,
+  res: Response,
+  next: NextFunction
+) {
+  try {
+    handleInputErrors(req);
+
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = parseInt(req.query.limit as string) || 10;
+    const { event, place } = req.query;
+
+    if (place) {
+      const exists = await Place.exists({ _id: place });
+      if (!exists) {
+        throw createError(
+          dynamicMessage(dStrings.notFound, "Place"),
+          StatusCodes.NOT_FOUND
+        );
+      }
+    }
+
+    if (event) {
+      const exists = await Event.exists({ _id: event });
+      if (!exists) {
+        throw createError(
+          dynamicMessage(dStrings.notFound, "Event"),
+          StatusCodes.NOT_FOUND
+        );
+      }
+    }
+
+    const medias = await Media.find({
+      ...(event && { event: event }),
+      ...(place && { place: place }),
+    })
+      .sort({ createdAt: -1 })
+      .skip((page - 1) * limit)
+      .limit(limit)
+      .populate("user", publicReadUserEssentialProjection)
+      .lean();
+
+    res.status(StatusCodes.OK).json({ success: true, data: medias });
   } catch (err) {
     next(err);
   }

@@ -26,10 +26,12 @@ const MediaSchema = new Schema<IMedia>({
   place: {
     type: Schema.Types.ObjectId,
     ref: "Place",
+    index: true,
   },
   event: {
     type: Schema.Types.ObjectId,
     ref: "Event",
+    index: true,
   },
   user: {
     type: Schema.Types.ObjectId,
