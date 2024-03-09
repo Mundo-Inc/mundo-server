@@ -12,12 +12,11 @@ import { authMiddleware } from "../middlewares/authMiddleWare";
 
 const router = express.Router();
 router.use(express.json());
-router.use(authMiddleware);
 
 router
   .route("/")
   .get(getEventsValidation, getEvents)
-  .post(createEventValidation, createEvent);
+  .post(authMiddleware, createEventValidation, createEvent);
 
 router.route("/:id").get(getEventValidation, getEvent);
 
