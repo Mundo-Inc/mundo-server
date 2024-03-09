@@ -74,7 +74,7 @@ export async function getCheckins(
       matchPipeline.push({
         $match: { user: new mongoose.Types.ObjectId(user as string) },
       });
-    } else {
+    } else if (!place && !event) {
       matchPipeline.push({
         $match: { user: new mongoose.Types.ObjectId(userId) },
       });

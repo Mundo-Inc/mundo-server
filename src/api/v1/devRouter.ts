@@ -10,7 +10,7 @@ router.use(adminAuthMiddleware);
 
 // Routes
 
-router.post("/notify", notifyUsers);
+// router.post("/notify", notifyUsers);
 
 router.get("/hello", (req, res) => {
   res.send("Hello, Admin!");
