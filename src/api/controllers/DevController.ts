@@ -36,55 +36,125 @@ export async function notifyUsers(
 
     const users = await User.find(query, ["name", "devices"]).lean();
 
+    const admins = await User.find(
+      {
+        _id: { $in: ["645c8b222134643c020860a5", "645e7f843abeb74ee6248ced"] },
+      },
+      ["name", "devices"]
+    ).lean();
+
     if (req.query.confirmSend) {
       let sent = 0;
       let failed = 0;
 
-      for (const user of users) {
-        if (user.devices.length > 0) {
-          // Notify user
-          logger.info(`Notifying user ${user.name} | ${user.id}`);
+      try {
+        // Sending to admins
+        for (const user of admins) {
+          if (user.devices.length > 0) {
+            // Notify user
+            logger.verbose(`Notifying admin ${user.name} | ${user.id}`);
 
-          const note = new apn.Notification();
-          note.alert = {
-            title: inputNote.title,
-            body: inputNote.body,
-            subtitle: inputNote.subtitle,
-          };
-          note.priority = 5;
+            const note = new apn.Notification();
+            note.alert = {
+              title: inputNote.title,
+              body: inputNote.body,
+              subtitle: inputNote.subtitle,
+            };
+            note.priority = 5;
 
-          note.topic = "ai.phantomphood.app";
-          note.sound = "default";
+            note.topic = "ai.phantomphood.app";
+            note.sound = "default";
 
-          await apnProvider
-            .send(
-              note,
-              user.devices
-                .filter((d: UserDevice) => d.apnToken)
-                .map((d: UserDevice) => d.apnToken)
-            )
-            .then((result) => {
-              if (result.sent.length > 0) {
-                sent++;
-                logger.info(`Notification sent to ${user.name} | ${user.id}`);
-              } else {
-                failed++;
-                logger.error(
-                  `Notification failed to send to ${user.name} | ${user.id}`
-                );
-              }
-            })
-            .catch((err) => {
-              logger.error(
-                "Internal server error while sending APN notification",
-                {
-                  error: err,
+            await apnProvider
+              .send(
+                note,
+                user.devices
+                  .filter((d: UserDevice) => d.apnToken)
+                  .map((d: UserDevice) => d.apnToken)
+              )
+              .then((result) => {
+                if (result.sent.length > 0) {
+                  logger.verbose(
+                    `Notification sent to ${user.name} | ${user.id}`
+                  );
+                } else {
+                  logger.verbose(
+                    `Notification failed to send to ${user.name} | ${user.id}`
+                  );
                 }
-              );
-            });
-        } else {
-          logger.error(`User ${user.name} | ${user.id} has no devices.`);
+              })
+              .catch((err) => {
+                logger.error(
+                  "Internal server error while sending APN notification",
+                  {
+                    error: err,
+                  }
+                );
+              });
+          } else {
+            logger.verbose(`User ${user.name} | ${user.id} has no devices.`);
+          }
         }
+      } catch (error) {
+        logger.error("Internal server error while sending APN notification", {
+          error,
+        });
+      }
+
+      try {
+        // Sending to users
+        for (const user of users) {
+          if (user.devices.length > 0) {
+            // Notify user
+            logger.verbose(`Notifying user ${user.name} | ${user.id}`);
+
+            const note = new apn.Notification();
+            note.alert = {
+              title: inputNote.title,
+              body: inputNote.body,
+              subtitle: inputNote.subtitle,
+            };
+            note.priority = 5;
+
+            note.topic = "ai.phantomphood.app";
+            note.sound = "default";
+
+            await apnProvider
+              .send(
+                note,
+                user.devices
+                  .filter((d: UserDevice) => d.apnToken)
+                  .map((d: UserDevice) => d.apnToken)
+              )
+              .then((result) => {
+                if (result.sent.length > 0) {
+                  sent++;
+                  logger.verbose(
+                    `Notification sent to ${user.name} | ${user.id}`
+                  );
+                } else {
+                  failed++;
+                  logger.verbose(
+                    `Notification failed to send to ${user.name} | ${user.id}`
+                  );
+                }
+              })
+              .catch((err) => {
+                logger.error(
+                  "Internal server error while sending APN notification",
+                  {
+                    error: err,
+                  }
+                );
+              });
+          } else {
+            logger.verbose(`User ${user.name} | ${user.id} has no devices.`);
+          }
+        }
+      } catch (error) {
+        logger.error("Internal server error while sending APN notification", {
+          error,
+        });
       }
 
       res.status(StatusCodes.OK).json({
@@ -93,13 +163,15 @@ export async function notifyUsers(
           sent,
           failed,
           total: users.length,
+          admins: admins.length,
         },
       });
     } else {
-      return res.status(StatusCodes.OK).json({
+      res.status(StatusCodes.OK).json({
         success: true,
         data: {
           total: users.length,
+          admins: admins.length,
           haveDevices: users.filter((u) => u.devices.length > 0).length,
         },
       });
