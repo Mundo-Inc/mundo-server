@@ -45,9 +45,6 @@ export async function getPlace(
 
     const response = await getDetailedPlace(id);
 
-    // TODO: remove after app update
-    response.reviewCount = response.activities.reviewCount;
-
     res.status(StatusCodes.OK).json({
       success: true,
       data: response,
@@ -110,7 +107,7 @@ export async function getPlaceOverview(
           amenity: 1,
           otherNames: 1,
           thumbnail: 1,
-          media: 1, // TODO: should we keep this?
+          media: 1,
           scores: 1,
           activities: 1,
           priceRange: 1,
@@ -144,9 +141,6 @@ export async function getPlaceOverview(
       );
     }
 
-    // TODO: remove after app update
-    response[0].reviewCount = response[0].activities.reviewCount;
-
     res.status(StatusCodes.OK).json({
       success: true,
       data: response[0],
@@ -166,7 +160,15 @@ export async function getDetailedPlace(id: string) {
     );
   }
 
-  const thirdPartyData = await fetchThirdPartiesData(place);
+  const [googleResults, yelpResults] = await Promise.all([
+    fetchGoogle(place),
+    fetchYelp(place),
+  ]);
+
+  const thirdPartyData = {
+    ...googleResults,
+    ...yelpResults,
+  };
 
   // Update place with thirdparty data
   const now = new Date();
@@ -253,15 +255,6 @@ export async function getDetailedPlace(id: string) {
   };
 
   return filteredPlace;
-}
-
-async function fetchThirdPartiesData(place: IPlace) {
-  const results = await Promise.all([fetchGoogle(place), fetchYelp(place)]);
-
-  return {
-    ...results[0],
-    ...results[1],
-  };
 }
 
 export const getPlaceMediaValidation: ValidationChain[] = [
@@ -383,7 +376,7 @@ export async function getPlaceExists(
   try {
     handleInputErrors(req);
     const { id } = req.params;
-    let exists = Boolean(await Place.findById(id).lean());
+    let exists = await Place.exists({ _id: id });
     res.status(StatusCodes.OK).json({
       success: true,
       data: { exists },
@@ -841,29 +834,6 @@ async function fetchGoogle(place: IPlace) {
     }
 
     await place.save();
-
-    // TODO: remove after force update
-    if (openingHours && openingHours.periods) {
-      openingHours.weekdayText = openingHours.weekdayDescriptions;
-      openingHours.periods.map((period: any) => {
-        if (period.open && period.close) {
-          period.open.time = `${
-            period.open.hour < 10 ? "0" + period.open.hour : period.open.hour
-          }:${
-            period.open.minute < 10
-              ? "0" + period.open.minute
-              : period.open.minute
-          }`;
-          period.close.time = `${
-            period.close.hour < 10 ? "0" + period.close.hour : period.close.hour
-          }:${
-            period.close.minute < 10
-              ? "0" + period.close.minute
-              : period.close.minute
-          }`;
-        }
-      });
-    }
 
     return {
       google: {

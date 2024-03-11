@@ -325,11 +325,6 @@ export async function getPlaces(
       ...projectPipeline,
     ]);
 
-    // TODO: remove after app update
-    for (const place of places) {
-      place.reviewCount = place.activities.reviewCount;
-    }
-
     res.status(StatusCodes.OK).json({ success: true, places: places });
   } catch (err) {
     next(err);
@@ -574,9 +569,6 @@ export async function getPlacesByContext(
     // combine it with detailed data
 
     const result = await getDetailedPlace(matchedPlace?._id);
-
-    // TODO: remove after app update
-    result.reviewCount = result.activities.reviewCount;
 
     if (!existing && !result.thirdParty.google?.id) {
       // If the place is new and doesn't exist on Google, delete it

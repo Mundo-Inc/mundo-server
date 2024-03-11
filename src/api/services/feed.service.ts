@@ -107,11 +107,6 @@ export const getResourceInfo = async (activity: IUserActivity) => {
       readPlaceDetailProjection
     ).lean();
 
-    // TODO: remove after force update
-    if (resourceInfo) {
-      resourceInfo.reviewCount = resourceInfo.activities?.reviewCount || 0;
-    }
-
     placeInfo = resourceInfo;
   } else if (activity.resourceType === ActivityResourceTypeEnum.REVIEW) {
     const reviews = await Review.aggregate([
@@ -257,12 +252,6 @@ export const getResourceInfo = async (activity: IUserActivity) => {
       },
     ]);
 
-    // TODO: remove after force update
-    if (reviews[0] && reviews[0].place) {
-      reviews[0].place.reviewCount =
-        reviews[0].place.activities?.reviewCount || 0;
-    }
-
     resourceInfo = reviews[0];
     placeInfo = resourceInfo.place;
   } else if (activity.resourceType === ActivityResourceTypeEnum.DEAL) {
@@ -372,12 +361,6 @@ export const getResourceInfo = async (activity: IUserActivity) => {
       return [null, null, userInfo];
     }
 
-    // TODO: remove after force update
-    if (results[0].checkin[0] && results[0].checkin[0].place) {
-      results[0].checkin[0].place.reviewCount =
-        results[0].checkin[0].place.activities?.reviewCount || 0;
-    }
-
     resourceInfo = {
       totalCheckins: results[0].total[0]?.total || 0,
       ...results[0].checkin[0],
@@ -393,11 +376,6 @@ export const getResourceInfo = async (activity: IUserActivity) => {
         activity.placeId,
         readPlaceDetailProjection
       ).lean();
-
-      // TODO: remove after force update
-      if (placeInfo) {
-        placeInfo.reviewCount = placeInfo.activities?.reviewCount || 0;
-      }
     }
   } else if (activity.resourceType === ActivityResourceTypeEnum.ACHIEVEMET) {
     resourceInfo = await Achievement.findById(activity.resourceId);
@@ -406,11 +384,6 @@ export const getResourceInfo = async (activity: IUserActivity) => {
         activity.placeId,
         readPlaceDetailProjection
       ).lean();
-
-      // TODO: remove after force update
-      if (placeInfo) {
-        placeInfo.reviewCount = placeInfo.activities?.reviewCount || 0;
-      }
     }
   }
 

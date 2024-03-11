@@ -235,11 +235,6 @@ export async function getReviews(
 
     const reviews = await Review.aggregate(pipeline);
 
-    // TODO: remove after app update
-    for (const review of reviews) {
-      review.place.reviewCount = review.place.activities.reviewCount;
-    }
-
     res.status(StatusCodes.OK).json({ success: true, data: reviews });
   } catch (err) {
     next(err);
