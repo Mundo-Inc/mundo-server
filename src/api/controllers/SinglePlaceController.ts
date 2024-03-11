@@ -835,6 +835,29 @@ async function fetchGoogle(place: IPlace) {
 
     await place.save();
 
+    // TODO: remove after force update
+    if (openingHours && openingHours.periods) {
+      openingHours.weekdayText = openingHours.weekdayDescriptions;
+      openingHours.periods.map((period: any) => {
+        if (period.open && period.close) {
+          period.open.time = `${
+            period.open.hour < 10 ? "0" + period.open.hour : period.open.hour
+          }:${
+            period.open.minute < 10
+              ? "0" + period.open.minute
+              : period.open.minute
+          }`;
+          period.close.time = `${
+            period.close.hour < 10 ? "0" + period.close.hour : period.close.hour
+          }:${
+            period.close.minute < 10
+              ? "0" + period.close.minute
+              : period.close.minute
+          }`;
+        }
+      });
+    }
+
     return {
       google: {
         id: googlePlacesId,
