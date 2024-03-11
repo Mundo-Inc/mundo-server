@@ -308,15 +308,10 @@ export async function createHomemadePost(
       videos: videoMediaIds,
     });
 
-    const reward = null;
-    //TODO: ADD REWARD FOR HOMEMADES
-    /*
     const reward = await addReward(authId, {
-      refType: "Review",
-      refId: review._id,
-      placeId: place,
+      refType: "Homemade",
+      refId: homemade._id,
     });
-    */
 
     //Send notifications to followers
     const followers = await Follow.find({

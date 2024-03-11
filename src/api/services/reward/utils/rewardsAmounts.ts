@@ -9,4 +9,5 @@ export const rewards_amounts = {
     HAS_IMAGES: 25,
     HAS_VIDEOS: 50,
   },
+  HOMEMADE: 40,
 };

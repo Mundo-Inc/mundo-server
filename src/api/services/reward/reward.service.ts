@@ -15,10 +15,12 @@ import { calcLevel, calcReviewReward } from "./helpers/levelCalculations";
 import {
   validateCheckinReward,
   validateCommentReward,
+  validateHomemadeReward,
   validateReactionReward,
   validateReviewReward,
 } from "./helpers/validations";
 import { rewards_amounts } from "./utils/rewardsAmounts";
+import Homemade from "../../../models/Homemade";
 
 const getValidatedEntity = async (
   refType: string,
@@ -26,6 +28,11 @@ const getValidatedEntity = async (
   user: IUser
 ) => {
   switch (refType) {
+    case "Homemade":
+      const homemade = await Homemade.findById(refId);
+      if (!homemade || !(await validateHomemadeReward(user, homemade)))
+        return null;
+      return { entity: homemade, rewardAmount: rewards_amounts.HOMEMADE };
     case "Checkin":
       const checkin = await CheckIn.findById(refId);
       if (!checkin || !(await validateCheckinReward(user, checkin)))

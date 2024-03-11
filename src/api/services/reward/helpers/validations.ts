@@ -1,5 +1,6 @@
 import type { ICheckIn } from "../../../../models/CheckIn";
 import type { IComment } from "../../../../models/Comment";
+import { IHomemade } from "../../../../models/Homemade";
 import type { IReaction } from "../../../../models/Reaction";
 import type { IReview } from "../../../../models/Review";
 import Reward from "../../../../models/Reward";
@@ -72,6 +73,31 @@ export const validateCheckinReward = async (user: IUser, checkin: ICheckIn) => {
       "reason.placeId": checkin.place,
       createdAt: {
         // checkin for last day
+        $gte: new Date(new Date().getTime() - 24 * 60 * 60 * 1000),
+      },
+    });
+
+    if (existingRewards.length >= thresholds.MAX_CHECKIN_PER_PLACE)
+      return false;
+    return true;
+  } catch (error) {
+    logger.error("Error for validating check-in reward", { error });
+    //TODO: we have to fix this instead of saying not eligible.
+    return false;
+  }
+};
+
+export const validateHomemadeReward = async (
+  user: IUser,
+  homemade: IHomemade
+) => {
+  try {
+    // check if the user has already been rewarded for the
+    const existingRewards = await Reward.find({
+      userId: user._id,
+      "reason.refType": "Homemade",
+      createdAt: {
+        // homemade for last day
         $gte: new Date(new Date().getTime() - 24 * 60 * 60 * 1000),
       },
     });

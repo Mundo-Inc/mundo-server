@@ -15,7 +15,7 @@ export interface IReward extends Document {
 const RewardSchema: Schema = new Schema<IReward>({
   userId: { type: Schema.Types.ObjectId, ref: "User", required: true },
   reason: {
-    refType: { type: String, required: true }, //TODO: REVIEW, COMMENT, REACTION, PLACE
+    refType: { type: String, required: true }, //TODO: REVIEW, COMMENT, REACTION, PLACE, Homemade
     refId: {
       type: Schema.Types.ObjectId,
       refPath: "reason.refType",
