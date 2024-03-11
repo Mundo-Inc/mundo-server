@@ -118,10 +118,11 @@ export async function getMissions(
       success: true,
       data: populatedMissions,
       pagination: {
+        totalCount: totalMissions,
         page: page,
         limit: limit,
-        totalPages: Math.ceil(totalMissions / limit),
-        totalItems: totalMissions,
+        totalPages: Math.ceil(totalMissions / limit), // TODO: remove this
+        totalItems: totalMissions, // TODO: remove this
       },
     });
   } catch (error) {
@@ -201,8 +202,6 @@ export async function getPrizes(
   next: NextFunction
 ) {
   try {
-    const { id: authId } = req.user!;
-
     const prizes = await Prize.aggregate([
       {
         $lookup: {
@@ -246,7 +245,8 @@ export async function getPrizes(
         },
       },
     ]);
-    res.status(200).json({ success: true, data: prizes });
+
+    res.status(StatusCodes.OK).json({ success: true, data: prizes });
   } catch (error) {
     next(error);
   }
@@ -278,10 +278,11 @@ export async function getAllMissions(
       success: true,
       data: missions,
       pagination: {
+        totalCount: totalMissions,
         page: page,
         limit: limit,
-        totalPages: Math.ceil(totalMissions / limit),
-        totalItems: totalMissions,
+        totalPages: Math.ceil(totalMissions / limit), // TODO: remove this
+        totalItems: totalMissions, // TODO: remove this
       },
     });
   } catch (error) {
@@ -323,14 +324,17 @@ export async function createPrize(
 ) {
   try {
     handleInputErrors(req);
+
     const { title, thumbnail, amount, count } = req.body;
+
     const prize = await Prize.create({
       title,
       thumbnail,
       amount,
       count,
     });
-    res.status(200).json({
+
+    res.status(StatusCodes.OK).json({
       succss: true,
       data: prize,
     });

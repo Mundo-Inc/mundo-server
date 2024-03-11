@@ -258,9 +258,10 @@ export async function getUserConnections(
     const { id, type } = req.params;
     const { id: authId } = req.user!;
 
-    const { limit, page } = req.query;
-    const limitNumber = parseInt(limit as string) || 50;
-    const skipNumber = (parseInt(page as string) - 1) * limitNumber || 0;
+    const { limit: reqLimit, page: reqPage } = req.query;
+    const limit = parseInt(reqLimit as string) || 50;
+    const page = parseInt(reqPage as string) || 1;
+    const skip = (page - 1) * limit;
 
     const theUserId = id || authId;
 
@@ -285,10 +286,10 @@ export async function getUserConnections(
           ],
           connections: [
             {
-              $skip: skipNumber,
+              $skip: skip,
             },
             {
-              $limit: limitNumber,
+              $limit: limit,
             },
             {
               $lookup: {
@@ -329,6 +330,11 @@ export async function getUserConnections(
       success: true,
       data: data[0]?.connections || [],
       total: data[0]?.total || 0,
+      pagination: {
+        totalCount: data[0]?.total || 0,
+        page: page || 1,
+        limit: limit || 50,
+      },
     });
   } catch (err) {
     next(err);

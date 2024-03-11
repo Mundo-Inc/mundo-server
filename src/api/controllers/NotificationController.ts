@@ -328,6 +328,11 @@ export async function getNotifications(
         notifications.length > 0
           ? notifications[0].total > page * limit
           : false,
+      pagination: {
+        totalCount: notifications.length > 0 ? notifications[0].total : 0,
+        page: page,
+        limit: limit,
+      },
     });
   } catch (err) {
     next(err);

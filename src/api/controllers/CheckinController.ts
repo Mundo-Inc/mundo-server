@@ -52,7 +52,7 @@ export async function getCheckins(
   try {
     handleInputErrors(req);
 
-    const { id: userId } = req.user!;
+    const { id: authId } = req.user!;
 
     const { user, place, event, page: reqPage, limit: reqLimit } = req.query;
     const page = parseInt(reqPage as string) || 1;
@@ -64,19 +64,18 @@ export async function getCheckins(
       const userObject = (await User.findById(user)) as IUser;
       if (userObject) {
         const isFollowed = await Follow.countDocuments({
-          user: userId,
+          user: authId,
           target: userObject._id,
         });
         if (!isFollowed && userObject.isPrivate) {
-          throw createError("UNAUTHORIZED", StatusCodes.UNAUTHORIZED);
+          throw createError(
+            strings.authorization.accessDenied,
+            StatusCodes.UNAUTHORIZED
+          );
         }
       }
       matchPipeline.push({
         $match: { user: new mongoose.Types.ObjectId(user as string) },
-      });
-    } else if (!place && !event) {
-      matchPipeline.push({
-        $match: { user: new mongoose.Types.ObjectId(userId) },
       });
     }
     if (place) {
@@ -88,6 +87,14 @@ export async function getCheckins(
     if (event) {
       matchPipeline.push({
         $match: { event: new mongoose.Types.ObjectId(event as string) },
+      });
+    }
+
+    if (user && user !== authId) {
+      matchPipeline.push({
+        $match: {
+          privacyType: ActivityPrivacyTypeEnum.PUBLIC,
+        },
       });
     }
 
@@ -190,6 +197,7 @@ export async function getCheckins(
                 place: 1,
                 caption: 1,
                 image: 1,
+                privacyType: 1,
                 tags: "$taggedUsers",
               },
             },
@@ -198,15 +206,43 @@ export async function getCheckins(
       },
     ]);
 
-    const resData: {
-      data: any;
-      total?: number;
-    } = {
-      data: checkins[0].checkins,
-      total: checkins[0].total[0]?.total || 0,
-    };
+    if (!user || user === authId) {
+      // anonymize user data
+      checkins[0].checkins = checkins[0].checkins.map((checkin: any) => {
+        if (
+          checkin.privacyType === ActivityPrivacyTypeEnum.PRIVATE &&
+          checkin.user._id.toString() !== authId
+        ) {
+          checkin._id = Math.random()
+            .toString(16)
+            .substring(2, 10)
+            .padEnd(24, "0");
+          checkin.user._id = Math.random()
+            .toString(16)
+            .substring(2, 10)
+            .padEnd(24, "0");
+          checkin.user.name = "Anonymous";
+          checkin.user.username = "Anonymous";
+          checkin.user.profileImage = null;
+          checkin.user.progress = {
+            xp: Math.round(checkin.user.progress?.xp / 100) * 100,
+            level: Math.round(checkin.user.progress?.level / 10) * 10,
+          };
+        }
+        return checkin;
+      });
+    }
 
-    res.status(StatusCodes.OK).json({ success: true, ...resData });
+    res.status(StatusCodes.OK).json({
+      success: true,
+      data: checkins[0].checkins,
+      total: checkins[0].total[0]?.total || 0, // TODO: remove on later upodates
+      pagination: {
+        totalCount: checkins[0].total[0]?.total || 0,
+        page: page,
+        limit: limit,
+      },
+    });
   } catch (err) {
     next(err);
   }
@@ -404,6 +440,7 @@ export async function createCheckin(
       place: placeId,
       caption: caption,
       tags: tags,
+      privacyType: privacyType || ActivityPrivacyTypeEnum.PUBLIC,
     };
 
     if (media) checkinBody.image = media._id;

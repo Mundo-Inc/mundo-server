@@ -356,8 +356,13 @@ export async function getPlaceMedia(
 
     res.status(StatusCodes.OK).json({
       success: true,
-      total: media[0].total[0]?.count || 0,
       data: media[0].media || [],
+      total: media[0].total[0]?.count || 0, // TODO: remove this
+      pagination: {
+        totalCount: media[0].total[0]?.count || 0,
+        page,
+        limit,
+      },
     });
   } catch (err) {
     next(err);
@@ -667,8 +672,13 @@ export async function getPlaceReviews(
 
       res.status(StatusCodes.OK).json({
         success: true,
-        total: total,
         data: results || [],
+        total: total, // TODO: remove this
+        pagination: {
+          totalCount: total,
+          page,
+          limit,
+        },
       });
     }
   } catch (err) {

@@ -172,9 +172,16 @@ export async function getActivitiesOfaUser(
       });
     }
 
-    res
-      .status(StatusCodes.OK)
-      .json({ success: true, data: result || [], total: total });
+    res.status(StatusCodes.OK).json({
+      success: true,
+      data: result || [],
+      total: total, // TODO: remove this
+      pagination: {
+        totalCount: total,
+        page,
+        limit,
+      },
+    });
   } catch (err) {
     next(err);
   }

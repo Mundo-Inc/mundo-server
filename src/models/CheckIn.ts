@@ -2,7 +2,7 @@ import mongoose, { Schema, type CallbackError, type Document } from "mongoose";
 
 import logger from "../api/services/logger";
 import Place from "./Place";
-import UserActivity from "./UserActivity";
+import UserActivity, { ActivityPrivacyTypeEnum } from "./UserActivity";
 
 export interface ICheckIn extends Document {
   user: mongoose.Types.ObjectId;
@@ -13,6 +13,7 @@ export interface ICheckIn extends Document {
   caption?: string;
   createdAt: Date;
   userActivityId?: mongoose.Types.ObjectId;
+  privacyType: ActivityPrivacyTypeEnum;
 }
 
 const CheckInSchema: Schema = new Schema<ICheckIn>({
@@ -24,6 +25,12 @@ const CheckInSchema: Schema = new Schema<ICheckIn>({
   tags: [{ type: Schema.Types.ObjectId, ref: "User" }],
   createdAt: { type: Date, default: Date.now },
   userActivityId: { type: Schema.Types.ObjectId, ref: "UserActivity" },
+  privacyType: {
+    type: String,
+    enum: Object.values(ActivityPrivacyTypeEnum),
+    default: ActivityPrivacyTypeEnum.PUBLIC,
+    required: true,
+  },
 });
 
 async function removeDependencies(checkin: ICheckIn) {

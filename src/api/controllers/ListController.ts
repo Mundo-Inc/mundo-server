@@ -599,7 +599,7 @@ export async function checkPlaceInUserLists(
     const lists = await List.find({
       "places.place": placeId,
       owner: authId,
-    });
+    }).lean();
 
     res.json(lists);
   } catch (error) {

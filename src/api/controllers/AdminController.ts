@@ -84,9 +84,16 @@ export async function getUsers(
     //   remainingXp: getRemainingXpToNextLevel(user.xp || 0),
     // }));
 
-    res
-      .status(StatusCodes.OK)
-      .json({ success: true, data: results.users, total: results.total });
+    res.status(StatusCodes.OK).json({
+      success: true,
+      data: results.users,
+      total: results.total, // TODO: remove this
+      pagination: {
+        totalCount: results.total,
+        page,
+        limit,
+      },
+    });
   } catch (err) {
     next(err);
   }
@@ -145,9 +152,16 @@ export async function getFlags(
       }
     }
 
-    res
-      .status(StatusCodes.OK)
-      .json({ success: true, data: result, total: totalDocuments });
+    res.status(StatusCodes.OK).json({
+      success: true,
+      data: result,
+      total: totalDocuments,
+      pagination: {
+        totalCount: totalDocuments,
+        page,
+        limit,
+      },
+    });
   } catch (err) {
     next(err);
   }

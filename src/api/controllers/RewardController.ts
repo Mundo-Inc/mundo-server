@@ -164,7 +164,7 @@ export async function redeemPrize(
     // notify them that they redemption is in verification progress
     await notifyRedemptionInProgress(user, prize);
 
-    res.status(200).json({
+    res.status(StatusCodes.OK).json({
       success: true,
       data: prizeRedemption,
     });
@@ -232,7 +232,7 @@ export async function getAllPrizeRedemptionHistory(
       .limit(limit)
       .lean();
 
-    res.status(200).json({ success: true, data: redemptions });
+    res.status(StatusCodes.OK).json({ success: true, data: redemptions });
   } catch (error) {
     next(error);
   }
@@ -289,7 +289,7 @@ export async function reviewRedemption(
     redemption.status = validation;
     await redemption.save();
 
-    res.status(200).json({
+    res.status(StatusCodes.OK).json({
       success: true,
       data: redemption,
     });
@@ -333,10 +333,11 @@ export async function getLatestReferredUsers(
       success: true,
       data: latestReferredUsers,
       pagination: {
-        total,
-        page: skip / limit + 1,
+        totalCount: total,
+        page,
         limit,
-        pages: Math.ceil(total / limit),
+        total, // TODO: remove this
+        pages: Math.ceil(total / limit), // TODO: remove this
       },
     });
   } catch (error) {

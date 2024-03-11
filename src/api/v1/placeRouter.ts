@@ -13,10 +13,6 @@ import {
   getThirdPartyRatingValidation,
 } from "../controllers/PlaceController";
 import {
-  searchPlaces,
-  searchPlacesValidation,
-} from "../controllers/PlaceSearchController";
-import {
   getExistInLists,
   getExistInListsValidation,
   getPlace,
@@ -55,10 +51,6 @@ router
     getPlacesByContextValidation,
     getPlacesByContext
   );
-
-router
-  .route("/search")
-  .get(express.json(), searchPlacesValidation, searchPlaces);
 
 router
   .route("/:id/media")

@@ -34,7 +34,7 @@ export async function getDecorations(
       frames,
       covers,
     };
-    res.status(200).json({
+    res.status(StatusCodes.OK).json({
       success: true,
       data: decorations,
     });
@@ -60,7 +60,7 @@ export async function getDecorationRedemption(
     const decorationRedemptions = await ProfileDecorationRedemption.find({
       userId: user._id,
     });
-    res.status(200).json({
+    res.status(StatusCodes.OK).json({
       success: true,
       data: decorationRedemptions,
     });
@@ -134,7 +134,7 @@ export async function redeemDecoration(
 
     //TODO: notify them that they redemption is in verification progress
 
-    res.status(200).json({
+    res.status(StatusCodes.OK).json({
       success: true,
       data: profileDecorationRedemption,
     });
@@ -185,7 +185,7 @@ export async function activateDecoration(
 
     user = await user.save();
 
-    res.status(200).json({
+    res.status(StatusCodes.OK).json({
       success: true,
       data: user,
     });
@@ -233,7 +233,7 @@ export async function deactivateDecoration(
 
     user = await user.save();
 
-    res.status(200).json({
+    res.status(StatusCodes.OK).json({
       success: true,
       data: user,
     });
