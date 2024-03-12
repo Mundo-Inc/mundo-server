@@ -752,7 +752,7 @@ async function fetchYelp(place: IPlace) {
         url: yelpData.url,
         rating: parseFloat(yelpData.rating || "-1"),
         reviewCount: yelpData.review_count,
-        thumbnail: yelpData.image_url || "",
+        thumbnail: yelpData.image_url || null,
         photos: yelpData.photos || [],
         categories: yelpData.categories,
         transactions: yelpData.transactions,
@@ -827,7 +827,7 @@ async function fetchGoogle(place: IPlace) {
       }
     }
 
-    let thumbnail = "";
+    let thumbnail = null;
     if (googlePlacesData.photos && googlePlacesData.photos.length > 0) {
       try {
         const photoName = googlePlacesData.photos[0].name;
