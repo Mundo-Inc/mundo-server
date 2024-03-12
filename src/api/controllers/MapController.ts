@@ -116,12 +116,6 @@ export async function getGeoActivities(
   next: NextFunction
 ) {
   try {
-    res.json({
-      success: true,
-      data: { activities: [] },
-    });
-    return;
-
     handleInputErrors(req);
 
     const { id: authId } = req.user!;
