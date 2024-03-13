@@ -4,26 +4,20 @@ import { StatusCodes } from "http-status-codes";
 import mongoose from "mongoose";
 
 import Follow from "../../models/Follow";
+import Homemade, { IHomemade } from "../../models/Homemade";
 import Media, { MediaTypeEnum } from "../../models/Media";
 import Notification, {
   NotificationTypeEnum,
   ResourceTypeEnum,
 } from "../../models/Notification";
 import Upload from "../../models/Upload";
-import User from "../../models/User";
 import strings, { dStrings as ds, dynamicMessage } from "../../strings";
 import { createError, handleInputErrors } from "../../utilities/errorHandlers";
 import { publicReadUserEssentialProjection } from "../dto/user/read-user-public.dto";
-import { reviewEarning } from "../services/earning.service";
 import logger from "../services/logger";
 import { addReward } from "../services/reward/reward.service";
-import {
-  addHomemadeActivity,
-  addRecommendActivity,
-  addReviewActivity,
-} from "../services/user.activity.service";
+import { addHomemadeActivity } from "../services/user.activity.service";
 import validate from "./validators";
-import Homemade, { IHomemade } from "../../models/Homemade";
 
 export const getHomemadePostsValidation: ValidationChain[] = [
   query("userId").optional().isMongoId(),
@@ -52,7 +46,7 @@ export async function getHomemadePosts(
     const limit = Number(req.query.limit) || 10;
     const skip = (page - 1) * limit;
 
-    let pipeline: any[] = [];
+    const pipeline: any[] = [];
 
     if (userId) {
       pipeline.push({
@@ -66,27 +60,9 @@ export async function getHomemadePosts(
       {
         $lookup: {
           from: "media",
-          localField: "images",
+          localField: "media",
           foreignField: "_id",
-          as: "images",
-          pipeline: [
-            {
-              $project: {
-                _id: 1,
-                src: 1,
-                caption: 1,
-                type: 1,
-              },
-            },
-          ],
-        },
-      },
-      {
-        $lookup: {
-          from: "media",
-          localField: "videos",
-          foreignField: "_id",
-          as: "videos",
+          as: "media",
           pipeline: [
             {
               $project: {
@@ -171,8 +147,7 @@ export async function getHomemadePosts(
           updatedAt: 1,
           content: 1,
           user: { $arrayElemAt: ["$user", 0] },
-          images: 1,
-          videos: 1,
+          media: 1,
           reactions: {
             $arrayElemAt: ["$reactions", 0],
           },
@@ -190,12 +165,9 @@ export async function getHomemadePosts(
 
 export const createHomemadeValidationPost: ValidationChain[] = [
   body("content").optional().isString(),
-  body("images").optional().isArray(),
-  body("images.*.uploadId").optional().isMongoId(),
-  body("images.*.caption").optional().isString(),
-  body("videos").optional().isArray(),
-  body("videos.*.uploadId").optional().isMongoId(),
-  body("videos.*.caption").optional().isString(),
+  body("media").isArray({ min: 1 }),
+  body("media.*.uploadId").isMongoId(),
+  body("media.*.caption").optional().isString(),
 ];
 export async function createHomemadePost(
   req: Request,
@@ -207,7 +179,7 @@ export async function createHomemadePost(
 
     const { id: authId, role } = req.user!;
 
-    const { content, images, videos } = req.body;
+    const { content, media } = req.body;
 
     const userId = req.body.userId || authId;
 
@@ -216,85 +188,37 @@ export async function createHomemadePost(
     }
 
     const uploadIds: string[] = [];
-    const imageMediaIds: string[] = [];
-    const videoMediaIds: string[] = [];
-    let hasMedia = false;
+    const mediaIds: string[] = [];
 
-    const hasAtLeastOneVid = videos && videos.length > 0;
-    const hasAtLeastOneImg = images && images.length > 0;
-
-    if (hasAtLeastOneImg) {
-      hasMedia = true;
-      for (const image of images) {
-        const upload = await Upload.findById(image.uploadId);
-        if (!upload) {
-          throw createError(
-            dynamicMessage(ds.notFound, "Uploaded image"),
-            StatusCodes.NOT_FOUND
-          );
-        }
-        if (upload.user.toString() !== authId) {
-          throw createError(
-            strings.authorization.otherUser,
-            StatusCodes.FORBIDDEN
-          );
-        }
-        if (upload.type !== "image") {
-          throw createError(
-            strings.upload.invalidType,
-            StatusCodes.BAD_REQUEST
-          );
-        }
-        uploadIds.push(image.uploadId);
-
-        await Media.create({
-          type: MediaTypeEnum.image,
-          user: authId,
-          caption: image.caption,
-          src: upload.src,
-        }).then(async (media) => {
-          imageMediaIds.push(media._id);
-          await Upload.findByIdAndDelete(image.uploadId);
-        });
+    for (const m of media) {
+      const upload = await Upload.findById(m.uploadId);
+      if (!upload) {
+        throw createError(
+          dynamicMessage(ds.notFound, "Uploaded media"),
+          StatusCodes.NOT_FOUND
+        );
       }
-    }
-    if (hasAtLeastOneVid) {
-      hasMedia = true;
-      for (const video of videos) {
-        const upload = await Upload.findById(video.uploadId);
-        if (!upload) {
-          throw createError(
-            dynamicMessage(ds.notFound, "Uploaded video"),
-            StatusCodes.NOT_FOUND
-          );
-        }
-        if (upload.user.toString() !== authId) {
-          throw createError(
-            strings.authorization.otherUser,
-            StatusCodes.FORBIDDEN
-          );
-        }
-        if (upload.type !== "video") {
-          throw createError(
-            strings.upload.invalidType,
-            StatusCodes.BAD_REQUEST
-          );
-        }
-        uploadIds.push(video.uploadId);
-
-        await Media.create({
-          type: MediaTypeEnum.video,
-          user: authId,
-          caption: video.caption,
-          src: upload.src,
-        }).then(async (media) => {
-          videoMediaIds.push(media._id);
-          await Upload.findByIdAndDelete(video.uploadId);
-        });
+      if (upload.user.toString() !== authId) {
+        throw createError(
+          strings.authorization.otherUser,
+          StatusCodes.FORBIDDEN
+        );
       }
+      uploadIds.push(m.uploadId);
+
+      await Media.create({
+        type:
+          upload.type === "video" ? MediaTypeEnum.video : MediaTypeEnum.image,
+        user: authId,
+        caption: m.caption,
+        src: upload.src,
+      }).then(async (media) => {
+        mediaIds.push(media._id);
+        await Upload.findByIdAndDelete(m.uploadId);
+      });
     }
 
-    if (!hasAtLeastOneImg && !hasAtLeastOneVid) {
+    if (mediaIds.length === 0) {
       throw createError(
         "At least one media (img/vid) should be included",
         StatusCodes.BAD_REQUEST
@@ -304,8 +228,7 @@ export async function createHomemadePost(
     const homemade = await Homemade.create({
       userId,
       content: content || "",
-      images: imageMediaIds,
-      videos: videoMediaIds,
+      media: mediaIds,
     });
 
     const reward = await addReward(authId, {
@@ -317,6 +240,7 @@ export async function createHomemadePost(
     const followers = await Follow.find({
       target: userId,
     }).lean();
+
     for (const follower of followers) {
       await Notification.create({
         user: follower.user,
@@ -397,27 +321,9 @@ export async function getHomemadePost(
       {
         $lookup: {
           from: "media",
-          localField: "images",
+          localField: "media",
           foreignField: "_id",
-          as: "images",
-          pipeline: [
-            {
-              $project: {
-                _id: 1,
-                src: 1,
-                caption: 1,
-                type: 1,
-              },
-            },
-          ],
-        },
-      },
-      {
-        $lookup: {
-          from: "media",
-          localField: "videos",
-          foreignField: "_id",
-          as: "videos",
+          as: "media",
           pipeline: [
             {
               $project: {
@@ -489,8 +395,7 @@ export async function getHomemadePost(
           updatedAt: 1,
           content: 1,
           user: { $arrayElemAt: ["$user", 0] },
-          images: 1,
-          videos: 1,
+          media: 1,
           reactions: {
             $arrayElemAt: ["$reactions", 0],
           },

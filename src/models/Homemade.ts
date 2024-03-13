@@ -8,8 +8,7 @@ import Media from "./Media";
 export interface IHomemade extends Document {
   userId: mongoose.Types.ObjectId;
   content: string;
-  images?: mongoose.Types.ObjectId[];
-  videos?: mongoose.Types.ObjectId[];
+  media: mongoose.Types.ObjectId[];
   createdAt: Date;
   updatedAt: Date;
   userActivityId?: mongoose.Types.ObjectId;
@@ -19,8 +18,10 @@ const HomemadeSchema: Schema = new Schema<IHomemade>(
   {
     userId: { type: Schema.Types.ObjectId, ref: "User", required: true },
     content: { type: String, default: "" },
-    images: [{ type: Schema.Types.ObjectId, ref: "Media" }],
-    videos: [{ type: Schema.Types.ObjectId, ref: "Media" }],
+    media: {
+      type: [{ type: Schema.Types.ObjectId, ref: "Media" }],
+      default: [],
+    },
     userActivityId: { type: Schema.Types.ObjectId, ref: "UserActivity" },
   },
   { timestamps: true }
@@ -45,20 +46,10 @@ async function removeHomemadeDependencies(homemade: IHomemade) {
   }
 
   // remove all media related to the homemade
-  if (homemade.videos && homemade.videos.length > 0) {
-    for (const video of homemade.videos) {
-      const media = await Media.findById(video);
-      if (media) {
-        await media.deleteOne();
-      }
-    }
-  }
-  if (homemade.images && homemade.images.length > 0) {
-    for (const image of homemade.images) {
-      const media = await Media.findById(image);
-      if (media) {
-        await media.deleteOne();
-      }
+  for (const m of homemade.media) {
+    const media = await Media.findById(m);
+    if (media) {
+      await media.deleteOne();
     }
   }
 }
