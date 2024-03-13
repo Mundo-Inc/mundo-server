@@ -6,7 +6,7 @@ import UserActivity from "./UserActivity";
 import Media from "./Media";
 
 export interface IHomemade extends Document {
-  userId: mongoose.Types.ObjectId;
+  user: mongoose.Types.ObjectId;
   content: string;
   media: mongoose.Types.ObjectId[];
   tags?: mongoose.Types.ObjectId[];
@@ -17,7 +17,7 @@ export interface IHomemade extends Document {
 
 const HomemadeSchema: Schema = new Schema<IHomemade>(
   {
-    userId: { type: Schema.Types.ObjectId, ref: "User", required: true },
+    user: { type: Schema.Types.ObjectId, ref: "User", required: true },
     content: { type: String, default: "" },
     media: {
       type: [{ type: Schema.Types.ObjectId, ref: "Media" }],

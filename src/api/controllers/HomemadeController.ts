@@ -21,7 +21,7 @@ import validate from "./validators";
 import User from "../../models/User";
 
 export const getHomemadePostsValidation: ValidationChain[] = [
-  query("userId").optional().isMongoId(),
+  query("user").optional().isMongoId(),
   query("sort").optional().isIn(["newest", "oldest"]),
   validate.page(query("page").optional(), 100),
   validate.limit(query("limit").optional(), 1, 50),
@@ -37,10 +37,10 @@ export async function getHomemadePosts(
     const { id: authId } = req.user!;
 
     const {
-      userId,
+      user,
       sort,
     }: {
-      userId?: string;
+      user?: string;
       sort?: "newest" | "oldest";
     } = req.query;
     const page = Number(req.query.page) || 1;
@@ -49,9 +49,9 @@ export async function getHomemadePosts(
 
     const pipeline: any[] = [];
 
-    if (userId) {
+    if (user) {
       pipeline.push({
-        $match: { userId: new mongoose.Types.ObjectId(userId as string) },
+        $match: { user: new mongoose.Types.ObjectId(user as string) },
       });
     }
     pipeline.push(
@@ -92,7 +92,7 @@ export async function getHomemadePosts(
       {
         $lookup: {
           from: "users",
-          localField: "userId",
+          localField: "user",
           foreignField: "_id",
           as: "user",
           pipeline: [
@@ -198,7 +198,7 @@ export async function createHomemadePost(
 
     const { content, media, tags } = req.body;
 
-    const userId = req.body.userId || authId;
+    const userId = req.body.user || authId;
 
     if (userId !== authId && role !== "admin") {
       throw createError(strings.authorization.otherUser, StatusCodes.FORBIDDEN);
@@ -256,7 +256,7 @@ export async function createHomemadePost(
     }
 
     const homemade = await Homemade.create({
-      userId,
+      user: userId,
       content: content || "",
       media: mediaIds,
       tags,
@@ -339,7 +339,7 @@ export async function getHomemadePost(
       {
         $lookup: {
           from: "users",
-          localField: "userId",
+          localField: "user",
           foreignField: "_id",
           as: "user",
           pipeline: [
@@ -484,7 +484,7 @@ export async function removeHomemadePost(
       );
     }
 
-    if (homemade.userId.toString() !== authId) {
+    if (homemade.user.toString() !== authId) {
       throw createError(strings.authorization.otherUser, StatusCodes.FORBIDDEN);
     }
 
