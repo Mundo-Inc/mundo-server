@@ -9,6 +9,7 @@ export interface IHomemade extends Document {
   userId: mongoose.Types.ObjectId;
   content: string;
   media: mongoose.Types.ObjectId[];
+  tags?: mongoose.Types.ObjectId[];
   createdAt: Date;
   updatedAt: Date;
   userActivityId?: mongoose.Types.ObjectId;
@@ -22,6 +23,7 @@ const HomemadeSchema: Schema = new Schema<IHomemade>(
       type: [{ type: Schema.Types.ObjectId, ref: "Media" }],
       default: [],
     },
+    tags: [{ type: Schema.Types.ObjectId, ref: "User" }],
     userActivityId: { type: Schema.Types.ObjectId, ref: "UserActivity" },
   },
   { timestamps: true }

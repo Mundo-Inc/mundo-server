@@ -18,6 +18,7 @@ import logger from "../services/logger";
 import { addReward } from "../services/reward/reward.service";
 import { addHomemadeActivity } from "../services/user.activity.service";
 import validate from "./validators";
+import User from "../../models/User";
 
 export const getHomemadePostsValidation: ValidationChain[] = [
   query("userId").optional().isMongoId(),
@@ -71,6 +72,19 @@ export async function getHomemadePosts(
                 caption: 1,
                 type: 1,
               },
+            },
+          ],
+        },
+      },
+      {
+        $lookup: {
+          from: "users",
+          localField: "tags",
+          foreignField: "_id",
+          as: "taggedUsers",
+          pipeline: [
+            {
+              $project: publicReadUserEssentialProjection,
             },
           ],
         },
@@ -148,6 +162,7 @@ export async function getHomemadePosts(
           content: 1,
           user: { $arrayElemAt: ["$user", 0] },
           media: 1,
+          taggedUsers: 1,
           reactions: {
             $arrayElemAt: ["$reactions", 0],
           },
@@ -168,6 +183,8 @@ export const createHomemadeValidationPost: ValidationChain[] = [
   body("media").isArray({ min: 1 }),
   body("media.*.uploadId").isMongoId(),
   body("media.*.caption").optional().isString(),
+  body("tags").optional().isArray(),
+  body("tags.*").optional().isMongoId(),
 ];
 export async function createHomemadePost(
   req: Request,
@@ -179,7 +196,7 @@ export async function createHomemadePost(
 
     const { id: authId, role } = req.user!;
 
-    const { content, media } = req.body;
+    const { content, media, tags } = req.body;
 
     const userId = req.body.userId || authId;
 
@@ -225,10 +242,24 @@ export async function createHomemadePost(
       );
     }
 
+    logger.verbose("validate tags");
+    if (tags) {
+      for (const userId of tags) {
+        const taggedUser = await User.exists({ _id: userId });
+        if (!taggedUser) {
+          throw createError(
+            "Tagged user does not exist",
+            StatusCodes.NOT_FOUND
+          );
+        }
+      }
+    }
+
     const homemade = await Homemade.create({
       userId,
       content: content || "",
       media: mediaIds,
+      tags,
     });
 
     const reward = await addReward(authId, {
@@ -338,6 +369,19 @@ export async function getHomemadePost(
       },
       {
         $lookup: {
+          from: "users",
+          localField: "tags",
+          foreignField: "_id",
+          as: "taggedUsers",
+          pipeline: [
+            {
+              $project: publicReadUserEssentialProjection,
+            },
+          ],
+        },
+      },
+      {
+        $lookup: {
           from: "reactions",
           let: {
             userActivityId: "$userActivityId",
@@ -396,6 +440,7 @@ export async function getHomemadePost(
           content: 1,
           user: { $arrayElemAt: ["$user", 0] },
           media: 1,
+          taggedUsers: 1,
           reactions: {
             $arrayElemAt: ["$reactions", 0],
           },
