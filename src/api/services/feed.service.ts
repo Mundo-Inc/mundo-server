@@ -20,6 +20,7 @@ import { readFormattedPlaceLocationProjection } from "../dto/place/place-dto";
 import { readPlaceDetailProjection } from "../dto/place/read-place-detail.dto";
 import { publicReadUserEssentialProjection } from "../dto/user/read-user-public.dto";
 import logger from "./logger";
+import Homemade from "../../models/Homemade";
 
 export type IMedia = {
   _id: string;
@@ -254,6 +255,112 @@ export const getResourceInfo = async (activity: IUserActivity) => {
 
     resourceInfo = reviews[0];
     placeInfo = resourceInfo.place;
+  } else if (activity.resourceType === ActivityResourceTypeEnum.HOMEMADE) {
+    const homemade = await Homemade.aggregate([
+      {
+        $match: {
+          _id: new mongoose.Types.ObjectId(activity.resourceId),
+        },
+      },
+      {
+        $lookup: {
+          from: "media",
+          localField: "media",
+          foreignField: "_id",
+          as: "media",
+          pipeline: [
+            {
+              $project: {
+                _id: 1,
+                src: 1,
+                caption: 1,
+                type: 1,
+              },
+            },
+          ],
+        },
+      },
+      {
+        $lookup: {
+          from: "users",
+          localField: "tags",
+          foreignField: "_id",
+          as: "tags",
+          pipeline: [
+            {
+              $project: publicReadUserEssentialProjection,
+            },
+          ],
+        },
+      },
+      {
+        $lookup: {
+          from: "users",
+          localField: "user",
+          foreignField: "_id",
+          as: "user",
+          pipeline: [
+            {
+              $project: publicReadUserEssentialProjection,
+            },
+          ],
+        },
+      },
+      {
+        $lookup: {
+          from: "reactions",
+          let: {
+            userActivityId: "$userActivityId",
+          },
+          as: "reactions",
+          pipeline: [
+            {
+              $match: {
+                $expr: { $eq: ["$target", "$$userActivityId"] },
+              },
+            },
+            {
+              $facet: {
+                total: [
+                  {
+                    $group: {
+                      _id: "$reaction",
+                      count: { $sum: 1 },
+                      type: { $first: "$type" },
+                    },
+                  },
+                  {
+                    $project: {
+                      _id: 0,
+                      reaction: "$_id",
+                      type: 1,
+                      count: 1,
+                    },
+                  },
+                ],
+              },
+            },
+          ],
+        },
+      },
+      {
+        $project: {
+          _id: 1,
+          createdAt: 1,
+          updatedAt: 1,
+          content: 1,
+          user: { $arrayElemAt: ["$user", 0] },
+          media: 1,
+          scores: 1,
+          tags: 1,
+          userActivityId: 1,
+          reactions: {
+            $arrayElemAt: ["$reactions", 0],
+          },
+        },
+      },
+    ]);
+    resourceInfo = homemade[0];
   } else if (activity.resourceType === ActivityResourceTypeEnum.DEAL) {
     resourceInfo = await Deal.findById(activity.resourceId).lean();
     placeInfo = await Place.findById(
