@@ -169,7 +169,7 @@ export async function getCheckins(
                 from: "users",
                 localField: "tags",
                 foreignField: "_id",
-                as: "taggedUsers",
+                as: "tags",
                 pipeline: [
                   {
                     $project: publicReadUserEssentialProjection,
@@ -198,7 +198,7 @@ export async function getCheckins(
                 caption: 1,
                 image: 1,
                 privacyType: 1,
-                tags: "$taggedUsers",
+                tags: 1,
               },
             },
           ],

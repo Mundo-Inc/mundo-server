@@ -81,7 +81,7 @@ export async function getHomemadePosts(
           from: "users",
           localField: "tags",
           foreignField: "_id",
-          as: "taggedUsers",
+          as: "tags",
           pipeline: [
             {
               $project: publicReadUserEssentialProjection,
@@ -162,7 +162,7 @@ export async function getHomemadePosts(
           content: 1,
           user: { $arrayElemAt: ["$user", 0] },
           media: 1,
-          taggedUsers: 1,
+          tags: 1,
           reactions: {
             $arrayElemAt: ["$reactions", 0],
           },
@@ -372,7 +372,7 @@ export async function getHomemadePost(
           from: "users",
           localField: "tags",
           foreignField: "_id",
-          as: "taggedUsers",
+          as: "tags",
           pipeline: [
             {
               $project: publicReadUserEssentialProjection,
@@ -440,7 +440,7 @@ export async function getHomemadePost(
           content: 1,
           user: { $arrayElemAt: ["$user", 0] },
           media: 1,
-          taggedUsers: 1,
+          tags: 1,
           reactions: {
             $arrayElemAt: ["$reactions", 0],
           },
