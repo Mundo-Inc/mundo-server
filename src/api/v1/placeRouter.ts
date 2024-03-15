@@ -16,8 +16,6 @@ import {
   getExistInLists,
   getExistInListsValidation,
   getPlace,
-  getPlaceExists,
-  getPlaceExistsValidation,
   getPlaceMedia,
   getPlaceMediaValidation,
   getPlaceOverview,
@@ -55,10 +53,6 @@ router
 router
   .route("/:id/media")
   .get(express.json(), getPlaceMediaValidation, getPlaceMedia);
-
-router
-  .route("/:id/exists")
-  .get(express.json(), getPlaceExistsValidation, getPlaceExists);
 
 router
   .route("/:id/reviews")

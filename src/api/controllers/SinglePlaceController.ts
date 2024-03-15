@@ -369,29 +369,6 @@ export async function getPlaceMedia(
   }
 }
 
-export const getPlaceExistsValidation: ValidationChain[] = [
-  param("id").isMongoId().withMessage("Invalid place id"),
-];
-
-export async function getPlaceExists(
-  req: Request,
-  res: Response,
-  next: NextFunction
-) {
-  try {
-    handleInputErrors(req);
-    const { id } = req.params;
-    let exists = await Place.exists({ _id: id });
-    res.status(StatusCodes.OK).json({
-      success: true,
-      data: { exists },
-    });
-  } catch (err) {
-    logger.error("error while checking a place's existance ", err);
-    next(err);
-  }
-}
-
 export const getPlaceReviewsValidation: ValidationChain[] = [
   param("id").isMongoId().withMessage("Invalid place id"),
   query("type").optional().isIn(["phantom", "googlePlaces", "yelp"]),
