@@ -3,18 +3,18 @@ import { Schema } from "mongoose";
 export interface IOSM {
   _id?: string;
   tags?: {
-    air_conditioning?: boolean;
+    air_conditioning?: string;
     amenity?: string;
     brand?: string;
     instagram?: string;
     phone?: string;
     website?: string;
     cuisine?: string;
-    delivery?: boolean;
-    internet_access?: boolean;
+    delivery?: string;
+    internet_access?: string;
     opening_hours?: string;
-    takeaway?: boolean;
-    wheelchair?: boolean;
+    takeaway?: string;
+    wheelchair?: string;
   };
   updatedAt?: Date;
 }
@@ -22,18 +22,18 @@ export interface IOSM {
 export const OSMSchema = new Schema<IOSM>({
   _id: String,
   tags: {
-    air_conditioning: Boolean,
+    air_conditioning: String,
     amenity: String,
     brand: String,
     instagram: String,
     phone: String,
     website: String,
     cuisine: String,
-    delivery: Boolean,
-    internet_access: Boolean,
+    delivery: String,
+    internet_access: String,
     opening_hours: String,
-    takeaway: Boolean,
-    wheelchair: Boolean,
+    takeaway: String,
+    wheelchair: String,
   },
   updatedAt: Date,
 });

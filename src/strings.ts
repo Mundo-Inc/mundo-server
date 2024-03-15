@@ -98,8 +98,6 @@ const strings = {
     invalidScore: "Invalid score provided",
     invalidScoreKey: "Invalid score key provided",
     invalidScoreValue: "Invalid score value",
-    cantReviewSamePlaceWithin24Hours:
-      "You can't review the same place within 24 hours",
     missingType: "Missing type",
   },
   feed: {

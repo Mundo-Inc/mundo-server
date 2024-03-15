@@ -328,7 +328,7 @@ export async function createReview(
       });
       if (lastReview) {
         throw createError(
-          strings.review.cantReviewSamePlaceWithin24Hours,
+          "You can't review the same place within 24 hours",
           StatusCodes.CONFLICT
         );
       }
@@ -434,9 +434,8 @@ export async function createReview(
     });
 
     logger.verbose("adding review count to the place");
-    const placeObject = await Place.findById(place);
-    placeObject.activities.reviewCount = placeObject.activities.reviewCount + 1;
-    await placeObject.save();
+    populatedPlace.activities.reviewCount += 1;
+    await populatedPlace.save();
 
     const reward = await addReward(authId, {
       refType: "Review",
