@@ -1,7 +1,10 @@
 import express from "express";
 
+import {
+  notifyUsers,
+  notifyUsersValidation,
+} from "../controllers/DevController";
 import { adminAuthMiddleware } from "../middlewares/authMiddleWare";
-import { notifyUsers } from "../controllers/DevController";
 
 // Admin Only
 const router = express.Router();
@@ -10,7 +13,7 @@ router.use(adminAuthMiddleware);
 
 // Routes
 
-// router.post("/notify", notifyUsers);
+router.post("/notify", notifyUsersValidation, notifyUsers);
 
 router.get("/hello", (req, res) => {
   res.send("Hello, Admin!");

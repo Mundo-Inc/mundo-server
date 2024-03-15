@@ -29,7 +29,7 @@ cron.schedule("*/30 * * * * *", async () => {
     for (const notification of notifications) {
       let failReason: string | null = null;
       let hasFailedDevice = false;
-      const { title, content, subtitle } = await getNotificationContent(
+      const { title, content, subtitle, link } = await getNotificationContent(
         notification
       );
 
@@ -47,38 +47,46 @@ cron.schedule("*/30 * * * * *", async () => {
         note.topic = "ai.phantomphood.app";
         note.badge = 1;
         note.sound = "default";
+        note.payload = {
+          link: link,
+        };
 
-        await apnProvider
-          .send(
-            note,
-            user.devices
-              .filter((d: UserDevice) => d.apnToken)
-              .map((d: UserDevice) => d.apnToken)
-          )
-          .then((result) => {
-            if (result.sent.length === 0) {
-              failReason = "Unknown";
-            }
-            if (result.failed.length > 0) {
-              for (const failure of result.failed) {
-                if (failReason === "Unknown" && failure.response?.reason) {
-                  failReason = failure.response.reason;
-                }
-                if (failure.response?.reason === "BadDeviceToken") {
-                  hasFailedDevice = true;
-                  user.devices = user.devices.filter(
-                    (d: UserDevice) => d.apnToken !== failure.device
-                  );
+        if (apnProvider) {
+          await apnProvider
+            .send(
+              note,
+              user.devices
+                .filter((d: UserDevice) => d.apnToken)
+                .map((d: UserDevice) => d.apnToken)
+            )
+            .then((result) => {
+              if (result.sent.length === 0) {
+                failReason = "Unknown";
+              }
+              if (result.failed.length > 0) {
+                for (const failure of result.failed) {
+                  if (failReason === "Unknown" && failure.response?.reason) {
+                    failReason = failure.response.reason;
+                  }
+                  if (failure.response?.reason === "BadDeviceToken") {
+                    hasFailedDevice = true;
+                    user.devices = user.devices.filter(
+                      (d: UserDevice) => d.apnToken !== failure.device
+                    );
+                  }
                 }
               }
-            }
-          })
-          .catch((err) => {
-            logger.error(
-              "Internal server error while sending APN notification",
-              { error: err }
-            );
-          });
+            })
+            .catch((err) => {
+              logger.error(
+                "Internal server error while sending APN notification",
+                { error: err }
+              );
+            });
+        } else {
+          failReason = "NoProvider";
+          logger.error("APN Provider not found");
+        }
       } else {
         failReason = "NoDevices";
       }
@@ -98,6 +106,8 @@ export async function getNotificationContent(notification: INotification) {
   let title = "Phantom Phood";
   let subtitle = undefined;
   let content = "You have a new notification.";
+  let link = "notifications";
+
   switch (notification.type) {
     case NotificationTypeEnum.COMMENT:
       await Comment.findById(notification.resources![0]._id)
@@ -191,5 +201,5 @@ export async function getNotificationContent(notification: INotification) {
     default:
       break;
   }
-  return { title, content, subtitle };
+  return { title, content, subtitle, link };
 }

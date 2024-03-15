@@ -5,17 +5,39 @@ import { body, query, type ValidationChain } from "express-validator";
 import { StatusCodes } from "http-status-codes";
 import apnProvider from "../../config/apn";
 import User, { type UserDevice } from "../../models/User";
-import { handleInputErrors } from "../../utilities/errorHandlers";
+import { createError, handleInputErrors } from "../../utilities/errorHandlers";
 import logger from "../services/logger";
 
 export const notifyUsersValidation: ValidationChain[] = [
-  body("referredBy").optional().isMongoId(),
-  body("users").optional().isArray().isMongoId(),
+  body("audience").isString().isIn(["all", "referredBy", "list"]),
+  body("audienceValue")
+    .exists()
+    .withMessage("Audience value is required")
+    .bail()
+    .custom((value, { req }) => {
+      if (!value) {
+        throw Error("Audience value is required");
+      }
+
+      if (req.body.audience === "referredBy") {
+        if (typeof value !== "string") {
+          throw Error("audienceValue must be a string");
+        }
+        return value.match(/^[0-9a-fA-F]{24}$/);
+      } else if (req.body.audience === "list") {
+        if (!Array.isArray(value)) {
+          throw Error("audienceValue must be an array");
+        }
+        return value.every((id: string) => id.match(/^[0-9a-fA-F]{24}$/));
+      }
+
+      return true;
+    }),
   body("note").isObject(),
   body("note.title").isString(),
   body("note.body").isString(),
   body("note.subtitle").optional().isString(),
-  query("confirmSend").optional().isBoolean(),
+  query("confirmSend").optional().isBoolean({ strict: true }),
 ];
 export async function notifyUsers(
   req: Request,
@@ -25,13 +47,23 @@ export async function notifyUsers(
   try {
     handleInputErrors(req);
 
-    const { referredBy, users: usersList, note: inputNote } = req.body;
+    if (!apnProvider) {
+      throw createError(
+        "APN provider not available",
+        StatusCodes.INTERNAL_SERVER_ERROR
+      );
+    }
 
-    const query: any = {};
-    if (referredBy) {
-      query["referredBy"] = referredBy;
-    } else if (usersList) {
-      query["_id"] = { $in: usersList };
+    const { audience, audienceValue, note: inputNote, toAll } = req.body;
+
+    const query: any = {
+      source: { $exists: false },
+    };
+
+    if (audience === "referredBy") {
+      query["referredBy"] = audienceValue;
+    } else if (audience === "list") {
+      query["_id"] = { $in: audienceValue };
     }
 
     const users = await User.find(query, ["name", "devices"]).lean();
@@ -54,16 +86,20 @@ export async function notifyUsers(
             // Notify user
             logger.verbose(`Notifying admin ${user.name} | ${user.id}`);
 
-            const note = new apn.Notification();
-            note.alert = {
-              title: inputNote.title,
-              body: inputNote.body,
-              subtitle: inputNote.subtitle,
-            };
-            note.priority = 5;
-
-            note.topic = "ai.phantomphood.app";
-            note.sound = "default";
+            const note = new apn.Notification({
+              alert: {
+                title: inputNote.title,
+                body: inputNote.body,
+                subtitle: inputNote.subtitle,
+              },
+              badge: 1,
+              sound: "default",
+              topic: "ai.phantomphood.app",
+              payload: {
+                link: "notifications",
+              },
+              priority: 5,
+            });
 
             await apnProvider
               .send(
@@ -108,16 +144,20 @@ export async function notifyUsers(
             // Notify user
             logger.verbose(`Notifying user ${user.name} | ${user.id}`);
 
-            const note = new apn.Notification();
-            note.alert = {
-              title: inputNote.title,
-              body: inputNote.body,
-              subtitle: inputNote.subtitle,
-            };
-            note.priority = 5;
-
-            note.topic = "ai.phantomphood.app";
-            note.sound = "default";
+            const note = new apn.Notification({
+              alert: {
+                title: inputNote.title,
+                body: inputNote.body,
+                subtitle: inputNote.subtitle,
+              },
+              badge: 1,
+              sound: "default",
+              topic: "ai.phantomphood.app",
+              payload: {
+                link: "notifications",
+              },
+              priority: 5,
+            });
 
             await apnProvider
               .send(
