@@ -37,7 +37,7 @@ export const notifyUsersValidation: ValidationChain[] = [
   body("note.title").isString(),
   body("note.body").isString(),
   body("note.subtitle").optional().isString(),
-  query("confirmSend").optional().isBoolean({ strict: true }),
+  body("sendConfirm").optional().isBoolean(),
 ];
 export async function notifyUsers(
   req: Request,
@@ -54,7 +54,7 @@ export async function notifyUsers(
       );
     }
 
-    const { audience, audienceValue, note: inputNote, toAll } = req.body;
+    const { audience, audienceValue, note: inputNote, sendConfirm } = req.body;
 
     const query: any = {
       source: { $exists: false },
@@ -75,7 +75,7 @@ export async function notifyUsers(
       ["name", "devices"]
     ).lean();
 
-    if (req.query.confirmSend) {
+    if (sendConfirm) {
       let sent = 0;
       let failed = 0;
 
