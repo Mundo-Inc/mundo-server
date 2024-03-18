@@ -3,24 +3,16 @@ import cors from "cors";
 import "dotenv/config";
 import express from "express";
 import rateLimit from "express-rate-limit";
-import admin, { type ServiceAccount } from "firebase-admin";
 import helmet from "helmet";
 
 import logger from "./api/services/logger";
 import { config } from "./config";
 import { connectDatabase } from "./config/database";
-import router from "./router";
 import { errorHandler } from "./utilities/errorHandlers";
 
-const serviceAccount: ServiceAccount = {
-  clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-  privateKey: process.env.FIREBASE_PRIVATE_KEY,
-  projectId: process.env.FIREBASE_PROJECT_ID,
-};
+import "./config/firebase-config";
 
-admin.initializeApp({
-  credential: admin.credential.cert(serviceAccount),
-});
+import router from "./router";
 
 const app = express();
 
@@ -55,6 +47,10 @@ async function main() {
   if (process.env.NODE_ENV === "production") {
     await import("./cronjobs/notification");
     await import("./cronjobs/backup");
+  } else {
+    logger.warn(
+      "Not starting notification and backup cronjobs in development."
+    );
   }
 }
 

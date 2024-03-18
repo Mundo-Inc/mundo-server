@@ -84,7 +84,7 @@ export function createCron(id: string, duty: IBot, botUser: IUser) {
           logger.error("Error While Adding Reaction With Bot", error);
         }
       });
-      logger.verbose(botUser.name + " is ON 🟢 [DUTY: " + duty._id + "]");
+      logger.verbose("BOT: " + botUser._id + " is on | " + botUser.name);
       return tasks[id];
 
     default:

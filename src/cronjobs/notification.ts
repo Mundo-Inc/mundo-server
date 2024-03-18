@@ -1,12 +1,16 @@
-import apn from "@parse/node-apn";
+import { Types } from "mongoose";
 import cron from "node-cron";
 
 import { publicReadUserEssentialProjection } from "../api/dto/user/read-user-public.dto";
 import logger from "../api/services/logger";
-import apnProvider from "../config/apn";
+import {
+  NotificationsService,
+  type NotificationItemByToken,
+} from "../api/services/notifications.service";
 import CheckIn from "../models/CheckIn";
 import Comment from "../models/Comment";
 import Follow from "../models/Follow";
+import Homemade from "../models/Homemade";
 import Notification, {
   NotificationTypeEnum,
   type INotification,
@@ -14,7 +18,6 @@ import Notification, {
 import Reaction from "../models/Reaction";
 import Review from "../models/Review";
 import User, { type UserDevice } from "../models/User";
-import Homemade from "../models/Homemade";
 
 cron.schedule("*/30 * * * * *", async () => {
   const notifications = await Notification.find({
@@ -28,83 +31,60 @@ cron.schedule("*/30 * * * * *", async () => {
 
     for (const notification of notifications) {
       let failReason: string | null = null;
-      let hasFailedDevice = false;
-      const { title, content, subtitle, link } = await getNotificationContent(
+      const { title, content, link } = await getNotificationContent(
         notification
       );
 
-      const user = await User.findById(notification.user, "devices");
+      const user: {
+        _id: Types.ObjectId;
+        devices?: UserDevice[];
+      } | null = await User.findById(notification.user, "devices").lean();
 
-      if (user.devices.length > 0) {
-        const note = new apn.Notification();
-        note.alert = {
-          title: title,
-          body: content,
-          subtitle: subtitle,
-        };
-        note.priority = 5;
+      if (user && user.devices && user.devices.length > 0) {
+        const items: NotificationItemByToken[] = user.devices
+          .filter((d: UserDevice) => Boolean(d.fcmToken))
+          .map((d: UserDevice) => ({
+            tokenMessage: {
+              notification: {
+                title,
+                body: content,
+              },
+              data: {
+                link,
+              },
+              token: d.fcmToken!,
+            },
+            user: notification.user,
+          }));
 
-        note.topic = "ai.phantomphood.app";
-        note.badge = 1;
-        note.sound = "default";
-        note.payload = {
-          link: link,
-        };
+        try {
+          const batchResponse =
+            await NotificationsService.getInstance().sendNotificationsByToken(
+              items
+            );
 
-        if (apnProvider) {
-          await apnProvider
-            .send(
-              note,
-              user.devices
-                .filter((d: UserDevice) => d.apnToken)
-                .map((d: UserDevice) => d.apnToken)
-            )
-            .then((result) => {
-              if (result.sent.length === 0) {
-                failReason = "Unknown";
-              }
-              if (result.failed.length > 0) {
-                for (const failure of result.failed) {
-                  if (failReason === "Unknown" && failure.response?.reason) {
-                    failReason = failure.response.reason;
-                  }
-                  if (failure.response?.reason === "BadDeviceToken") {
-                    hasFailedDevice = true;
-                    user.devices = user.devices.filter(
-                      (d: UserDevice) => d.apnToken !== failure.device
-                    );
-                  }
-                }
-              }
-            })
-            .catch((err) => {
-              logger.error(
-                "Internal server error while sending APN notification",
-                { error: err }
-              );
-            });
-        } else {
-          failReason = "NoProvider";
-          logger.error("APN Provider not found");
+          if (!batchResponse || batchResponse.successCount == 0) {
+            failReason = "NoDevices/InternalError";
+          }
+        } catch (error) {
+          failReason = "NoDevices/InternalError";
         }
       } else {
         failReason = "NoDevices";
       }
+
       if (failReason) {
         notification.failReason = failReason;
       }
       notification.sent = true;
+
       await notification.save();
-      if (hasFailedDevice) {
-        await user.save();
-      }
     }
   }
 });
 
 export async function getNotificationContent(notification: INotification) {
   let title = "Phantom Phood";
-  let subtitle = undefined;
   let content = "You have a new notification.";
   let link = "notifications";
 
@@ -113,9 +93,9 @@ export async function getNotificationContent(notification: INotification) {
       await Comment.findById(notification.resources![0]._id)
         .populate("author", ["name", "profileImage"])
         .then((comment) => {
-          title = comment.author.name;
-          subtitle = "Commented on your activity.";
+          title = `${comment.author.name} commented on your activity.`;
           content = comment.content;
+          link = `activity/${comment.userActivity}`;
         });
       break;
     case NotificationTypeEnum.FOLLOW:
@@ -128,9 +108,9 @@ export async function getNotificationContent(notification: INotification) {
       await Comment.findById(notification.resources![0]._id)
         .populate("author", ["name", "profileImage"])
         .then((comment) => {
-          title = comment.author.name;
-          subtitle = "Mentioned you in a comment.";
+          title = `${comment.author.name} mentioned you in a comment.`;
           content = comment.content;
+          link = `activity/${comment.userActivity}`;
         });
       break;
     case NotificationTypeEnum.REACTION:
@@ -143,6 +123,7 @@ export async function getNotificationContent(notification: INotification) {
           } else {
             content = "Added an special reaction to your activity.";
           }
+          link = `activity/${reaction.target}`;
         });
       break;
     case NotificationTypeEnum.FOLLOWING_REVIEW:
@@ -153,26 +134,26 @@ export async function getNotificationContent(notification: INotification) {
         })
         .populate("place")
         .then((review) => {
-          title = review.writer.name;
-          content = `${review.writer.name} reviewed ${review.place.name}`;
+          title = `${review.writer.name} reviewed ${review.place.name}`;
+          content = review.content;
           if (review.scores && review.scores.overall) {
-            content = `${review.writer.name} rated ${review.place.name} ${review.scores.overall}/5⭐️`;
+            title += ` ${review.scores.overall}/5⭐️`;
           }
-          subtitle = review.content;
+          link = review.userActivityId
+            ? `activity/${review.userActivityId}`
+            : `place/${review.place._id}`;
         });
       break;
     case NotificationTypeEnum.FOLLOWING_HOMEMADE:
-      console.log("here2");
-
       await Homemade.findById(notification.resources![0]._id)
         .populate({
           path: "userId",
           select: publicReadUserEssentialProjection,
         })
         .then((homemade) => {
-          title = homemade.userId.name;
-          content = `New post from ${homemade.userId.name}`;
-          subtitle = homemade.content;
+          title = `New post from ${homemade.userId.name}`;
+          content = homemade.content;
+          link = `activity/${homemade.userActivityId}`;
         });
       break;
     case NotificationTypeEnum.FOLLOWING_CHECKIN:
@@ -185,6 +166,7 @@ export async function getNotificationContent(notification: INotification) {
         .then((checkin) => {
           title = checkin.user.name;
           content = `${checkin.user.name} checked into ${checkin.place.name}`;
+          link = `place/${checkin.place._id}`;
         });
       break;
     case NotificationTypeEnum.REFERRAL_REWARD:
@@ -201,5 +183,5 @@ export async function getNotificationContent(notification: INotification) {
     default:
       break;
   }
-  return { title, content, subtitle, link };
+  return { title, content, link };
 }
