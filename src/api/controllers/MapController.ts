@@ -113,7 +113,7 @@ export const getMapActivitiesValidation: ValidationChain[] = [
   validate.lng(query("northEastLng")),
   validate.lat(query("southWestLat")),
   validate.lng(query("southWestLng")),
-  query("startDate").isString(),
+  query("startDate").isNumeric(),
   query("scope").isIn(["GLOBAL", "FOLLOWINGS"]),
   query("users").optional().isString(),
 ];
@@ -174,11 +174,12 @@ export async function getMapActivities(
     ];
 
     let createdAtFrom: Date;
-    if (typeof startDate === "string") {
-      createdAtFrom = new Date(startDate);
-    } else {
-      throw createError("Invalid startDate format");
+
+    createdAtFrom = new Date(Number(startDate));
+    if (isNaN(createdAtFrom.getTime())) {
+      throw createError("Invalida Date", 400);
     }
+
     let query;
     if (scope === "GLOBAL") {
       query = {
