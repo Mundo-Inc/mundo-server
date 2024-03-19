@@ -177,7 +177,7 @@ export async function getMapActivities(
 
     createdAtFrom = new Date(Number(startDate));
     if (isNaN(createdAtFrom.getTime())) {
-      throw createError("Invalida Date", 400);
+      throw createError("Invalida Date", StatusCodes.BAD_REQUEST);
     }
 
     let query;
