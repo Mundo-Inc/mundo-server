@@ -31,7 +31,7 @@ async function updateHotnessScores(
       await activity.save();
     }
   } catch (error) {
-    logger.error("error while updating hotness scores", { error });
+    logger.error("error while updating hotness scores", error);
   }
 }
 const now = new Date();

@@ -39,6 +39,10 @@ export interface IUserActivity extends Document {
   resourceType: ActivityResourceTypeEnum;
   resourceId: mongoose.Types.ObjectId;
   placeId?: mongoose.Types.ObjectId;
+  geoLocation?: {
+    type: string;
+    coordinates: number[];
+  }; // { type: "Point", coordinates: [ longitude, latitude ] }
   privacyType: ActivityPrivacyTypeEnum;
   newLevel?: number;
   hasMedia: boolean;
@@ -73,6 +77,10 @@ const UserActivitySchema: Schema = new Schema<IUserActivity>(
       type: Schema.Types.ObjectId,
       refPath: "Place",
       default: null,
+    },
+    geoLocation: {
+      type: { type: String, default: "Point" },
+      coordinates: { type: [Number], required: false },
     },
     privacyType: {
       type: String,
@@ -162,6 +170,29 @@ UserActivitySchema.methods.updateHotnessScore = function () {
   this.hotnessScore = hotnessScore;
   return this.save();
 };
+
+UserActivitySchema.pre<IUserActivity>("save", async function (next) {
+  // Check if placeId is set for this UserActivity
+  if (this.placeId && (!this.geoLocation || !this.geoLocation.coordinates)) {
+    try {
+      // Assuming you have a Place model available
+      const place = await mongoose.model("Place").findById(this.placeId).exec();
+      if (place && place.location && place.location.geoLocation) {
+        // Copy geoLocation from Place to UserActivity
+        this.geoLocation = {
+          type: place.location.geoLocation.type,
+          coordinates: place.location.geoLocation.coordinates,
+        };
+      }
+    } catch (error: any) {
+      console.error("Error fetching Place for geoLocation copy:", error);
+      return next(error);
+    }
+  }
+  next();
+});
+
+UserActivitySchema.index({ geoLocation: "2dsphere" });
 
 export default mongoose.models.UserActivity ||
   mongoose.model<IUserActivity>("UserActivity", UserActivitySchema);

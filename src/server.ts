@@ -13,6 +13,7 @@ import { errorHandler } from "./utilities/errorHandlers";
 import "./config/firebase-config";
 
 import router from "./router";
+import { updateGeoLocationsInUserActivities } from "./api/controllers/MapController";
 
 const app = express();
 
@@ -43,6 +44,9 @@ async function main() {
 
   await import("./cronjobs/updateTrendScores");
   await import("./cronjobs/bots");
+
+  //TODO: REMOVE AFTER FIRST USE
+  await updateGeoLocationsInUserActivities();
 
   if (process.env.NODE_ENV === "production") {
     await import("./cronjobs/notification");

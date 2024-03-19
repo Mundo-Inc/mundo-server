@@ -5,6 +5,8 @@ import {
   getGeoActivitiesValidation,
   getGeoLocation,
   getGeoLocationValidation,
+  getMapActivities,
+  getMapActivitiesValidation,
 } from "../controllers/MapController";
 import { authMiddleware } from "../middlewares/authMiddleWare";
 
@@ -16,5 +18,7 @@ router.use(authMiddleware);
 router.get("/geoLocation", getGeoLocationValidation, getGeoLocation);
 
 router.get("/geoActivities", getGeoActivitiesValidation, getGeoActivities);
+
+router.get("/mapActivities", getMapActivitiesValidation, getMapActivities);
 
 export default router;
