@@ -79,7 +79,7 @@ const UserActivitySchema: Schema = new Schema<IUserActivity>(
       default: null,
     },
     geoLocation: {
-      type: { type: String, default: "Point" },
+      type: { type: String },
       coordinates: { type: [Number], required: false },
     },
     privacyType: {
