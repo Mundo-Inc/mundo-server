@@ -8,16 +8,14 @@ import CheckIn from "../../models/CheckIn";
 import Follow, { type IFollow } from "../../models/Follow";
 import Place from "../../models/Place";
 import Review from "../../models/Review";
-import strings, { dStrings, dynamicMessage } from "../../strings";
-import { createError, handleInputErrors } from "../../utilities/errorHandlers";
-import validate from "./validators";
 import UserActivity, {
   ActivityPrivacyTypeEnum,
-  IUserActivity,
 } from "../../models/UserActivity";
-import { publicReadUserEssentialProjection } from "../dto/user/read-user-public.dto";
+import strings from "../../strings";
+import { createError, handleInputErrors } from "../../utilities/errorHandlers";
 import { readPlaceBriefProjection } from "../dto/place/read-place-brief.dto";
-import { getResourceInfo } from "../services/feed.service";
+import { publicReadUserEssentialProjection } from "../dto/user/read-user-public.dto";
+import validate from "./validators";
 
 const API_KEY = process.env.GOOGLE_GEO_API_KEY!;
 
@@ -258,38 +256,6 @@ export async function getMapActivities(
     });
   } catch (error: any) {
     next(error);
-  }
-}
-
-export async function updateGeoLocationsInUserActivities() {
-  try {
-    // Step 1: Fetch UserActivities with placeId and missing/incomplete geoLocation
-    const userActivities = await UserActivity.find({
-      placeId: { $exists: true },
-      $or: [
-        { geoLocation: { $exists: false } },
-        { "geoLocation.coordinates": { $exists: false } },
-      ],
-    });
-
-    // Step 2 and 3: For each, fetch Place and update UserActivity
-    for (const activity of userActivities) {
-      const place = await Place.findById(activity.placeId);
-      if (place && place.location && place.location.geoLocation) {
-        // Copying geoLocation from Place to UserActivity
-        activity.geoLocation = {
-          type: place.location.geoLocation.type,
-          coordinates: place.location.geoLocation.coordinates,
-        };
-        await activity.save(); // Save the updated UserActivity document
-      }
-    }
-    console.log("GeoLocation update process completed.");
-  } catch (error) {
-    console.error(
-      "An error occurred during the GeoLocation update process:",
-      error
-    );
   }
 }
 
