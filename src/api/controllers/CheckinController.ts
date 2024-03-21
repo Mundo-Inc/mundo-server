@@ -33,7 +33,7 @@ export const getCheckinsValidation: ValidationChain[] = [
   query("place").optional().isMongoId().withMessage("Invalid place id"),
   query("event").optional().isMongoId().withMessage("Invalid event id"),
   validate.page(query("page").optional(), 50),
-  validate.limit(query("limit").optional(), 1, 50),
+  validate.limit(query("limit").optional(), 1, 500),
   query("count").optional().isBoolean().withMessage("Invalid count"),
 ];
 /**
