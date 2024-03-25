@@ -29,6 +29,7 @@ import logger from "../services/logger";
 import { calcRemainingXP } from "../services/reward/helpers/levelCalculations";
 import { sendSlackMessage } from "./SlackController";
 import validate from "./validators";
+import { getLevelThresholds } from "../services/reward/utils/levelupThresholds";
 
 // const FIREBASE_WEB_API_KEY = process.env.FIREBASE_WEB_API_KEY;
 
@@ -547,6 +548,11 @@ export async function getUser(req: Request, res: Response, next: NextFunction) {
     const reviewsCount = await Review.countDocuments({ writer: id });
     const totalCheckins = await CheckIn.countDocuments({ user: id });
 
+    let prevLevelXp = 0;
+    if (user.progress.level > 1) {
+      prevLevelXp = getLevelThresholds()[user.progress.level];
+    }
+
     const result: any = {
       ...user,
       followersCount,
@@ -555,6 +561,7 @@ export async function getUser(req: Request, res: Response, next: NextFunction) {
       totalCheckins,
       rank: rank + 1,
       remainingXp: calcRemainingXP((user.progress && user.progress.xp) || 0),
+      prevLevelXp: prevLevelXp,
     };
 
     if (view === "contextual") {
