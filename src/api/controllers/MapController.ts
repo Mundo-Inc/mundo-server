@@ -13,6 +13,7 @@ import UserActivity, {
 } from "../../models/UserActivity";
 import strings from "../../strings";
 import { createError, handleInputErrors } from "../../utilities/errorHandlers";
+import { readFormattedPlaceLocationProjection } from "../dto/place/place-dto";
 import { readPlaceBriefProjection } from "../dto/place/read-place-brief.dto";
 import { publicReadUserEssentialProjection } from "../dto/user/read-user-public.dto";
 import validate from "./validators";
@@ -223,7 +224,10 @@ export async function getMapActivities(
           as: "place",
           pipeline: [
             {
-              $project: readPlaceBriefProjection,
+              $project: {
+                ...readPlaceBriefProjection,
+                location: readFormattedPlaceLocationProjection,
+              },
             },
           ],
         },
