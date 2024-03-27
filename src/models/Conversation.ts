@@ -9,10 +9,8 @@ export interface IConversation extends Document {
     chat: string; // Presumably the Twilio chat SID
   }[];
   tags?: string[]; // An optional array of tags for categorization
-  created_by: string; // Who created the conversation, with restricted values
+  createdBy: mongoose.Types.ObjectId; // Who created the conversation, with restricted values
   is_closed: boolean; // Whether the conversation is closed
-  created_at: Date; // When the conversation was created
-  updated_at: Date; // When the conversation was last updated
 }
 
 const ConversationSchema = new Schema<IConversation>(
@@ -40,14 +38,9 @@ const ConversationSchema = new Schema<IConversation>(
       // Optional tags
       type: [String],
     },
-    created_by: {
-      type: String,
-      enum: ["admin", "user", "system"],
-      default: "user",
-    },
-    created_at: {
-      type: Date,
-      default: Date.now,
+    createdBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
     },
     is_closed: {
       type: Boolean,

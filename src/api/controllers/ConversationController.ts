@@ -26,7 +26,6 @@ export async function getToken(
   try {
     handleInputErrors(req);
 
-    const { content, activity } = req.body;
     const { id: authId } = req.user!;
 
     const chatGrant = new ChatGrant({
@@ -89,8 +88,6 @@ export async function createConversation(
       },
     ]);
 
-    console.log(alreadyExists);
-
     if (alreadyExists.length > 0) {
       throw createError("conversation between two parties already exists", 400);
     }
@@ -139,7 +136,7 @@ export async function createConversation(
           chat: userParticipant.sid,
         },
       ],
-      created_by: "user",
+      createdBy: new mongoose.Types.ObjectId(authId),
       is_closed: false,
     });
 
