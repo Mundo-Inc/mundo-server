@@ -1,7 +1,7 @@
 import type { NextFunction, Request, Response } from "express";
 import { body, param, query, type ValidationChain } from "express-validator";
 import { StatusCodes } from "http-status-codes";
-import mongoose from "mongoose";
+import { Types } from "mongoose";
 
 import AppSetting from "../../models/AppSetting";
 import Comment from "../../models/Comment";
@@ -127,7 +127,10 @@ export async function getFlags(
     }
     // Create a query object to filter the results based on the "review" query parameter if it's set
     const queryObj = review
-      ? { target: review, adminAction: { $exists: false } }
+      ? {
+          target: new Types.ObjectId(review as string),
+          adminAction: { $exists: false },
+        }
       : { adminAction: { $exists: false } };
 
     const totalDocuments = await Flag.countDocuments(queryObj);
@@ -209,7 +212,7 @@ export async function resolveFlag(
     const adminAction = {
       type: action,
       note: req.body.note,
-      admin: new mongoose.Types.ObjectId(userId),
+      admin: new Types.ObjectId(userId),
       createdAt: new Date(),
     };
 
