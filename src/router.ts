@@ -20,6 +20,7 @@ import reviewRouter from "./api/v1/reviewRouter";
 import rewardRouter from "./api/v1/rewardRouter";
 import uploadRouter from "./api/v1/uploadRouter";
 import userRouter from "./api/v1/userRouter";
+import conversationRouter from "./api/v1/conversationRouter";
 
 const router = express.Router();
 
@@ -43,5 +44,6 @@ router.use("/lists", listRouter);
 router.use("/rewards", rewardRouter);
 router.use("/dev", devRouter);
 router.use("/admin", adminRouter);
+router.use("/conversations", conversationRouter);
 
 export default router;

@@ -1,14 +1,18 @@
 import mongoose, { Schema, type Document } from "mongoose";
 
 export interface IConversation extends Document {
-  _id: string;
-  friendly_name: string;
-  participants: { user: mongoose.Types.ObjectId[]; role: string; chat: string };
-  tags?: string;
-  created_by: string;
-  is_closed: boolean;
-  created_at: Date;
-  updated_at: Date;
+  _id: string; // MongoDB's unique identifier for the document
+  friendly_name: string; // A human-readable name for the conversation
+  participants: {
+    user: mongoose.Types.ObjectId; // Reference to a User document
+    role: string; // The participant's role in the conversation
+    chat: string; // Presumably the Twilio chat SID
+  }[];
+  tags?: string[]; // An optional array of tags for categorization
+  created_by: string; // Who created the conversation, with restricted values
+  is_closed: boolean; // Whether the conversation is closed
+  created_at: Date; // When the conversation was created
+  updated_at: Date; // When the conversation was last updated
 }
 
 const ConversationSchema = new Schema<IConversation>(

@@ -95,6 +95,7 @@ export interface IUser extends Document {
   };
   latestPlace?: mongoose.Types.ObjectId;
   isPrivate: boolean;
+  conversations: string[];
   referredBy?: mongoose.Types.ObjectId;
 }
 
@@ -237,6 +238,13 @@ const UserSchema = new Schema<IUser>(
       type: Schema.Types.ObjectId,
       ref: "Place",
     },
+    conversations: [
+      {
+        type: String,
+        ref: "Conversation",
+        default: [],
+      },
+    ],
     progress: {
       xp: {
         type: Number,
