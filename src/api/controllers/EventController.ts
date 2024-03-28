@@ -142,7 +142,9 @@ export async function getEvents(
   try {
     handleInputErrors(req);
 
-    const events = await Event.find()
+    const events = await Event.find({
+      isActive: true,
+    })
       .populate("place", readPlaceBriefProjection)
       .lean();
 
