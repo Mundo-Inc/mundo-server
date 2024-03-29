@@ -145,7 +145,7 @@ export async function getEvents(
   try {
     handleInputErrors(req);
 
-    let query = {};
+    let query = { isActive: true, name: {} };
 
     if (req.query.q) {
       query = {
