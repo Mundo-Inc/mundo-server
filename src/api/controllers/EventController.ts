@@ -145,13 +145,13 @@ export async function getEvents(
   try {
     handleInputErrors(req);
 
-    let query = { isActive: true, name: {} };
+    let query: {
+      isActive: boolean;
+      name?: Record<string, any>;
+    } = { isActive: true };
 
     if (req.query.q) {
-      query = {
-        ...query,
-        name: { $regex: new RegExp(req.query.q.toString(), "i") },
-      };
+      query.name = { $regex: new RegExp(req.query.q.toString(), "i") };
     }
 
     const events = await Event.find(query)
