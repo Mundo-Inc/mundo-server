@@ -1,5 +1,5 @@
 import type { NextFunction, Request, Response } from "express";
-import { body, param, type ValidationChain } from "express-validator";
+import { body, param, query, type ValidationChain } from "express-validator";
 import { StatusCodes } from "http-status-codes";
 
 import Event from "../../models/Event";
@@ -133,7 +133,10 @@ export async function createEvent(
   }
 }
 
-export const getEventsValidation: ValidationChain[] = [];
+export const getEventsValidation: ValidationChain[] = [
+  query("q").optional().isString().trim().notEmpty(),
+];
+
 export async function getEvents(
   req: Request,
   res: Response,
@@ -142,13 +145,22 @@ export async function getEvents(
   try {
     handleInputErrors(req);
 
-    const events = await Event.find()
+    let query = {};
+
+    if (req.query.q) {
+      query = {
+        ...query,
+        name: { $regex: new RegExp(req.query.q.toString(), "i") },
+      };
+    }
+
+    const events = await Event.find(query)
       .populate("place", readPlaceBriefProjection)
       .lean();
 
     for (const event of events) {
       if (!event.place) {
-        throw createError(dynamicMessage(dStrings.notFound, "Place"));
+        throw createError(dynamicMessage(dStrings.notFound, "Event"));
       } else {
         if ("coordinates" in event.place.location.geoLocation) {
           event.place.location.geoLocation = {
