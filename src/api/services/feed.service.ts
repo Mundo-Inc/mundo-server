@@ -239,6 +239,7 @@ export const getResourceInfo = async (activity: IUserActivity) => {
           createdAt: 1,
           updatedAt: 1,
           content: 1,
+          recommend: 1,
           place: { $arrayElemAt: ["$place", 0] },
           writer: { $arrayElemAt: ["$writer", 0] },
           images: 1,
