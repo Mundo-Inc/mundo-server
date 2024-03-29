@@ -63,24 +63,26 @@ export async function getActivity(
     const { id: authId } = req.user!;
     const { id } = req.params;
 
-    const followings: IFollow[] = await Follow.find(
-      {
-        user: authId,
-      },
-      {
-        target: 1,
-      }
-    ).lean();
+    // const followings: IFollow[] = await Follow.find(
+    //   {
+    //     user: authId,
+    //   },
+    //   {
+    //     target: 1,
+    //   }
+    // ).lean();
 
-    const activity = await UserActivity.findOne({
-      _id: id,
-      userId: {
-        $in: [
-          ...followings.map((f: IFollow) => f.target),
-          new mongoose.Types.ObjectId(authId),
-        ],
-      },
-    });
+    // const activity = await UserActivity.findOne({
+    //   _id: id,
+    //   userId: {
+    //     $in: [
+    //       ...followings.map((f: IFollow) => f.target),
+    //       new mongoose.Types.ObjectId(authId),
+    //     ],
+    //   },
+    // });
+
+    const activity = await UserActivity.findById(id);
 
     if (!activity) {
       throw createError(
