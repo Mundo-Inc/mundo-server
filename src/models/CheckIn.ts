@@ -36,7 +36,9 @@ const CheckInSchema: Schema = new Schema<ICheckIn>({
 async function removeDependencies(checkin: ICheckIn) {
   // remove the userActivity related to the review
   const userActivity = await UserActivity.findById(checkin.userActivityId);
-  await userActivity.deleteOne();
+  if (userActivity) {
+    await userActivity.deleteOne();
+  }
 }
 
 CheckInSchema.pre<ICheckIn>(
