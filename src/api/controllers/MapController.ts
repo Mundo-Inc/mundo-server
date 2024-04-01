@@ -154,9 +154,7 @@ export async function getMapActivities(
       [northEast.lng, northEast.lat], // upper right corner (longitude, latitude)
     ];
 
-    let createdAtFrom: Date;
-
-    createdAtFrom = new Date(Number(startDate));
+    const createdAtFrom = new Date(Number(startDate));
     if (isNaN(createdAtFrom.getTime())) {
       throw createError("Invalida Date", StatusCodes.BAD_REQUEST);
     }
@@ -219,8 +217,6 @@ export async function getMapActivities(
         createdAt: { $gte: createdAtFrom },
       };
     }
-
-    console.log(query);
 
     const activities = await UserActivity.aggregate([
       {
