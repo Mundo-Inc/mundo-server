@@ -129,19 +129,6 @@ export async function getMapActivities(
 
     const { id: authId } = req.user!;
 
-    const followingsObj: FilterQuery<IFollow> = await Follow.find(
-      {
-        user: authId,
-      },
-      {
-        target: 1,
-      }
-    );
-
-    const followingsIdsStr = [
-      ...followingsObj.map((f: IFollow) => f.target.toString()),
-    ];
-
     const {
       northEastLat,
       northEastLng,
@@ -161,13 +148,6 @@ export async function getMapActivities(
       lng: Number(southWestLng),
     };
 
-    let targetUsers = followingsIdsStr;
-
-    if (users) {
-      const usersArrayStr = users.toString().trim().split(",");
-      targetUsers = followingsIdsStr.filter((id) => usersArrayStr.includes(id));
-    }
-
     // Define the bounding box for the geo query
     const boundingBox = [
       [southWest.lng, southWest.lat], // lower left corner (longitude, latitude)
@@ -181,8 +161,31 @@ export async function getMapActivities(
       throw createError("Invalida Date", StatusCodes.BAD_REQUEST);
     }
 
+    const usersArrayStr = users
+      ? users
+          .toString()
+          .trim()
+          .split(",")
+          .map((u) => {
+            return new mongoose.Types.ObjectId(u);
+          })
+      : [];
+
     let query;
-    if (scope === "GLOBAL") {
+    if (usersArrayStr.length > 0) {
+      query = {
+        userId: {
+          $in: usersArrayStr,
+        },
+        geoLocation: {
+          $geoWithin: {
+            $box: boundingBox,
+          },
+        },
+        privacyType: ActivityPrivacyTypeEnum.PUBLIC,
+        createdAt: { $gte: createdAtFrom },
+      };
+    } else if (scope === "GLOBAL") {
       query = {
         geoLocation: {
           $geoWithin: {
@@ -192,9 +195,20 @@ export async function getMapActivities(
         createdAt: { $gte: createdAtFrom },
       };
     } else {
+      const followingsObj: FilterQuery<IFollow> = await Follow.find(
+        {
+          user: authId,
+        },
+        {
+          target: 1,
+        }
+      );
+
+      const followingsIds = [...followingsObj.map((f: IFollow) => f.target)];
+
       query = {
         userId: {
-          $in: targetUsers,
+          $in: followingsIds,
         },
         geoLocation: {
           $geoWithin: {
@@ -205,6 +219,8 @@ export async function getMapActivities(
         createdAt: { $gte: createdAtFrom },
       };
     }
+
+    console.log(query);
 
     const activities = await UserActivity.aggregate([
       {
@@ -255,7 +271,8 @@ export async function getMapActivities(
         },
       },
     ]);
-    res.json({
+
+    res.status(StatusCodes.OK).json({
       success: true,
       data: activities,
     });
