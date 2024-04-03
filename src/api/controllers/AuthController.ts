@@ -50,6 +50,12 @@ export async function authPost(
           StatusCodes.UNAUTHORIZED
         );
       }
+      if (!user.password) {
+        throw createError(
+          "This account was created using a social login method. Please sign in using the same method.",
+          StatusCodes.UNAUTHORIZED
+        );
+      }
 
       const isPasswordCorrect = await bcrypt.compare(password, user.password);
       if (!isPasswordCorrect) {
