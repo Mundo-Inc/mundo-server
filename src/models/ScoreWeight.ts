@@ -1,11 +1,11 @@
 import mongoose, { Schema, type Document } from "mongoose";
 
-export interface IBlacklist extends Document {
+export interface IScoreWeight extends Document {
   userId: mongoose.Types.ObjectId;
   value: number;
 }
 
-const BlacklistSchema = new Schema<IBlacklist>({
+const ScoreWeightSchema = new Schema<IScoreWeight>({
   userId: {
     type: Schema.Types.ObjectId,
     ref: "User",
@@ -18,5 +18,5 @@ const BlacklistSchema = new Schema<IBlacklist>({
   },
 });
 
-export default mongoose.models.Blacklist ||
-  mongoose.model<IBlacklist>("Blacklist", BlacklistSchema);
+export default mongoose.models.ScoreWeight ||
+  mongoose.model<IScoreWeight>("ScoreWeight", ScoreWeightSchema);
