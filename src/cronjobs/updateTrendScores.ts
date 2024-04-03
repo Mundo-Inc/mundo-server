@@ -26,7 +26,7 @@ async function updateHotnessScores(
   const activities = await UserActivity.find(query);
   try {
     for (const activity of activities) {
-      const hotnessScore = activity.calculateHotnessScore();
+      const hotnessScore = await activity.calculateHotnessScore();
       activity.hotnessScore = hotnessScore;
       await activity.save();
     }

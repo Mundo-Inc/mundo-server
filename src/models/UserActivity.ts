@@ -1,6 +1,7 @@
 import mongoose, { Schema, type Document } from "mongoose";
 
 import { weights } from "../config/trendFactors";
+import Blacklist, { IBlacklist } from "./Blacklist";
 
 export enum ActivityTypeEnum {
   NEW_CHECKIN = "NEW_CHECKIN",
@@ -147,7 +148,7 @@ function getFreshHoursBoost(hoursValue: number) {
   return 0;
 }
 
-UserActivitySchema.methods.calculateHotnessScore = function () {
+UserActivitySchema.methods.calculateHotnessScore = async function () {
   const hoursSinceCreation = Math.max(
     1,
     (new Date().getTime() - this.createdAt.getTime()) / 36e5
@@ -161,12 +162,19 @@ UserActivitySchema.methods.calculateHotnessScore = function () {
       this.engagements.views * weights.view) *
     timeDecayFactor;
   const newPostBoost = weights.newPostInitialBoost / hoursValue;
-  const finalScore = score + newPostBoost + getFreshHoursBoost(hoursValue);
+  let finalScore = score + newPostBoost + getFreshHoursBoost(hoursValue);
+  // Check if the user is blacklisted
+  const blacklistEntry = (await Blacklist.findOne({
+    userId: this.userId,
+  }).lean()) as IBlacklist;
+  if (blacklistEntry) {
+    finalScore *= blacklistEntry.value;
+  }
   return finalScore;
 };
 
-UserActivitySchema.methods.updateHotnessScore = function () {
-  const hotnessScore = this.calculateHotnessScore();
+UserActivitySchema.methods.updateHotnessScore = async function () {
+  const hotnessScore = await this.calculateHotnessScore();
   this.hotnessScore = hotnessScore;
   return this.save();
 };
