@@ -74,7 +74,7 @@ export async function notifyUsers(
             body: inputNote.body,
           },
           data: {
-            link: "notifications",
+            link: "inbox/notifications",
           },
         },
         user: id,
@@ -98,7 +98,7 @@ export async function notifyUsers(
                     body: inputNote.body,
                   },
                   data: {
-                    link: "notifications",
+                    link: "inbox/notifications",
                   },
                   token: d.fcmToken!,
                 },

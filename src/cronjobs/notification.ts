@@ -86,7 +86,7 @@ cron.schedule("*/30 * * * * *", async () => {
 export async function getNotificationContent(notification: INotification) {
   let title = "Phantom Phood";
   let content = "You have a new notification.";
-  let link = "notifications";
+  let link = "inbox/notifications";
 
   switch (notification.type) {
     case NotificationTypeEnum.COMMENT:

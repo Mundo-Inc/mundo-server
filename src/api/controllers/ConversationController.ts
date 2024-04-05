@@ -1,14 +1,14 @@
 import type { NextFunction, Request, Response } from "express";
-import { query, body, param, type ValidationChain } from "express-validator";
+import { body, param, type ValidationChain } from "express-validator";
 import { StatusCodes } from "http-status-codes";
-import mongoose, { Types } from "mongoose";
+import mongoose from "mongoose";
+import twilio, { Twilio } from "twilio";
 
-import User, { IUser } from "../../models/User";
+import Conversation from "../../models/Conversation";
+import User, { type IUser } from "../../models/User";
 import { createError, handleInputErrors } from "../../utilities/errorHandlers";
 import { publicReadUserEssentialProjection } from "../dto/user/read-user-public.dto";
 
-import twilio, { Twilio } from "twilio";
-import Conversation, { IConversation } from "../../models/Conversation";
 const AccessToken = twilio.jwt.AccessToken;
 const ChatGrant = AccessToken.ChatGrant;
 
@@ -44,7 +44,7 @@ export async function getToken(
     token.addGrant(chatGrant);
 
     res
-      .status(StatusCodes.CREATED)
+      .status(StatusCodes.OK)
       .json({ success: true, data: { token: token.toJwt() } });
   } catch (err) {
     next(err);
@@ -62,7 +62,11 @@ export async function createConversation(
   try {
     handleInputErrors(req);
 
-    const { user } = req.body;
+    const {
+      user,
+    }: {
+      user: string;
+    } = req.body;
     const { id: authId } = req.user!;
 
     const alreadyExists = await Conversation.aggregate([
@@ -89,7 +93,10 @@ export async function createConversation(
     ]);
 
     if (alreadyExists.length > 0) {
-      throw createError("conversation between two parties already exists", 400);
+      throw createError(
+        "conversation between two parties already exists",
+        StatusCodes.CONFLICT
+      );
     }
 
     const friendlyName = authId + "_" + user;
@@ -180,9 +187,7 @@ export async function getConversations(
 
     const conversations = user.conversations;
 
-    res
-      .status(StatusCodes.CREATED)
-      .json({ success: true, data: conversations });
+    res.status(StatusCodes.OK).json({ success: true, data: conversations });
   } catch (err) {
     next(err);
   }
@@ -216,10 +221,10 @@ export async function getConversation(
       .lean();
 
     if (!conversation) {
-      throw createError("Conversation not found", 404);
+      throw createError("Conversation not found", StatusCodes.NOT_FOUND);
     }
 
-    res.status(StatusCodes.CREATED).json({ success: true, data: conversation });
+    res.status(StatusCodes.OK).json({ success: true, data: conversation });
   } catch (err) {
     next(err);
   }
