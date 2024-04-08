@@ -90,13 +90,18 @@ export async function createConversation(
           participantsCount: 2,
         },
       },
+      {
+        $project: {
+          _id: 1,
+          friendly_name: 1,
+        },
+      },
     ]);
 
     if (alreadyExists.length > 0) {
-      throw createError(
-        "conversation between two parties already exists",
-        StatusCodes.CONFLICT
-      );
+      return res
+        .status(StatusCodes.OK)
+        .json({ success: true, data: alreadyExists[0] });
     }
 
     const friendlyName = authId + "_" + user;
