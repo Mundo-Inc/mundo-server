@@ -4,7 +4,6 @@ import Achievement from "../../models/Achievement";
 import Block, { type IBlock } from "../../models/Block";
 import CheckIn from "../../models/CheckIn";
 import Comment from "../../models/Comment";
-import Deal from "../../models/Deal";
 import Follow, { type IFollow } from "../../models/Follow";
 import Homemade from "../../models/Homemade";
 import Place, { type IPlace } from "../../models/Place";
@@ -361,12 +360,6 @@ export const getResourceInfo = async (activity: IUserActivity) => {
       },
     ]);
     resourceInfo = homemade[0];
-  } else if (activity.resourceType === ActivityResourceTypeEnum.DEAL) {
-    resourceInfo = await Deal.findById(activity.resourceId).lean();
-    placeInfo = await Place.findById(
-      resourceInfo.place,
-      readPlaceDetailProjection
-    ).lean();
   } else if (activity.resourceType === ActivityResourceTypeEnum.CHECKIN) {
     const results = await CheckIn.aggregate([
       {

@@ -1,5 +1,4 @@
 import type { ICheckIn } from "../../models/CheckIn";
-import type { IDeal } from "../../models/Deal";
 import Earning, { EarningTypeEnum } from "../../models/Earning";
 import type { IPlace } from "../../models/Place";
 import type { IReview } from "../../models/Review";
@@ -10,7 +9,6 @@ export const imageCoins = 2;
 export const videoCoins = 2;
 export const checkinCoins = { normalValue: 1, expLimit: 5, expMul: 10 };
 export const placeCoins = { normalValue: 1, expLimit: 5, expMul: 10 };
-export const dealCoins = { normalValue: 1, expLimit: 5, expMul: 10 };
 
 export const reviewEarning = async (userId: string, review: IReview) => {
   const user = await User.findById(userId);
@@ -79,27 +77,6 @@ export const placeEarning = async (userId: string, place: IPlace) => {
     userId,
     earningType: EarningTypeEnum.Place,
     earning: place._id,
-    coins: totalCoins,
-  });
-};
-export const dealEarning = async (deal: IDeal) => {
-  const creator = await User.findById(deal.creator);
-  const dealEarns = await Earning.find({
-    userId: creator._id,
-    earningType: EarningTypeEnum.Deal,
-  });
-  let totalCoins = 0;
-  totalCoins +=
-    dealCoins.normalValue *
-    (dealEarns && dealEarns.length >= dealCoins.expLimit
-      ? dealCoins.expMul
-      : 1);
-  creator.coins += totalCoins;
-  await creator.save();
-  await Earning.create({
-    userId: creator._id,
-    earningType: EarningTypeEnum.Deal,
-    earning: deal._id,
     coins: totalCoins,
   });
 };

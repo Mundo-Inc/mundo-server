@@ -149,29 +149,6 @@ export const addReactionToPlaceActivity = async (
   return await addActivity(activityParams, true);
 };
 
-export const addCreateDealActivity = async (
-  userId: string,
-  dealId: string,
-  placeId: string | null = null,
-  privacyType: string = ActivityPrivacyTypeEnum.PUBLIC,
-  createdAt?: Date
-) => {
-  const activityParams: {
-    [key: string]: any;
-  } = {
-    userId,
-    activityType: ActivityTypeEnum.CREATE_DEAL,
-    resourceType: ActivityResourceTypeEnum.DEAL,
-    resourceId: dealId,
-    placeId,
-    privacyType,
-  };
-  if (createdAt) {
-    activityParams.createdAt = createdAt;
-  }
-  return await addActivity(activityParams, true);
-};
-
 export const addGotBadgeActivity = async (
   userId: string,
   privacyType: string = ActivityPrivacyTypeEnum.PUBLIC

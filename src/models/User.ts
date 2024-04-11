@@ -4,7 +4,6 @@ import Achievement from "./Achievement";
 import ActivitySeen from "./ActivitySeen";
 import CheckIn from "./CheckIn";
 import Comment from "./Comment";
-import Deal from "./Deal";
 import Flag from "./Flag";
 import Follow from "./Follow";
 import List from "./List";
@@ -323,10 +322,6 @@ async function removeDependencies(user: IUser) {
   //remove all comments of that user
   const comments = await Comment.find({ author: user._id });
   await Promise.all(comments.map((comment) => comment.deleteOne()));
-
-  // remove all deals created by that user
-  const deals = await Deal.find({ creator: user._id });
-  await Promise.all(deals.map((deal) => deal.deleteOne()));
 
   // remove all followings and followers of that user
   const follows = await Follow.find({

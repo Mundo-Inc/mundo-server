@@ -4,7 +4,6 @@ export enum EarningTypeEnum {
   Place = "Place",
   Review = "Review",
   Checkin = "Checkin",
-  Deal = "Deal",
 }
 
 export interface IEarning extends Document {

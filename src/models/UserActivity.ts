@@ -13,7 +13,6 @@ export enum ActivityTypeEnum {
   ADD_PLACE = "ADD_PLACE",
   GOT_BADGE = "GOT_BADGE",
   LEVEL_UP = "LEVEL_UP",
-  CREATE_DEAL = "CREATE_DEAL",
   FOLLOWING = "FOLLOWING",
 }
 
@@ -26,7 +25,6 @@ export enum ActivityPrivacyTypeEnum {
 export enum ActivityResourceTypeEnum {
   PLACE = "Place",
   REVIEW = "Review",
-  DEAL = "Deal",
   CHECKIN = "Checkin",
   USER = "User",
   REACTION = "Reaction",

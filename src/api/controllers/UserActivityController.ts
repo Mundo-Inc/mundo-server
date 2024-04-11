@@ -25,7 +25,6 @@ export const getActivitiesOfaUserValidation: ValidationChain[] = [
       "ADD_PLACE",
       "GOT_BADGE",
       "LEVEL_UP",
-      "CREATE_DEAL",
       "FOLLOWING",
     ]),
   validate.page(query("page").optional()),
