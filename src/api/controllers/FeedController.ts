@@ -242,9 +242,20 @@ export async function getActivity(
       userActivity: activity._id,
     });
 
+    const [followedByUser, followsUser] = await Promise.all([
+      Follow.exists({ user: authId, target: id }),
+      Follow.exists({ user: id, target: authId }),
+    ]);
+
+    userInfo.connectionStatus = {
+      followedByUser: !!followedByUser,
+      followsUser: !!followsUser,
+    };
+
     res.status(StatusCodes.OK).json({
       success: true,
       data: {
+        _id: activity._id,
         id: activity._id,
         user: userInfo,
         place: placeInfo,
