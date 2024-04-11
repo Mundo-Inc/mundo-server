@@ -97,6 +97,12 @@ export interface IUser extends Document {
   isPrivate: boolean;
   conversations: string[];
   referredBy?: mongoose.Types.ObjectId;
+  stripe: {
+    customerId?: string;
+    paymentMethod?: string;
+    payoutMethod?: string;
+    balance: number;
+  };
 }
 
 const UserSchema = new Schema<IUser>(
@@ -274,6 +280,12 @@ const UserSchema = new Schema<IUser>(
     referredBy: {
       type: Schema.Types.ObjectId,
       ref: "User",
+    },
+    stripe: {
+      customerId: { type: String, required: false }, // Stripe customer ID
+      paymentMethod: { type: String, required: false }, // Stripe payment method ID
+      payoutMethod: { type: String, required: false }, // Bank account or card ID for payouts
+      balance: { type: Number, required: true, default: 0 }, // Balance from received gifts
     },
   },
 
