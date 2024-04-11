@@ -1,7 +1,7 @@
 import mongoose, { Schema, type Document } from "mongoose";
 
 import { weights } from "../config/trendFactors";
-import ScoreWeight, { IScoreWeight } from "./ScoreWeight";
+import ScoreWeight, { type IScoreWeight } from "./ScoreWeight";
 
 export enum ActivityTypeEnum {
   NEW_CHECKIN = "NEW_CHECKIN",
@@ -76,7 +76,7 @@ const UserActivitySchema: Schema = new Schema<IUserActivity>(
     },
     placeId: {
       type: Schema.Types.ObjectId,
-      refPath: "Place",
+      ref: "Place",
       default: null,
     },
     geoLocation: {

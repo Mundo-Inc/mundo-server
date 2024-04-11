@@ -18,9 +18,10 @@ import validate from "./validators";
 export const getFeedValidation: ValidationChain[] = [
   validate.page(query("page").optional()),
   validate.limit(query("limit").optional(), 5, 50),
-  validate.lng(query("lng").optional()),
-  validate.lat(query("lat").optional()),
-  validate.isForYou(query("isForYou").optional()),
+  query("isForYou")
+    .optional()
+    .isBoolean()
+    .withMessage("isForYou must be a boolean"),
 ];
 export async function getFeed(req: Request, res: Response, next: NextFunction) {
   try {
@@ -29,21 +30,62 @@ export async function getFeed(req: Request, res: Response, next: NextFunction) {
     const { id: authId } = req.user!;
 
     const page = Number(req.query.page) || 1;
-    const limit = Number(req.query.limit) || 20;
+    const limit = Number(req.query.limit) || 30;
     const isForYou = Boolean(req.query.isForYou) || false;
-    const { lng, lat } = req.query;
 
-    const result = await getUserFeed(
-      authId,
-      isForYou,
-      page,
-      limit,
-      lng && lat
-        ? { lng: Number(lng as string), lat: Number(lat as string) }
-        : undefined
-    );
+    const result = await getUserFeed(authId, isForYou, page, limit);
 
-    res.status(StatusCodes.OK).json({ success: true, data: result || [] });
+    // Get follow status for each user
+    const usersObject: {
+      [key: string]: {
+        followedByUser: boolean;
+        followsUser: boolean;
+      };
+    } = {};
+
+    result.forEach((activity) => {
+      const userId = activity.user._id.toString();
+      if (!usersObject[userId] && userId !== authId) {
+        usersObject[userId] = {
+          followedByUser: false,
+          followsUser: false,
+        };
+      }
+    });
+
+    const followItems = await Follow.find({
+      $or: [
+        {
+          user: authId,
+          target: Object.keys(usersObject),
+        },
+        {
+          target: authId,
+          user: Object.keys(usersObject),
+        },
+      ],
+    })
+      .select({
+        target: 1,
+        user: 1,
+      })
+      .lean();
+
+    followItems.forEach((f) => {
+      const userId = f.user.toString();
+      if (userId === authId) {
+        usersObject[f.target.toString()].followedByUser = true;
+      } else {
+        usersObject[userId].followsUser = true;
+      }
+    });
+
+    result.forEach((activity) => {
+      const userId = activity.user._id.toString();
+      activity.user.connectionStatus = usersObject[userId];
+    });
+
+    res.status(StatusCodes.OK).json({ success: true, data: result });
   } catch (err) {
     next(err);
   }

@@ -29,29 +29,28 @@ export async function connectionFollowStatus(
 ) {
   try {
     handleInputErrors(req);
+
     const { id } = req.params;
     const { id: authId } = req.user!;
-    const isFollowing =
-      (await Follow.exists({
-        user: authId,
-        target: id,
-      })) !== null;
-    const isFollower =
-      (await Follow.exists({
-        user: id,
-        target: authId,
-      })) !== null;
+
+    const [followedByUser, followsUser] = await Promise.all([
+      Follow.exists({ user: id, target: authId }),
+      Follow.exists({ user: authId, target: id }),
+    ]);
+
     const isRequestPending =
-      (await FollowRequest.exists({
-        user: authId,
-        target: id,
-      })) !== null;
-    return res.json({
+      (await FollowRequest.exists({ user: authId, target: id })) !== null;
+
+    return res.status(StatusCodes.OK).json({
       success: true,
       data: {
-        isFollowing,
+        followedByUser: !!followedByUser,
+        followsUser: !!followsUser,
         isRequestPending,
-        isFollower,
+
+        // TODO: Remove this after the client is updated
+        isFollowing: !!followsUser,
+        isFollower: !!followedByUser,
       },
     });
   } catch (error) {

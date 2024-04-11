@@ -16,9 +16,6 @@ const validate = {
 
   bio: (start: ValidationChain) => start.trim(),
 
-  isForYou: (start: ValidationChain) =>
-    start.isBoolean().withMessage("isForYou must be a boolean"),
-
   username: (start: ValidationChain) =>
     start
       .trim()

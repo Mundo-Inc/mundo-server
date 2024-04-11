@@ -1,12 +1,12 @@
 import mongoose, { type FilterQuery, type SortOrder } from "mongoose";
 
 import Achievement from "../../models/Achievement";
-import ActivitySeen, { type IActivitySeen } from "../../models/ActivitySeen";
 import Block, { type IBlock } from "../../models/Block";
 import CheckIn from "../../models/CheckIn";
 import Comment from "../../models/Comment";
 import Deal from "../../models/Deal";
 import Follow, { type IFollow } from "../../models/Follow";
+import Homemade from "../../models/Homemade";
 import Place, { type IPlace } from "../../models/Place";
 import Reaction from "../../models/Reaction";
 import Review from "../../models/Review";
@@ -20,7 +20,6 @@ import { readFormattedPlaceLocationProjection } from "../dto/place/place-dto";
 import { readPlaceDetailProjection } from "../dto/place/read-place-detail.dto";
 import { publicReadUserEssentialProjection } from "../dto/user/read-user-public.dto";
 import logger from "./logger";
-import Homemade from "../../models/Homemade";
 
 export type IMedia = {
   _id: string;
@@ -613,16 +612,12 @@ const calculateScore = async (
 
 export const getUserFeed = async (
   userId: string,
-  isForYou: boolean = false,
-  page: number = 1,
-  limit: number = 20,
-  location?: {
-    lng: number;
-    lat: number;
-  }
+  isForYou: boolean,
+  page: number,
+  limit: number
 ) => {
   try {
-    const followings: FilterQuery<IFollow> = await Follow.find(
+    const followings: IFollow[] = await Follow.find(
       {
         user: userId,
       },
@@ -631,24 +626,18 @@ export const getUserFeed = async (
       }
     ).lean();
 
-    const blocked: FilterQuery<IBlock> = await Block.find({
+    const blocked: IBlock[] = await Block.find({
       target: userId,
-    });
+    }).lean();
 
-    const activities = [];
     const skip = (page - 1) * limit;
 
-    let query: object = {
-      userId: {
-        $nin: blocked.map((b: IBlock) => b.user),
-        $in: [
-          ...followings.map((f: IFollow) => f.target),
-          new mongoose.Types.ObjectId(userId),
-        ],
-      },
-    };
+    const activities = [];
+
+    let query: FilterQuery<any> = {};
 
     if (isForYou) {
+      // For You activities
       query = {
         userId: {
           $nin: blocked.map((b: IBlock) => b.user),
@@ -667,43 +656,54 @@ export const getUserFeed = async (
           },
         ],
       };
+    } else {
+      // Following users' activities
+      query = {
+        userId: {
+          $nin: blocked.map((b: IBlock) => b.user),
+          $in: [
+            ...followings.map((f: IFollow) => f.target),
+            new mongoose.Types.ObjectId(userId),
+          ],
+        },
+      };
     }
 
     let sortBy: { [key: string]: SortOrder } = { createdAt: -1 };
     if (isForYou) sortBy = { hotnessScore: -1 };
 
-    const userActivities = UserActivity.find(query)
+    const userActivities = await UserActivity.find(query)
       .sort(sortBy)
       .skip(skip)
       .limit(limit)
       .lean();
 
-    for await (const _act of userActivities) {
-      const seen: FilterQuery<IActivitySeen> | null =
-        await ActivitySeen.findOne(
-          {
-            subjectId: _act.userId,
-            observerId: userId,
-            activityId: _act._id,
-          },
-          {
-            weight: 1,
-          }
-        ).lean();
-
+    for (const _act of userActivities) {
       const [resourceInfo, placeInfo, userInfo] = await getResourceInfo(
         _act as IUserActivity
       );
       if (!resourceInfo) continue;
-      const score = await calculateScore(
-        userId,
-        _act.userId,
-        _act as IUserActivity,
-        placeInfo,
-        location && location
-      );
 
-      const weight = seen ? seen.weight + 1 : 1;
+      // const seen: IActivitySeen | null = await ActivitySeen.findOne(
+      //   {
+      //     subjectId: _act.userId,
+      //     observerId: userId,
+      //     activityId: _act._id,
+      //   },
+      //   {
+      //     weight: 1,
+      //   }
+      // ).lean();
+
+      // const score = await calculateScore(
+      //   userId,
+      //   _act.userId,
+      //   _act as IUserActivity,
+      //   placeInfo,
+      //   location && location
+      // );
+
+      // const weight = seen ? seen.weight + 1 : 1;
 
       const reactions = await Reaction.aggregate([
         {
@@ -792,7 +792,8 @@ export const getUserFeed = async (
       });
 
       activities.push({
-        id: _act._id,
+        _id: _act._id,
+        id: _act._id, // TODO: remove this after client update
         user: userInfo,
         place: placeInfo,
         activityType: _act.activityType,
@@ -801,21 +802,17 @@ export const getUserFeed = async (
         privacyType: _act.privacyType,
         createdAt: _act.createdAt,
         updatedAt: _act.updatedAt,
-        score,
-        weight,
         reactions: reactions[0],
         comments: comments,
         commentsCount,
       });
     }
 
-    // strategy when once all unseen activities are exhausted, retrieve previously seen activities
-    if (activities.length === 0) {
-      logger.info("No recent activities found");
-    }
+    // TODO: strategy: once all unseen activities are exhausted, retrieve previously seen activities
 
     return activities;
   } catch (e) {
     logger.error(`Error happened with this description: ${e}`);
+    return [];
   }
 };
