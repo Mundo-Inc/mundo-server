@@ -51,6 +51,16 @@ export async function getFeed(req: Request, res: Response, next: NextFunction) {
           followsUser: false,
         };
       }
+
+      if (activity.resourceType === "User") {
+        const resourceId = activity.resource._id.toString();
+        if (!usersObject[resourceId] && resourceId !== authId) {
+          usersObject[resourceId] = {
+            followedByUser: false,
+            followsUser: false,
+          };
+        }
+      }
     });
 
     const followItems = await Follow.find({
@@ -83,6 +93,11 @@ export async function getFeed(req: Request, res: Response, next: NextFunction) {
     result.forEach((activity) => {
       const userId = activity.user._id.toString();
       activity.user.connectionStatus = usersObject[userId];
+
+      if (activity.resourceType === "User") {
+        const resourceId = activity.resource._id.toString();
+        activity.resource.connectionStatus = usersObject[resourceId];
+      }
     });
 
     res.status(StatusCodes.OK).json({ success: true, data: result });
