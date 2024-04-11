@@ -495,8 +495,8 @@ export async function getUser(req: Request, res: Response, next: NextFunction) {
       user.progress.achievements = Object.values(achievements);
 
       const [followedByUser, followsUser] = await Promise.all([
-        Follow.exists({ user: id, target: authId }),
         Follow.exists({ user: authId, target: id }),
+        Follow.exists({ user: id, target: authId }),
       ]);
 
       connectionStatus.followedByUser = !!followedByUser;
@@ -576,8 +576,8 @@ export async function getUser(req: Request, res: Response, next: NextFunction) {
       result.connectionStatus = connectionStatus;
 
       // TODO: remove this after the client is updated
-      result.isFollower = connectionStatus.followedByUser;
-      result.isFollowing = connectionStatus.followsUser;
+      result.isFollower = connectionStatus.followsUser;
+      result.isFollowing = connectionStatus.followedByUser;
     }
 
     res.status(StatusCodes.OK).json({ success: true, data: result });

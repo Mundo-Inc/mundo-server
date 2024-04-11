@@ -34,8 +34,8 @@ export async function connectionFollowStatus(
     const { id: authId } = req.user!;
 
     const [followedByUser, followsUser] = await Promise.all([
-      Follow.exists({ user: id, target: authId }),
       Follow.exists({ user: authId, target: id }),
+      Follow.exists({ user: id, target: authId }),
     ]);
 
     const isRequestPending =
@@ -49,8 +49,8 @@ export async function connectionFollowStatus(
         isRequestPending,
 
         // TODO: Remove this after the client is updated
-        isFollowing: !!followsUser,
-        isFollower: !!followedByUser,
+        isFollowing: !!followedByUser,
+        isFollower: !!followsUser,
       },
     });
   } catch (error) {
