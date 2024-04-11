@@ -236,7 +236,6 @@ export async function getCheckins(
     res.status(StatusCodes.OK).json({
       success: true,
       data: checkins[0].checkins,
-      total: checkins[0].total[0]?.total || 0, // TODO: remove on later upodates
       pagination: {
         totalCount: checkins[0].total[0]?.total || 0,
         page: page,

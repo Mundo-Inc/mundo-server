@@ -121,8 +121,6 @@ export async function getMissions(
         totalCount: totalMissions,
         page: page,
         limit: limit,
-        totalPages: Math.ceil(totalMissions / limit), // TODO: remove this
-        totalItems: totalMissions, // TODO: remove this
       },
     });
   } catch (error) {
@@ -281,8 +279,6 @@ export async function getAllMissions(
         totalCount: totalMissions,
         page: page,
         limit: limit,
-        totalPages: Math.ceil(totalMissions / limit), // TODO: remove this
-        totalItems: totalMissions, // TODO: remove this
       },
     });
   } catch (error) {

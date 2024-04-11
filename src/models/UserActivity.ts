@@ -49,6 +49,7 @@ export interface IUserActivity extends Document {
   hasMedia: boolean;
   hotnessScore: number;
   createdAt: Date;
+  updatedAt: Date;
   engagements: {
     reactions: number;
     comments: number;
@@ -91,10 +92,6 @@ const UserActivitySchema: Schema = new Schema<IUserActivity>(
     newLevel: {
       type: Number,
       required: false,
-    },
-    createdAt: {
-      type: Date,
-      default: Date.now,
     },
     hotnessScore: {
       type: Number,

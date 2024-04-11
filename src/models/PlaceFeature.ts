@@ -34,8 +34,6 @@ const PlaceFeatureSchema: Schema = new Schema<IPlaceFeature>(
     processedReviews: [
       { type: Schema.Types.ObjectId, ref: "Review", required: true },
     ],
-    createdAt: { type: Date, default: Date.now },
-    updatedAt: { type: Date, default: Date.now },
   },
   {
     timestamps: true,

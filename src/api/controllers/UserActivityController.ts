@@ -5,7 +5,7 @@ import mongoose from "mongoose";
 
 import Comment from "../../models/Comment";
 import Reaction from "../../models/Reaction";
-import UserActivity from "../../models/UserActivity";
+import UserActivity, { type IUserActivity } from "../../models/UserActivity";
 import { handleInputErrors } from "../../utilities/errorHandlers";
 import { publicReadUserEssentialProjection } from "../dto/user/read-user-public.dto";
 import { getResourceInfo } from "../services/feed.service";
@@ -52,7 +52,8 @@ export async function getActivitiesOfaUser(
           }
         : {}),
     });
-    const userActivities = await UserActivity.find({
+
+    const userActivities: IUserActivity[] = await UserActivity.find({
       userId,
       ...(req.query.type
         ? {
@@ -62,7 +63,8 @@ export async function getActivitiesOfaUser(
     })
       .sort({ createdAt: -1 })
       .skip((page - 1) * limit)
-      .limit(limit);
+      .limit(limit)
+      .lean();
 
     const result = [];
 
@@ -155,6 +157,7 @@ export async function getActivitiesOfaUser(
       });
 
       result.push({
+        _id: _act._id,
         id: _act._id,
         user: userInfo,
         place: placeInfo,
@@ -164,8 +167,6 @@ export async function getActivitiesOfaUser(
         privacyType: _act.privacyType,
         createdAt: _act.createdAt,
         updatedAt: _act.updatedAt,
-        score: 0,
-        weight: 0,
         reactions: reactions[0],
         comments: comments,
         commentsCount,
@@ -175,7 +176,6 @@ export async function getActivitiesOfaUser(
     res.status(StatusCodes.OK).json({
       success: true,
       data: result || [],
-      total: total, // TODO: remove this
       pagination: {
         totalCount: total,
         page,

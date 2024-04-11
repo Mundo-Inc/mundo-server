@@ -87,7 +87,6 @@ export async function getUsers(
     res.status(StatusCodes.OK).json({
       success: true,
       data: results.users,
-      total: results.total, // TODO: remove this
       pagination: {
         totalCount: results.total,
         page,

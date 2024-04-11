@@ -38,6 +38,7 @@ export interface IFlag extends Document {
   note: string;
   adminAction: AdminAction;
   createdAt: Date;
+  updatedAt: Date;
 }
 
 const FlagSchema = new Schema<IFlag>(
@@ -90,10 +91,6 @@ const FlagSchema = new Schema<IFlag>(
         },
       }),
       required: false,
-    },
-    createdAt: {
-      type: Date,
-      default: Date.now,
     },
   },
   { timestamps: true }

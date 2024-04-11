@@ -39,8 +39,6 @@ const DealSchema = new Schema<IDeal>(
     isAccepted: { type: Boolean, defautl: false },
     creator: { type: Schema.Types.ObjectId, ref: "User", required: true },
     isActive: { type: Boolean, defautl: true },
-    createdAt: { type: Date, default: Date.now },
-    updatedAt: { type: Date, default: Date.now },
   },
   { timestamps: true }
 );

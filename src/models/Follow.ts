@@ -11,27 +11,24 @@ export interface IFollow extends Document {
   createdAt: Date;
 }
 
-const FollowSchema = new Schema<IFollow>(
-  {
-    user: {
-      type: Schema.Types.ObjectId,
-      ref: "User",
-      required: true,
-      index: true,
-    },
-    target: {
-      type: Schema.Types.ObjectId,
-      ref: "User",
-      required: true,
-      index: true,
-    },
-    createdAt: {
-      type: Date,
-      default: Date.now,
-    },
+const FollowSchema = new Schema<IFollow>({
+  user: {
+    type: Schema.Types.ObjectId,
+    ref: "User",
+    required: true,
+    index: true,
   },
-  { timestamps: true }
-);
+  target: {
+    type: Schema.Types.ObjectId,
+    ref: "User",
+    required: true,
+    index: true,
+  },
+  createdAt: {
+    type: Date,
+    default: Date.now,
+  },
+});
 
 FollowSchema.index({ user: 1, target: 1 });
 

@@ -336,8 +336,6 @@ export async function getLatestReferredUsers(
         totalCount: total,
         page,
         limit,
-        total, // TODO: remove this
-        pages: Math.ceil(total / limit), // TODO: remove this
       },
     });
   } catch (error) {

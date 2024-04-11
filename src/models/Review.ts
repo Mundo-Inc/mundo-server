@@ -52,7 +52,7 @@ const ReviewSchema: Schema = new Schema<IReview>(
     content: { type: String, default: "" },
     images: [{ type: Schema.Types.ObjectId, ref: "Media" }],
     videos: [{ type: Schema.Types.ObjectId, ref: "Media" }],
-    tags: [{ type: String, ref: "Tag" }],
+    tags: [{ type: String }],
     recommend: { type: Boolean, default: false },
     language: { type: String, default: "en" },
     userActivityId: { type: Schema.Types.ObjectId, ref: "UserActivity" },

@@ -4,6 +4,7 @@ export interface IBlock extends Document {
   user: mongoose.Types.ObjectId;
   target: mongoose.Types.ObjectId;
   createdAt: Date;
+  updatedAt: Date;
 }
 
 const BlockSchema = new Schema<IBlock>(
@@ -19,10 +20,6 @@ const BlockSchema = new Schema<IBlock>(
       ref: "User",
       required: true,
       index: true,
-    },
-    createdAt: {
-      type: Date,
-      default: Date.now,
     },
   },
   { timestamps: true }

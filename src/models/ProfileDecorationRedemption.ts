@@ -5,6 +5,7 @@ export interface IProfileDecorationRedemption extends Document {
   decorationType: string;
   decorationId: mongoose.Types.ObjectId;
   createdAt: Date;
+  updatedAt: Date;
 }
 
 export enum ProfileDecorationEnum {
@@ -21,11 +22,8 @@ const ProfileDecorationRedemption: Schema =
         type: String,
         enum: Object.values(ProfileDecorationEnum),
       },
-      createdAt: { type: Date, default: Date.now },
     },
-    {
-      timestamps: true,
-    }
+    { timestamps: true }
   );
 
 export default mongoose.models.ProfileDecorationRedemption ||

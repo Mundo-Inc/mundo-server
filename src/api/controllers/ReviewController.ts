@@ -703,9 +703,6 @@ export async function getReview(
       );
     }
 
-    // TODO: remove after app update
-    reviews[0].place.reviewCount = reviews[0].place.activities.reviewCount;
-
     res.status(StatusCodes.OK).json({ success: true, data: reviews[0] });
   } catch (err) {
     next(err);
