@@ -300,6 +300,8 @@ export async function getLeaderBoard(
   try {
     handleInputErrors(req);
 
+    const { id: authId } = req.user!;
+
     const page = Number(req.query.page) || 1;
     const limit = Number(req.query.limit) || 10;
     const skip = (page - 1) * limit;
@@ -327,24 +329,67 @@ export async function getLeaderBoard(
       },
     ]);
 
+    const usersObject: {
+      [key: string]: {
+        followedByUser: boolean;
+        followsUser: boolean;
+      };
+    } = {};
+
+    leaderboard.forEach((user) => {
+      const userId = user._id.toString();
+      if (!usersObject[userId] && userId !== authId) {
+        usersObject[userId] = {
+          followedByUser: false,
+          followsUser: false,
+        };
+      }
+    });
+
+    const followItems = await Follow.find({
+      $or: [
+        {
+          user: authId,
+          target: Object.keys(usersObject),
+        },
+        {
+          target: authId,
+          user: Object.keys(usersObject),
+        },
+      ],
+    })
+      .select({
+        target: 1,
+        user: 1,
+      })
+      .lean();
+
+    followItems.forEach((f) => {
+      const userId = f.user.toString();
+      if (userId === authId) {
+        usersObject[f.target.toString()].followedByUser = true;
+      } else {
+        usersObject[userId].followsUser = true;
+      }
+    });
+
     for (const user of leaderboard) {
       const achievements: any = {};
-      if (user) {
-        for (const achievement of user.progress.achievements) {
-          if (achievement.type in achievements) {
-            achievements[achievement.type].createdAt = achievement.createdAt;
-            achievements[achievement.type].count++;
-          } else {
-            achievements[achievement.type] = {
-              _id: achievement.type,
-              type: achievement.type,
-              createdAt: achievement.createdAt,
-              count: 1,
-            };
-          }
+      for (const achievement of user.progress.achievements) {
+        if (achievement.type in achievements) {
+          achievements[achievement.type].createdAt = achievement.createdAt;
+          achievements[achievement.type].count++;
+        } else {
+          achievements[achievement.type] = {
+            _id: achievement.type,
+            type: achievement.type,
+            createdAt: achievement.createdAt,
+            count: 1,
+          };
         }
       }
       user.progress.achievements = Object.values(achievements);
+      user.connectionStatus = usersObject[user._id.toString()];
     }
 
     res.status(StatusCodes.OK).json({ success: true, data: leaderboard });

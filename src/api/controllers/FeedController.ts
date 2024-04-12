@@ -6,18 +6,17 @@ import mongoose from "mongoose";
 import ActivitySeen from "../../models/ActivitySeen";
 import Block from "../../models/Block";
 import Comment from "../../models/Comment";
-import Follow, { type IFollow } from "../../models/Follow";
-import Reaction from "../../models/Reaction";
+import Follow from "../../models/Follow";
 import UserActivity from "../../models/UserActivity";
 import { dStrings, dynamicMessage } from "../../strings";
 import { createError, handleInputErrors } from "../../utilities/errorHandlers";
 import { publicReadUserEssentialProjection } from "../dto/user/read-user-public.dto";
 import { getResourceInfo, getUserFeed } from "../services/feed.service";
-import validate from "./validators";
 import {
   getCommentsOfActivity,
   getReactionsOfActivity,
 } from "./UserActivityController";
+import validate from "./validators";
 
 export const getFeedValidation: ValidationChain[] = [
   validate.page(query("page").optional()),
