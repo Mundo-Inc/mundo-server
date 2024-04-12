@@ -36,7 +36,7 @@ export const addNewPlaceActivity = async (
   return await addActivity(activityParams, true);
 };
 
-export const addCheckinActivity = async (
+export const addCheckInActivity = async (
   userId: string,
   checkinId: string,
   placeId: string | null = null,

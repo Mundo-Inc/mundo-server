@@ -13,7 +13,7 @@ import { eligibleForAchivement } from "./helpers/achivementEligibility";
 import { checkNewLevelupAchivements } from "./helpers/achivements";
 import { calcLevel, calcReviewReward } from "./helpers/levelCalculations";
 import {
-  validateCheckinReward,
+  validateCheckInReward,
   validateCommentReward,
   validateHomemadeReward,
   validateReactionReward,
@@ -33,9 +33,9 @@ const getValidatedEntity = async (
       if (!homemade || !(await validateHomemadeReward(user, homemade)))
         return null;
       return { entity: homemade, rewardAmount: rewards_amounts.HOMEMADE };
-    case "Checkin":
+    case "CheckIn":
       const checkin = await CheckIn.findById(refId);
-      if (!checkin || !(await validateCheckinReward(user, checkin)))
+      if (!checkin || !(await validateCheckInReward(user, checkin)))
         return null;
       return { entity: checkin, rewardAmount: rewards_amounts.CHECKIN };
 
@@ -131,7 +131,7 @@ export const addReward = async (
 
     let customAchivements = [];
 
-    if (["Review", "Reaction", "Checkin"].includes(reason.refType)) {
+    if (["Review", "Reaction", "CheckIn"].includes(reason.refType)) {
       const achivements = await checkForCustomAchivements(
         user._id,
         reason.refType
@@ -190,7 +190,7 @@ export const checkForCustomAchivements = async (
         }
         break;
 
-      case "Checkin":
+      case "CheckIn":
         for (let checkinAchivementType of [
           "CHECK_CHECK",
           "EARLY_BIRD",

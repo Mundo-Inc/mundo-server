@@ -27,9 +27,9 @@ import { handleSignUp } from "../lib/profile-handlers";
 import { BrevoService } from "../services/brevo.service";
 import logger from "../services/logger";
 import { calcRemainingXP } from "../services/reward/helpers/levelCalculations";
+import { getLevelThresholds } from "../services/reward/utils/levelupThresholds";
 import { sendSlackMessage } from "./SlackController";
 import validate from "./validators";
-import { getLevelThresholds } from "../services/reward/utils/levelupThresholds";
 
 // const FIREBASE_WEB_API_KEY = process.env.FIREBASE_WEB_API_KEY;
 
@@ -551,7 +551,7 @@ export async function getUser(req: Request, res: Response, next: NextFunction) {
       createdAt: -1,
     });
 
-    const [followersCount, followingCount, reviewsCount, totalCheckins] =
+    const [followersCount, followingCount, reviewsCount, totalCheckIns] =
       await Promise.all([
         Follow.countDocuments({ target: id }),
         Follow.countDocuments({ user: id }),
@@ -569,7 +569,7 @@ export async function getUser(req: Request, res: Response, next: NextFunction) {
       followersCount,
       followingCount,
       reviewsCount,
-      totalCheckins,
+      totalCheckins: totalCheckIns,
       rank: rank + 1,
       remainingXp: calcRemainingXP((user.progress && user.progress.xp) || 0),
       prevLevelXp: prevLevelXp,

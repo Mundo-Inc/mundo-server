@@ -25,7 +25,7 @@ export enum ActivityPrivacyTypeEnum {
 export enum ActivityResourceTypeEnum {
   PLACE = "Place",
   REVIEW = "Review",
-  CHECKIN = "Checkin",
+  CHECKIN = "CheckIn",
   USER = "User",
   REACTION = "Reaction",
   ACHIEVEMET = "Achievement",

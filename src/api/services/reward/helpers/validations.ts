@@ -64,13 +64,13 @@ export const validateCommentReward = async (user: IUser, comment: IComment) => {
   }
 };
 
-export const validateCheckinReward = async (user: IUser, checkin: ICheckIn) => {
+export const validateCheckInReward = async (user: IUser, checkIn: ICheckIn) => {
   try {
     // check if the user has already been rewarded for the
     const existingRewards = await Reward.find({
       userId: user._id,
-      "reason.refType": "Checkin",
-      "reason.placeId": checkin.place,
+      "reason.refType": "CheckIn",
+      "reason.placeId": checkIn.place,
       createdAt: {
         // checkin for last day
         $gte: new Date(new Date().getTime() - 24 * 60 * 60 * 1000),

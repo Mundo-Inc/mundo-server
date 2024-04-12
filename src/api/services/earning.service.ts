@@ -42,7 +42,7 @@ export const checkinEarning = async (userId: string, checkin: ICheckIn) => {
   const user = await User.findById(userId);
   const checkinEarns = await Earning.find({
     userId,
-    earningType: EarningTypeEnum.Checkin,
+    earningType: EarningTypeEnum.CheckIn,
   });
   let totalCoins = 0;
   totalCoins +=
@@ -54,7 +54,7 @@ export const checkinEarning = async (userId: string, checkin: ICheckIn) => {
   await user.save();
   await Earning.create({
     userId,
-    earningType: EarningTypeEnum.Checkin,
+    earningType: EarningTypeEnum.CheckIn,
     earning: checkin._id,
     coins: totalCoins,
   });

@@ -3,7 +3,7 @@ import mongoose, { Schema, type Document } from "mongoose";
 export enum EarningTypeEnum {
   Place = "Place",
   Review = "Review",
-  Checkin = "Checkin",
+  CheckIn = "CheckIn",
 }
 
 export interface IEarning extends Document {

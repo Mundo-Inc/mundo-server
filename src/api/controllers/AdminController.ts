@@ -4,8 +4,10 @@ import { StatusCodes } from "http-status-codes";
 import { Types } from "mongoose";
 
 import AppSetting from "../../models/AppSetting";
+import CheckIn from "../../models/CheckIn";
 import Comment from "../../models/Comment";
 import Flag from "../../models/Flag";
+import Homemade from "../../models/Homemade";
 import Review from "../../models/Review";
 import User from "../../models/User";
 import { dStrings as ds, dynamicMessage } from "../../strings";
@@ -206,6 +208,12 @@ export async function resolveFlag(
       } else if (flag.targetType === "Review") {
         const review = await Review.findById(flag.target);
         if (review) await review.deleteOne();
+      } else if (flag.targetType === "CheckIn") {
+        const checkIn = await CheckIn.findById(flag.target);
+        if (checkIn) await checkIn.deleteOne();
+      } else if (flag.targetType === "Homemade") {
+        const homemade = await Homemade.findById(flag.target);
+        if (homemade) await homemade.deleteOne();
       }
     }
 

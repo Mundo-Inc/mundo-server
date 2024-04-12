@@ -1,5 +1,6 @@
 import express from "express";
 
+import activityRouter from "./api/v1/activityRouter";
 import adminRouter from "./api/v1/adminRouter";
 import authRouter from "./api/v1/authRouter";
 import checkinRouter from "./api/v1/checkinRouter";
@@ -24,6 +25,7 @@ import conversationRouter from "./api/v1/conversationRouter";
 
 const router = express.Router();
 
+router.use("/activities", activityRouter);
 router.use("/auth", authRouter);
 router.use("/events", eventRouter);
 router.use("/media", mediaRouter);

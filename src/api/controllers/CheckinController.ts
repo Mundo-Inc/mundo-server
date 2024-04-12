@@ -23,12 +23,12 @@ import { publicReadUserEssentialProjection } from "../dto/user/read-user-public.
 import { checkinEarning } from "../services/earning.service";
 import logger from "../services/logger";
 import { addReward } from "../services/reward/reward.service";
-import { addCheckinActivity } from "../services/user.activity.service";
+import { addCheckInActivity } from "../services/user.activity.service";
 import validate from "./validators";
 
-const checkinWaitTime = 1; // minutes
+const checkInWaitTime = 1; // minutes
 
-export const getCheckinsValidation: ValidationChain[] = [
+export const getCheckInsValidation: ValidationChain[] = [
   query("user").optional().isMongoId().withMessage("Invalid user id"),
   query("place").optional().isMongoId().withMessage("Invalid place id"),
   query("event").optional().isMongoId().withMessage("Invalid event id"),
@@ -44,7 +44,7 @@ export const getCheckinsValidation: ValidationChain[] = [
  * @query limit   number      |     limit
  * @query count   boolean     |     count
  */
-export async function getCheckins(
+export async function getCheckIns(
   req: Request,
   res: Response,
   next: NextFunction
@@ -247,7 +247,7 @@ export async function getCheckins(
   }
 }
 
-async function enforceCheckinInterval(authId: string, authRole: string) {
+async function enforceCheckInInterval(authId: string, authRole: string) {
   if (authRole !== "admin") {
     const lastCheckIn = await CheckIn.findOne({ user: authId }).sort(
       "-createdAt"
@@ -255,10 +255,10 @@ async function enforceCheckinInterval(authId: string, authRole: string) {
     if (lastCheckIn) {
       const diffMinutes =
         (new Date().getTime() - lastCheckIn.createdAt.getTime()) / 1000 / 60;
-      if (diffMinutes < checkinWaitTime) {
-        logger.debug(`check-in cool down: ${checkinWaitTime} minutes`);
+      if (diffMinutes < checkInWaitTime) {
+        logger.debug(`check-in cool down: ${checkInWaitTime} minutes`);
         throw createError(
-          `You must wait at least ${checkinWaitTime} minutes between check-ins`,
+          `You must wait at least ${checkInWaitTime} minutes between check-ins`,
           StatusCodes.BAD_REQUEST
         );
       }
@@ -266,15 +266,15 @@ async function enforceCheckinInterval(authId: string, authRole: string) {
   }
 }
 
-async function addCheckinReward(authId: string, checkin: ICheckIn) {
+async function addCheckInReward(authId: string, checkin: ICheckIn) {
   return addReward(authId, {
-    refType: "Checkin",
+    refType: "CheckIn",
     refId: checkin._id,
     placeId: checkin.place,
   });
 }
 
-async function processCheckinActivities(
+async function processCheckInActivities(
   authId: string,
   checkin: ICheckIn,
   place: string,
@@ -290,7 +290,7 @@ async function processCheckinActivities(
       );
     }
     const hasMedia = Boolean(checkin.image);
-    const activity = await addCheckinActivity(
+    const activity = await addCheckInActivity(
       authId,
       checkin._id,
       place,
@@ -326,7 +326,7 @@ async function sendNotificiationToFollowers(authId: string, checkin: ICheckIn) {
   }
 }
 
-export const createCheckinValidation: ValidationChain[] = [
+export const createCheckInValidation: ValidationChain[] = [
   body("place")
     .custom((value, { req }) => {
       if (value && req.body.event) {
@@ -351,7 +351,7 @@ export const createCheckinValidation: ValidationChain[] = [
   body("tags.*").optional().isMongoId(),
 ];
 
-export async function createCheckin(
+export async function createCheckIn(
   req: Request,
   res: Response,
   next: NextFunction
@@ -384,7 +384,7 @@ export async function createCheckin(
       logger.verbose("Check-in to event");
     }
 
-    await enforceCheckinInterval(authId, authRole);
+    await enforceCheckInInterval(authId, authRole);
 
     logger.verbose("validate tags");
     if (tags) {
@@ -447,9 +447,9 @@ export async function createCheckin(
 
     const checkin = await CheckIn.create(checkinBody);
 
-    await processCheckinActivities(authId, checkin, placeId, privacyType);
+    await processCheckInActivities(authId, checkin, placeId, privacyType);
 
-    const reward = await addCheckinReward(authId, checkin);
+    const reward = await addCheckInReward(authId, checkin);
 
     const placeObject = await Place.findById(placeId);
     placeObject.activities.checkinCount =
@@ -468,10 +468,10 @@ export async function createCheckin(
   }
 }
 
-export const deleteCheckinValidation: ValidationChain[] = [
+export const deleteCheckInValidation: ValidationChain[] = [
   param("id").isMongoId().withMessage("Invalid checkin id"),
 ];
-export async function deleteCheckin(
+export async function deleteCheckIn(
   req: Request,
   res: Response,
   next: NextFunction

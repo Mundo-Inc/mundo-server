@@ -1,13 +1,13 @@
 import express from "express";
 
 import {
-  createCheckin,
-  createCheckinValidation,
-  deleteCheckin,
-  deleteCheckinValidation,
-  getCheckins,
-  getCheckinsValidation,
-} from "../controllers/CheckinController";
+  createCheckIn,
+  createCheckInValidation,
+  deleteCheckIn,
+  deleteCheckInValidation,
+  getCheckIns,
+  getCheckInsValidation,
+} from "../controllers/CheckInController";
 import { authMiddleware } from "../middlewares/authMiddleWare";
 
 const router = express.Router();
@@ -15,11 +15,11 @@ router.use(express.json());
 
 router
   .route("/")
-  .get(authMiddleware, getCheckinsValidation, getCheckins)
-  .post(authMiddleware, createCheckinValidation, createCheckin);
+  .get(authMiddleware, getCheckInsValidation, getCheckIns)
+  .post(authMiddleware, createCheckInValidation, createCheckIn);
 
 router
   .route("/:id")
-  .delete(authMiddleware, deleteCheckinValidation, deleteCheckin);
+  .delete(authMiddleware, deleteCheckInValidation, deleteCheckIn);
 
 export default router;

@@ -19,7 +19,7 @@ export const eligibleForAchivement = async (
   try {
     const user = await User.findById(userId).populate("progress.achievements");
     if (!user.progress.achievements) user.progress.achievements = [];
-    logger.verbose("Checkin eligibility for " + AchievementType);
+    logger.verbose("CheckIn eligibility for " + AchievementType);
     switch (AchievementType) {
       case AchievementTypeEnum.ROOKIE_REVIEWER:
         if (
@@ -94,14 +94,14 @@ export const eligibleForAchivement = async (
                 new Date().getTime() - 7 * 24 * 60 * 60 * 1000
           ).length;
 
-        const userCheckinsCountInLastWeek = await CheckIn.countDocuments({
+        const userCheckInsCountInLastWeek = await CheckIn.countDocuments({
           user: userId,
           createdAt: { $gt: new Date().getTime() - 7 * 24 * 60 * 60 * 1000 },
         });
 
         if (
           checkCheckAchivementInLastWeek === 0 &&
-          userCheckinsCountInLastWeek >= 5
+          userCheckInsCountInLastWeek >= 5
         ) {
           const newAchivement = await Achievement.create({
             userId: userId,
@@ -143,15 +143,15 @@ export const eligibleForAchivement = async (
               a.createdAt.getTime() > new Date().getTime() - 12 * 60 * 60 * 1000
           ).length;
 
-        const usersLatestCheckin = await CheckIn.findOne({
+        const usersLatestCheckIn = await CheckIn.findOne({
           user: userId,
         })
           .sort({ createdAt: -1 })
           .populate("place");
-        if (earlyBirdAchivementInLast12hrs === 0 && usersLatestCheckin) {
+        if (earlyBirdAchivementInLast12hrs === 0 && usersLatestCheckIn) {
           const placeTimezone = tzlookup(
-            usersLatestCheckin.place.location.geoLocation.coordinates[1],
-            usersLatestCheckin.place.location.geoLocation.coordinates[0]
+            usersLatestCheckIn.place.location.geoLocation.coordinates[1],
+            usersLatestCheckIn.place.location.geoLocation.coordinates[0]
           );
           const currentTimeInPlace = moment().tz(placeTimezone);
 
@@ -174,15 +174,15 @@ export const eligibleForAchivement = async (
             a.createdAt.getTime() > new Date().getTime() - 12 * 60 * 60 * 1000
         ).length;
 
-        const usersLatestCheckin_ = await CheckIn.findOne({
+        const usersLatestCheckIn_ = await CheckIn.findOne({
           user: userId,
         })
           .sort({ createdAt: -1 })
           .populate("place");
-        if (nightOwlAchivementInLast12hrs === 0 && usersLatestCheckin_) {
+        if (nightOwlAchivementInLast12hrs === 0 && usersLatestCheckIn_) {
           const placeTimezone = tzlookup(
-            usersLatestCheckin_.place.location.geoLocation.coordinates[1],
-            usersLatestCheckin_.place.location.geoLocation.coordinates[0]
+            usersLatestCheckIn_.place.location.geoLocation.coordinates[1],
+            usersLatestCheckIn_.place.location.geoLocation.coordinates[0]
           );
           const currentTimeInPlace = moment().tz(placeTimezone);
           if (currentTimeInPlace.hour() > 21 && currentTimeInPlace.hour() < 3) {

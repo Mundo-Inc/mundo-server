@@ -16,6 +16,8 @@ export enum FlagTypeEnum {
 export enum TargetTypeEnum {
   REVIEW = "Review",
   COMMENT = "Comment",
+  CHECKIN = "CheckIn",
+  HOMEMADE = "Homemade",
 }
 
 export enum AdminActionEnum {
