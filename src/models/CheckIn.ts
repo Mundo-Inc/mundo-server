@@ -1,6 +1,7 @@
 import mongoose, { Schema, type CallbackError, type Document } from "mongoose";
 
 import logger from "../api/services/logger";
+import Media from "./Media";
 import Place from "./Place";
 import UserActivity, { ActivityPrivacyTypeEnum } from "./UserActivity";
 
@@ -39,6 +40,12 @@ async function removeDependencies(checkin: ICheckIn) {
   if (userActivity) {
     await userActivity.deleteOne();
   }
+  if (checkin.image) {
+    const media = await Media.findById(checkin.image);
+    if (media) {
+      await media.deleteOne();
+    }
+  }
 }
 
 CheckInSchema.pre<ICheckIn>(
@@ -46,12 +53,11 @@ CheckInSchema.pre<ICheckIn>(
   { document: true, query: false },
   async function (next) {
     try {
-      const checkin = this;
       // Find all notifications related to the comment
-      await removeDependencies(checkin);
+      await removeDependencies(this);
 
       logger.verbose("decreasing checkin count of the place");
-      const placeObject = await Place.findById(checkin.place);
+      const placeObject = await Place.findById(this.place);
       placeObject.activities.checkinCount =
         placeObject.activities.checkinCount - 1;
       await placeObject.save();

@@ -3,6 +3,8 @@ import express from "express";
 import {
   createCheckin,
   createCheckinValidation,
+  deleteCheckin,
+  deleteCheckinValidation,
   getCheckins,
   getCheckinsValidation,
 } from "../controllers/CheckinController";
@@ -15,5 +17,9 @@ router
   .route("/")
   .get(authMiddleware, getCheckinsValidation, getCheckins)
   .post(authMiddleware, createCheckinValidation, createCheckin);
+
+router
+  .route("/:id")
+  .delete(authMiddleware, deleteCheckinValidation, deleteCheckin);
 
 export default router;

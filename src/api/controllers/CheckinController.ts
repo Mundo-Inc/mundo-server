@@ -1,5 +1,5 @@
 import type { NextFunction, Request, Response } from "express";
-import { body, query, type ValidationChain } from "express-validator";
+import { body, param, query, type ValidationChain } from "express-validator";
 import { StatusCodes } from "http-status-codes";
 import mongoose from "mongoose";
 
@@ -463,6 +463,42 @@ export async function createCheckin(
     res
       .status(StatusCodes.CREATED)
       .json({ success: true, data: checkin, reward: reward });
+  } catch (err) {
+    next(err);
+  }
+}
+
+export const deleteCheckinValidation: ValidationChain[] = [
+  param("id").isMongoId().withMessage("Invalid checkin id"),
+];
+export async function deleteCheckin(
+  req: Request,
+  res: Response,
+  next: NextFunction
+) {
+  try {
+    handleInputErrors(req);
+
+    const { id: authId, role: authRole } = req.user!;
+
+    const { id } = req.params;
+
+    const checkin = await CheckIn.findById(id);
+
+    if (!checkin) {
+      throw createError(
+        dynamicMessage(dStrings.notFound, "Check-in"),
+        StatusCodes.NOT_FOUND
+      );
+    }
+
+    if (checkin.user.toString() !== authId && authRole !== "admin") {
+      throw createError(strings.authorization.otherUser, StatusCodes.FORBIDDEN);
+    }
+
+    await checkin.deleteOne();
+
+    res.sendStatus(StatusCodes.NO_CONTENT);
   } catch (err) {
     next(err);
   }
