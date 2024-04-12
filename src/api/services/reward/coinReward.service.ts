@@ -11,6 +11,7 @@ import UserActivity, {
 } from "../../../models/UserActivity";
 import { dStrings, dynamicMessage } from "../../../strings";
 import { createError } from "../../../utilities/errorHandlers";
+import mongoose from "mongoose";
 
 const DAY_HOURS = 24;
 
@@ -78,17 +79,20 @@ export async function applyDailyStreakResetIfNeeded(user: IUser) {
 
 export async function isMissionRewardClaimedByUser(
   mission: IMission,
-  user: IUser
+  userId: mongoose.Types.ObjectId
 ) {
   const isClaimed = await CoinReward.countDocuments({
-    userId: user._id,
+    userId: userId,
     missionId: mission._id,
   });
   return isClaimed > 0;
 }
 
-export async function populateMissionProgress(mission: IMission, user: IUser) {
-  const isClaimed = await isMissionRewardClaimedByUser(mission, user);
+export async function populateMissionProgress(
+  mission: IMission,
+  userId: mongoose.Types.ObjectId
+) {
+  const isClaimed = await isMissionRewardClaimedByUser(mission, userId);
   const populatedMission = {
     ...mission,
     isClaimed,
@@ -101,7 +105,7 @@ export async function populateMissionProgress(mission: IMission, user: IUser) {
     const reactionAggregate = await Reaction.aggregate([
       {
         $match: {
-          user: user._id,
+          user: userId,
           createdAt: {
             $gte: mission.startsAt,
             $lte: mission.expiresAt,
@@ -125,7 +129,7 @@ export async function populateMissionProgress(mission: IMission, user: IUser) {
     const checkinAggregation = await CheckIn.aggregate([
       {
         $match: {
-          user: user._id,
+          user: userId,
           createdAt: {
             $gte: mission.startsAt,
             $lte: mission.expiresAt,
@@ -147,7 +151,7 @@ export async function populateMissionProgress(mission: IMission, user: IUser) {
   }
   if (mission.task.type === TaskTypeEnum.HAS_MEDIA) {
     const completedCount = await UserActivity.countDocuments({
-      userId: user._id,
+      userId: userId,
       hasMedia: true,
       createdAt: {
         $gte: mission.startsAt,
@@ -158,7 +162,7 @@ export async function populateMissionProgress(mission: IMission, user: IUser) {
   }
   if (mission.task.type === TaskTypeEnum.REVIEW) {
     const completedCount = await UserActivity.countDocuments({
-      userId: user._id,
+      userId: userId,
       resourceType: ActivityResourceTypeEnum.REVIEW,
       createdAt: {
         $gte: mission.startsAt,

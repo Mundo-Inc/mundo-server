@@ -1,9 +1,10 @@
 import type { NextFunction, Request, Response } from "express";
 import { param, query, type ValidationChain } from "express-validator";
 import { StatusCodes } from "http-status-codes";
-import mongoose from "mongoose";
+import mongoose, { type FilterQuery } from "mongoose";
 
 import Comment from "../../models/Comment";
+import Follow from "../../models/Follow";
 import Reaction from "../../models/Reaction";
 import UserActivity, { type IUserActivity } from "../../models/UserActivity";
 import { handleInputErrors } from "../../utilities/errorHandlers";
@@ -39,133 +40,78 @@ export async function getActivitiesOfaUser(
   try {
     handleInputErrors(req);
 
+    const { id: authId } = req.user!;
+
     const userId = req.params.id;
     const page = Number(req.query.page) || 1;
     const limit = Number(req.query.limit) || 20;
 
-    const total = await UserActivity.countDocuments({
+    let query: FilterQuery<IUserActivity> = {
       userId,
-      ...(req.query.type
-        ? {
-            activityType: req.query.type,
-          }
-        : {}),
-    });
+    };
 
-    const userActivities: IUserActivity[] = await UserActivity.find({
-      userId,
-      ...(req.query.type
-        ? {
-            activityType: req.query.type,
-          }
-        : {}),
-    })
-      .sort({ createdAt: -1 })
-      .skip((page - 1) * limit)
-      .limit(limit)
-      .lean();
+    if (req.query.type) {
+      query.activityType = req.query.type as string;
+    }
+
+    const [total, userActivities] = await Promise.all([
+      UserActivity.countDocuments(query),
+      UserActivity.find(query)
+        .sort({ createdAt: -1 })
+        .skip((page - 1) * limit)
+        .limit(limit)
+        .lean(),
+    ]);
 
     const result = [];
 
-    for (const _act of userActivities) {
-      const [resourceInfo, placeInfo, userInfo] = await getResourceInfo(_act);
-      const reactions = await Reaction.aggregate([
-        {
-          $match: {
-            target: _act._id,
-          },
-        },
-        {
-          $facet: {
-            total: [
-              {
-                $group: {
-                  _id: "$reaction",
-                  count: { $sum: 1 },
-                  type: { $first: "$type" },
-                },
-              },
-              {
-                $project: {
-                  _id: 0,
-                  reaction: "$_id",
-                  type: 1,
-                  count: 1,
-                },
-              },
-            ],
-            user: [
-              {
-                $match: {
-                  user: new mongoose.Types.ObjectId(userId),
-                },
-              },
-              {
-                $project: {
-                  _id: 1,
-                  type: 1,
-                  reaction: 1,
-                  createdAt: 1,
-                },
-              },
-            ],
-          },
-        },
+    for (const activity of userActivities) {
+      const [
+        [resourceInfo, placeInfo, userInfo],
+        reactions,
+        comments,
+        commentsCount,
+        followedByUser,
+        followsUser,
+      ] = await Promise.all([
+        getResourceInfo(activity as IUserActivity),
+        getReactionsOfActivity(
+          activity._id as mongoose.Types.ObjectId,
+          new mongoose.Types.ObjectId(userId)
+        ),
+        getCommentsOfActivity(
+          activity._id as mongoose.Types.ObjectId,
+          new mongoose.Types.ObjectId(userId)
+        ),
+        Comment.countDocuments({
+          userActivity: activity._id,
+        }),
+        authId !== userId
+          ? Follow.exists({ user: authId, target: userId })
+          : null,
+        authId !== userId
+          ? Follow.exists({ user: userId, target: authId })
+          : null,
       ]);
 
-      const comments = await Comment.aggregate([
-        {
-          $match: {
-            userActivity: _act._id,
-          },
-        },
-        {
-          $limit: 3,
-        },
-        {
-          $lookup: {
-            from: "users",
-            localField: "author",
-            foreignField: "_id",
-            as: "author",
-            pipeline: [
-              {
-                $project: publicReadUserEssentialProjection,
-              },
-            ],
-          },
-        },
-        {
-          $project: {
-            _id: 1,
-            createdAt: 1,
-            updatedAt: 1,
-            content: 1,
-            mentions: 1,
-            author: { $arrayElemAt: ["$author", 0] },
-            likes: { $size: "$likes" },
-            liked: {
-              $in: [new mongoose.Types.ObjectId(userId), "$likes"],
-            },
-          },
-        },
-      ]);
-
-      const commentsCount = await Comment.countDocuments({
-        userActivity: _act._id,
-      });
+      if (authId !== userId) {
+        userInfo.connectionStatus = {
+          followedByUser: !!followedByUser,
+          followsUser: !!followsUser,
+        };
+      }
 
       result.push({
-        _id: _act._id,
-        id: _act._id,
+        _id: activity._id,
+        id: activity._id,
         user: userInfo,
         place: placeInfo,
-        activityType: _act.activityType,
-        resourceType: _act.resourceType,
+        activityType: activity.activityType,
+        resourceType: activity.resourceType,
         resource: resourceInfo,
-        privacyType: _act.privacyType,
-        createdAt: _act.createdAt,
-        updatedAt: _act.updatedAt,
+        privacyType: activity.privacyType,
+        createdAt: activity.createdAt,
+        updatedAt: activity.updatedAt,
         reactions: reactions[0],
         comments: comments,
         commentsCount,
@@ -184,4 +130,96 @@ export async function getActivitiesOfaUser(
   } catch (err) {
     next(err);
   }
+}
+
+export function getReactionsOfActivity(
+  activityId: mongoose.Types.ObjectId,
+  userId: mongoose.Types.ObjectId
+) {
+  return Reaction.aggregate([
+    {
+      $match: {
+        target: activityId,
+      },
+    },
+    {
+      $facet: {
+        total: [
+          {
+            $group: {
+              _id: "$reaction",
+              count: { $sum: 1 },
+              type: { $first: "$type" },
+            },
+          },
+          {
+            $project: {
+              _id: 0,
+              reaction: "$_id",
+              type: 1,
+              count: 1,
+            },
+          },
+        ],
+        user: [
+          {
+            $match: {
+              user: userId,
+            },
+          },
+          {
+            $project: {
+              _id: 1,
+              type: 1,
+              reaction: 1,
+              createdAt: 1,
+            },
+          },
+        ],
+      },
+    },
+  ]);
+}
+
+export function getCommentsOfActivity(
+  activityId: mongoose.Types.ObjectId,
+  userId: mongoose.Types.ObjectId
+) {
+  return Comment.aggregate([
+    {
+      $match: {
+        userActivity: activityId,
+      },
+    },
+    {
+      $limit: 3,
+    },
+    {
+      $lookup: {
+        from: "users",
+        localField: "author",
+        foreignField: "_id",
+        as: "author",
+        pipeline: [
+          {
+            $project: publicReadUserEssentialProjection,
+          },
+        ],
+      },
+    },
+    {
+      $project: {
+        _id: 1,
+        createdAt: 1,
+        updatedAt: 1,
+        content: 1,
+        mentions: 1,
+        author: { $arrayElemAt: ["$author", 0] },
+        likes: { $size: "$likes" },
+        liked: {
+          $in: [userId, "$likes"],
+        },
+      },
+    },
+  ]);
 }

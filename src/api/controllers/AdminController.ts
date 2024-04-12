@@ -52,7 +52,7 @@ export async function getUsers(
       matchPipeline.push({ $match: matchObject });
     }
 
-    let result = await User.aggregate([
+    const result = await User.aggregate([
       ...matchPipeline,
       {
         $sort: {
@@ -76,13 +76,11 @@ export async function getUsers(
     const results = result[0];
 
     if (!results) {
-      throw createError("No users found", StatusCodes.NOT_FOUND);
+      throw createError(
+        dynamicMessage(ds.notFound, "User"),
+        StatusCodes.NOT_FOUND
+      );
     }
-
-    // const users = results.users.map((user: PublicReadUserDto) => ({
-    //   ...user,
-    //   remainingXp: getRemainingXpToNextLevel(user.xp || 0),
-    // }));
 
     res.status(StatusCodes.OK).json({
       success: true,
@@ -132,21 +130,24 @@ export async function getFlags(
         }
       : { adminAction: { $exists: false } };
 
-    const totalDocuments = await Flag.countDocuments(queryObj);
-    // Query the database to fetch the flags
-    const result = await Flag.find(queryObj)
-      .sort("-createdAt")
-      .skip(skip)
-      .limit(limit)
-      .populate("target")
-      .populate("user", adminReadUserProjection);
+    const [totalDocuments, result] = await Promise.all([
+      Flag.countDocuments(queryObj),
+      Flag.find(queryObj)
+        .sort("-createdAt")
+        .skip(skip)
+        .limit(limit)
+        .populate("target")
+        .populate("user", adminReadUserProjection),
+    ]);
 
     for (const flag of result) {
       switch (flag.targetType) {
         case "Review":
-          await flag.populate("target.videos", "_id src caption type");
-          await flag.populate("target.images", "_id src caption type");
-          await flag.populate("target.writer", privateReadUserProjection);
+          await Promise.all([
+            flag.populate("target.writer", privateReadUserProjection),
+            flag.populate("target.images", "_id src caption type"),
+            flag.populate("target.videos", "_id src caption type"),
+          ]);
         case "Comment":
           await flag.populate("target.author", privateReadUserProjection);
         default:

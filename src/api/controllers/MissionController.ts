@@ -2,6 +2,7 @@ import type { NextFunction, Request, Response } from "express";
 import { body, param, query, type ValidationChain } from "express-validator";
 import { StatusCodes } from "http-status-codes";
 
+import mongoose from "mongoose";
 import CoinReward, { CoinRewardTypeEnum } from "../../models/CoinReward";
 import Mission, { TaskTypeEnum, type IMission } from "../../models/Mission";
 import Prize from "../../models/Prize";
@@ -88,8 +89,6 @@ export async function getMissions(
 
     const { id: authId } = req.user!;
 
-    const user = await User.findById(authId);
-
     // Get page and limit from query parameters
     const page = parseInt(req.query.page as string) || 1;
     const limit = parseInt(req.query.limit as string) || 10; // Default to 10 items per page
@@ -99,19 +98,24 @@ export async function getMissions(
       expiresAt: { $gte: new Date() },
       startsAt: { $lte: new Date() },
     };
-    const missionsQuery = Mission.find(query)
-      .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(limit)
-      .lean();
 
-    // Get the total count for pagination
-    const totalMissions = await Mission.countDocuments(query);
+    const [missions, totalMissions] = await Promise.all([
+      Mission.find(query)
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .lean(),
+      Mission.countDocuments(query),
+    ]);
 
-    const missions = (await missionsQuery) as IMission[];
-    let populatedMissions = [];
+    const populatedMissions = [];
     for (const mission of missions) {
-      populatedMissions.push(await populateMissionProgress(mission, user));
+      populatedMissions.push(
+        await populateMissionProgress(
+          mission as IMission,
+          new mongoose.Types.ObjectId(authId)
+        )
+      );
     }
 
     res.status(StatusCodes.OK).json({
@@ -150,7 +154,10 @@ export async function claimMissionReward(
       throw createError("mission not found", StatusCodes.NOT_FOUND);
     }
 
-    const missionWithProgress = await populateMissionProgress(mission, user);
+    const missionWithProgress = await populateMissionProgress(
+      mission,
+      user._id
+    );
 
     const isClaimable =
       missionWithProgress.progress.completed >=

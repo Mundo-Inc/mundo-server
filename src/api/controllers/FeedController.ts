@@ -14,6 +14,10 @@ import { createError, handleInputErrors } from "../../utilities/errorHandlers";
 import { publicReadUserEssentialProjection } from "../dto/user/read-user-public.dto";
 import { getResourceInfo, getUserFeed } from "../services/feed.service";
 import validate from "./validators";
+import {
+  getCommentsOfActivity,
+  getReactionsOfActivity,
+} from "./UserActivityController";
 
 export const getFeedValidation: ValidationChain[] = [
   validate.page(query("page").optional()),
@@ -149,6 +153,7 @@ export async function getActivity(
     }
 
     const [resourceInfo, placeInfo, userInfo] = await getResourceInfo(activity);
+
     if (!resourceInfo) {
       throw createError(
         dynamicMessage(dStrings.notFound, "Resource"),
@@ -156,96 +161,22 @@ export async function getActivity(
       );
     }
 
-    const reactions = await Reaction.aggregate([
-      {
-        $match: {
-          target: activity._id,
-        },
-      },
-      {
-        $facet: {
-          total: [
-            {
-              $group: {
-                _id: "$reaction",
-                count: { $sum: 1 },
-                type: { $first: "$type" },
-              },
-            },
-            {
-              $project: {
-                _id: 0,
-                reaction: "$_id",
-                type: 1,
-                count: 1,
-              },
-            },
-          ],
-          user: [
-            {
-              $match: {
-                user: new mongoose.Types.ObjectId(authId),
-              },
-            },
-            {
-              $project: {
-                _id: 1,
-                type: 1,
-                reaction: 1,
-                createdAt: 1,
-              },
-            },
-          ],
-        },
-      },
-    ]);
-
-    const comments = await Comment.aggregate([
-      {
-        $match: {
+    const [reactions, comments, commentsCount, followedByUser, followsUser] =
+      await Promise.all([
+        getReactionsOfActivity(
+          activity._id,
+          new mongoose.Types.ObjectId(authId)
+        ),
+        getCommentsOfActivity(
+          activity._id,
+          new mongoose.Types.ObjectId(authId)
+        ),
+        Comment.countDocuments({
           userActivity: activity._id,
-        },
-      },
-      {
-        $limit: 3,
-      },
-      {
-        $lookup: {
-          from: "users",
-          localField: "author",
-          foreignField: "_id",
-          as: "author",
-          pipeline: [
-            {
-              $project: publicReadUserEssentialProjection,
-            },
-          ],
-        },
-      },
-      {
-        $project: {
-          _id: 1,
-          createdAt: 1,
-          updatedAt: 1,
-          content: 1,
-          mentions: 1,
-          author: { $arrayElemAt: ["$author", 0] },
-          likes: { $size: "$likes" },
-          liked: {
-            $in: [new mongoose.Types.ObjectId(authId), "$likes"],
-          },
-        },
-      },
-    ]);
-
-    const commentsCount = await Comment.countDocuments({
-      userActivity: activity._id,
-    });
-
-    const [followedByUser, followsUser] = await Promise.all([
-      Follow.exists({ user: authId, target: id }),
-      Follow.exists({ user: id, target: authId }),
-    ]);
+        }),
+        Follow.exists({ user: authId, target: id }),
+        Follow.exists({ user: id, target: authId }),
+      ]);
 
     userInfo.connectionStatus = {
       followedByUser: !!followedByUser,

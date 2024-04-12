@@ -1,13 +1,12 @@
 import mongoose, { type FilterQuery, type SortOrder } from "mongoose";
 
 import Achievement from "../../models/Achievement";
-import Block, { type IBlock } from "../../models/Block";
+import Block from "../../models/Block";
 import CheckIn from "../../models/CheckIn";
 import Comment from "../../models/Comment";
-import Follow, { type IFollow } from "../../models/Follow";
+import Follow from "../../models/Follow";
 import Homemade from "../../models/Homemade";
 import Place, { type IPlace } from "../../models/Place";
-import Reaction from "../../models/Reaction";
 import Review from "../../models/Review";
 import User from "../../models/User";
 import UserActivity, {
@@ -15,6 +14,10 @@ import UserActivity, {
   ActivityResourceTypeEnum,
   type IUserActivity,
 } from "../../models/UserActivity";
+import {
+  getCommentsOfActivity,
+  getReactionsOfActivity,
+} from "../controllers/UserActivityController";
 import { readFormattedPlaceLocationProjection } from "../dto/place/place-dto";
 import { readPlaceDetailProjection } from "../dto/place/read-place-detail.dto";
 import { publicReadUserEssentialProjection } from "../dto/user/read-user-public.dto";
@@ -96,405 +99,414 @@ export interface IPlaceData {
 export const getResourceInfo = async (activity: IUserActivity) => {
   let resourceInfo: any;
   let placeInfo: any;
+
   const userInfo = await User.findOne(
     { _id: activity.userId },
     publicReadUserEssentialProjection
   ).lean();
-  if (activity.resourceType === ActivityResourceTypeEnum.PLACE) {
-    resourceInfo = await Place.findById(
-      activity.resourceId,
-      readPlaceDetailProjection
-    ).lean();
 
-    placeInfo = resourceInfo;
-  } else if (activity.resourceType === ActivityResourceTypeEnum.REVIEW) {
-    const reviews = await Review.aggregate([
-      {
-        $match: {
-          _id: new mongoose.Types.ObjectId(activity.resourceId),
+  switch (activity.resourceType) {
+    case ActivityResourceTypeEnum.PLACE:
+      resourceInfo = await Place.findById(
+        activity.resourceId,
+        readPlaceDetailProjection
+      ).lean();
+
+      placeInfo = resourceInfo;
+      break;
+    case ActivityResourceTypeEnum.REVIEW:
+      const reviews = await Review.aggregate([
+        {
+          $match: {
+            _id: new mongoose.Types.ObjectId(activity.resourceId),
+          },
         },
-      },
-      {
-        $lookup: {
-          from: "users",
-          localField: "writer",
-          foreignField: "_id",
-          as: "writer",
-          pipeline: [
-            {
-              $project: publicReadUserEssentialProjection,
-            },
-          ],
-        },
-      },
-      {
-        $lookup: {
-          from: "media",
-          localField: "images",
-          foreignField: "_id",
-          as: "images",
-          pipeline: [
-            {
-              $project: {
-                _id: 1,
-                src: 1,
-                caption: 1,
-                type: 1,
+        {
+          $lookup: {
+            from: "users",
+            localField: "writer",
+            foreignField: "_id",
+            as: "writer",
+            pipeline: [
+              {
+                $project: publicReadUserEssentialProjection,
               },
-            },
-          ],
+            ],
+          },
         },
-      },
-      {
-        $lookup: {
-          from: "media",
-          localField: "videos",
-          foreignField: "_id",
-          as: "videos",
-          pipeline: [
-            {
-              $project: {
-                _id: 1,
-                src: 1,
-                caption: 1,
-                type: 1,
+        {
+          $lookup: {
+            from: "media",
+            localField: "images",
+            foreignField: "_id",
+            as: "images",
+            pipeline: [
+              {
+                $project: {
+                  _id: 1,
+                  src: 1,
+                  caption: 1,
+                  type: 1,
+                },
               },
-            },
-          ],
+            ],
+          },
         },
-      },
-      {
-        $lookup: {
-          from: "places",
-          localField: "place",
-          foreignField: "_id",
-          as: "place",
-          pipeline: [
-            {
-              $project: {
-                ...readPlaceDetailProjection,
-                location: readFormattedPlaceLocationProjection,
-                scores: {
-                  overall: 1,
-                  drinkQuality: 1,
-                  foodQuality: 1,
-                  service: 1,
-                  atmosphere: 1,
-                  value: 1,
-                  phantom: {
-                    $cond: {
-                      if: { $lt: ["$reviewCount", 4] },
-                      then: "$$REMOVE",
-                      else: "$scores.phantom",
+        {
+          $lookup: {
+            from: "media",
+            localField: "videos",
+            foreignField: "_id",
+            as: "videos",
+            pipeline: [
+              {
+                $project: {
+                  _id: 1,
+                  src: 1,
+                  caption: 1,
+                  type: 1,
+                },
+              },
+            ],
+          },
+        },
+        {
+          $lookup: {
+            from: "places",
+            localField: "place",
+            foreignField: "_id",
+            as: "place",
+            pipeline: [
+              {
+                $project: {
+                  ...readPlaceDetailProjection,
+                  location: readFormattedPlaceLocationProjection,
+                  scores: {
+                    overall: 1,
+                    drinkQuality: 1,
+                    foodQuality: 1,
+                    service: 1,
+                    atmosphere: 1,
+                    value: 1,
+                    phantom: {
+                      $cond: {
+                        if: { $lt: ["$reviewCount", 4] },
+                        then: "$$REMOVE",
+                        else: "$scores.phantom",
+                      },
                     },
                   },
                 },
               },
-            },
-          ],
-        },
-      },
-      {
-        $lookup: {
-          from: "reactions",
-          let: {
-            userActivityId: "$userActivityId",
-          },
-          as: "reactions",
-          pipeline: [
-            {
-              $match: {
-                $expr: { $eq: ["$target", "$$userActivityId"] },
-              },
-            },
-            {
-              $facet: {
-                total: [
-                  {
-                    $group: {
-                      _id: "$reaction",
-                      count: { $sum: 1 },
-                      type: { $first: "$type" },
-                    },
-                  },
-                  {
-                    $project: {
-                      _id: 0,
-                      reaction: "$_id",
-                      type: 1,
-                      count: 1,
-                    },
-                  },
-                ],
-              },
-            },
-          ],
-        },
-      },
-      {
-        $project: {
-          _id: 1,
-          createdAt: 1,
-          updatedAt: 1,
-          content: 1,
-          recommend: 1,
-          place: { $arrayElemAt: ["$place", 0] },
-          writer: { $arrayElemAt: ["$writer", 0] },
-          images: 1,
-          videos: 1,
-          scores: 1,
-          tags: 1,
-          userActivityId: 1,
-          reactions: {
-            $arrayElemAt: ["$reactions", 0],
+            ],
           },
         },
-      },
-    ]);
+        {
+          $lookup: {
+            from: "reactions",
+            let: {
+              userActivityId: "$userActivityId",
+            },
+            as: "reactions",
+            pipeline: [
+              {
+                $match: {
+                  $expr: { $eq: ["$target", "$$userActivityId"] },
+                },
+              },
+              {
+                $facet: {
+                  total: [
+                    {
+                      $group: {
+                        _id: "$reaction",
+                        count: { $sum: 1 },
+                        type: { $first: "$type" },
+                      },
+                    },
+                    {
+                      $project: {
+                        _id: 0,
+                        reaction: "$_id",
+                        type: 1,
+                        count: 1,
+                      },
+                    },
+                  ],
+                },
+              },
+            ],
+          },
+        },
+        {
+          $project: {
+            _id: 1,
+            createdAt: 1,
+            updatedAt: 1,
+            content: 1,
+            recommend: 1,
+            place: { $arrayElemAt: ["$place", 0] },
+            writer: { $arrayElemAt: ["$writer", 0] },
+            images: 1,
+            videos: 1,
+            scores: 1,
+            tags: 1,
+            userActivityId: 1,
+            reactions: {
+              $arrayElemAt: ["$reactions", 0],
+            },
+          },
+        },
+      ]);
 
-    resourceInfo = reviews[0];
-    placeInfo = resourceInfo.place;
-  } else if (activity.resourceType === ActivityResourceTypeEnum.HOMEMADE) {
-    const homemade = await Homemade.aggregate([
-      {
-        $match: {
-          _id: new mongoose.Types.ObjectId(activity.resourceId),
-        },
-      },
-      {
-        $lookup: {
-          from: "media",
-          localField: "media",
-          foreignField: "_id",
-          as: "media",
-          pipeline: [
-            {
-              $project: {
-                _id: 1,
-                src: 1,
-                caption: 1,
-                type: 1,
-              },
-            },
-          ],
-        },
-      },
-      {
-        $lookup: {
-          from: "users",
-          localField: "tags",
-          foreignField: "_id",
-          as: "tags",
-          pipeline: [
-            {
-              $project: publicReadUserEssentialProjection,
-            },
-          ],
-        },
-      },
-      {
-        $lookup: {
-          from: "users",
-          localField: "user",
-          foreignField: "_id",
-          as: "user",
-          pipeline: [
-            {
-              $project: publicReadUserEssentialProjection,
-            },
-          ],
-        },
-      },
-      {
-        $lookup: {
-          from: "reactions",
-          let: {
-            userActivityId: "$userActivityId",
-          },
-          as: "reactions",
-          pipeline: [
-            {
-              $match: {
-                $expr: { $eq: ["$target", "$$userActivityId"] },
-              },
-            },
-            {
-              $facet: {
-                total: [
-                  {
-                    $group: {
-                      _id: "$reaction",
-                      count: { $sum: 1 },
-                      type: { $first: "$type" },
-                    },
-                  },
-                  {
-                    $project: {
-                      _id: 0,
-                      reaction: "$_id",
-                      type: 1,
-                      count: 1,
-                    },
-                  },
-                ],
-              },
-            },
-          ],
-        },
-      },
-      {
-        $project: {
-          _id: 1,
-          createdAt: 1,
-          updatedAt: 1,
-          content: 1,
-          user: { $arrayElemAt: ["$user", 0] },
-          media: 1,
-          scores: 1,
-          tags: 1,
-          userActivityId: 1,
-          reactions: {
-            $arrayElemAt: ["$reactions", 0],
+      resourceInfo = reviews[0];
+      placeInfo = resourceInfo.place;
+      break;
+    case ActivityResourceTypeEnum.HOMEMADE:
+      const homemade = await Homemade.aggregate([
+        {
+          $match: {
+            _id: new mongoose.Types.ObjectId(activity.resourceId),
           },
         },
-      },
-    ]);
-    resourceInfo = homemade[0];
-  } else if (activity.resourceType === ActivityResourceTypeEnum.CHECKIN) {
-    const results = await CheckIn.aggregate([
-      {
-        $match: {
-          user: activity.userId,
+        {
+          $lookup: {
+            from: "media",
+            localField: "media",
+            foreignField: "_id",
+            as: "media",
+            pipeline: [
+              {
+                $project: {
+                  _id: 1,
+                  src: 1,
+                  caption: 1,
+                  type: 1,
+                },
+              },
+            ],
+          },
         },
-      },
-      {
-        $facet: {
-          total: [
-            {
-              $count: "total",
-            },
-          ],
-          checkin: [
-            {
-              $match: {
-                _id: new mongoose.Types.ObjectId(activity.resourceId),
+        {
+          $lookup: {
+            from: "users",
+            localField: "tags",
+            foreignField: "_id",
+            as: "tags",
+            pipeline: [
+              {
+                $project: publicReadUserEssentialProjection,
               },
-            },
-            {
-              $lookup: {
-                from: "users",
-                localField: "user",
-                foreignField: "_id",
-                as: "user",
-              },
-            },
-            {
-              $lookup: {
-                from: "places",
-                localField: "place",
-                foreignField: "_id",
-                as: "place",
-                pipeline: [
-                  {
-                    $project: {
-                      ...readPlaceDetailProjection,
-                      location: readFormattedPlaceLocationProjection,
-                    },
-                  },
-                ],
-              },
-            },
-            {
-              $lookup: {
-                from: "media",
-                localField: "image",
-                foreignField: "_id",
-                as: "image",
-                pipeline: [
-                  {
-                    $project: {
-                      _id: 1,
-                      src: 1,
-                      caption: 1,
-                      type: 1,
-                    },
-                  },
-                ],
-              },
-            },
-            {
-              $lookup: {
-                from: "users",
-                localField: "tags",
-                foreignField: "_id",
-                as: "tags",
-                pipeline: [
-                  {
-                    $project: publicReadUserEssentialProjection,
-                  },
-                ],
-              },
-            },
-            {
-              $unwind: "$user",
-            },
-            {
-              $unwind: "$place",
-            },
-            {
-              $project: {
-                _id: 1,
-                createdAt: 1,
-                user: publicReadUserEssentialProjection,
-                place: readPlaceDetailProjection,
-                image: { $arrayElemAt: ["$image", 0] },
-                caption: 1,
-                tags: 1,
-              },
-            },
-          ],
+            ],
+          },
         },
-      },
-    ]);
+        {
+          $lookup: {
+            from: "users",
+            localField: "user",
+            foreignField: "_id",
+            as: "user",
+            pipeline: [
+              {
+                $project: publicReadUserEssentialProjection,
+              },
+            ],
+          },
+        },
+        {
+          $lookup: {
+            from: "reactions",
+            let: {
+              userActivityId: "$userActivityId",
+            },
+            as: "reactions",
+            pipeline: [
+              {
+                $match: {
+                  $expr: { $eq: ["$target", "$$userActivityId"] },
+                },
+              },
+              {
+                $facet: {
+                  total: [
+                    {
+                      $group: {
+                        _id: "$reaction",
+                        count: { $sum: 1 },
+                        type: { $first: "$type" },
+                      },
+                    },
+                    {
+                      $project: {
+                        _id: 0,
+                        reaction: "$_id",
+                        type: 1,
+                        count: 1,
+                      },
+                    },
+                  ],
+                },
+              },
+            ],
+          },
+        },
+        {
+          $project: {
+            _id: 1,
+            createdAt: 1,
+            updatedAt: 1,
+            content: 1,
+            user: { $arrayElemAt: ["$user", 0] },
+            media: 1,
+            scores: 1,
+            tags: 1,
+            userActivityId: 1,
+            reactions: {
+              $arrayElemAt: ["$reactions", 0],
+            },
+          },
+        },
+      ]);
+      resourceInfo = homemade[0];
+      break;
+    case ActivityResourceTypeEnum.CHECKIN:
+      const results = await CheckIn.aggregate([
+        {
+          $match: {
+            user: activity.userId,
+          },
+        },
+        {
+          $facet: {
+            total: [
+              {
+                $count: "total",
+              },
+            ],
+            checkin: [
+              {
+                $match: {
+                  _id: new mongoose.Types.ObjectId(activity.resourceId),
+                },
+              },
+              {
+                $lookup: {
+                  from: "users",
+                  localField: "user",
+                  foreignField: "_id",
+                  as: "user",
+                },
+              },
+              {
+                $lookup: {
+                  from: "places",
+                  localField: "place",
+                  foreignField: "_id",
+                  as: "place",
+                  pipeline: [
+                    {
+                      $project: {
+                        ...readPlaceDetailProjection,
+                        location: readFormattedPlaceLocationProjection,
+                      },
+                    },
+                  ],
+                },
+              },
+              {
+                $lookup: {
+                  from: "media",
+                  localField: "image",
+                  foreignField: "_id",
+                  as: "image",
+                  pipeline: [
+                    {
+                      $project: {
+                        _id: 1,
+                        src: 1,
+                        caption: 1,
+                        type: 1,
+                      },
+                    },
+                  ],
+                },
+              },
+              {
+                $lookup: {
+                  from: "users",
+                  localField: "tags",
+                  foreignField: "_id",
+                  as: "tags",
+                  pipeline: [
+                    {
+                      $project: publicReadUserEssentialProjection,
+                    },
+                  ],
+                },
+              },
+              {
+                $unwind: "$user",
+              },
+              {
+                $unwind: "$place",
+              },
+              {
+                $project: {
+                  _id: 1,
+                  createdAt: 1,
+                  user: publicReadUserEssentialProjection,
+                  place: readPlaceDetailProjection,
+                  image: { $arrayElemAt: ["$image", 0] },
+                  caption: 1,
+                  tags: 1,
+                },
+              },
+            ],
+          },
+        },
+      ]);
 
-    if (!results[0]) {
-      return [null, null, userInfo];
-    }
+      if (!results[0]) {
+        return [null, null, userInfo];
+      }
 
-    resourceInfo = {
-      totalCheckins: results[0].total[0]?.total || 0,
-      ...results[0].checkin[0],
-    };
-    placeInfo = resourceInfo.place;
-  } else if (activity.resourceType === ActivityResourceTypeEnum.USER) {
-    resourceInfo = await User.findById(
-      activity.resourceId,
-      publicReadUserEssentialProjection
-    ).lean();
-    if (activity.placeId) {
-      placeInfo = await Place.findById(
-        activity.placeId,
-        readPlaceDetailProjection
+      resourceInfo = {
+        totalCheckins: results[0].total[0]?.total || 0,
+        ...results[0].checkin[0],
+      };
+      placeInfo = resourceInfo.place;
+      break;
+    case ActivityResourceTypeEnum.USER:
+      resourceInfo = await User.findById(
+        activity.resourceId,
+        publicReadUserEssentialProjection
       ).lean();
-    }
-  } else if (activity.resourceType === ActivityResourceTypeEnum.ACHIEVEMET) {
-    resourceInfo = await Achievement.findById(activity.resourceId);
-    if (activity.placeId) {
-      placeInfo = await Place.findById(
-        activity.placeId,
-        readPlaceDetailProjection
-      ).lean();
-    }
+      if (activity.placeId) {
+        placeInfo = await Place.findById(
+          activity.placeId,
+          readPlaceDetailProjection
+        ).lean();
+      }
+      break;
+    case ActivityResourceTypeEnum.ACHIEVEMET:
+      resourceInfo = await Achievement.findById(activity.resourceId).lean();
+      if (activity.placeId) {
+        placeInfo = await Place.findById(
+          activity.placeId,
+          readPlaceDetailProjection
+        ).lean();
+      }
+      break;
+    default:
+      break;
   }
 
   // Fix place location format
-  if (placeInfo) {
-    if (placeInfo.location?.geoLocation?.coordinates) {
-      placeInfo.location.geoLocation = {
-        lng: placeInfo.location.geoLocation.coordinates[0],
-        lat: placeInfo.location.geoLocation.coordinates[1],
-      };
-    }
+  if (placeInfo && placeInfo.location?.geoLocation?.coordinates) {
+    placeInfo.location.geoLocation = {
+      lng: placeInfo.location.geoLocation.coordinates[0],
+      lat: placeInfo.location.geoLocation.coordinates[1],
+    };
   }
 
   return [resourceInfo, placeInfo, userInfo];
@@ -610,22 +622,14 @@ export const getUserFeed = async (
   limit: number
 ) => {
   try {
-    const followings: IFollow[] = await Follow.find(
-      {
-        user: userId,
-      },
-      {
-        target: 1,
-      }
-    ).lean();
-
-    const blocked: IBlock[] = await Block.find({
-      target: userId,
-    }).lean();
-
     const skip = (page - 1) * limit;
 
     const activities = [];
+
+    const [followings, blocked] = await Promise.all([
+      Follow.find({ user: userId }, { target: 1 }).lean(),
+      Block.find({ target: userId }).lean(),
+    ]);
 
     let query: FilterQuery<any> = {};
 
@@ -633,7 +637,7 @@ export const getUserFeed = async (
       // For You activities
       query = {
         userId: {
-          $nin: blocked.map((b: IBlock) => b.user),
+          $nin: blocked.map((b) => b.user),
         },
         hasMedia: true,
         // Either should be public or it should be followed by the viewer or be the viewer's itself
@@ -642,7 +646,7 @@ export const getUserFeed = async (
           {
             userId: {
               $in: [
-                ...followings.map((f: IFollow) => f.target),
+                ...followings.map((f) => f.target),
                 new mongoose.Types.ObjectId(userId),
               ],
             },
@@ -653,17 +657,18 @@ export const getUserFeed = async (
       // Following users' activities
       query = {
         userId: {
-          $nin: blocked.map((b: IBlock) => b.user),
+          $nin: blocked.map((b) => b.user),
           $in: [
-            ...followings.map((f: IFollow) => f.target),
+            ...followings.map((f) => f.target),
             new mongoose.Types.ObjectId(userId),
           ],
         },
       };
     }
 
-    let sortBy: { [key: string]: SortOrder } = { createdAt: -1 };
-    if (isForYou) sortBy = { hotnessScore: -1 };
+    const sortBy: { [key: string]: SortOrder } = isForYou
+      ? { hotnessScore: -1 }
+      : { createdAt: -1 };
 
     const userActivities = await UserActivity.find(query)
       .sort(sortBy)
@@ -671,10 +676,11 @@ export const getUserFeed = async (
       .limit(limit)
       .lean();
 
-    for (const _act of userActivities) {
+    for (const activity of userActivities) {
       const [resourceInfo, placeInfo, userInfo] = await getResourceInfo(
-        _act as IUserActivity
+        activity as IUserActivity
       );
+
       if (!resourceInfo) continue;
 
       // const seen: IActivitySeen | null = await ActivitySeen.findOne(
@@ -698,103 +704,31 @@ export const getUserFeed = async (
 
       // const weight = seen ? seen.weight + 1 : 1;
 
-      const reactions = await Reaction.aggregate([
-        {
-          $match: {
-            target: _act._id,
-          },
-        },
-        {
-          $facet: {
-            total: [
-              {
-                $group: {
-                  _id: "$reaction",
-                  count: { $sum: 1 },
-                  type: { $first: "$type" },
-                },
-              },
-              {
-                $project: {
-                  _id: 0,
-                  reaction: "$_id",
-                  type: 1,
-                  count: 1,
-                },
-              },
-            ],
-            user: [
-              {
-                $match: {
-                  user: new mongoose.Types.ObjectId(userId),
-                },
-              },
-              {
-                $project: {
-                  _id: 1,
-                  type: 1,
-                  reaction: 1,
-                  createdAt: 1,
-                },
-              },
-            ],
-          },
-        },
+      const [reactions, comments, commentsCount] = await Promise.all([
+        getReactionsOfActivity(
+          activity._id as mongoose.Types.ObjectId,
+          new mongoose.Types.ObjectId(userId)
+        ),
+        getCommentsOfActivity(
+          activity._id as mongoose.Types.ObjectId,
+          new mongoose.Types.ObjectId(userId)
+        ),
+        Comment.countDocuments({
+          userActivity: activity._id,
+        }),
       ]);
-
-      const comments = await Comment.aggregate([
-        {
-          $match: {
-            userActivity: _act._id,
-          },
-        },
-        {
-          $limit: 3,
-        },
-        {
-          $lookup: {
-            from: "users",
-            localField: "author",
-            foreignField: "_id",
-            as: "author",
-            pipeline: [
-              {
-                $project: publicReadUserEssentialProjection,
-              },
-            ],
-          },
-        },
-        {
-          $project: {
-            _id: 1,
-            createdAt: 1,
-            updatedAt: 1,
-            content: 1,
-            mentions: 1,
-            author: { $arrayElemAt: ["$author", 0] },
-            likes: { $size: "$likes" },
-            liked: {
-              $in: [new mongoose.Types.ObjectId(userId), "$likes"],
-            },
-          },
-        },
-      ]);
-
-      const commentsCount = await Comment.countDocuments({
-        userActivity: _act._id,
-      });
 
       activities.push({
-        _id: _act._id,
-        id: _act._id, // TODO: remove this after client update
+        _id: activity._id,
+        id: activity._id, // TODO: remove this after client update
         user: userInfo,
         place: placeInfo,
-        activityType: _act.activityType,
-        resourceType: _act.resourceType,
+        activityType: activity.activityType,
+        resourceType: activity.resourceType,
         resource: resourceInfo,
-        privacyType: _act.privacyType,
-        createdAt: _act.createdAt,
-        updatedAt: _act.updatedAt,
+        privacyType: activity.privacyType,
+        createdAt: activity.createdAt,
+        updatedAt: activity.updatedAt,
         reactions: reactions[0],
         comments: comments,
         commentsCount,

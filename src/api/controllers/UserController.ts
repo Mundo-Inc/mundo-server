@@ -551,10 +551,13 @@ export async function getUser(req: Request, res: Response, next: NextFunction) {
       createdAt: -1,
     });
 
-    const followersCount = await Follow.countDocuments({ target: id });
-    const followingCount = await Follow.countDocuments({ user: id });
-    const reviewsCount = await Review.countDocuments({ writer: id });
-    const totalCheckins = await CheckIn.countDocuments({ user: id });
+    const [followersCount, followingCount, reviewsCount, totalCheckins] =
+      await Promise.all([
+        Follow.countDocuments({ target: id }),
+        Follow.countDocuments({ user: id }),
+        Review.countDocuments({ writer: id }),
+        CheckIn.countDocuments({ user: id }),
+      ]);
 
     let prevLevelXp = 0;
     if (user.progress.level > 1) {
