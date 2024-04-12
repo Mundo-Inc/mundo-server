@@ -95,6 +95,11 @@ export async function getFeed(req: Request, res: Response, next: NextFunction) {
     });
 
     result.forEach((activity) => {
+      // TODO: remove next line after updating client
+      if (activity.activityType === "ChechIn") {
+        activity.activityType = "Checkin";
+      }
+
       const userId = activity.user._id.toString();
       activity.user.connectionStatus = usersObject[userId];
 
@@ -190,7 +195,11 @@ export async function getActivity(
         id: activity._id,
         user: userInfo,
         place: placeInfo,
-        activityType: activity.activityType,
+        // TODO: remove check in next line after updating client
+        activityType:
+          activity.activityType === "CheckIn"
+            ? "Checkin"
+            : activity.activityType,
         resourceType: activity.resourceType,
         resource: resourceInfo,
         privacyType: activity.privacyType,
