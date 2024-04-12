@@ -1,11 +1,21 @@
-import { body, ValidationChain } from "express-validator";
-import User, { IUser } from "../../models/User";
 import { NextFunction, Request, Response } from "express";
-import { handleInputErrors } from "../../utilities/errorHandlers";
+import { body, ValidationChain } from "express-validator";
 import Stripe from "stripe";
-import { StatusCodes } from "http-status-codes";
+import User, { IUser } from "../../models/User";
+import { handleInputErrors } from "../../utilities/errorHandlers";
 
-const stripe = new Stripe("your_stripe_secret_key_here");
+let stripe: Stripe;
+if (process.env.NODE_ENV === "production") {
+  stripe = new Stripe(process.env.STRIPE_SECRET_PROD!);
+} else {
+  stripe = new Stripe(process.env.STRIPE_SECRET_TEST!);
+}
+
+async function createStripeCustomer(user: IUser) {
+  return stripe.customers.create({
+    email: user.email.address,
+  });
+}
 
 export const addOrUpdatePaymentMethodValidation: ValidationChain[] = [
   body("paymentMethodId").isString(),
@@ -51,8 +61,57 @@ export async function addOrUpdatePaymentMethod(
   }
 }
 
-async function createStripeCustomer(user: IUser) {
-  return stripe.customers.create({
-    email: user.email.address,
-  });
+export const addOrUpdatePayoutMethodValidation: ValidationChain[] = [
+  body("bankAccountToken").isString(),
+];
+
+export async function addOrUpdatePayoutMethod(
+  req: Request,
+  res: Response,
+  next: NextFunction
+) {
+  try {
+    handleInputErrors(req);
+
+    const { id: authId } = req.user!;
+
+    const { bankAccountToken } = req.body; // Frontend should send a bank account token
+
+    let user = (await User.findById(authId)) as IUser;
+
+    if (!user) {
+      return res.status(404).send("User not found.");
+    }
+
+    let accountId;
+    // Check if the user already has a Stripe Connect account
+    if (!user.stripe.connectAccountId) {
+      const account = await stripe.accounts.create({
+        type: "express", // or 'standard', depending on your needs
+        email: user.email.address,
+        capabilities: {
+          transfers: { requested: true },
+        },
+      });
+      accountId = account.id;
+      // Save the Connect Account ID to the user's profile
+      user.stripe.connectAccountId = accountId;
+      await user.save();
+    } else {
+      accountId = user.stripe.connectAccountId;
+    }
+
+    // Add or update the bank account information for the Stripe Connect account
+    const bankAccount = await stripe.accounts.createExternalAccount(accountId, {
+      external_account: bankAccountToken,
+    });
+
+    res.send({
+      success: true,
+      message: "Payout method updated successfully.",
+      bankAccount,
+    });
+  } catch (error) {
+    next(error);
+  }
 }
