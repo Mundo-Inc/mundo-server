@@ -152,6 +152,10 @@ export async function getFlags(
           ]);
         case "Comment":
           await flag.populate("target.author", privateReadUserProjection);
+        case "CheckIn":
+          await flag.populate("target.user", privateReadUserProjection);
+        case "Homemade":
+          await flag.populate("target.user", privateReadUserProjection);
         default:
           break;
       }

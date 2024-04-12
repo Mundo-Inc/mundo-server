@@ -100,7 +100,6 @@ export async function createFlag(
       throw createError("No target provided", StatusCodes.BAD_REQUEST);
     }
 
-    console.log("target", target, targetType);
     const newFlag = await Flag.create({
       user: authId,
       target: target,
@@ -109,16 +108,16 @@ export async function createFlag(
       note,
     });
 
-    // try {
-    //   sendSlackMessage(
-    //     "phantomAssistant",
-    //     `${targetType} flagged!\nType: ${flagType}\nNote: ${note}`
-    //   );
-    // } catch (error) {
-    //   logger.error("Error sending slack message", { error });
-    // }
+    try {
+      sendSlackMessage(
+        "phantomAssistant",
+        `${targetType} flagged!\nType: ${flagType}\nNote: ${note}`
+      );
+    } catch (error) {
+      logger.error("Error sending slack message", { error });
+    }
 
-    res.status(StatusCodes.CREATED).json({ success: true, data: "newFlag" }); // Send the ID of the created list as response
+    res.status(StatusCodes.CREATED).json({ success: true, data: newFlag }); // Send the ID of the created list as response
   } catch (err) {
     next(err);
   }
