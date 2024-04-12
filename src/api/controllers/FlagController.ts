@@ -18,7 +18,7 @@ export const createFlagValidation: ValidationChain[] = [
   body("review").optional().isMongoId(),
   body("comment").optional().isMongoId(),
   body("homemade").optional().isMongoId(),
-  body("checkin").optional().isMongoId(),
+  body("checkIn").optional().isMongoId(),
 
   body("flagType").isIn(Object.keys(FlagTypeEnum)),
   body("note").optional().isString(),
@@ -33,7 +33,7 @@ export async function createFlag(
     handleInputErrors(req);
 
     const { id: authId } = req.user!;
-    const { flagType, note, activity, review, comment, homemade, checkin } =
+    const { flagType, note, activity, review, comment, homemade, checkIn } =
       req.body;
 
     let target: string, targetType: string;
@@ -86,15 +86,15 @@ export async function createFlag(
       }
       target = homemade;
       targetType = "Homemade";
-    } else if (checkin) {
-      const checkinExists = await CheckIn.exists({ _id: checkin });
+    } else if (checkIn) {
+      const checkinExists = await CheckIn.exists({ _id: checkIn });
       if (!checkinExists) {
         throw createError(
           dynamicMessage(dStrings.notFound, "CheckIn"),
           StatusCodes.NOT_FOUND
         );
       }
-      target = checkin;
+      target = checkIn;
       targetType = "CheckIn";
     } else {
       throw createError("No target provided", StatusCodes.BAD_REQUEST);
