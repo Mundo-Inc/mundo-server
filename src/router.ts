@@ -5,6 +5,7 @@ import adminRouter from "./api/v1/adminRouter";
 import authRouter from "./api/v1/authRouter";
 import checkinRouter from "./api/v1/checkinRouter";
 import commentRouter from "./api/v1/commentRouter";
+import conversationRouter from "./api/v1/conversationRouter";
 import devRouter from "./api/v1/devRouter";
 import eventRouter from "./api/v1/eventRouter";
 import feedRouter from "./api/v1/feedRouter";
@@ -21,7 +22,7 @@ import reviewRouter from "./api/v1/reviewRouter";
 import rewardRouter from "./api/v1/rewardRouter";
 import uploadRouter from "./api/v1/uploadRouter";
 import userRouter from "./api/v1/userRouter";
-import conversationRouter from "./api/v1/conversationRouter";
+import webhookRouter from "./api/v1/webhookRouter";
 
 const router = express.Router();
 
@@ -47,5 +48,6 @@ router.use("/rewards", rewardRouter);
 router.use("/dev", devRouter);
 router.use("/admin", adminRouter);
 router.use("/conversations", conversationRouter);
+router.use("/webhooks", webhookRouter);
 
 export default router;
