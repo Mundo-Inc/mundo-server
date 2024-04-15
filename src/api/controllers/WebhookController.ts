@@ -93,6 +93,14 @@ export async function conversationsWebhook(
                 link: `chat/${ConversationSid}`,
                 contextId: `chat/${ConversationSid}`,
               },
+              apns: {
+                payload: {
+                  aps: {
+                    "mutable-content": 1,
+                    sound: "default",
+                  },
+                },
+              },
             },
             user: u.user,
           }))
