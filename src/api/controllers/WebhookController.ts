@@ -90,7 +90,8 @@ export async function conversationsWebhook(
                 body: Body || "New message",
               },
               data: {
-                link: `/chat/${ConversationSid}`,
+                link: `chat/${ConversationSid}`,
+                contextId: `chat/${ConversationSid}`,
               },
             },
             user: u.user,
