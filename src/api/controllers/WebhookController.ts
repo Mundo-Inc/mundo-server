@@ -10,7 +10,9 @@ import { createError, handleInputErrors } from "../../utilities/errorHandlers";
 import logger from "../services/logger";
 import { NotificationsService } from "../services/notifications.service";
 
-export const conversationsWebhookValidator: ValidationChain[] = [];
+const twilioAuthToken = process.env.TWILIO_AUTH_TOKEN!;
+const twilioWebhookURL = process.env.TWILIO_WEBHOOK_URL!;
+
 export async function conversationsWebhook(
   req: Request,
   res: Response,
@@ -20,25 +22,22 @@ export async function conversationsWebhook(
     handleInputErrors(req);
 
     const twilioSignature = req.headers["x-twilio-signature"] as string;
-    const twilioAuthToken = process.env.TWILIO_AUTH_TOKEN!;
 
-    if (!twilioSignature || !twilioAuthToken) {
+    if (!twilioSignature) {
       throw createError(
-        "Access denied. Missing Twilio signature or auth token.",
+        "Access denied. Missing Twilio signature.",
         StatusCodes.UNAUTHORIZED
       );
     }
 
     if (
-      twilio.validateRequest(
+      !twilio.validateRequest(
         twilioAuthToken,
         twilioSignature,
-        "https://8dbd-88-243-151-148.ngrok-free.app/api/v1/webhooks/conversations",
+        twilioWebhookURL,
         req.body
       )
     ) {
-      console.log("Here");
-    } else {
       throw createError(
         "Access denied. Invalid Twilio signature.",
         StatusCodes.UNAUTHORIZED
