@@ -622,10 +622,6 @@ export async function getUser(req: Request, res: Response, next: NextFunction) {
 
     if (view === "contextual") {
       result.connectionStatus = connectionStatus;
-
-      // TODO: remove this after the client is updated
-      result.isFollower = connectionStatus.followsUser;
-      result.isFollowing = connectionStatus.followedByUser;
     }
 
     res.status(StatusCodes.OK).json({ success: true, data: result });

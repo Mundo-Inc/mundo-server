@@ -720,7 +720,6 @@ export const getUserFeed = async (
 
       activities.push({
         _id: activity._id,
-        id: activity._id, // TODO: remove this after client update
         user: userInfo,
         place: placeInfo,
         activityType: activity.activityType,

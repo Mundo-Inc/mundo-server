@@ -103,15 +103,10 @@ export async function getActivitiesOfaUser(
 
       result.push({
         _id: activity._id,
-        id: activity._id,
         user: userInfo,
         place: placeInfo,
         activityType: activity.activityType,
-        // TODO: remove check in next line after client update
-        resourceType:
-          activity.resourceType === "CheckIn"
-            ? "Checkin"
-            : activity.resourceType,
+        resourceType: activity.resourceType,
         resource: resourceInfo,
         privacyType: activity.privacyType,
         createdAt: activity.createdAt,
