@@ -136,6 +136,7 @@ export async function createList(
 ) {
   try {
     handleInputErrors(req);
+
     const { id: authId } = req.user!;
     const {
       name,
@@ -145,7 +146,7 @@ export async function createList(
       isPrivate = false,
     } = req.body;
 
-    let newList: IList = new List({
+    let newList = await List.create({
       name,
       owner,
       collaborators,
@@ -153,13 +154,10 @@ export async function createList(
       isPrivate,
     });
 
-    await newList.save();
-
-    await newList.populate("owner", publicReadUserEssentialProjection);
-    await newList.populate(
-      "collaborators.user",
-      publicReadUserEssentialProjection
-    );
+    await Promise.all([
+      newList.populate("owner", publicReadUserEssentialProjection),
+      newList.populate("collaborators.user", publicReadUserEssentialProjection),
+    ]);
 
     newList = newList.toObject();
 
@@ -273,7 +271,7 @@ export async function editList(
 
     return res.status(StatusCodes.OK).json({
       success: true,
-      list: {
+      data: {
         _id: editedList._id,
         name: editedList.name,
         owner: editedList.owner,
@@ -335,15 +333,20 @@ export async function addToList(
       );
     }
 
-    if (list.places)
+    if (list.places) {
       list.places.push({
         place: placeId as any,
         user: authId as any,
         createdAt: new Date(),
       });
+    }
 
     await list.save();
-    return res.status(StatusCodes.OK).json({ list });
+
+    return res.status(StatusCodes.OK).json({
+      success: true,
+      data: list,
+    });
   } catch (err) {
     next(err);
   }
@@ -361,9 +364,11 @@ export async function removeFromList(
 ) {
   try {
     handleInputErrors(req);
+
     const { id, placeId } = req.params;
     const { id: authId } = req.user!;
-    const list = (await List.findById(id)) as IList;
+
+    const list: IList | null = await List.findById(id);
 
     if (!list) {
       throw createError(
@@ -395,12 +400,14 @@ export async function removeFromList(
       );
     }
 
-    if (list.places)
+    if (list.places) {
       list.places = list.places.filter((place) => {
         return place.place.toString() !== placeId;
       });
+    }
 
     await list.save();
+
     return res.sendStatus(StatusCodes.NO_CONTENT);
   } catch (err) {
     next(err);
@@ -420,11 +427,12 @@ export async function addCollaborator(
 ) {
   try {
     handleInputErrors(req);
+
     const { id, userId } = req.params;
     const { id: authId } = req.user!;
     const { access } = req.body;
 
-    const list = (await List.findById(id)) as IList;
+    const list: IList | null = await List.findById(id);
 
     if (!list) {
       throw createError(
@@ -457,7 +465,11 @@ export async function addCollaborator(
     });
 
     await list.save();
-    return res.status(StatusCodes.OK).json({ list });
+
+    return res.status(StatusCodes.OK).json({
+      success: true,
+      data: list,
+    });
   } catch (err) {
     next(err);
   }
@@ -475,9 +487,11 @@ export async function removeFromCollaborators(
 ) {
   try {
     handleInputErrors(req);
+
     const { id, userId } = req.params;
     const { id: authId } = req.user!;
-    const list = (await List.findById(id)) as IList;
+
+    const list: IList | null = await List.findById(id);
 
     if (!list) {
       throw createError(
@@ -511,12 +525,14 @@ export async function removeFromCollaborators(
       );
     }
 
-    if (list.collaborators)
+    if (list.collaborators) {
       list.collaborators = list.collaborators.filter((collaborator) => {
         return collaborator.user.toString() !== userId;
       });
+    }
 
     await list.save();
+
     return res.sendStatus(StatusCodes.NO_CONTENT);
   } catch (err) {
     next(err);
@@ -536,11 +552,12 @@ export async function editCollaboratorAccess(
 ) {
   try {
     handleInputErrors(req);
+
     const { id, userId } = req.params;
     const { id: authId } = req.user!;
     const { access } = req.body;
 
-    const list = (await List.findById(id)) as IList;
+    const list: IList | null = await List.findById(id);
 
     if (!list) {
       throw createError(
@@ -576,34 +593,10 @@ export async function editCollaboratorAccess(
     list.collaborators[collaboratorIndex].access = access;
 
     await list.save();
+
     return res.sendStatus(StatusCodes.NO_CONTENT);
   } catch (err) {
     next(err);
-  }
-}
-
-export const checkPlaceInUserListsValidation: ValidationChain[] = [
-  param("placeId").isMongoId(),
-];
-
-export async function checkPlaceInUserLists(
-  req: Request,
-  res: Response,
-  next: NextFunction
-) {
-  try {
-    handleInputErrors(req);
-    const { id: authId } = req.user!;
-    const placeId = req.params.placeId;
-
-    const lists = await List.find({
-      "places.place": placeId,
-      owner: authId,
-    }).lean();
-
-    res.json(lists);
-  } catch (error) {
-    next(error);
   }
 }
 
@@ -617,6 +610,7 @@ export async function getUserLists(
 ) {
   try {
     handleInputErrors(req);
+
     const { id: authId } = req.user!; //person who wants to see the lists
     const { id } = req.params; // person who has the lists (or collaborates in)
 
