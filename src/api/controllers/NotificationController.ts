@@ -22,12 +22,10 @@ async function handleResourceNotFound(notification: INotification) {
 
 async function getNotificationContent(notification: INotification) {
   let user = undefined;
-  let title = "Phantom Phood";
-  let subtitle = undefined;
-  let content = undefined;
-  let image = undefined;
-  let activity = undefined;
-  let error = false;
+  let title: string | undefined = undefined;
+  let content: string | undefined = undefined;
+  let image: string | undefined = undefined;
+  let activity: string | undefined = undefined;
 
   switch (notification.type) {
     case NotificationTypeEnum.COMMENT:
@@ -39,12 +37,9 @@ async function getNotificationContent(notification: INotification) {
         .then((comment) => {
           if (!comment) {
             handleResourceNotFound(notification);
-            error = true;
           } else {
             user = comment.author;
-            image = comment.author.profileImage;
-            title = comment.author.name;
-            subtitle = "Commented on your activity";
+            title = "Commented on your activity";
             content = comment.content;
             activity = comment.userActivity;
           }
@@ -52,7 +47,6 @@ async function getNotificationContent(notification: INotification) {
       break;
     case NotificationTypeEnum.FOLLOW:
       await Follow.findById(notification.resources![0]._id)
-        // .populate("user")
         .populate({
           path: "user",
           select: publicReadUserEssentialProjection,
@@ -60,12 +54,9 @@ async function getNotificationContent(notification: INotification) {
         .then((follow) => {
           if (!follow) {
             handleResourceNotFound(notification);
-            error = true;
           } else {
             user = follow.user;
-            image = follow.user.profileImage;
-            title = follow.user.name;
-            content = "Started following you.";
+            title = "Started following you";
           }
         });
       break;
@@ -78,12 +69,9 @@ async function getNotificationContent(notification: INotification) {
         .then((comment) => {
           if (!comment) {
             handleResourceNotFound(notification);
-            error = true;
           } else {
             user = comment.author;
-            title = comment.author.name;
-            image = comment.author.profileImage;
-            subtitle = "Mentioned you in a comment.";
+            title = "Mentioned you in a comment.";
             content = comment.content;
             activity = comment.userActivity;
           }
@@ -98,30 +86,24 @@ async function getNotificationContent(notification: INotification) {
         .then((reaction) => {
           if (!reaction) {
             handleResourceNotFound(notification);
-            error = true;
           } else {
             user = reaction.user;
-            title = reaction.user.name;
-            activity = reaction.target;
             if (reaction.type === "emoji") {
-              content = `Reacted with ${reaction.reaction} to your activity.`;
+              title = `Reacted with ${reaction.reaction} to your activity.`;
             } else {
-              content = "Added an special reaction to your activity.";
+              title = "Added an special reaction to your activity.";
             }
+            activity = reaction.target;
           }
         });
       break;
     case NotificationTypeEnum.XP:
-      title = "XP Gain!";
-      content = `You gained ${notification.content} XP.`;
-      image = "XPGain";
-      user = null;
+      title = "XP Gain";
+      content = `+ ${notification.content}`;
       break;
     case NotificationTypeEnum.LEVEL_UP:
       title = "Level Up!";
-      content = `You reached level ${notification.content}!`;
-      image = "LevelUp";
-      user = null;
+      content = `You've reached level ${notification.content}!`;
       break;
     case NotificationTypeEnum.FOLLOWING_REVIEW:
       await Review.findById(notification.resources![0]._id)
@@ -133,17 +115,25 @@ async function getNotificationContent(notification: INotification) {
         .then((review) => {
           if (!review) {
             handleResourceNotFound(notification);
-            error = true;
           } else {
-            title = review.writer.name;
             user = review.writer;
-            image = review.writer.profileImage;
-            content = `${review.writer.name} reviewed ${review.place.name}`;
+            title = `Reviewed ${review.place.name}`;
             if (review.scores && review.scores.overall) {
-              content = `${review.writer.name} rated ${review.place.name} ${review.scores.overall}/5⭐️`;
+              content = `${review.scores.overall}/5⭐️ - ${
+                review.content.length > 30
+                  ? review.content.slice(0, 27) + "..."
+                  : review.content
+              }`;
+            } else if (review.content && review.content.length > 0) {
+              content = `${
+                review.content.length > 30
+                  ? review.content.slice(0, 27) + "..."
+                  : review.content
+              }`;
+            } else {
+              content = `${review.writer.name} reviewed ${review.place.name}`;
             }
             activity = review.userActivityId;
-            subtitle = review.content;
           }
         });
       break;
@@ -156,14 +146,10 @@ async function getNotificationContent(notification: INotification) {
         .then((homemade) => {
           if (!homemade) {
             handleResourceNotFound(notification);
-            error = true;
           } else {
-            title = homemade.userId.name;
             user = homemade.userId;
-            image = homemade.userId.profileImage;
-            content = `${homemade.userId.name} has posted`;
+            title = "Posted a new homemade recipe";
             activity = homemade.userActivityId;
-            subtitle = homemade.content;
           }
         });
       break;
@@ -173,16 +159,13 @@ async function getNotificationContent(notification: INotification) {
           path: "user",
           select: publicReadUserEssentialProjection,
         })
-        .populate("place")
+        .populate("place", "name")
         .then((checkin) => {
           if (!checkin) {
             handleResourceNotFound(notification);
-            error = true;
           }
-          title = checkin.user.name;
           user = checkin.user;
-          image = checkin.user.profileImage;
-          content = `${checkin.user.name} checked into ${checkin.place.name}`;
+          title = `Checked into ${checkin.place.name}`;
           activity = checkin.userActivityId;
         });
       break;
@@ -190,23 +173,21 @@ async function getNotificationContent(notification: INotification) {
       title = "Referral Reward";
       const friendName =
         "(" + notification.additionalData?.newUserName + ") " || "";
-      content =
-        `Congratulations! You've been credited with ${
-          notification.additionalData?.amount || 250
-        } Phantom Coins for successfully referring your frined ` +
-        friendName +
-        `to our app. Thanks for sharing!`;
+      content = `Congratulations! You've been credited with ${
+        notification.additionalData?.amount || 250
+      } Phantom Coins for successfully referring your frined ${friendName} to our app. Thanks for sharing!`;
       break;
     default:
       break;
   }
-  return { title, content, subtitle, image, user, activity, error };
+  return { user, title, content, image, activity };
 }
 
 export const getNotificationsValidation: ValidationChain[] = [
   validate.page(query("page").optional()),
   validate.limit(query("limit").optional(), 10, 50),
   query("unread").optional().isBoolean(),
+  query("v").optional().isNumeric(),
 ];
 export async function getNotifications(
   req: Request,
@@ -219,9 +200,10 @@ export async function getNotifications(
     const { id: authId } = req.user!;
 
     const { unread } = req.query;
-    const limit = Number(req.query.limit) || 10;
-    const page = Number(req.query.page) || 1;
+    const limit = parseInt(req.query.limit as string) || 10;
+    const page = parseInt(req.query.page as string) || 1;
     const skip = (page - 1) * limit;
+    const v = parseInt(req.query.v as string) || 1;
 
     const matchPipeline: any[] = [
       {
@@ -239,7 +221,7 @@ export async function getNotifications(
       });
     }
 
-    const notifications = await Notification.aggregate([
+    const result = await Notification.aggregate([
       ...matchPipeline,
       {
         $sort: {
@@ -272,62 +254,56 @@ export async function getNotifications(
           total: "$total.total",
         },
       },
-    ]);
+    ]).then((result) => result[0]);
 
-    if (notifications.length > 0 && notifications[0].notifications.length > 0) {
-      for (const notification of notifications[0].notifications) {
-        const { content, title, subtitle, user, image, activity, error } =
+    if (result && result.notifications.length > 0) {
+      for (const notification of result.notifications) {
+        const { user, title, content, image, activity } =
           await getNotificationContent(notification);
-        if (error) {
-          notification.error = true;
-          continue;
-        }
+
         if (user) {
           notification.user = user;
         } else {
           delete notification.user;
         }
-        if (image) {
-          notification.image = image;
-        }
         if (content) {
           notification.content = content;
-        }
-        if (subtitle) {
-          notification.subtitle = subtitle;
         }
         if (title) {
           notification.title = title;
         }
+        if (image) {
+          notification.image = image;
+        }
         if (activity) {
           notification.activity = activity;
         }
+
+        // TODO: Remove after the client is updated
+        if (!notification.content && notification.title) {
+          notification.content = notification.title;
+        }
       }
 
-      notifications[0].notifications = notifications[0].notifications.filter(
-        (
-          n: INotification & {
-            error?: boolean;
-          }
-        ) => !n.error
+      result.notifications = result.notifications.filter(
+        (n: { content?: string; title?: string }) =>
+          (n.content && n.content.length > 0) || (n.title && n.title.length > 0)
       );
     }
 
     res.status(StatusCodes.OK).json({
       success: true,
+      // TODO: Remove extra checks after the client is updated
       data:
-        notifications.length > 0
-          ? notifications[0]
-          : {
-              notifications: [],
-              total: 0,
-            },
-      hasMore:
-        notifications.length > 0
-          ? notifications[0].total > page * limit
-          : false,
+        v === 2
+          ? result?.notifications || []
+          : result
+          ? result
+          : { notifications: [], total: 0 },
+      // TODO: Remove hasMore after the client is updated
+      hasMore: result && result.total > page * limit,
       pagination: {
-        totalCount: notifications.length > 0 ? notifications[0].total : 0,
+        totalCount: result ? result.total : 0,
         page: page,
         limit: limit,
       },
