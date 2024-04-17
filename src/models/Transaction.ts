@@ -6,7 +6,7 @@ interface ITransaction extends Document {
   totalAmount: Number;
   sender: mongoose.Types.ObjectId;
   receiver: mongoose.Types.ObjectId;
-  chargeId: string;
+  paymentIntentId: string;
   createdAt: Date;
 }
 
@@ -20,7 +20,7 @@ const TransactionSchema: Schema = new Schema<ITransaction>({
     ref: "User",
     required: true,
   },
-  chargeId: { type: String, required: true },
+  paymentIntentId: { type: String, required: true },
   createdAt: { type: Date, default: Date.now },
 });
 

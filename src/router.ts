@@ -23,6 +23,7 @@ import rewardRouter from "./api/v1/rewardRouter";
 import uploadRouter from "./api/v1/uploadRouter";
 import userRouter from "./api/v1/userRouter";
 import webhookRouter from "./api/v1/webhookRouter";
+import transactionRouter from "./api/v1/transactionRouter";
 
 const router = express.Router();
 
@@ -49,5 +50,6 @@ router.use("/dev", devRouter);
 router.use("/admin", adminRouter);
 router.use("/conversations", conversationRouter);
 router.use("/webhooks", webhookRouter);
+router.use("/transactions", transactionRouter);
 
 export default router;

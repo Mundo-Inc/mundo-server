@@ -71,12 +71,34 @@ export async function getPaymentMethod(
   try {
     handleInputErrors(req);
     const { id: authId } = req.user!;
+
     const user = await User.findById(authId);
+    if (!user || !user.stripe.paymentMethod) {
+      return res
+        .status(404)
+        .json({ success: false, message: "No payment method found." });
+    }
+
+    // Retrieve the payment method details from Stripe
+    const paymentMethod = await stripe.paymentMethods.retrieve(
+      user.stripe.paymentMethod
+    );
+
+    // Extract relevant details to return
+    const paymentMethodDetails = {
+      type: paymentMethod.type,
+      last4: paymentMethod.card?.last4, // Assuming it's a card; adjust accordingly for other types
+      brand: paymentMethod.card?.brand,
+      exp_month: paymentMethod.card?.exp_month,
+      exp_year: paymentMethod.card?.exp_year,
+    };
+
     res.json({
       success: true,
-      data: { paymentMethod: user.stripe.paymentMethod },
+      data: { paymentMethod: paymentMethodDetails },
     });
   } catch (error) {
+    console.error("Failed to retrieve payment method:", error);
     next(error);
   }
 }
@@ -148,37 +170,41 @@ export async function sendGift(
   const { amount, receiverId } = req.body;
 
   try {
-    const sender = (await User.findById(authId)) as IUser;
-    const receiver = (await User.findById(receiverId)) as IUser;
+    const sender = await User.findById(authId);
+    const receiver = await User.findById(receiverId);
 
     if (!sender || !receiver) {
       throw createError("Sender or receiver not found", NOT_FOUND);
     }
 
-    // Check if sender has a registered payment method
-    if (!sender.stripe.paymentMethod) {
+    if (!sender.stripe.paymentMethod || !sender.stripe.customerId) {
       throw createError(
         "No payment method found. Please add a payment method before sending a gift.",
         BAD_REQUEST
       );
     }
 
-    // Calculate service fee and total amount
     const serviceFee = amount * SERVICE_FEE_RATIO; // Assuming a 5% service fee
     const totalAmount = amount + serviceFee;
 
-    if (!sender.stripe.paymentMethod) {
-    }
-
-    const charge = await stripe.charges.create({
-      amount: totalAmount * 100, // in cents
+    const paymentIntent = await stripe.paymentIntents.create({
+      amount: Math.round(totalAmount * 100), // convert amount to cents
       currency: "usd",
-      source: sender.stripe.paymentMethod, // Assuming the sender has a saved Stripe payment method ID
+      payment_method: sender.stripe.paymentMethod,
+      customer: sender.stripe.customerId, // Include the customer ID here
+      confirm: true, // Automatically confirm the payment
       description: `Gift transaction from ${sender._id} to ${receiver._id}`,
+      transfer_data: {
+        destination: receiver.stripe.accountId,
+      },
+      automatic_payment_methods: {
+        enabled: true,
+        allow_redirects: "never",
+      },
     });
 
     // Update receiver's balance
-    receiver.stripe.balance += amount;
+    receiver.stripe.balance += amount; // Ensure this is persisted in your database model
     await receiver.save();
 
     // Log transaction in your database
@@ -188,7 +214,7 @@ export async function sendGift(
       totalAmount,
       sender: sender._id,
       receiver: receiver._id,
-      chargeId: charge.id, // Save the Stripe charge ID for future reference
+      paymentIntentId: paymentIntent.id,
     });
     await transaction.save();
 
@@ -197,6 +223,7 @@ export async function sendGift(
       data: { transaction },
     });
   } catch (error) {
+    console.error("Error during transaction:", error);
     next(error);
   }
 }
