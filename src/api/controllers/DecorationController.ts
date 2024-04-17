@@ -1,18 +1,19 @@
-import { ValidationChain, param } from "express-validator";
+import type { NextFunction, Request, Response } from "express";
+import { param, type ValidationChain } from "express-validator";
+import { StatusCodes } from "http-status-codes";
+
+import {
+  type IProfileCover,
+  type IProfileFrame,
+  ProfileCover,
+  ProfileFrame,
+} from "../../models/ProfileDecoration";
 import ProfileDecorationRedemption, {
   ProfileDecorationEnum,
 } from "../../models/ProfileDecorationRedemption";
-import { NextFunction, Request, Response } from "express";
-import { createError, handleInputErrors } from "../../utilities/errorHandlers";
-import User, { IUser } from "../../models/User";
+import User, { type IUser } from "../../models/User";
 import strings from "../../strings";
-import { StatusCodes } from "http-status-codes";
-import {
-  IProfileCover,
-  IProfileFrame,
-  ProfileFrame,
-} from "../../models/ProfileDecoration";
-import { ProfileCover } from "../../models/ProfileDecoration";
+import { createError, handleInputErrors } from "../../utilities/errorHandlers";
 
 export const getDecorationsValidation: ValidationChain[] = [];
 

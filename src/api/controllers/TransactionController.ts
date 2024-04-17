@@ -1,12 +1,13 @@
 // @ts-nocheck
 
-import { NextFunction, Request, Response } from "express";
-import { body, ValidationChain } from "express-validator";
+import type { NextFunction, Request, Response } from "express";
+import { body, type ValidationChain } from "express-validator";
+import { StatusCodes } from "http-status-codes";
 import Stripe from "stripe";
-import User, { IUser } from "../../models/User";
-import { createError, handleInputErrors } from "../../utilities/errorHandlers";
+
 import Transaction from "../../models/Transaction";
-import { BAD_REQUEST, NOT_FOUND } from "http-status-codes";
+import User, { type IUser } from "../../models/User";
+import { createError, handleInputErrors } from "../../utilities/errorHandlers";
 
 const SERVICE_FEE_RATIO = 0.05;
 
@@ -194,13 +195,13 @@ export async function sendGift(
     const receiver = await User.findById(receiverId);
 
     if (!sender || !receiver) {
-      throw createError("Sender or receiver not found", NOT_FOUND);
+      throw createError("Sender or receiver not found", StatusCodes.NOT_FOUND);
     }
 
     if (!sender.stripe.paymentMethod || !sender.stripe.customerId) {
       throw createError(
         "No payment method found. Please add a payment method before sending a gift.",
-        BAD_REQUEST
+        StatusCodes.BAD_REQUEST
       );
     }
 
@@ -264,17 +265,20 @@ export async function withdraw(
   try {
     const user = await User.findById(authId);
     if (!user) {
-      throw createError("User not found", BAD_REQUEST);
+      throw createError("User not found", StatusCodes.BAD_REQUEST);
     }
 
     // Ensure the user's balance is sufficient
     if (user.balance < amount) {
-      throw createError("Insufficient Balance", BAD_REQUEST);
+      throw createError("Insufficient Balance", StatusCodes.BAD_REQUEST);
     }
 
     // Check if the user has a Stripe Connect account with a bank account attached
     if (!user.stripe.connectAccountId) {
-      throw createError("Stripe Connect account not configured", BAD_REQUEST);
+      throw createError(
+        "Stripe Connect account not configured",
+        StatusCodes.BAD_REQUEST
+      );
     }
 
     // Retrieve the Stripe Connect account to confirm that it has an external account set up

@@ -280,7 +280,7 @@ export async function getNotifications(
         }
 
         // TODO: Remove after the client is updated
-        if (!notification.content && notification.title) {
+        if (v !== 2 && !notification.content && notification.title) {
           notification.content = notification.title;
         }
       }
