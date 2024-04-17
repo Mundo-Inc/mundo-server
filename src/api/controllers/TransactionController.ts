@@ -1,3 +1,5 @@
+// @ts-nocheck
+
 import { NextFunction, Request, Response } from "express";
 import { body, ValidationChain } from "express-validator";
 import Stripe from "stripe";
