@@ -8,6 +8,10 @@ import {
   getPaymentMethod,
   sendGift,
   sendGiftValidation,
+  updateAccountInformation,
+  updateAccountInformationValidation,
+  withdraw,
+  withdrawValidation,
 } from "../controllers/TransactionController";
 
 const router = express.Router();
@@ -30,5 +34,16 @@ router
     addOrUpdatePayoutMethod
   );
 
+router.route("/withdraw").post(authMiddleware, withdrawValidation, withdraw);
+
 router.route("/gift").post(authMiddleware, sendGiftValidation, sendGift);
+
+router
+  .route("/accountInformation")
+  .post(
+    authMiddleware,
+    updateAccountInformationValidation,
+    updateAccountInformation
+  );
+
 export default router;
