@@ -4,12 +4,10 @@ import {
   addOrUpdatePaymentMethod,
   addOrUpdatePaymentMethodValidation,
   addOrUpdatePayoutMethod,
-  addOrUpdatePayoutMethodValidation,
   getPaymentMethod,
+  onboarding,
   sendGift,
   sendGiftValidation,
-  updateAccountInformation,
-  updateAccountInformationValidation,
   withdraw,
   withdrawValidation,
 } from "../controllers/TransactionController";
@@ -28,22 +26,11 @@ router
 
 router
   .route("/payout-method")
-  .post(
-    authMiddleware,
-    addOrUpdatePayoutMethodValidation,
-    addOrUpdatePayoutMethod
-  );
+  .put(authMiddleware, onboarding)
+  .post(authMiddleware, addOrUpdatePayoutMethod);
 
 router.route("/withdraw").post(authMiddleware, withdrawValidation, withdraw);
 
 router.route("/gift").post(authMiddleware, sendGiftValidation, sendGift);
-
-router
-  .route("/accountInformation")
-  .post(
-    authMiddleware,
-    updateAccountInformationValidation,
-    updateAccountInformation
-  );
 
 export default router;

@@ -1,5 +1,3 @@
-// @ts-nocheck
-
 import type { NextFunction, Request, Response } from "express";
 import { body, type ValidationChain } from "express-validator";
 import { StatusCodes } from "http-status-codes";
@@ -64,8 +62,6 @@ export async function addOrUpdatePaymentMethod(
   }
 }
 
-export const getPaymentMethodValidation: ValidationChain[] = [];
-
 export async function getPaymentMethod(
   req: Request,
   res: Response,
@@ -90,7 +86,7 @@ export async function getPaymentMethod(
     // Extract relevant details to return
     const paymentMethodDetails = {
       type: paymentMethod.type,
-      last4: paymentMethod.card?.last4, // Assuming it's a card; adjust accordingly for other types
+      last4: paymentMethod.card?.last4, //TODO: we assumed that it's a card; adjust accordingly for other types
       brand: paymentMethod.card?.brand,
       exp_month: paymentMethod.card?.exp_month,
       exp_year: paymentMethod.card?.exp_year,
@@ -106,20 +102,13 @@ export async function getPaymentMethod(
   }
 }
 
-export const addOrUpdatePayoutMethodValidation: ValidationChain[] = [
-  body("bankAccountToken").isString(),
-];
-
 export async function addOrUpdatePayoutMethod(
   req: Request,
   res: Response,
   next: NextFunction
 ) {
   try {
-    // Handle input errors first (this function needs to be defined by you or use any existing validation middleware)
     handleInputErrors(req);
-
-    // Extract the authenticated user's ID from the request, assuming authentication middleware sets it
     const { id: authId } = req.user!;
     let user = await User.findById(authId);
 
@@ -129,49 +118,97 @@ export async function addOrUpdatePayoutMethod(
 
     let accountId = user.stripe.connectAccountId;
 
-    // Check if the user already has a Stripe Connect account
     if (!accountId) {
       // Create a new Custom Stripe Connect account
       const account = await stripe.accounts.create({
         type: "custom",
         email: user.email.address,
-        requested_capabilities: ["transfers"],
         business_type: "individual",
-        individual: {
-          email: user.email.address,
-          first_name: user.name.split(" ")[0],
-          last_name: user.name.split(" ")[1] || "",
+        capabilities: {
+          card_payments: { requested: true },
+          transfers: { requested: true },
         },
       });
       accountId = account.id;
-
-      // Save the Connect Account ID to the user's profile
       user.stripe.connectAccountId = accountId;
       await user.save();
     }
 
-    // Assume the bank account token is already created and passed in
-    const { bankAccountToken } = req.body;
+    // Retrieve the account to check for required information
+    const account: Stripe.Account | null = await stripe.accounts.retrieve(
+      accountId
+    );
 
-    if (!bankAccountToken) {
-      return res
-        .status(400)
-        .json({ message: "Bank account token is required" });
+    // Check if there are any requirements pending that prevent payouts
+    if (
+      account.requirements &&
+      account.requirements.currently_due &&
+      account.requirements.eventually_due &&
+      (account.requirements.currently_due.length > 0 ||
+        account.requirements.eventually_due.length > 0)
+    ) {
+      // Generate an account link for onboarding or updating information
+      const accountLink = await stripe.accountLinks.create({
+        account: accountId,
+        refresh_url: "https://www.phantomphood.ai",
+        return_url: "https://www.phantomphood.ai",
+        type: "account_onboarding",
+      });
+
+      // Send the user to complete their account setup
+      return res.status(200).json({
+        success: true,
+        eligible: false,
+        message: "Please complete the required account setup.",
+        url: accountLink.url,
+      });
+    } else {
+      return res.status(200).json({
+        success: true,
+        eligible: true,
+        message:
+          "No additional setup required. Account is fully set up for payouts.",
+      });
     }
-
-    // Add or update the bank account information for the Stripe Connect account
-    const bankAccount = await stripe.accounts.createExternalAccount(accountId, {
-      external_account: bankAccountToken,
-    });
-
-    res.send({
-      success: true,
-      message: "Payout method updated successfully.",
-      bankAccount,
-    });
   } catch (error) {
     console.error("Error in addOrUpdatePayoutMethod:", error);
     next(error); // Passes errors to Express error handling middleware
+  }
+}
+
+export async function onboarding(
+  req: Request,
+  res: Response,
+  next: NextFunction
+) {
+  try {
+    handleInputErrors(req);
+
+    const { id: authId } = req.user!;
+    let user: IUser | null = await User.findById(authId);
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    const accountId = user.stripe.connectAccountId;
+
+    if (!accountId) {
+      throw createError(
+        "Payout-method is not set up for this account, try setting that up first before onboarding",
+        400
+      );
+    }
+
+    const accountLink = await stripe.accountLinks.create({
+      account: accountId,
+      refresh_url: "https://www.phantomphood.ai", // URL to redirect if the link is no longer valid
+      return_url: "https://www.phantomphood.ai", // URL to redirect after the user completes the onboarding
+      type: "account_onboarding",
+    });
+    res.status(200).json({ success: true, data: { url: accountLink.url } });
+  } catch (error) {
+    next(error);
   }
 }
 
@@ -283,25 +320,28 @@ export async function withdraw(
 
     // Retrieve the Stripe Connect account to confirm that it has an external account set up
     try {
-      const account = await stripe.accounts.retrieve(
+      const account: Stripe.Account | null = await stripe.accounts.retrieve(
         user.stripe.connectAccountId
       );
 
-      if (account.requirements.currently_due.length > 0) {
-        console.log(
-          "Requirements currently due:",
-          account.requirements.currently_due
-        );
-      } else if (account.requirements.eventually_due.length > 0) {
-        console.log(
-          "Requirements eventually due:",
-          account.requirements.eventually_due
-        );
-      } else {
-        console.log(
-          "No requirements due. Other issues may be preventing payouts."
+      if (
+        account.requirements &&
+        account.requirements.currently_due &&
+        account.requirements.eventually_due &&
+        (account.requirements.currently_due.length > 0 ||
+          account.requirements.eventually_due.length > 0)
+      ) {
+        throw createError(
+          "Please update your account information to be eligible for the withdrawal",
+          400
         );
       }
+      // Transfer funds to the Connect account, assuming the platform has enough balance
+      const transfer = await stripe.transfers.create({
+        amount: Math.round(amount * 100), // Amount in cents
+        currency: "usd",
+        destination: user.stripe.connectAccountId,
+      });
     } catch (error) {
       console.error("Error retrieving Stripe account details:", error);
     }
@@ -327,7 +367,7 @@ export async function withdraw(
       serviceFee: 0, // Assuming no service fee for withdrawal; adjust if needed
       totalAmount: amount,
       sender: authId, // Assuming the withdrawal deducts from the user's own balance
-      receiver: null, // There is no receiver in a withdrawal
+      receiver: user._id, // There is no receiver in a withdrawal
       paymentIntentId: payout.id, // Use the payout ID for the transaction record
     });
     await transaction.save();
@@ -337,58 +377,6 @@ export async function withdraw(
       data: { payout },
     });
   } catch (error) {
-    next(error);
-  }
-}
-
-export const updateAccountInformationValidation: ValidationChain[] = [];
-
-export async function updateAccountInformation(
-  req: Request,
-  res: Response,
-  next: NextFunction
-) {
-  try {
-    handleInputErrors(req);
-
-    const { id: authId } = req.user!;
-    let user = await User.findById(authId);
-
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
-    }
-
-    const { token, individual, business_profile, tos_acceptance } = req.body;
-
-    const clientIp =
-      req.headers["x-forwarded-for"] || req.connection.remoteAddress;
-    const tosTimestamp = Math.floor(Date.now() / 1000);
-
-    // The tos_acceptance should be provided directly, not nested within 'individual'
-    const updatedIndividual = { ...individual };
-    delete updatedIndividual.tos_acceptance; // Remove tos_acceptance from individual if it's there
-
-    try {
-      const accountUpdate = await stripe.accounts.update(
-        user.stripe.connectAccountId,
-        {
-          external_account: token, // Assuming 'token' is a bank account token (btok_*)
-          individual: updatedIndividual,
-          business_profile: { url: "www.phantomphood.ai" },
-          tos_acceptance: {
-            date: tosTimestamp,
-            ip: clientIp,
-          },
-        }
-      );
-
-      res.json({ success: true, accountUpdate });
-    } catch (error) {
-      console.log(error);
-      res.status(500).json({ success: false, error: error.message });
-    }
-  } catch (error) {
-    console.error("Error in updateAccountInformation:", error);
     next(error);
   }
 }
