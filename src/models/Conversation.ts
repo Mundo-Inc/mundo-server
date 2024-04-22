@@ -1,13 +1,14 @@
 import mongoose, { Schema, type Document } from "mongoose";
 
+export interface IParticipant {
+  user: mongoose.Types.ObjectId | string;
+  role: string;
+  chat: string;
+}
 export interface IConversation extends Document {
   _id: string; // MongoDB's unique identifier for the document
   friendly_name: string; // A human-readable name for the conversation
-  participants: {
-    user: mongoose.Types.ObjectId; // Reference to a User document
-    role: string; // The participant's role in the conversation
-    chat: string; // Presumably the Twilio chat SID
-  }[];
+  participants: IParticipant[];
   tags?: string[]; // An optional array of tags for categorization
   createdBy: mongoose.Types.ObjectId; // Who created the conversation, with restricted values
   is_closed: boolean; // Whether the conversation is closed
