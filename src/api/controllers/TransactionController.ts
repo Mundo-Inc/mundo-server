@@ -278,7 +278,7 @@ export async function sendGift(
 
     res.send({
       success: true,
-      data: { transaction },
+      data: transaction,
     });
   } catch (error) {
     console.error("Error during transaction:", error);
@@ -337,13 +337,13 @@ export async function withdraw(
         );
       }
       // Transfer funds to the Connect account, assuming the platform has enough balance
-      const transfer = await stripe.transfers.create({
+      await stripe.transfers.create({
         amount: Math.round(amount * 100), // Amount in cents
         currency: "usd",
         destination: user.stripe.connectAccountId,
       });
     } catch (error) {
-      console.error("Error retrieving Stripe account details:", error);
+      throw createError("Error retrieving Stripe account details:", 500);
     }
 
     // Create a payout to the default external account
@@ -374,7 +374,7 @@ export async function withdraw(
 
     res.json({
       success: true,
-      data: { payout },
+      data: payout,
     });
   } catch (error) {
     next(error);
