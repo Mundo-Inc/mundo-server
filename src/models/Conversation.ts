@@ -11,7 +11,9 @@ export interface IConversation extends Document {
   participants: IParticipant[];
   tags?: string[]; // An optional array of tags for categorization
   createdBy: mongoose.Types.ObjectId; // Who created the conversation, with restricted values
-  isClosed: boolean; // Whether the conversation is closed
+  isClosed: boolean;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 const ConversationSchema = new Schema<IConversation>(

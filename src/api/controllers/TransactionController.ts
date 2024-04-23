@@ -5,6 +5,7 @@ import Stripe from "stripe";
 
 import Transaction from "../../models/Transaction";
 import User, { type IUser } from "../../models/User";
+import { dStrings, dynamicMessage } from "../../strings";
 import { createError, handleInputErrors } from "../../utilities/errorHandlers";
 
 const SERVICE_FEE_RATIO = 0.05;
@@ -55,7 +56,7 @@ export async function addOrUpdatePaymentMethod(
     await user.save();
 
     res
-      .status(200)
+      .status(StatusCodes.OK)
       .json({ success: true, data: { paymentMethodId: paymentMethodId } });
   } catch (error) {
     next(error);
@@ -69,13 +70,12 @@ export async function getPaymentMethod(
 ) {
   try {
     handleInputErrors(req);
+
     const { id: authId } = req.user!;
 
     const user = await User.findById(authId);
     if (!user || !user.stripe.paymentMethod) {
-      return res
-        .status(404)
-        .json({ success: false, message: "No payment method found." });
+      throw createError("No payment method found", StatusCodes.NOT_FOUND);
     }
 
     // Retrieve the payment method details from Stripe
@@ -92,12 +92,11 @@ export async function getPaymentMethod(
       exp_year: paymentMethod.card?.exp_year,
     };
 
-    res.json({
+    res.status(StatusCodes.OK).json({
       success: true,
-      data: { paymentMethod: paymentMethodDetails },
+      data: paymentMethodDetails,
     });
   } catch (error) {
-    console.error("Failed to retrieve payment method:", error);
     next(error);
   }
 }
@@ -109,11 +108,16 @@ export async function addOrUpdatePayoutMethod(
 ) {
   try {
     handleInputErrors(req);
+
     const { id: authId } = req.user!;
-    let user = await User.findById(authId);
+
+    const user = await User.findById(authId);
 
     if (!user) {
-      return res.status(404).json({ message: "User not found" });
+      throw createError(
+        dynamicMessage(dStrings.notFound, "User"),
+        StatusCodes.NOT_FOUND
+      );
     }
 
     let accountId = user.stripe.connectAccountId;
@@ -156,23 +160,26 @@ export async function addOrUpdatePayoutMethod(
       });
 
       // Send the user to complete their account setup
-      return res.status(200).json({
+      return res.status(StatusCodes.OK).json({
         success: true,
-        eligible: false,
-        message: "Please complete the required account setup.",
-        url: accountLink.url,
+        data: {
+          eligible: false,
+          message: "Please complete the required account setup.",
+          url: accountLink.url,
+        },
       });
     } else {
-      return res.status(200).json({
+      return res.status(StatusCodes.OK).json({
         success: true,
-        eligible: true,
-        message:
-          "No additional setup required. Account is fully set up for payouts.",
+        data: {
+          eligible: true,
+          message:
+            "No additional setup required. Account is fully set up for payouts.",
+        },
       });
     }
   } catch (error) {
-    console.error("Error in addOrUpdatePayoutMethod:", error);
-    next(error); // Passes errors to Express error handling middleware
+    next(error);
   }
 }
 
@@ -185,10 +192,14 @@ export async function onboarding(
     handleInputErrors(req);
 
     const { id: authId } = req.user!;
+
     let user: IUser | null = await User.findById(authId);
 
     if (!user) {
-      return res.status(404).json({ message: "User not found" });
+      throw createError(
+        dynamicMessage(dStrings.notFound, "User"),
+        StatusCodes.NOT_FOUND
+      );
     }
 
     const accountId = user.stripe.connectAccountId;
@@ -196,7 +207,7 @@ export async function onboarding(
     if (!accountId) {
       throw createError(
         "Payout-method is not set up for this account, try setting that up first before onboarding",
-        400
+        StatusCodes.BAD_REQUEST
       );
     }
 
@@ -206,7 +217,10 @@ export async function onboarding(
       return_url: "https://www.phantomphood.ai", // URL to redirect after the user completes the onboarding
       type: "account_onboarding",
     });
-    res.status(200).json({ success: true, data: { url: accountLink.url } });
+
+    res
+      .status(StatusCodes.OK)
+      .json({ success: true, data: { url: accountLink.url } });
   } catch (error) {
     next(error);
   }
@@ -266,7 +280,7 @@ export async function sendGift(
     await receiver.save();
 
     // Log transaction in your database
-    const transaction = new Transaction({
+    const transaction = await Transaction.create({
       amount,
       serviceFee,
       totalAmount,
@@ -274,14 +288,12 @@ export async function sendGift(
       receiver: receiver._id,
       paymentIntentId: paymentIntent.id,
     });
-    await transaction.save();
 
-    res.send({
+    res.status(StatusCodes.OK).send({
       success: true,
       data: transaction,
     });
   } catch (error) {
-    console.error("Error during transaction:", error);
     next(error);
   }
 }
@@ -296,11 +308,13 @@ export async function withdraw(
   next: NextFunction
 ) {
   handleInputErrors(req);
+
   const { id: authId } = req.user!;
   const { amount } = req.body;
 
   try {
     const user = await User.findById(authId);
+
     if (!user) {
       throw createError("User not found", StatusCodes.BAD_REQUEST);
     }
@@ -333,7 +347,7 @@ export async function withdraw(
       ) {
         throw createError(
           "Please update your account information to be eligible for the withdrawal",
-          400
+          StatusCodes.BAD_REQUEST
         );
       }
       // Transfer funds to the Connect account, assuming the platform has enough balance
@@ -343,7 +357,10 @@ export async function withdraw(
         destination: user.stripe.connectAccountId,
       });
     } catch (error) {
-      throw createError("Error retrieving Stripe account details:", 500);
+      throw createError(
+        "Error retrieving Stripe account details:",
+        StatusCodes.INTERNAL_SERVER_ERROR
+      );
     }
 
     // Create a payout to the default external account
@@ -362,7 +379,7 @@ export async function withdraw(
     await user.save();
 
     // Log the transaction in your database
-    const transaction = new Transaction({
+    await Transaction.create({
       amount: amount,
       serviceFee: 0, // Assuming no service fee for withdrawal; adjust if needed
       totalAmount: amount,
@@ -370,9 +387,8 @@ export async function withdraw(
       receiver: user._id, // There is no receiver in a withdrawal
       paymentIntentId: payout.id, // Use the payout ID for the transaction record
     });
-    await transaction.save();
 
-    res.json({
+    res.status(StatusCodes.OK).json({
       success: true,
       data: payout,
     });

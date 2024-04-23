@@ -7,10 +7,8 @@ import {
   createGroupConversationValidation,
   getConversation,
   getConversations,
-  getConversationsValidation,
   getConversationValidation,
   getToken,
-  getTokenValidation,
   removeUserFromGroupConversation,
   removeUserFromGroupConversationValidation,
 } from "../controllers/ConversationController";
@@ -22,7 +20,7 @@ router.use(authMiddleware);
 
 router
   .route("/")
-  .get(getConversationsValidation, getConversations)
+  .get(getConversations)
   .post(createConversationValidation, createConversation);
 
 router.post(
@@ -31,7 +29,7 @@ router.post(
   createGroupConversation
 );
 
-router.get("/token", getTokenValidation, getToken);
+router.get("/token", getToken);
 
 router.get("/:id", getConversationValidation, getConversation);
 

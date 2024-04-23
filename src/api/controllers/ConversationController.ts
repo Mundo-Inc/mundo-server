@@ -4,11 +4,11 @@ import { StatusCodes } from "http-status-codes";
 import mongoose from "mongoose";
 import twilio, { Twilio } from "twilio";
 
-import Conversation, { IConversation } from "../../models/Conversation";
+import Conversation, { type IConversation } from "../../models/Conversation";
 import User, { type IUser } from "../../models/User";
+import { dStrings, dynamicMessage } from "../../strings";
 import { createError, handleInputErrors } from "../../utilities/errorHandlers";
 import { publicReadUserEssentialProjection } from "../dto/user/read-user-public.dto";
-import { dStrings, dynamicMessage } from "../../strings";
 
 const AccessToken = twilio.jwt.AccessToken;
 const ChatGrant = AccessToken.ChatGrant;
@@ -18,7 +18,6 @@ const accountSid = process.env.TWILIO_ACCOUNT_SID; // Replace with your Account 
 const authToken = process.env.TWILIO_AUTH_TOKEN; // Replace with your Auth Token
 const client = new Twilio(accountSid, authToken);
 
-export const getTokenValidation: ValidationChain[] = [];
 export async function getToken(
   req: Request,
   res: Response,
@@ -333,14 +332,11 @@ export async function removeUserFromGroupConversation(
 
     res.status(StatusCodes.OK).json({ success: true, data: conversation });
   } catch (err) {
-    console.log(err);
     next(err);
   }
 }
 
 // update the group name
-
-export const getConversationsValidation: ValidationChain[] = [];
 
 export async function getConversations(
   req: Request,
@@ -352,15 +348,57 @@ export async function getConversations(
 
     const { id: authId } = req.user!;
 
-    const user = (await User.findById(authId, ["conversations"]).populate({
-      path: "conversations",
-      populate: {
-        path: "participants.user",
-        select: publicReadUserEssentialProjection,
+    const conversations = await User.aggregate([
+      {
+        $match: {
+          _id: new mongoose.Types.ObjectId(authId),
+        },
       },
-    })) as IUser;
-
-    const conversations = user.conversations;
+      {
+        $lookup: {
+          from: "conversations",
+          localField: "conversations",
+          foreignField: "_id",
+          as: "conversations",
+        },
+      },
+      {
+        $unwind: "$conversations",
+      },
+      {
+        $unwind: "$conversations.participants",
+      },
+      {
+        $lookup: {
+          from: "users",
+          localField: "conversations.participants.user",
+          foreignField: "_id",
+          as: "conversations.participants.user",
+          pipeline: [
+            {
+              $project: publicReadUserEssentialProjection,
+            },
+          ],
+        },
+      },
+      {
+        $addFields: {
+          "conversations.participants.user": {
+            $arrayElemAt: ["$conversations.participants.user", 0],
+          },
+        },
+      },
+      {
+        $group: {
+          _id: "$conversations._id",
+          participants: { $push: "$conversations.participants" },
+          friendlyName: { $first: "$conversations.friendlyName" },
+          tags: { $first: "$conversations.tags" },
+          createdBy: { $first: "$conversations.createdBy" },
+          updatedAt: { $first: "$conversations.updatedAt" },
+        },
+      },
+    ]);
 
     res.status(StatusCodes.OK).json({ success: true, data: conversations });
   } catch (err) {
@@ -396,7 +434,10 @@ export async function getConversation(
       .lean();
 
     if (!conversation) {
-      throw createError("Conversation not found", StatusCodes.NOT_FOUND);
+      throw createError(
+        dynamicMessage(dStrings.notFound, "Conversation"),
+        StatusCodes.NOT_FOUND
+      );
     }
 
     res.status(StatusCodes.OK).json({ success: true, data: conversation });

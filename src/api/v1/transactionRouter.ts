@@ -1,5 +1,5 @@
 import express from "express";
-import { authMiddleware } from "../middlewares/authMiddleWare";
+
 import {
   addOrUpdatePaymentMethod,
   addOrUpdatePaymentMethodValidation,
@@ -11,26 +11,21 @@ import {
   withdraw,
   withdrawValidation,
 } from "../controllers/TransactionController";
+import { authMiddleware } from "../middlewares/authMiddleWare";
 
 const router = express.Router();
 router.use(express.json());
+router.use(authMiddleware);
 
 router
   .route("/payment-method")
-  .get(authMiddleware, getPaymentMethod)
-  .post(
-    authMiddleware,
-    addOrUpdatePaymentMethodValidation,
-    addOrUpdatePaymentMethod
-  );
+  .get(getPaymentMethod)
+  .post(addOrUpdatePaymentMethodValidation, addOrUpdatePaymentMethod);
 
-router
-  .route("/payout-method")
-  .put(authMiddleware, onboarding)
-  .post(authMiddleware, addOrUpdatePayoutMethod);
+router.route("/payout-method").put(onboarding).post(addOrUpdatePayoutMethod);
 
-router.route("/withdraw").post(authMiddleware, withdrawValidation, withdraw);
+router.route("/withdraw").post(withdrawValidation, withdraw);
 
-router.route("/gift").post(authMiddleware, sendGiftValidation, sendGift);
+router.route("/gift").post(sendGiftValidation, sendGift);
 
 export default router;
