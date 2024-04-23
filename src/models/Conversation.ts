@@ -7,11 +7,11 @@ export interface IParticipant {
 }
 export interface IConversation extends Document {
   _id: string; // MongoDB's unique identifier for the document
-  friendly_name: string; // A human-readable name for the conversation
+  friendlyName: string; // A human-readable name for the conversation
   participants: IParticipant[];
   tags?: string[]; // An optional array of tags for categorization
   createdBy: mongoose.Types.ObjectId; // Who created the conversation, with restricted values
-  is_closed: boolean; // Whether the conversation is closed
+  isClosed: boolean; // Whether the conversation is closed
 }
 
 const ConversationSchema = new Schema<IConversation>(
@@ -21,7 +21,7 @@ const ConversationSchema = new Schema<IConversation>(
       type: String,
       required: true,
     },
-    friendly_name: {
+    friendlyName: {
       type: String,
       required: true,
     },
@@ -43,7 +43,7 @@ const ConversationSchema = new Schema<IConversation>(
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
     },
-    is_closed: {
+    isClosed: {
       type: Boolean,
       default: false,
     },

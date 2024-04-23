@@ -8,6 +8,7 @@ import Conversation, { IConversation } from "../../models/Conversation";
 import User, { type IUser } from "../../models/User";
 import { createError, handleInputErrors } from "../../utilities/errorHandlers";
 import { publicReadUserEssentialProjection } from "../dto/user/read-user-public.dto";
+import { dStrings, dynamicMessage } from "../../strings";
 
 const AccessToken = twilio.jwt.AccessToken;
 const ChatGrant = AccessToken.ChatGrant;
@@ -93,7 +94,7 @@ export async function createConversation(
       {
         $project: {
           _id: 1,
-          friendly_name: 1,
+          friendlyName: 1,
         },
       },
     ]);
@@ -133,9 +134,9 @@ export async function createConversation(
         }),
       });
 
-    const conversation = new Conversation({
+    const conversation = await Conversation.create({
       _id: twilioConversation.sid, // Use the SID as the unique ID
-      friendly_name: friendlyName, // Assuming friendlyName is defined elsewhere
+      friendlyName: friendlyName, // Assuming friendlyName is defined elsewhere
       participants: [
         {
           user: new mongoose.Types.ObjectId(authId),
@@ -149,10 +150,8 @@ export async function createConversation(
         },
       ],
       createdBy: new mongoose.Types.ObjectId(authId),
-      is_closed: false,
+      isClosed: false,
     });
-
-    await conversation.save();
 
     await User.updateOne(
       { _id: user },
@@ -199,11 +198,18 @@ export async function createGroupConversation(
         friendlyName: friendlyName,
       });
 
-    const creatorUser = (await User.findById(authId)) as IUser;
+    const creatorUser: IUser | null = await User.findById(authId).lean();
+
+    if (!creatorUser) {
+      throw createError(
+        dynamicMessage(dStrings.notFound, "User"),
+        StatusCodes.NOT_FOUND
+      );
+    }
 
     const participantsUsers: IUser[] = await User.find({
       _id: { $in: users },
-    });
+    }).lean();
 
     // Add participants to the Twilio conversation
     const creatorUserParticipant = await client.conversations.v1
@@ -215,7 +221,7 @@ export async function createGroupConversation(
         }),
       });
 
-    let twilioParticipants = [
+    const twilioParticipants = [
       {
         user: new mongoose.Types.ObjectId(authId),
         role: "participant",
@@ -232,6 +238,7 @@ export async function createGroupConversation(
             name: participant.name,
           }),
         });
+
       twilioParticipants.push({
         user: participant._id,
         role: "participant",
@@ -239,15 +246,13 @@ export async function createGroupConversation(
       });
     }
 
-    const conversation = new Conversation({
+    const conversation = await Conversation.create({
       _id: twilioConversation.sid, // Use the SID as the unique ID
-      friendly_name: friendlyName, // Assuming friendlyName is defined elsewhere
+      friendlyName: friendlyName, // Assuming friendlyName is defined elsewhere
       participants: twilioParticipants,
       createdBy: new mongoose.Types.ObjectId(authId),
-      is_closed: false,
+      isClosed: false,
     });
-
-    await conversation.save();
 
     for (const participant of participantsUsers) {
       await User.updateOne(
@@ -263,8 +268,6 @@ export async function createGroupConversation(
 
     res.status(StatusCodes.CREATED).json({ success: true, data: conversation });
   } catch (err) {
-    console.log(err);
-
     next(err);
   }
 }
@@ -303,24 +306,26 @@ export async function removeUserFromGroupConversation(
         .participants(participantToRemove.sid)
         .remove();
     } else {
-      return res.status(StatusCodes.NOT_FOUND).json({
-        success: false,
-        message: "Participant not found in this conversation.",
-      });
+      throw createError(
+        "Participant not found in this conversation.",
+        StatusCodes.NOT_FOUND
+      );
     }
 
     // Update the database to reflect participant removal
     const conversation: IConversation | null = await Conversation.findById(id);
+
     if (!conversation) {
-      return res.status(StatusCodes.NOT_FOUND).json({
-        success: false,
-        message: "Conversation not found.",
-      });
+      throw createError(
+        dynamicMessage(dStrings.notFound, "Conversation"),
+        StatusCodes.NOT_FOUND
+      );
     }
 
     conversation.participants = conversation.participants.filter(
       (p) => p.user.toString() !== user
     );
+
     await conversation.save();
 
     // Optionally, update the user's conversation list

@@ -1,6 +1,5 @@
 import express from "express";
 
-import { authMiddleware } from "../middlewares/authMiddleWare";
 import {
   createConversation,
   createConversationValidation,
@@ -15,34 +14,31 @@ import {
   removeUserFromGroupConversation,
   removeUserFromGroupConversationValidation,
 } from "../controllers/ConversationController";
+import { authMiddleware } from "../middlewares/authMiddleWare";
 
 const router = express.Router();
 router.use(express.json());
+router.use(authMiddleware);
 
-router.get("/token", authMiddleware, getTokenValidation, getToken);
-
-router.delete(
-  "/:id/participant",
-  authMiddleware,
-  removeUserFromGroupConversationValidation,
-  removeUserFromGroupConversation
-);
-router.get("/:id", authMiddleware, getConversationValidation, getConversation);
-
-router.post(
-  "/",
-  authMiddleware,
-  createConversationValidation,
-  createConversation
-);
-
-router.get("/", authMiddleware, getConversationsValidation, getConversations);
+router
+  .route("/")
+  .get(getConversationsValidation, getConversations)
+  .post(createConversationValidation, createConversation);
 
 router.post(
   "/group",
-  authMiddleware,
   createGroupConversationValidation,
   createGroupConversation
+);
+
+router.get("/token", getTokenValidation, getToken);
+
+router.get("/:id", getConversationValidation, getConversation);
+
+router.delete(
+  "/:id/participant",
+  removeUserFromGroupConversationValidation,
+  removeUserFromGroupConversation
 );
 
 export default router;
