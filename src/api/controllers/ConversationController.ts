@@ -62,12 +62,30 @@ export async function createConversation(
   try {
     handleInputErrors(req);
 
+    const { id: authId } = req.user!;
+
     const {
       user,
     }: {
       user: string;
     } = req.body;
-    const { id: authId } = req.user!;
+
+    const [creatorUser, participant]: [IUser | null, IUser | null] =
+      await Promise.all([User.findById(authId), User.findById(user)]);
+
+    if (!creatorUser) {
+      throw createError(
+        dynamicMessage(dStrings.notFound, "User"),
+        StatusCodes.NOT_FOUND
+      );
+    }
+
+    if (!participant) {
+      throw createError(
+        dynamicMessage(dStrings.notFound, "Participant"),
+        StatusCodes.NOT_FOUND
+      );
+    }
 
     const alreadyExists = await Conversation.aggregate([
       {
@@ -96,12 +114,12 @@ export async function createConversation(
           friendlyName: 1,
         },
       },
-    ]);
+    ]).then((conversations) => conversations[0]);
 
-    if (alreadyExists.length > 0) {
+    if (alreadyExists) {
       return res
         .status(StatusCodes.OK)
-        .json({ success: true, data: alreadyExists[0] });
+        .json({ success: true, data: alreadyExists });
     }
 
     const friendlyName = authId + "_" + user;
@@ -111,27 +129,26 @@ export async function createConversation(
         friendlyName: friendlyName,
       });
 
-    const creatorUser = (await User.findById(authId)) as IUser;
-    const participant = (await User.findById(user)) as IUser;
-
     // Add participants to the Twilio conversation
-    const creatorUserParticipant = await client.conversations.v1
-      .conversations(twilioConversation.sid)
-      .participants.create({
-        identity: authId.toString(),
-        attributes: JSON.stringify({
-          name: creatorUser.name,
-        }),
-      });
 
-    const userParticipant = await client.conversations.v1
-      .conversations(twilioConversation.sid)
-      .participants.create({
-        identity: user.toString(),
-        attributes: JSON.stringify({
-          name: participant.name,
+    const [creatorUserParticipant, userParticipant] = await Promise.all([
+      client.conversations.v1
+        .conversations(twilioConversation.sid)
+        .participants.create({
+          identity: authId.toString(),
+          attributes: JSON.stringify({
+            name: creatorUser.name,
+          }),
         }),
-      });
+      client.conversations.v1
+        .conversations(twilioConversation.sid)
+        .participants.create({
+          identity: user.toString(),
+          attributes: JSON.stringify({
+            name: participant.name,
+          }),
+        }),
+    ]);
 
     const conversation = await Conversation.create({
       _id: twilioConversation.sid, // Use the SID as the unique ID
@@ -152,15 +169,16 @@ export async function createConversation(
       isClosed: false,
     });
 
-    await User.updateOne(
-      { _id: user },
-      { $push: { conversations: conversation._id } }
-    );
-
-    await User.updateOne(
-      { _id: authId },
-      { $push: { conversations: conversation._id } }
-    );
+    await Promise.all([
+      User.updateOne(
+        { _id: user },
+        { $push: { conversations: conversation._id } }
+      ),
+      User.updateOne(
+        { _id: authId },
+        { $push: { conversations: conversation._id } }
+      ),
+    ]);
 
     res.status(StatusCodes.CREATED).json({ success: true, data: conversation });
   } catch (err) {

@@ -807,12 +807,20 @@ export async function putUserPrivacy(
       throw createError("UNAUTHORIZED", StatusCodes.FORBIDDEN);
     }
 
-    const user = (await User.findById(id)) as IUser;
+    const user: IUser | null = await User.findById(id);
+
+    if (!user) {
+      throw createError(
+        dynamicMessage(ds.notFound, "User"),
+        StatusCodes.NOT_FOUND
+      );
+    }
 
     if (user.isPrivate && !isPrivate) {
-      const followReqs = (await FollowRequest.find({
+      const followReqs: IFollowRequest[] = await FollowRequest.find({
         target: authId,
-      })) as IFollowRequest[];
+      });
+
       for (const followReq of followReqs) {
         await Follow.create({
           user: followReq.user,
@@ -917,6 +925,7 @@ export async function getLatestPlace(
       user = await User.findById(id, {
         latestPlace: true,
       }).lean();
+
       if (!user) {
         throw createError(strings.user.notFound, StatusCodes.BAD_REQUEST);
       }
@@ -927,11 +936,12 @@ export async function getLatestPlace(
     if (!user.latestPlace) {
       throw createError(strings.user.noLatestPlace, StatusCodes.NOT_FOUND);
     }
-    let latestPlace: any = (await Place.findById(user.latestPlace, {
+
+    let latestPlace: any = await Place.findById(user.latestPlace, {
       _id: true,
       name: true,
       location: true,
-    }).lean()) as IPlace | null;
+    }).lean();
 
     if (latestPlace) {
       latestPlace.location.geoLocation = {
