@@ -59,6 +59,9 @@ export async function getUsers(
       users = await User.aggregate([
         {
           $match: {
+            source: {
+              $exists: false,
+            },
             $or: [
               { name: { $regex: q, $options: "i" } },
               { username: { $regex: q, $options: "i" } },
