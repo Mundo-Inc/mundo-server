@@ -9,6 +9,7 @@ import User, { type IUser } from "../../models/User";
 import { dStrings, dynamicMessage } from "../../strings";
 import { createError, handleInputErrors } from "../../utilities/errorHandlers";
 import { publicReadUserEssentialProjection } from "../dto/user/read-user-public.dto";
+import logger from "../services/logger";
 
 const AccessToken = twilio.jwt.AccessToken;
 const ChatGrant = AccessToken.ChatGrant;
@@ -316,6 +317,15 @@ export async function removeUserFromGroupConversation(
       (participant) => participant.identity === user
     );
 
+    if (participantToRemove && participants.length === 1) {
+      // Remove the conversation if the user is the only participant
+      await Promise.all([
+        Conversation.deleteOne({ _id: id }),
+        client.conversations.v1.conversations(id).remove(),
+        User.updateOne({ _id: user }, { $pull: { conversations: id } }),
+      ]);
+    }
+
     if (participantToRemove) {
       // Remove the found participant
       await client.conversations.v1
@@ -333,6 +343,9 @@ export async function removeUserFromGroupConversation(
     const conversation: IConversation | null = await Conversation.findById(id);
 
     if (!conversation) {
+      logger.error(
+        `Conversation with id ${id} not found in the database. but it was found in Twilio.`
+      );
       throw createError(
         dynamicMessage(dStrings.notFound, "Conversation"),
         StatusCodes.NOT_FOUND
@@ -343,10 +356,10 @@ export async function removeUserFromGroupConversation(
       (p) => p.user.toString() !== user
     );
 
-    await conversation.save();
-
-    // Optionally, update the user's conversation list
-    await User.updateOne({ _id: user }, { $pull: { conversations: id } });
+    await Promise.all([
+      conversation.save(),
+      User.updateOne({ _id: user }, { $pull: { conversations: id } }),
+    ]);
 
     res.status(StatusCodes.OK).json({ success: true, data: conversation });
   } catch (err) {
