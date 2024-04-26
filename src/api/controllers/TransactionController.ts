@@ -143,40 +143,33 @@ export async function addOrUpdatePayoutMethod(
       accountId
     );
 
-    // Check if there are any requirements pending that prevent payouts
     if (
-      account.requirements &&
-      account.requirements.currently_due &&
-      account.requirements.eventually_due &&
-      (account.requirements.currently_due.length > 0 ||
-        account.requirements.eventually_due.length > 0)
+      !(
+        account.requirements &&
+        account.requirements.currently_due &&
+        account.requirements.eventually_due
+      )
     ) {
-      // Generate an account link for onboarding or updating information
-      // const accountLink = await stripe.accountLinks.create({
-      //   account: accountId,
-      //   refresh_url: "https://www.phantomphood.ai",
-      //   return_url: "https://www.phantomphood.ai",
-      //   type: "account_onboarding",
-      // });
-
-      // Send the user to complete their account setup
-      return res.status(StatusCodes.OK).json({
-        success: true,
-        data: {
-          eligible: false,
-          message: "Please complete the required account setup.",
-        },
-      });
-    } else {
-      return res.status(StatusCodes.OK).json({
-        success: true,
-        data: {
-          eligible: true,
-          message:
-            "No additional setup required. Account is fully set up for payouts.",
-        },
-      });
+      throw createError(
+        "Error retrieving account requirements",
+        StatusCodes.INTERNAL_SERVER_ERROR
+      );
     }
+
+    const isEligible =
+      account.requirements.currently_due.length === 0 &&
+      account.requirements.eventually_due.length === 0;
+
+    // Check if there are any requirements pending that prevent payouts
+    res.status(StatusCodes.OK).json({
+      success: true,
+      data: {
+        eligible: isEligible,
+        message: isEligible
+          ? "No additional setup required. Account is fully set up for payouts."
+          : "Please complete the required account setup.",
+      },
+    });
   } catch (error) {
     next(error);
   }
