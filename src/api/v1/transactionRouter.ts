@@ -22,10 +22,14 @@ router
   .get(getPaymentMethod)
   .post(addOrUpdatePaymentMethodValidation, addOrUpdatePaymentMethod);
 
-router.route("/payout-method").put(onboarding).post(addOrUpdatePayoutMethod);
+router.route("/payout-method").post(onboarding).get(addOrUpdatePayoutMethod);
 
 router.route("/withdraw").post(withdrawValidation, withdraw);
 
 router.route("/gift").post(sendGiftValidation, sendGift);
+
+// post /customer -> ephemeralKeySecret +
+
+// create-setup-intent -> setup intent
 
 export default router;

@@ -152,12 +152,12 @@ export async function addOrUpdatePayoutMethod(
         account.requirements.eventually_due.length > 0)
     ) {
       // Generate an account link for onboarding or updating information
-      const accountLink = await stripe.accountLinks.create({
-        account: accountId,
-        refresh_url: "https://www.phantomphood.ai",
-        return_url: "https://www.phantomphood.ai",
-        type: "account_onboarding",
-      });
+      // const accountLink = await stripe.accountLinks.create({
+      //   account: accountId,
+      //   refresh_url: "https://www.phantomphood.ai",
+      //   return_url: "https://www.phantomphood.ai",
+      //   type: "account_onboarding",
+      // });
 
       // Send the user to complete their account setup
       return res.status(StatusCodes.OK).json({
@@ -165,7 +165,6 @@ export async function addOrUpdatePayoutMethod(
         data: {
           eligible: false,
           message: "Please complete the required account setup.",
-          url: accountLink.url,
         },
       });
     } else {
