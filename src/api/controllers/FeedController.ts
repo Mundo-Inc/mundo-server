@@ -265,7 +265,7 @@ export async function getComments(
       (block) => block.user
     );
 
-    const comments = await Comment.aggregate([
+    const result = await Comment.aggregate([
       {
         $match: {
           userActivity: new mongoose.Types.ObjectId(id),
@@ -273,46 +273,65 @@ export async function getComments(
         },
       },
       {
-        $sort: {
-          createdAt: -1,
-        },
-      },
-      {
-        $skip: (page - 1) * limit,
-      },
-      {
-        $limit: limit,
-      },
-      {
-        $lookup: {
-          from: "users",
-          localField: "author",
-          foreignField: "_id",
-          as: "author",
-          pipeline: [
+        $facet: {
+          comments: [
             {
-              $project: publicReadUserEssentialProjection,
+              $sort: {
+                createdAt: -1,
+              },
+            },
+            {
+              $skip: (page - 1) * limit,
+            },
+            {
+              $limit: limit,
+            },
+            {
+              $lookup: {
+                from: "users",
+                localField: "author",
+                foreignField: "_id",
+                as: "author",
+                pipeline: [
+                  {
+                    $project: publicReadUserEssentialProjection,
+                  },
+                ],
+              },
+            },
+            {
+              $project: {
+                _id: 1,
+                createdAt: 1,
+                updatedAt: 1,
+                content: 1,
+                mentions: 1,
+                author: { $arrayElemAt: ["$author", 0] },
+                likes: { $size: "$likes" },
+                liked: {
+                  $in: [new mongoose.Types.ObjectId(authId), "$likes"],
+                },
+              },
+            },
+          ],
+          count: [
+            {
+              $count: "count",
             },
           ],
         },
       },
-      {
-        $project: {
-          _id: 1,
-          createdAt: 1,
-          updatedAt: 1,
-          content: 1,
-          mentions: 1,
-          author: { $arrayElemAt: ["$author", 0] },
-          likes: { $size: "$likes" },
-          liked: {
-            $in: [new mongoose.Types.ObjectId(authId), "$likes"],
-          },
-        },
-      },
-    ]);
+    ]).then((result) => result[0]);
 
-    res.status(StatusCodes.OK).json({ success: true, data: comments });
+    res.status(StatusCodes.OK).json({
+      success: true,
+      data: result.comments,
+      pagination: {
+        totalCount: result.count[0]?.count || 0,
+        page: page,
+        limit: limit,
+      },
+    });
   } catch (err) {
     next(err);
   }

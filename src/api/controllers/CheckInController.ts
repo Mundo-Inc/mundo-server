@@ -98,7 +98,7 @@ export async function getCheckIns(
       });
     }
 
-    const checkins = await CheckIn.aggregate([
+    const result = await CheckIn.aggregate([
       ...matchPipeline,
       {
         $facet: {
@@ -204,11 +204,11 @@ export async function getCheckIns(
           ],
         },
       },
-    ]);
+    ]).then((result) => result[0]);
 
     if (!user || user === authId) {
       // anonymize user data
-      checkins[0].checkins = checkins[0].checkins.map((checkin: any) => {
+      result.checkins = result.checkins.map((checkin: any) => {
         if (
           checkin.privacyType === ActivityPrivacyTypeEnum.PRIVATE &&
           checkin.user._id.toString() !== authId
@@ -235,9 +235,9 @@ export async function getCheckIns(
 
     res.status(StatusCodes.OK).json({
       success: true,
-      data: checkins[0].checkins,
+      data: result.checkins,
       pagination: {
-        totalCount: checkins[0].total[0]?.total || 0,
+        totalCount: result.total[0]?.total || 0,
         page: page,
         limit: limit,
       },

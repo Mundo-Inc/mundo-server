@@ -1,10 +1,6 @@
 import express from "express";
 
 import {
-  createFlagReview,
-  createFlagReviewValidation,
-} from "../controllers/FlagController";
-import {
   createReview,
   createReviewValidation,
   getReview,
@@ -18,19 +14,16 @@ import { authMiddleware } from "../middlewares/authMiddleWare";
 
 const router = express.Router();
 router.use(express.json());
+router.use(authMiddleware);
 
 router
   .route("/")
-  .get(authMiddleware, getReviewsValidation, getReviews)
-  .post(authMiddleware, createReviewValidation, createReview);
+  .get(getReviewsValidation, getReviews)
+  .post(createReviewValidation, createReview);
 
 router
   .route("/:id")
-  .get(authMiddleware, getReviewValidation, getReview)
-  .delete(authMiddleware, removeReviewValidation, removeReview);
-
-router
-  .route("/:id/flag")
-  .post(authMiddleware, createFlagReviewValidation, createFlagReview);
+  .get(getReviewValidation, getReview)
+  .delete(removeReviewValidation, removeReview);
 
 export default router;

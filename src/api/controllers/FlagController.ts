@@ -1,10 +1,10 @@
 import type { NextFunction, Request, Response } from "express";
-import { body, param, type ValidationChain } from "express-validator";
+import { body, type ValidationChain } from "express-validator";
 import { StatusCodes } from "http-status-codes";
 
 import CheckIn from "../../models/CheckIn";
 import Comment from "../../models/Comment";
-import Flag, { FlagTypeEnum, type IFlag } from "../../models/Flag";
+import Flag, { FlagTypeEnum } from "../../models/Flag";
 import Homemade from "../../models/Homemade";
 import Review from "../../models/Review";
 import UserActivity, { type IUserActivity } from "../../models/UserActivity";
@@ -112,104 +112,6 @@ export async function createFlag(
       sendSlackMessage(
         "phantomAssistant",
         `${targetType} flagged!\nType: ${flagType}\nNote: ${note}`
-      );
-    } catch (error) {
-      logger.error("Error sending slack message", { error });
-    }
-
-    res.status(StatusCodes.CREATED).json({ success: true, data: newFlag }); // Send the ID of the created list as response
-  } catch (err) {
-    next(err);
-  }
-}
-
-// TODO: Delete after client is updated
-export const createFlagReviewValidation: ValidationChain[] = [
-  param("id").isMongoId(),
-  body("flagType").isIn(Object.keys(FlagTypeEnum)),
-  body("note").optional().isString(),
-];
-
-// TODO: Delete after client is updated
-export async function createFlagReview(
-  req: Request,
-  res: Response,
-  next: NextFunction
-) {
-  try {
-    handleInputErrors(req);
-    const { id: authId } = req.user!;
-    const { id } = req.params;
-    const { flagType, note } = req.body;
-
-    //check if review exists
-    const reviewExists = await Review.exists({ _id: id });
-    if (!reviewExists) {
-      throw createError("Review not found", StatusCodes.NOT_FOUND);
-    }
-
-    const newFlag: IFlag = new Flag({
-      user: authId,
-      target: id,
-      targetType: "Review",
-      flagType,
-      note,
-    });
-    await newFlag.save();
-
-    try {
-      sendSlackMessage(
-        "phantomAssistant",
-        `Review flagged!\nFlag type: ${flagType}\nNote: ${note}`
-      );
-    } catch (error) {
-      logger.error("Error sending slack message", { error });
-    }
-
-    res.status(StatusCodes.CREATED).json({ success: true, data: newFlag }); // Send the ID of the created list as response
-  } catch (err) {
-    next(err);
-  }
-}
-
-// TODO: Delete after client is updated
-export const createFlagCommentValidation: ValidationChain[] = [
-  param("id").isMongoId(),
-  body("flagType").isIn(Object.keys(FlagTypeEnum)),
-  body("note").optional().isString(),
-];
-
-// TODO: Delete after client is updated
-export async function createFlagComment(
-  req: Request,
-  res: Response,
-  next: NextFunction
-) {
-  try {
-    handleInputErrors(req);
-    const { id: authId } = req.user!;
-    const { id } = req.params;
-    const { flagType, note } = req.body;
-
-    //check if review exists
-    const commentExists = await Comment.exists({ _id: id });
-    if (!commentExists) {
-      throw createError("Comment not found", StatusCodes.NOT_FOUND);
-    }
-
-    const newFlag: IFlag = new Flag({
-      user: authId,
-      target: id,
-      targetType: "Comment",
-      flagType,
-      note,
-    });
-    await newFlag.save();
-
-    try {
-      sendSlackMessage(
-        "phantomAssistant",
-        `Comment flagged!\nFlag type: ${flagType}\nNote: ${note}`
       );
     } catch (error) {
       logger.error("Error sending slack message", { error });
