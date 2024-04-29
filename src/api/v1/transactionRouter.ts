@@ -5,6 +5,7 @@ import {
   addOrUpdatePaymentMethodValidation,
   addOrUpdatePayoutMethod,
   getPaymentMethod,
+  getSecret,
   onboarding,
   sendGift,
   sendGiftValidation,
@@ -17,10 +18,10 @@ const router = express.Router();
 router.use(express.json());
 router.use(authMiddleware);
 
-router
-  .route("/payment-method")
-  .get(getPaymentMethod)
-  .post(addOrUpdatePaymentMethodValidation, addOrUpdatePaymentMethod);
+// router
+//   .route("/payment-method")
+//   .get(getPaymentMethod)
+//   .post(addOrUpdatePaymentMethodValidation, addOrUpdatePaymentMethod);
 
 router.route("/payout-method").post(onboarding).get(addOrUpdatePayoutMethod);
 
@@ -28,8 +29,6 @@ router.route("/withdraw").post(withdrawValidation, withdraw);
 
 router.route("/gift").post(sendGiftValidation, sendGift);
 
-// post /customer -> ephemeralKeySecret +
-
-// create-setup-intent -> setup intent
+router.route("/customer").get(getSecret);
 
 export default router;

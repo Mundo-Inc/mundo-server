@@ -23,6 +23,47 @@ async function createStripeCustomer(user: IUser) {
   });
 }
 
+export async function getSecret(
+  req: Request,
+  res: Response,
+  next: NextFunction
+) {
+  try {
+    handleInputErrors(req);
+    const { id: authId } = req.user!;
+
+    const user: IUser | null = await User.findById(authId);
+    if (!user) {
+      throw createError(
+        dynamicMessage(dStrings.notFound, "User"),
+        StatusCodes.NOT_FOUND
+      );
+    }
+    const customerId =
+      user.stripe.customerId || (await createStripeCustomer(user)).id;
+    user.stripe.customerId = customerId;
+
+    await user.save();
+
+    console.log(process.env.STRIPE_API_VERSION!);
+
+    const ephemeralKey = await stripe.ephemeralKeys.create(
+      { customer: customerId },
+      { apiVersion: process.env.STRIPE_API_VERSION! }
+    );
+
+    res.status(200).json({
+      success: true,
+      data: {
+        customerId,
+        ephemeralKeySecret: ephemeralKey.secret,
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
 export const addOrUpdatePaymentMethodValidation: ValidationChain[] = [
   body("paymentMethodId").isString(),
 ];
@@ -221,6 +262,7 @@ export async function onboarding(
 export const sendGiftValidation: ValidationChain[] = [
   body("amount").isNumeric(),
   body("receiverId").isMongoId(),
+  body("paymentMethodId").isString(),
 ];
 
 export async function sendGift(
@@ -228,12 +270,11 @@ export async function sendGift(
   res: Response,
   next: NextFunction
 ) {
-  handleInputErrors(req);
-
-  const { id: authId } = req.user!;
-  const { amount, receiverId } = req.body;
-
   try {
+    handleInputErrors(req);
+
+    const { id: authId } = req.user!;
+    const { amount, receiverId, paymentMethodId } = req.body;
     const sender = await User.findById(authId);
     const receiver = await User.findById(receiverId);
 
@@ -241,9 +282,9 @@ export async function sendGift(
       throw createError("Sender or receiver not found", StatusCodes.NOT_FOUND);
     }
 
-    if (!sender.stripe.paymentMethod || !sender.stripe.customerId) {
+    if (!sender.stripe.customerId) {
       throw createError(
-        "No payment method found. Please add a payment method before sending a gift.",
+        "No customerID found. Please contact support.",
         StatusCodes.BAD_REQUEST
       );
     }
@@ -254,7 +295,7 @@ export async function sendGift(
     const paymentIntent = await stripe.paymentIntents.create({
       amount: Math.round(totalAmount * 100), // convert amount to cents
       currency: "usd",
-      payment_method: sender.stripe.paymentMethod,
+      payment_method: paymentMethodId,
       customer: sender.stripe.customerId, // Include the customer ID here
       confirm: true, // Automatically confirm the payment
       description: `Gift transaction from ${sender._id} to ${receiver._id}`,
@@ -299,12 +340,11 @@ export async function withdraw(
   res: Response,
   next: NextFunction
 ) {
-  handleInputErrors(req);
-
-  const { id: authId } = req.user!;
-  const { amount } = req.body;
-
   try {
+    handleInputErrors(req);
+
+    const { id: authId } = req.user!;
+    const { amount } = req.body;
     const user = await User.findById(authId);
 
     if (!user) {
