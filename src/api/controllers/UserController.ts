@@ -476,20 +476,25 @@ export async function getUser(req: Request, res: Response, next: NextFunction) {
         })
         .lean();
 
+      if (!user) {
+        throw createError(
+          dynamicMessage(ds.notFound, "User"),
+          StatusCodes.NOT_FOUND
+        );
+      }
+
       const achievements: any = {};
-      if (user) {
-        for (const achievement of user.progress.achievements) {
-          if (achievement.type in achievements) {
-            achievements[achievement.type].createdAt = achievement.createdAt;
-            achievements[achievement.type].count++;
-          } else {
-            achievements[achievement.type] = {
-              _id: achievement.type,
-              type: achievement.type,
-              createdAt: achievement.createdAt,
-              count: 1,
-            };
-          }
+      for (const achievement of user.progress.achievements) {
+        if (achievement.type in achievements) {
+          achievements[achievement.type].createdAt = achievement.createdAt;
+          achievements[achievement.type].count++;
+        } else {
+          achievements[achievement.type] = {
+            _id: achievement.type,
+            type: achievement.type,
+            createdAt: achievement.createdAt,
+            count: 1,
+          };
         }
       }
       user.progress.achievements = Object.values(achievements);
@@ -524,20 +529,25 @@ export async function getUser(req: Request, res: Response, next: NextFunction) {
         })
         .lean();
 
+      if (!user) {
+        throw createError(
+          dynamicMessage(ds.notFound, "User"),
+          StatusCodes.NOT_FOUND
+        );
+      }
+
       const achievements: any = {};
-      if (user) {
-        for (const achievement of user.progress.achievements) {
-          if (achievement.type in achievements) {
-            achievements[achievement.type].createdAt = achievement.createdAt;
-            achievements[achievement.type].count++;
-          } else {
-            achievements[achievement.type] = {
-              _id: achievement.type,
-              type: achievement.type,
-              createdAt: achievement.createdAt,
-              count: 1,
-            };
-          }
+      for (const achievement of user.progress.achievements) {
+        if (achievement.type in achievements) {
+          achievements[achievement.type].createdAt = achievement.createdAt;
+          achievements[achievement.type].count++;
+        } else {
+          achievements[achievement.type] = {
+            _id: achievement.type,
+            type: achievement.type,
+            createdAt: achievement.createdAt,
+            count: 1,
+          };
         }
       }
       user.progress.achievements = Object.values(achievements);
@@ -559,34 +569,32 @@ export async function getUser(req: Request, res: Response, next: NextFunction) {
         })
         .lean();
 
-      const achievements: any = {};
-      if (user) {
-        for (const achievement of user.progress.achievements) {
-          if (achievement.type in achievements) {
-            achievements[achievement.type].createdAt = achievement.createdAt;
-            achievements[achievement.type].count++;
-          } else {
-            achievements[achievement.type] = {
-              _id: achievement.type,
-              type: achievement.type,
-              createdAt: achievement.createdAt,
-              count: 1,
-            };
-          }
-        }
+      if (!user) {
+        throw createError(
+          dynamicMessage(ds.notFound, "User"),
+          StatusCodes.NOT_FOUND
+        );
       }
-      user.progress.achievements = Object.values(achievements);
+
+      const achievements: any = {};
+      for (const achievement of user.progress.achievements) {
+        if (achievement.type in achievements) {
+          achievements[achievement.type].createdAt = achievement.createdAt;
+          achievements[achievement.type].count++;
+        } else {
+          achievements[achievement.type] = {
+            _id: achievement.type,
+            type: achievement.type,
+            createdAt: achievement.createdAt,
+            count: 1,
+          };
+        }
+        user.progress.achievements = Object.values(achievements);
+      }
     } else {
       throw createError(
         strings.authorization.loginRequired,
         StatusCodes.FORBIDDEN
-      );
-    }
-
-    if (!user) {
-      throw createError(
-        dynamicMessage(ds.notFound, "User"),
-        StatusCodes.NOT_FOUND
       );
     }
 
