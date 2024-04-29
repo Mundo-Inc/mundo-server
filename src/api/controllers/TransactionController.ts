@@ -30,6 +30,7 @@ export async function getSecret(
 ) {
   try {
     handleInputErrors(req);
+
     const { id: authId } = req.user!;
 
     const user: IUser | null = await User.findById(authId);
@@ -45,17 +46,15 @@ export async function getSecret(
 
     await user.save();
 
-    console.log(process.env.STRIPE_API_VERSION!);
-
     const ephemeralKey = await stripe.ephemeralKeys.create(
       { customer: customerId },
       { apiVersion: process.env.STRIPE_API_VERSION! }
     );
 
-    res.status(200).json({
+    res.status(StatusCodes.OK).json({
       success: true,
       data: {
-        customerId,
+        customer: customerId,
         ephemeralKeySecret: ephemeralKey.secret,
       },
     });

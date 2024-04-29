@@ -1,10 +1,7 @@
 import express from "express";
 
 import {
-  addOrUpdatePaymentMethod,
-  addOrUpdatePaymentMethodValidation,
   addOrUpdatePayoutMethod,
-  getPaymentMethod,
   getSecret,
   onboarding,
   sendGift,
