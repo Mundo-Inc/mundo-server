@@ -1,6 +1,6 @@
 import mongoose, { Schema, type Document } from "mongoose";
 
-interface ITransaction extends Document {
+export interface ITransaction extends Document {
   amount: Number;
   serviceFee: Number;
   totalAmount: Number;

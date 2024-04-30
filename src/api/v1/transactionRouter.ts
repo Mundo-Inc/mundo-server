@@ -3,6 +3,8 @@ import express from "express";
 import {
   addOrUpdatePayoutMethod,
   getSecret,
+  getTransaction,
+  getTransactionValidation,
   onboarding,
   sendGift,
   sendGiftValidation,
@@ -27,5 +29,7 @@ router.route("/withdraw").post(withdrawValidation, withdraw);
 router.route("/gift").post(sendGiftValidation, sendGift);
 
 router.route("/customer").get(getSecret);
+
+router.route("/:id").get(getTransactionValidation, getTransaction);
 
 export default router;

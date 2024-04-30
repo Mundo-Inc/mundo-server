@@ -1,12 +1,20 @@
 import type { NextFunction, Request, Response } from "express";
-import { body, type ValidationChain } from "express-validator";
+import { body, param, type ValidationChain } from "express-validator";
 import { StatusCodes } from "http-status-codes";
 import Stripe from "stripe";
+import { Twilio } from "twilio";
 
-import Transaction from "../../models/Transaction";
+import Transaction, { type ITransaction } from "../../models/Transaction";
 import User, { type IUser } from "../../models/User";
 import { dStrings, dynamicMessage } from "../../strings";
 import { createError, handleInputErrors } from "../../utilities/errorHandlers";
+import { sendAttributtedMessage } from "./ConversationController";
+import { publicReadTransactionProjection } from "../dto/transaction/read-transaction-public.dto";
+import { publicReadUserEssentialProjection } from "../dto/user/read-user-public.dto";
+
+const accountSid = process.env.TWILIO_ACCOUNT_SID; // Replace with your Account SID
+const authToken = process.env.TWILIO_AUTH_TOKEN; // Replace with your Auth Token
+const client = new Twilio(accountSid, authToken);
 
 const SERVICE_FEE_RATIO = 0.05;
 
@@ -262,6 +270,7 @@ export const sendGiftValidation: ValidationChain[] = [
   body("amount").isNumeric(),
   body("receiverId").isMongoId(),
   body("paymentMethodId").isString(),
+  body("message").optional().isString(),
 ];
 
 export async function sendGift(
@@ -273,7 +282,7 @@ export async function sendGift(
     handleInputErrors(req);
 
     const { id: authId } = req.user!;
-    const { amount, receiverId, paymentMethodId } = req.body;
+    const { amount, receiverId, paymentMethodId, message } = req.body;
     const sender = await User.findById(authId);
     const receiver = await User.findById(receiverId);
 
@@ -319,6 +328,12 @@ export async function sendGift(
       sender: sender._id,
       receiver: receiver._id,
       paymentIntentId: paymentIntent.id,
+    });
+
+    // Send message to receiver
+    sendAttributtedMessage(authId, receiverId, message || "", {
+      action: "gift",
+      transactionId: transaction._id.toString(),
     });
 
     res.status(StatusCodes.OK).send({
@@ -422,6 +437,55 @@ export async function withdraw(
     res.status(StatusCodes.OK).json({
       success: true,
       data: payout,
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
+export const getTransactionValidation: ValidationChain[] = [
+  param("id").isMongoId(),
+];
+
+export async function getTransaction(
+  req: Request,
+  res: Response,
+  next: NextFunction
+) {
+  try {
+    handleInputErrors(req);
+
+    const { id: authId } = req.user!;
+    const { id } = req.params;
+
+    const transaction: ITransaction | null = await Transaction.findById(
+      id,
+      publicReadTransactionProjection
+    )
+      .populate("sender", publicReadUserEssentialProjection)
+      .populate("receiver", publicReadUserEssentialProjection)
+      .lean();
+
+    if (!transaction) {
+      throw createError(
+        dynamicMessage(dStrings.notFound, "Transaction"),
+        StatusCodes.NOT_FOUND
+      );
+    }
+
+    if (
+      authId !== transaction.sender._id.toString() &&
+      authId !== transaction.receiver._id.toString()
+    ) {
+      throw createError(
+        "You are not authorized to view this transaction",
+        StatusCodes.UNAUTHORIZED
+      );
+    }
+
+    res.status(StatusCodes.OK).json({
+      success: true,
+      data: transaction,
     });
   } catch (error) {
     next(error);
