@@ -186,7 +186,9 @@ export const createHomemadeValidationPost: ValidationChain[] = [
   body("media.*.caption").optional().isString(),
   body("tags").optional().isArray(),
   body("tags.*").optional().isMongoId(),
-  body("privacyType").optional().isIn(Object.values(ActivityPrivacyTypeEnum)),
+  body("privacyType")
+    .optional()
+    .isIn([ActivityPrivacyTypeEnum.PUBLIC, ActivityPrivacyTypeEnum.FOLLOWING]),
 ];
 export async function createHomemadePost(
   req: Request,
@@ -262,7 +264,7 @@ export async function createHomemadePost(
       content: content || "",
       media: mediaIds,
       tags,
-      privacyType: privacyType || ActivityPrivacyTypeEnum.PUBLIC
+      privacyType: privacyType || ActivityPrivacyTypeEnum.PUBLIC,
     });
 
     const reward = await addReward(authId, {

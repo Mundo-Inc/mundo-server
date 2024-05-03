@@ -640,10 +640,17 @@ export const getUserFeed = async (
           $nin: blocked.map((b) => b.user),
         },
         hasMedia: true,
-        // Either should be public or it should be followed by the viewer or be the viewer's itself
+        // Either should be public or it should be followed by the viewer or be the viewer's itself, or private and im looking for my feed
         $or: [
           { privacyType: ActivityPrivacyTypeEnum.PUBLIC },
+
           {
+            privacyType: ActivityPrivacyTypeEnum.PRIVATE,
+            userId: new mongoose.Types.ObjectId(userId),
+          },
+
+          {
+            privacyType: ActivityPrivacyTypeEnum.FOLLOWING,
             userId: {
               $in: [
                 ...followings.map((f) => f.target),
@@ -656,13 +663,22 @@ export const getUserFeed = async (
     } else {
       // Following users' activities
       query = {
-        userId: {
-          $nin: blocked.map((b) => b.user),
-          $in: [
-            ...followings.map((f) => f.target),
-            new mongoose.Types.ObjectId(userId),
-          ],
-        },
+        $or: [
+          {
+            privacyType: { $ne: ActivityPrivacyTypeEnum.PRIVATE },
+            userId: {
+              $nin: blocked.map((b) => b.user),
+              $in: [
+                ...followings.map((f) => f.target),
+                new mongoose.Types.ObjectId(userId),
+              ],
+            },
+          },
+          {
+            privacyType: ActivityPrivacyTypeEnum.PRIVATE,
+            userId: new mongoose.Types.ObjectId(userId),
+          },
+        ],
       };
     }
 

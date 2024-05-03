@@ -7,10 +7,12 @@ import Comment from "../../models/Comment";
 import Follow from "../../models/Follow";
 import Reaction from "../../models/Reaction";
 import UserActivity, { type IUserActivity } from "../../models/UserActivity";
-import { handleInputErrors } from "../../utilities/errorHandlers";
+import { createError, handleInputErrors } from "../../utilities/errorHandlers";
 import { publicReadUserEssentialProjection } from "../dto/user/read-user-public.dto";
 import { getResourceInfo } from "../services/feed.service";
 import validate from "./validators";
+import User, { IUser } from "../../models/User";
+import strings from "../../strings";
 
 export const getActivitiesOfaUserValidation: ValidationChain[] = [
   param("id").isMongoId(),
@@ -45,6 +47,21 @@ export async function getActivitiesOfaUser(
     const userId = req.params.id;
     const page = Number(req.query.page) || 1;
     const limit = Number(req.query.limit) || 20;
+
+    //PRIVACY
+    const userObject: IUser | null = await User.findById(userId);
+    if (userObject) {
+      const isFollowed = await Follow.countDocuments({
+        user: authId,
+        target: userObject._id,
+      });
+      if (!isFollowed && userObject.isPrivate) {
+        throw createError(
+          strings.authorization.accessDenied,
+          StatusCodes.UNAUTHORIZED
+        );
+      }
+    }
 
     let query: FilterQuery<IUserActivity> = {
       userId,
