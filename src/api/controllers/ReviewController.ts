@@ -25,6 +25,7 @@ import {
   addReviewActivity,
 } from "../services/user.activity.service";
 import validate from "./validators";
+import { ActivityPrivacyTypeEnum } from "../../models/UserActivity";
 
 export const getReviewsValidation: ValidationChain[] = [
   query("writer").optional().isMongoId(),
@@ -292,6 +293,7 @@ export const createReviewValidation: ValidationChain[] = [
   body("videos.*.caption").optional().isString(),
   body("language").optional().isString(),
   body("recommend").optional().isBoolean(),
+  body("privacyType").optional().isIn(Object.values(ActivityPrivacyTypeEnum)),
 ];
 export async function createReview(
   req: Request,
@@ -303,8 +305,16 @@ export async function createReview(
 
     const { id: authId, role } = req.user!;
 
-    const { place, scores, content, images, videos, language, recommend } =
-      req.body;
+    const {
+      place,
+      scores,
+      content,
+      images,
+      videos,
+      language,
+      recommend,
+      privacyType,
+    } = req.body;
 
     const writer = req.body.writer || authId;
 
@@ -431,6 +441,7 @@ export async function createReview(
           ? false
           : Boolean(recommend)
         : undefined,
+      privacyType: privacyType || ActivityPrivacyTypeEnum.PUBLIC,
     });
 
     logger.verbose("adding review count to the place");

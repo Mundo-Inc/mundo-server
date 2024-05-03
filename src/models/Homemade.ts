@@ -2,7 +2,7 @@ import mongoose, { CallbackError, Schema, type Document } from "mongoose";
 import logger from "../api/services/logger";
 import Reaction from "./Reaction";
 import Comment from "./Comment";
-import UserActivity from "./UserActivity";
+import UserActivity, { ActivityPrivacyTypeEnum } from "./UserActivity";
 import Media from "./Media";
 
 export interface IHomemade extends Document {
@@ -13,6 +13,7 @@ export interface IHomemade extends Document {
   createdAt: Date;
   updatedAt: Date;
   userActivityId?: mongoose.Types.ObjectId;
+  privacyType: ActivityPrivacyTypeEnum;
 }
 
 const HomemadeSchema: Schema = new Schema<IHomemade>(
@@ -25,6 +26,12 @@ const HomemadeSchema: Schema = new Schema<IHomemade>(
     },
     tags: [{ type: Schema.Types.ObjectId, ref: "User" }],
     userActivityId: { type: Schema.Types.ObjectId, ref: "UserActivity" },
+    privacyType: {
+      type: String,
+      enum: Object.values(ActivityPrivacyTypeEnum),
+      default: ActivityPrivacyTypeEnum.PUBLIC,
+      required: true,
+    },
   },
   { timestamps: true }
 );

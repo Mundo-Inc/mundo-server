@@ -19,6 +19,7 @@ import { addReward } from "../services/reward/reward.service";
 import { addHomemadeActivity } from "../services/user.activity.service";
 import validate from "./validators";
 import User from "../../models/User";
+import { ActivityPrivacyTypeEnum } from "../../models/UserActivity";
 
 export const getHomemadePostsValidation: ValidationChain[] = [
   query("user").optional().isMongoId(),
@@ -185,6 +186,7 @@ export const createHomemadeValidationPost: ValidationChain[] = [
   body("media.*.caption").optional().isString(),
   body("tags").optional().isArray(),
   body("tags.*").optional().isMongoId(),
+  body("privacyType").optional().isIn(Object.values(ActivityPrivacyTypeEnum)),
 ];
 export async function createHomemadePost(
   req: Request,
@@ -196,7 +198,7 @@ export async function createHomemadePost(
 
     const { id: authId, role } = req.user!;
 
-    const { content, media, tags } = req.body;
+    const { content, media, tags, privacyType } = req.body;
 
     const userId = req.body.user || authId;
 
@@ -260,6 +262,7 @@ export async function createHomemadePost(
       content: content || "",
       media: mediaIds,
       tags,
+      privacyType: privacyType || ActivityPrivacyTypeEnum.PUBLIC
     });
 
     const reward = await addReward(authId, {

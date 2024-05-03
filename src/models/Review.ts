@@ -5,7 +5,7 @@ import Comment from "./Comment";
 import Media from "./Media";
 import Place from "./Place";
 import Reaction from "./Reaction";
-import UserActivity from "./UserActivity";
+import UserActivity, { ActivityPrivacyTypeEnum } from "./UserActivity";
 
 export interface IReview extends Document {
   writer: mongoose.Types.ObjectId;
@@ -31,6 +31,7 @@ export interface IReview extends Document {
   source?: "yelp" | "google";
   lastProcessDate?: Date;
   processError?: "rateLimit" | "notValidResponse" | "parseError";
+  privacyType: ActivityPrivacyTypeEnum;
 }
 
 const ReviewSchema: Schema = new Schema<IReview>(
@@ -64,6 +65,12 @@ const ReviewSchema: Schema = new Schema<IReview>(
     processError: {
       type: String,
       enum: ["rateLimit", "notValidResponse", "parseError"],
+    },
+    privacyType: {
+      type: String,
+      enum: Object.values(ActivityPrivacyTypeEnum),
+      default: ActivityPrivacyTypeEnum.PUBLIC,
+      required: true,
     },
   },
   { timestamps: true }
