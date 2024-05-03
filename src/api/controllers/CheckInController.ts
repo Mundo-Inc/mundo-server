@@ -59,6 +59,47 @@ export async function getCheckIns(
     const limit = parseInt(reqLimit as string) || 500;
     const skip = (page - 1) * limit;
     const matchPipeline: any[] = [];
+
+    const privacyPipeline: any[] = [
+      {
+        $lookup: {
+          from: "follows",
+          localField: "user",
+          foreignField: "target",
+          as: "followDetails",
+        },
+      },
+      {
+        $addFields: {
+          isFollowed: {
+            $anyElementTrue: {
+              $map: {
+                input: "$followDetails",
+                as: "followDetail",
+                in: {
+                  $eq: [
+                    "$$followDetail.user",
+                    new mongoose.Types.ObjectId(authId),
+                  ],
+                },
+              },
+            },
+          },
+        },
+      },
+      {
+        $match: {
+          $or: [
+            { privacyType: "PUBLIC" },
+            {
+              privacyType: "PRIVATE",
+              user: new mongoose.Types.ObjectId(authId),
+            },
+            { privacyType: "FOLLOWING", isFollowed: true },
+          ],
+        },
+      },
+    ];
     if (user) {
       //PRIVACY
       const userObject = (await User.findById(user)) as IUser;
@@ -90,16 +131,17 @@ export async function getCheckIns(
       });
     }
 
-    if (user && user !== authId) {
-      matchPipeline.push({
-        $match: {
-          privacyType: ActivityPrivacyTypeEnum.PUBLIC,
-        },
-      });
-    }
+    // if (user && user !== authId) {
+    //   matchPipeline.push({
+    //     $match: {
+    //       privacyType: ActivityPrivacyTypeEnum.PUBLIC,
+    //     },
+    //   });
+    // }
 
     const result = await CheckIn.aggregate([
       ...matchPipeline,
+      ...privacyPipeline,
       {
         $facet: {
           total: [
@@ -446,6 +488,8 @@ export async function createCheckIn(
     if (event) checkinBody.event = event;
 
     const checkin = await CheckIn.create(checkinBody);
+    await checkin.save();
+    // console.log(checkin);
 
     await processCheckInActivities(authId, checkin, placeId, privacyType);
 
