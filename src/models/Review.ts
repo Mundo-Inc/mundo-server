@@ -31,7 +31,7 @@ export interface IReview extends Document {
   source?: "yelp" | "google";
   lastProcessDate?: Date;
   processError?: "rateLimit" | "notValidResponse" | "parseError";
-  privacyType: ActivityPrivacyTypeEnum;
+  // privacyType: ActivityPrivacyTypeEnum;
 }
 
 const ReviewSchema: Schema = new Schema<IReview>(
@@ -66,12 +66,12 @@ const ReviewSchema: Schema = new Schema<IReview>(
       type: String,
       enum: ["rateLimit", "notValidResponse", "parseError"],
     },
-    privacyType: {
-      type: String,
-      enum: Object.values(ActivityPrivacyTypeEnum),
-      default: ActivityPrivacyTypeEnum.PUBLIC,
-      required: true,
-    },
+    // privacyType: {
+    //   type: String,
+    //   enum: Object.values(ActivityPrivacyTypeEnum),
+    //   default: ActivityPrivacyTypeEnum.PUBLIC,
+    //   required: true,
+    // },
   },
   { timestamps: true }
 );
