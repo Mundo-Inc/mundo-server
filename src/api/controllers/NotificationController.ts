@@ -13,7 +13,7 @@ import Notification, {
 import Reaction from "../../models/Reaction";
 import Review from "../../models/Review";
 import { handleInputErrors } from "../../utilities/errorHandlers";
-import { publicReadUserEssentialProjection } from "../dto/user/read-user-public.dto";
+import UserProjection from "../dto/user/user";
 import validate from "./validators";
 
 async function handleResourceNotFound(notification: INotification) {
@@ -32,7 +32,7 @@ async function getNotificationContent(notification: INotification) {
       await Comment.findById(notification.resources![0]._id)
         .populate({
           path: "author",
-          select: publicReadUserEssentialProjection,
+          select: UserProjection.essentials,
         })
         .then((comment) => {
           if (!comment) {
@@ -49,7 +49,7 @@ async function getNotificationContent(notification: INotification) {
       await Follow.findById(notification.resources![0]._id)
         .populate({
           path: "user",
-          select: publicReadUserEssentialProjection,
+          select: UserProjection.essentials,
         })
         .then((follow) => {
           if (!follow) {
@@ -64,7 +64,7 @@ async function getNotificationContent(notification: INotification) {
       await Comment.findById(notification.resources![0]._id)
         .populate({
           path: "author",
-          select: publicReadUserEssentialProjection,
+          select: UserProjection.essentials,
         })
         .then((comment) => {
           if (!comment) {
@@ -81,7 +81,7 @@ async function getNotificationContent(notification: INotification) {
       await Reaction.findById(notification.resources![0]._id)
         .populate({
           path: "user",
-          select: publicReadUserEssentialProjection,
+          select: UserProjection.essentials,
         })
         .then((reaction) => {
           if (!reaction) {
@@ -109,7 +109,7 @@ async function getNotificationContent(notification: INotification) {
       await Review.findById(notification.resources![0]._id)
         .populate({
           path: "writer",
-          select: publicReadUserEssentialProjection,
+          select: UserProjection.essentials,
         })
         .populate("place")
         .then((review) => {
@@ -141,7 +141,7 @@ async function getNotificationContent(notification: INotification) {
       await Review.findById(notification.resources![0]._id)
         .populate({
           path: "userId",
-          select: publicReadUserEssentialProjection,
+          select: UserProjection.essentials,
         })
         .then((homemade) => {
           if (!homemade) {
@@ -157,7 +157,7 @@ async function getNotificationContent(notification: INotification) {
       await CheckIn.findById(notification.resources![0]._id)
         .populate({
           path: "user",
-          select: publicReadUserEssentialProjection,
+          select: UserProjection.essentials,
         })
         .populate("place", "name")
         .then((checkin) => {

@@ -3,16 +3,16 @@ import { param, type ValidationChain } from "express-validator";
 import { StatusCodes } from "http-status-codes";
 
 import {
-  type IProfileCover,
-  type IProfileFrame,
   ProfileCover,
   ProfileFrame,
+  type IProfileCover,
+  type IProfileFrame,
 } from "../../models/ProfileDecoration";
 import ProfileDecorationRedemption, {
   ProfileDecorationEnum,
 } from "../../models/ProfileDecorationRedemption";
 import User, { type IUser } from "../../models/User";
-import strings from "../../strings";
+import strings, { dStrings, dynamicMessage } from "../../strings";
 import { createError, handleInputErrors } from "../../utilities/errorHandlers";
 
 export const getDecorationsValidation: ValidationChain[] = [];
@@ -25,7 +25,7 @@ export async function getDecorations(
   try {
     handleInputErrors(req);
     const { id: authId } = req.user!;
-    const user = (await User.findById(authId)) as IUser;
+    const user: IUser | null = await User.findById(authId);
     if (!user) {
       throw createError(strings.user.notFound, StatusCodes.NOT_FOUND);
     }
@@ -54,7 +54,7 @@ export async function getDecorationRedemption(
   try {
     handleInputErrors(req);
     const { id: authId } = req.user!;
-    const user = (await User.findById(authId)) as IUser;
+    const user: IUser | null = await User.findById(authId);
     if (!user) {
       throw createError(strings.user.notFound, StatusCodes.NOT_FOUND);
     }
@@ -84,7 +84,7 @@ export async function redeemDecoration(
     handleInputErrors(req);
     const { id: authId } = req.user!;
     const { id, type } = req.params;
-    const user = (await User.findById(authId)) as IUser;
+    const user: IUser | null = await User.findById(authId);
     if (!user) {
       throw createError(strings.user.notFound, StatusCodes.NOT_FOUND);
     }
@@ -92,9 +92,11 @@ export async function redeemDecoration(
     let decoration: IProfileCover | IProfileFrame | null = null;
 
     if (type === ProfileDecorationEnum.PROFILE_COVER) {
-      decoration = (await ProfileCover.findById(id)) as IProfileCover;
+      const cover: IProfileCover | null = await ProfileCover.findById(id);
+      decoration = cover;
     } else if (type === ProfileDecorationEnum.PROFILE_FRAME) {
-      decoration = (await ProfileFrame.findById(id)) as IProfileFrame;
+      const frame: IProfileFrame | null = await ProfileFrame.findById(id);
+      decoration = frame;
     }
 
     if (!decoration) {
@@ -158,7 +160,7 @@ export async function activateDecoration(
     handleInputErrors(req);
     const { id: authId } = req.user!;
     const { id, type } = req.params;
-    let user = (await User.findById(authId)) as IUser;
+    const user: IUser | null = await User.findById(authId);
     if (!user) {
       throw createError(strings.user.notFound, StatusCodes.NOT_FOUND);
     }
@@ -177,14 +179,26 @@ export async function activateDecoration(
     }
 
     if (type === ProfileDecorationEnum.PROFILE_COVER) {
-      const cover = (await ProfileCover.findById(id)) as IProfileCover;
+      const cover: IProfileCover | null = await ProfileCover.findById(id);
+      if (!cover) {
+        throw createError(
+          dynamicMessage(dStrings.notFound, "Cover"),
+          StatusCodes.NOT_FOUND
+        );
+      }
       user.decorations.cover = cover.url;
     } else if (type === ProfileDecorationEnum.PROFILE_FRAME) {
-      const frame = (await ProfileFrame.findById(id)) as IProfileFrame;
+      const frame: IProfileFrame | null = await ProfileFrame.findById(id);
+      if (!frame) {
+        throw createError(
+          dynamicMessage(dStrings.notFound, "Frame"),
+          StatusCodes.NOT_FOUND
+        );
+      }
       user.decorations.frame = frame.url;
     }
 
-    user = await user.save();
+    await user.save();
 
     res.status(StatusCodes.OK).json({
       success: true,
@@ -209,7 +223,7 @@ export async function deactivateDecoration(
     handleInputErrors(req);
     const { id: authId } = req.user!;
     const { id, type } = req.params;
-    let user = (await User.findById(authId)) as IUser;
+    const user: IUser | null = await User.findById(authId);
     if (!user) {
       throw createError(strings.user.notFound, StatusCodes.NOT_FOUND);
     }
@@ -232,7 +246,7 @@ export async function deactivateDecoration(
       user.decorations.frame = undefined;
     }
 
-    user = await user.save();
+    await user.save();
 
     res.status(StatusCodes.OK).json({
       success: true,

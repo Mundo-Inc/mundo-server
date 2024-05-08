@@ -8,9 +8,9 @@ import Transaction, { type ITransaction } from "../../models/Transaction";
 import User, { type IUser } from "../../models/User";
 import { dStrings, dynamicMessage } from "../../strings";
 import { createError, handleInputErrors } from "../../utilities/errorHandlers";
-import { sendAttributtedMessage } from "./ConversationController";
 import { publicReadTransactionProjection } from "../dto/transaction/read-transaction-public.dto";
-import { publicReadUserEssentialProjection } from "../dto/user/read-user-public.dto";
+import UserProjection from "../dto/user/user";
+import { sendAttributtedMessage } from "./ConversationController";
 
 const accountSid = process.env.TWILIO_ACCOUNT_SID; // Replace with your Account SID
 const authToken = process.env.TWILIO_AUTH_TOKEN; // Replace with your Auth Token
@@ -462,8 +462,8 @@ export async function getTransaction(
       id,
       publicReadTransactionProjection
     )
-      .populate("sender", publicReadUserEssentialProjection)
-      .populate("receiver", publicReadUserEssentialProjection)
+      .populate("sender", UserProjection.essentials)
+      .populate("receiver", UserProjection.essentials)
       .lean();
 
     if (!transaction) {

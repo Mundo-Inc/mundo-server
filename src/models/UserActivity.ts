@@ -159,9 +159,9 @@ UserActivitySchema.methods.calculateHotnessScore = async function () {
   const newPostBoost = weights.newPostInitialBoost / hoursValue;
   let finalScore = score + newPostBoost + getFreshHoursBoost(hoursValue);
 
-  const scoreWeightEntry = (await ScoreWeight.findOne({
+  const scoreWeightEntry: IScoreWeight | null = await ScoreWeight.findOne({
     userId: this.userId,
-  }).lean()) as IScoreWeight;
+  }).lean();
   if (scoreWeightEntry) {
     finalScore *= scoreWeightEntry.value;
   }

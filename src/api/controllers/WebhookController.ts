@@ -63,10 +63,8 @@ export async function conversationsWebhook(
           );
         }
 
-        const authorInfo: IUser | null = await User.findById(
-          Author,
-          "name"
-        ).lean();
+        const authorInfo: Pick<IUser, "_id" | "name"> | null =
+          await User.findById(Author, "name").lean();
 
         if (!authorInfo) {
           logger.warn(`User ${Author} not found. Skipping notification.`);

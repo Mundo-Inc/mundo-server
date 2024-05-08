@@ -6,13 +6,13 @@ import mongoose, { type FilterQuery } from "mongoose";
 import Comment from "../../models/Comment";
 import Follow from "../../models/Follow";
 import Reaction from "../../models/Reaction";
+import User, { type IUser } from "../../models/User";
 import UserActivity, { type IUserActivity } from "../../models/UserActivity";
+import strings from "../../strings";
 import { createError, handleInputErrors } from "../../utilities/errorHandlers";
-import { publicReadUserEssentialProjection } from "../dto/user/read-user-public.dto";
+import UserProjection from "../dto/user/user";
 import { getResourceInfo } from "../services/feed.service";
 import validate from "./validators";
-import User, { IUser } from "../../models/User";
-import strings from "../../strings";
 
 export const getActivitiesOfaUserValidation: ValidationChain[] = [
   param("id").isMongoId(),
@@ -218,7 +218,7 @@ export function getCommentsOfActivity(
         as: "author",
         pipeline: [
           {
-            $project: publicReadUserEssentialProjection,
+            $project: UserProjection.essentials,
           },
         ],
       },

@@ -16,7 +16,6 @@ import User from "../../models/User";
 import strings, { dStrings as ds, dynamicMessage } from "../../strings";
 import { createError, handleInputErrors } from "../../utilities/errorHandlers";
 import { openAiAnalyzeReview } from "../../utilities/openAi";
-import { publicReadUserEssentialProjection } from "../dto/user/read-user-public.dto";
 import { reviewEarning } from "../services/earning.service";
 import logger from "../services/logger";
 import { addReward } from "../services/reward/reward.service";
@@ -25,6 +24,7 @@ import {
   addReviewActivity,
 } from "../services/user.activity.service";
 import validate from "./validators";
+import UserProjection from "../dto/user/user";
 // import { ActivityPrivacyTypeEnum } from "../../models/UserActivity";
 
 export const getReviewsValidation: ValidationChain[] = [
@@ -109,7 +109,7 @@ export async function getReviews(
           as: "writer",
           pipeline: [
             {
-              $project: publicReadUserEssentialProjection,
+              $project: UserProjection.essentials,
             },
           ],
         },
@@ -538,7 +538,7 @@ export async function getReview(
           as: "writer",
           pipeline: [
             {
-              $project: publicReadUserEssentialProjection,
+              $project: UserProjection.essentials,
             },
           ],
         },

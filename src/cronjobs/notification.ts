@@ -1,7 +1,6 @@
 import { Types } from "mongoose";
 import cron from "node-cron";
 
-import { publicReadUserEssentialProjection } from "../api/dto/user/read-user-public.dto";
 import logger from "../api/services/logger";
 import {
   NotificationsService,
@@ -18,6 +17,7 @@ import Notification, {
 import Reaction from "../models/Reaction";
 import Review from "../models/Review";
 import User, { type UserDevice } from "../models/User";
+import UserProjection from "../api/dto/user/user";
 
 cron.schedule("*/30 * * * * *", async () => {
   const notifications = await Notification.find({
@@ -130,7 +130,7 @@ export async function getNotificationContent(notification: INotification) {
       await Review.findById(notification.resources![0]._id)
         .populate({
           path: "writer",
-          select: publicReadUserEssentialProjection,
+          select: UserProjection.essentials,
         })
         .populate("place")
         .then((review) => {
@@ -148,7 +148,7 @@ export async function getNotificationContent(notification: INotification) {
       await Homemade.findById(notification.resources![0]._id)
         .populate({
           path: "userId",
-          select: publicReadUserEssentialProjection,
+          select: UserProjection.essentials,
         })
         .then((homemade) => {
           title = `New post from ${homemade.userId.name}`;
@@ -160,7 +160,7 @@ export async function getNotificationContent(notification: INotification) {
       await CheckIn.findById(notification.resources![0]._id)
         .populate({
           path: "user",
-          select: publicReadUserEssentialProjection,
+          select: UserProjection.essentials,
         })
         .populate("place")
         .then((checkin) => {

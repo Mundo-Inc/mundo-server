@@ -11,15 +11,15 @@ import Notification, {
   ResourceTypeEnum,
 } from "../../models/Notification";
 import Upload from "../../models/Upload";
+import User from "../../models/User";
+import { ActivityPrivacyTypeEnum } from "../../models/UserActivity";
 import strings, { dStrings as ds, dynamicMessage } from "../../strings";
 import { createError, handleInputErrors } from "../../utilities/errorHandlers";
-import { publicReadUserEssentialProjection } from "../dto/user/read-user-public.dto";
+import UserProjection from "../dto/user/user";
 import logger from "../services/logger";
 import { addReward } from "../services/reward/reward.service";
 import { addHomemadeActivity } from "../services/user.activity.service";
 import validate from "./validators";
-import User from "../../models/User";
-import { ActivityPrivacyTypeEnum } from "../../models/UserActivity";
 
 export const getHomemadePostsValidation: ValidationChain[] = [
   query("user").optional().isMongoId(),
@@ -85,7 +85,7 @@ export async function getHomemadePosts(
           as: "tags",
           pipeline: [
             {
-              $project: publicReadUserEssentialProjection,
+              $project: UserProjection.essentials,
             },
           ],
         },
@@ -98,7 +98,7 @@ export async function getHomemadePosts(
           as: "user",
           pipeline: [
             {
-              $project: publicReadUserEssentialProjection,
+              $project: UserProjection.essentials,
             },
           ],
         },
@@ -349,7 +349,7 @@ export async function getHomemadePost(
           as: "user",
           pipeline: [
             {
-              $project: publicReadUserEssentialProjection,
+              $project: UserProjection.essentials,
             },
           ],
         },
@@ -380,7 +380,7 @@ export async function getHomemadePost(
           as: "tags",
           pipeline: [
             {
-              $project: publicReadUserEssentialProjection,
+              $project: UserProjection.essentials,
             },
           ],
         },

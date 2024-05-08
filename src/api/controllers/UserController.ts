@@ -11,7 +11,7 @@ import CoinReward, { CoinRewardTypeEnum } from "../../models/CoinReward";
 import Follow from "../../models/Follow";
 import FollowRequest, { type IFollowRequest } from "../../models/FollowRequest";
 import Notification, { NotificationTypeEnum } from "../../models/Notification";
-import Place, { type IPlace } from "../../models/Place";
+import Place from "../../models/Place";
 import Review from "../../models/Review";
 import User, {
   SignupMethodEnum,
@@ -21,8 +21,7 @@ import User, {
 import strings, { dStrings as ds, dynamicMessage } from "../../strings";
 import { createError, handleInputErrors } from "../../utilities/errorHandlers";
 import { bucketName, s3 } from "../../utilities/storage";
-import { privateReadUserProjection } from "../dto/user/read-user-private.dto";
-import { publicReadUserProjection } from "../dto/user/read-user-public.dto";
+import UserProjection from "../dto/user/user";
 import { handleSignUp } from "../lib/profile-handlers";
 import { BrevoService } from "../services/brevo.service";
 import logger from "../services/logger";
@@ -83,14 +82,14 @@ export async function getUsers(
           },
         },
         {
-          $project: publicReadUserProjection,
+          $project: UserProjection.public,
         },
       ]);
     } else if (authId) {
       const followings = await Follow.find({ user: authId })
         .populate({
           path: "target",
-          select: publicReadUserProjection,
+          select: UserProjection.public,
           populate: {
             path: "progress.achievements",
           },
@@ -106,7 +105,7 @@ export async function getUsers(
       const followers = await Follow.find({ target: authId })
         .populate({
           path: "user",
-          select: publicReadUserProjection,
+          select: UserProjection.public,
           populate: {
             path: "progress.achievements",
           },
@@ -328,7 +327,7 @@ export async function getLeaderBoard(
         },
       },
       {
-        $project: publicReadUserProjection,
+        $project: UserProjection.public,
       },
     ]);
 
@@ -469,7 +468,7 @@ export async function getUser(req: Request, res: Response, next: NextFunction) {
     if (authId && id === authId) {
       // own profile
 
-      user = await User.findById(id, privateReadUserProjection)
+      user = await User.findById(id, UserProjection.private)
         .populate({
           path: "progress.achievements",
           select: "type createdAt",
@@ -522,7 +521,7 @@ export async function getUser(req: Request, res: Response, next: NextFunction) {
         }
       }
 
-      user = await User.findById(id, publicReadUserProjection)
+      user = await User.findById(id, UserProjection.public)
         .populate({
           path: "progress.achievements",
           select: "type createdAt",
@@ -562,7 +561,7 @@ export async function getUser(req: Request, res: Response, next: NextFunction) {
     } else if (view === "basic") {
       // basic view
 
-      user = await User.findById(id, publicReadUserProjection)
+      user = await User.findById(id, UserProjection.public)
         .populate({
           path: "progress.achievements",
           select: "type createdAt",
@@ -735,7 +734,7 @@ export async function editUser(
       }
     }
 
-    const updatedUser: any = await User.findById(id, privateReadUserProjection)
+    const updatedUser: any = await User.findById(id, UserProjection.private)
       .populate("progress.achievements")
       .lean();
 

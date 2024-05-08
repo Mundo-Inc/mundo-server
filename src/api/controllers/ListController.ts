@@ -10,7 +10,7 @@ import strings, { dStrings as ds, dynamicMessage } from "../../strings";
 import { createError, handleInputErrors } from "../../utilities/errorHandlers";
 import { getListOfListsDTO } from "../dto/list/readLists";
 import { readPlaceBriefProjection } from "../dto/place/read-place-brief.dto";
-import { publicReadUserEssentialProjection } from "../dto/user/read-user-public.dto";
+import UserProjection from "../dto/user/user";
 
 export const getListValidation: ValidationChain[] = [param("id").isMongoId()];
 
@@ -34,7 +34,7 @@ export async function getList(req: Request, res: Response, next: NextFunction) {
           as: "owner",
           pipeline: [
             {
-              $project: publicReadUserEssentialProjection,
+              $project: UserProjection.essentials,
             },
           ],
         },
@@ -71,7 +71,7 @@ export async function getList(req: Request, res: Response, next: NextFunction) {
     for (let i = 0; i < result.collaborators.length; i++) {
       let user = await User.findById(
         result.collaborators[i].user,
-        publicReadUserEssentialProjection
+        UserProjection.essentials
       ).lean();
       if (!user) {
         throw createError(
@@ -88,7 +88,7 @@ export async function getList(req: Request, res: Response, next: NextFunction) {
       ).lean();
       let user = await User.findById(
         result.places[i].user,
-        publicReadUserEssentialProjection
+        UserProjection.essentials
       ).lean();
       if (!p) {
         throw createError(
@@ -155,8 +155,8 @@ export async function createList(
     });
 
     await Promise.all([
-      newList.populate("owner", publicReadUserEssentialProjection),
-      newList.populate("collaborators.user", publicReadUserEssentialProjection),
+      newList.populate("owner", UserProjection.essentials),
+      newList.populate("collaborators.user", UserProjection.essentials),
     ]);
 
     newList = newList.toObject();
@@ -265,7 +265,7 @@ export async function editList(
     // Save the updated list
     let editedList = await list.save();
 
-    await editedList.populate("owner", publicReadUserEssentialProjection);
+    await editedList.populate("owner", UserProjection.essentials);
 
     editedList = editedList.toObject();
 
@@ -635,7 +635,7 @@ export async function getUserLists(
           as: "owner",
           pipeline: [
             {
-              $project: publicReadUserEssentialProjection,
+              $project: UserProjection.essentials,
             },
           ],
         },

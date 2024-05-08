@@ -59,7 +59,7 @@ export async function getVersionInfo(
     const [latestAppVersion, minOperationalVersion] = (await Promise.all([
       AppSetting.findOne({ key: "latestAppVersion" }).lean(),
       AppSetting.findOne({ key: "minOperationalVersion" }).lean(),
-    ])) as [IAppSetting, IAppSetting];
+    ])) as [IAppSetting | null, IAppSetting | null];
 
     if (!latestAppVersion || !minOperationalVersion) {
       throw createError("App settings not found", StatusCodes.NOT_FOUND);

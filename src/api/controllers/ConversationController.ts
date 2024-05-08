@@ -8,8 +8,8 @@ import Conversation, { type IConversation } from "../../models/Conversation";
 import User, { type IUser } from "../../models/User";
 import { dStrings, dynamicMessage } from "../../strings";
 import { createError, handleInputErrors } from "../../utilities/errorHandlers";
-import { publicReadUserEssentialProjection } from "../dto/user/read-user-public.dto";
 import logger from "../services/logger";
+import UserProjection from "../dto/user/user";
 
 const AccessToken = twilio.jwt.AccessToken;
 const ChatGrant = AccessToken.ChatGrant;
@@ -407,7 +407,7 @@ export async function getConversations(
           as: "conversations.participants.user",
           pipeline: [
             {
-              $project: publicReadUserEssentialProjection,
+              $project: UserProjection.essentials,
             },
           ],
         },
@@ -460,7 +460,7 @@ export async function getConversation(
     })
       .populate({
         path: "participants.user",
-        select: publicReadUserEssentialProjection,
+        select: UserProjection.essentials,
       })
       .lean();
 
@@ -484,14 +484,14 @@ export async function sendAttributtedMessage(
   attributes: object
 ) {
   const [byUser, toUser] = await Promise.all([
-    User.findById(by, "name").lean() as Promise<{
-      _id: mongoose.Types.ObjectId;
-      name: string;
-    } | null>,
-    User.findById(to, "name").lean() as Promise<{
-      _id: mongoose.Types.ObjectId;
-      name: string;
-    } | null>,
+    User.findById(by, "name").lean() as Promise<Pick<
+      IUser,
+      "_id" | "name"
+    > | null>,
+    User.findById(to, "name").lean() as Promise<Pick<
+      IUser,
+      "_id" | "name"
+    > | null>,
   ]);
 
   if (!byUser || !toUser) {

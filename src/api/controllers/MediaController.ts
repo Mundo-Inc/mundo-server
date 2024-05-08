@@ -1,6 +1,7 @@
 import { PutObjectCommand } from "@aws-sdk/client-s3";
 import crypto from "crypto";
 import type { NextFunction, Request, Response } from "express";
+import { query, type ValidationChain } from "express-validator";
 import type { File } from "formidable";
 import * as fs from "fs";
 import { readFileSync } from "fs";
@@ -8,7 +9,6 @@ import { StatusCodes } from "http-status-codes";
 import mongoose from "mongoose";
 import path from "path";
 
-import { query, type ValidationChain } from "express-validator";
 import Event from "../../models/Event";
 import Media, { MediaTypeEnum } from "../../models/Media";
 import Place from "../../models/Place";
@@ -22,8 +22,8 @@ import {
   resizeVideo,
   s3,
 } from "../../utilities/storage";
-import { type CreateMediaDto } from "../dto/media/create-media.dto";
-import { publicReadUserEssentialProjection } from "../dto/user/read-user-public.dto";
+import type { CreateMediaDto } from "../dto/media/create-media.dto";
+import UserProjection from "../dto/user/user";
 import validate from "./validators";
 
 const imagesDirectory = "images";
@@ -187,7 +187,7 @@ export async function getMedia(
       .sort({ createdAt: -1 })
       .skip((page - 1) * limit)
       .limit(limit)
-      .populate("user", publicReadUserEssentialProjection)
+      .populate("user", UserProjection.essentials)
       .lean();
 
     res.status(StatusCodes.OK).json({ success: true, data: medias });

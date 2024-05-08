@@ -11,7 +11,6 @@ import { dStrings, dynamicMessage } from "../../strings";
 import { createError, handleInputErrors } from "../../utilities/errorHandlers";
 import { bucketName, parseForm, region, s3 } from "../../utilities/storage";
 import { areStrictlySimilar } from "../../utilities/stringHelper";
-import { publicReadUserEssentialProjection } from "../dto/user/read-user-public.dto";
 import {
   findFoursquareId,
   findTripAdvisorId,
@@ -22,6 +21,7 @@ import {
 } from "../services/provider.service";
 import { getDetailedPlace } from "./SinglePlaceController";
 import validate from "./validators";
+import UserProjection from "../dto/user/user";
 
 export const createPlaceValidation: ValidationChain[] = [
   // validate.name(body("name")),
@@ -257,7 +257,7 @@ export async function getPlaces(
                 as: "user",
                 pipeline: [
                   {
-                    $project: publicReadUserEssentialProjection,
+                    $project: UserProjection.essentials,
                   },
                 ],
               },

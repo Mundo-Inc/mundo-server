@@ -70,8 +70,6 @@ export interface IUser extends Document {
     resetPasswordToken: String;
     resetPasswordTokenExpiry: Date;
   };
-  xp?: number;
-  level?: number;
   signupMethod: string;
   devices?: UserDevice[];
   progress: {
@@ -167,16 +165,6 @@ const UserSchema = new Schema<IUser>(
     profileImage: {
       type: String,
       default: "",
-    },
-    xp: {
-      type: Number,
-      default: 0,
-      index: true,
-    },
-    level: {
-      type: Number,
-      default: 1,
-      index: true,
     },
     signupMethod: {
       type: String,
@@ -358,13 +346,12 @@ async function removeDependencies(user: IUser) {
   await Promise.all(reviews.map((review) => review.deleteOne()));
 }
 
-UserSchema.pre<IUser>(
+UserSchema.pre(
   "deleteOne",
   { document: true, query: false },
   async function (next) {
     try {
-      const user = this;
-      removeDependencies(user);
+      removeDependencies(this);
       next();
     } catch (error) {
       next(error as CallbackError);

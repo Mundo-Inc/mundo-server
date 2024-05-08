@@ -1,21 +1,16 @@
-import axios from "axios";
 import type { NextFunction, Request, Response } from "express";
 import { query, type ValidationChain } from "express-validator";
 import { StatusCodes } from "http-status-codes";
 import mongoose, { type FilterQuery } from "mongoose";
 
-import CheckIn from "../../models/CheckIn";
 import Follow, { type IFollow } from "../../models/Follow";
-import Place from "../../models/Place";
-import Review from "../../models/Review";
 import UserActivity, {
   ActivityPrivacyTypeEnum,
 } from "../../models/UserActivity";
-import strings from "../../strings";
 import { createError, handleInputErrors } from "../../utilities/errorHandlers";
 import { readFormattedPlaceLocationProjection } from "../dto/place/place-dto";
 import { readPlaceBriefProjection } from "../dto/place/read-place-brief.dto";
-import { publicReadUserEssentialProjection } from "../dto/user/read-user-public.dto";
+import UserProjection from "../dto/user/user";
 import validate from "./validators";
 
 const API_KEY = process.env.GOOGLE_GEO_API_KEY!;
@@ -163,7 +158,7 @@ export async function getMapActivities(
           as: "user",
           pipeline: [
             {
-              $project: publicReadUserEssentialProjection,
+              $project: UserProjection.essentials,
             },
           ],
         },

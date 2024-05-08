@@ -2,6 +2,7 @@ import mongoose from "mongoose";
 
 import CheckIn from "../../../models/CheckIn";
 import Comment from "../../../models/Comment";
+import Homemade from "../../../models/Homemade";
 import Reaction from "../../../models/Reaction";
 import Review from "../../../models/Review";
 import Reward from "../../../models/Reward";
@@ -20,7 +21,6 @@ import {
   validateReviewReward,
 } from "./helpers/validations";
 import { rewards_amounts } from "./utils/rewardsAmounts";
-import Homemade from "../../../models/Homemade";
 
 const getValidatedEntity = async (
   refType: string,

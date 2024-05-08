@@ -50,9 +50,9 @@ export function createCron(id: string, duty: IBot, botUser: IUser) {
             query.createdAt = {
               $gt: getDateHoursAgo(duty.targetThresholdHours),
             };
-          let userActivities = (await UserActivity.find(query)) as [
-            IUserActivity
-          ];
+          const userActivities: IUserActivity[] = await UserActivity.find(
+            query
+          );
           for (const userActivity of userActivities) {
             // check if we already reacted or not!
             const alreadyReacted = await Reaction.findOne({
@@ -94,9 +94,9 @@ export function createCron(id: string, duty: IBot, botUser: IUser) {
 
 User.find({ signupMethod: "bot" }).then(async (botUsers: IUser[]) => {
   for (const botUser of botUsers) {
-    const duties = (await Bot.find({
+    const duties: IBot[] = await Bot.find({
       userId: botUser._id,
-    })) as [IBot];
+    });
     for (const duty of duties) {
       createCron(duty._id.toString(), duty, botUser)?.start();
     }

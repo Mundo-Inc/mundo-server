@@ -20,7 +20,6 @@ import { dStrings, dynamicMessage } from "../../strings";
 import type { IYelpPlaceDetails } from "../../types/yelpPlace.interface";
 import { createError, handleInputErrors } from "../../utilities/errorHandlers";
 import { filterObjectByConfig } from "../../utilities/filtering";
-import { publicReadUserEssentialProjection } from "../dto/user/read-user-public.dto";
 import logger from "../services/logger";
 import {
   findYelpId,
@@ -28,6 +27,7 @@ import {
   getYelpReviews,
 } from "../services/provider.service";
 import validate from "./validators";
+import UserProjection from "../dto/user/user";
 
 export const getPlaceValidation: ValidationChain[] = [
   param("id").isMongoId().withMessage("Invalid place id"),
@@ -335,7 +335,7 @@ export async function getPlaceMedia(
                 as: "user",
                 pipeline: [
                   {
-                    $project: publicReadUserEssentialProjection,
+                    $project: UserProjection.essentials,
                   },
                 ],
               },
@@ -497,7 +497,7 @@ export async function getPlaceReviews(
             as: "writer",
             pipeline: [
               {
-                $project: publicReadUserEssentialProjection,
+                $project: UserProjection.essentials,
               },
             ],
           },
@@ -599,7 +599,7 @@ export async function getPlaceReviews(
                   as: "author",
                   pipeline: [
                     {
-                      $project: publicReadUserEssentialProjection,
+                      $project: UserProjection.essentials,
                     },
                   ],
                 },

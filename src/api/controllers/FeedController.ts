@@ -10,13 +10,13 @@ import Follow from "../../models/Follow";
 import UserActivity from "../../models/UserActivity";
 import { dStrings, dynamicMessage } from "../../strings";
 import { createError, handleInputErrors } from "../../utilities/errorHandlers";
-import { publicReadUserEssentialProjection } from "../dto/user/read-user-public.dto";
 import { getResourceInfo, getUserFeed } from "../services/feed.service";
 import {
   getCommentsOfActivity,
   getReactionsOfActivity,
 } from "./UserActivityController";
 import validate from "./validators";
+import UserProjection from "../dto/user/user";
 
 export const getFeedValidation: ValidationChain[] = [
   validate.page(query("page").optional()),
@@ -294,7 +294,7 @@ export async function getComments(
                 as: "author",
                 pipeline: [
                   {
-                    $project: publicReadUserEssentialProjection,
+                    $project: UserProjection.essentials,
                   },
                 ],
               },

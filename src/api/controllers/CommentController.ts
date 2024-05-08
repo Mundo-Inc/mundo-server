@@ -8,7 +8,7 @@ import User from "../../models/User";
 import UserActivity from "../../models/UserActivity";
 import strings, { dStrings as ds, dynamicMessage } from "../../strings";
 import { createError, handleInputErrors } from "../../utilities/errorHandlers";
-import { publicReadUserEssentialProjection } from "../dto/user/read-user-public.dto";
+import UserProjection from "../dto/user/user";
 import { addReward } from "../services/reward/reward.service";
 
 export const createCommentValidation: ValidationChain[] = [
@@ -26,7 +26,7 @@ export async function createComment(
     const { content, activity } = req.body;
     const { id: authId } = req.user!;
 
-    const user = await User.findById(authId, publicReadUserEssentialProjection);
+    const user = await User.findById(authId, UserProjection.essentials);
 
     if (!user) {
       throw createError(
@@ -145,7 +145,7 @@ export async function likeComment(
 
     await comment.populate({
       path: "author",
-      select: publicReadUserEssentialProjection,
+      select: UserProjection.essentials,
     });
 
     res.status(StatusCodes.OK).json({
@@ -197,7 +197,7 @@ export async function deleteCommentLike(
 
     await comment.populate({
       path: "author",
-      select: publicReadUserEssentialProjection,
+      select: UserProjection.essentials,
     });
 
     // update comments count in user activity

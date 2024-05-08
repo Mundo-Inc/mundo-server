@@ -11,9 +11,9 @@ import UserActivity, {
   ActivityResourceTypeEnum,
   ActivityTypeEnum,
 } from "../../models/UserActivity";
-import strings from "../../strings";
+import strings, { dStrings, dynamicMessage } from "../../strings";
 import { createError, handleInputErrors } from "../../utilities/errorHandlers";
-import { publicReadUserEssentialProjection } from "../dto/user/read-user-public.dto";
+import UserProjection from "../dto/user/user";
 import logger from "../services/logger";
 import { addNewFollowingActivity } from "../services/user.activity.service";
 import validate from "./validators";
@@ -92,7 +92,14 @@ export async function createUserConnection(
       throw createError(strings.follows.alreadyExists, StatusCodes.CONFLICT);
     }
 
-    const targetUser = (await User.findById(id)) as IUser;
+    const targetUser: IUser | null = await User.findById(id);
+
+    if (!targetUser) {
+      throw createError(
+        dynamicMessage(dStrings.notFound, "User"),
+        StatusCodes.NOT_FOUND
+      );
+    }
 
     if (targetUser.isPrivate) {
       const existingFollowRequest = await FollowRequest.findOne({
@@ -140,7 +147,7 @@ export async function getPendingConnections(
 
     const followRequests = await FollowRequest.find({
       target: authId,
-    }).populate("user", publicReadUserEssentialProjection);
+    }).populate("user", UserProjection.essentials);
 
     res
       .status(StatusCodes.CREATED)
@@ -164,10 +171,10 @@ export async function acceptConnectionRequest(
     const { id } = req.body;
     const { id: authId } = req.user!;
 
-    const followRequest = (await FollowRequest.findOne({
+    const followRequest: IFollowRequest | null = await FollowRequest.findOne({
       _id: id,
       target: authId,
-    })) as IFollowRequest;
+    });
 
     if (!followRequest) {
       throw createError(strings.followRequest.notFound, StatusCodes.NOT_FOUND);
@@ -298,7 +305,7 @@ export async function getUserConnections(
                 as: "user",
                 pipeline: [
                   {
-                    $project: publicReadUserEssentialProjection,
+                    $project: UserProjection.essentials,
                   },
                 ],
               },

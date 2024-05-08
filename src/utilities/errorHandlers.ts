@@ -55,7 +55,7 @@ export function createError(
   message: string,
   options?: ErrorOptions | number
 ): Error {
-  const error: CustomError = new Error(message) as CustomError;
+  const error: CustomError = new Error(message);
   if (typeof options === "number") {
     error.statusCode = options;
   } else if (options) {

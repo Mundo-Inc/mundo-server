@@ -20,7 +20,7 @@ import {
 } from "../controllers/UserActivityController";
 import { readFormattedPlaceLocationProjection } from "../dto/place/place-dto";
 import { readPlaceDetailProjection } from "../dto/place/read-place-detail.dto";
-import { publicReadUserEssentialProjection } from "../dto/user/read-user-public.dto";
+import UserProjection from "../dto/user/user";
 import logger from "./logger";
 
 export type IMedia = {
@@ -102,7 +102,7 @@ export const getResourceInfo = async (activity: IUserActivity) => {
 
   const userInfo = await User.findOne(
     { _id: activity.userId },
-    publicReadUserEssentialProjection
+    UserProjection.essentials
   ).lean();
 
   switch (activity.resourceType) {
@@ -129,7 +129,7 @@ export const getResourceInfo = async (activity: IUserActivity) => {
             as: "writer",
             pipeline: [
               {
-                $project: publicReadUserEssentialProjection,
+                $project: UserProjection.essentials,
               },
             ],
           },
@@ -295,7 +295,7 @@ export const getResourceInfo = async (activity: IUserActivity) => {
             as: "tags",
             pipeline: [
               {
-                $project: publicReadUserEssentialProjection,
+                $project: UserProjection.essentials,
               },
             ],
           },
@@ -308,7 +308,7 @@ export const getResourceInfo = async (activity: IUserActivity) => {
             as: "user",
             pipeline: [
               {
-                $project: publicReadUserEssentialProjection,
+                $project: UserProjection.essentials,
               },
             ],
           },
@@ -439,7 +439,7 @@ export const getResourceInfo = async (activity: IUserActivity) => {
                   as: "tags",
                   pipeline: [
                     {
-                      $project: publicReadUserEssentialProjection,
+                      $project: UserProjection.essentials,
                     },
                   ],
                 },
@@ -454,7 +454,7 @@ export const getResourceInfo = async (activity: IUserActivity) => {
                 $project: {
                   _id: 1,
                   createdAt: 1,
-                  user: publicReadUserEssentialProjection,
+                  user: UserProjection.essentials,
                   place: readPlaceDetailProjection,
                   image: { $arrayElemAt: ["$image", 0] },
                   caption: 1,
@@ -479,7 +479,7 @@ export const getResourceInfo = async (activity: IUserActivity) => {
     case ActivityResourceTypeEnum.USER:
       resourceInfo = await User.findById(
         activity.resourceId,
-        publicReadUserEssentialProjection
+        UserProjection.essentials
       ).lean();
       if (activity.placeId) {
         placeInfo = await Place.findById(

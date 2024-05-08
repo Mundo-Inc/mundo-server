@@ -12,9 +12,8 @@ import Review from "../../models/Review";
 import User from "../../models/User";
 import { dStrings as ds, dynamicMessage } from "../../strings";
 import { createError, handleInputErrors } from "../../utilities/errorHandlers";
-import { adminReadUserProjection } from "../dto/user/read-user-admin.dto";
-import { privateReadUserProjection } from "../dto/user/read-user-private.dto";
 import validate from "./validators";
+import UserProjection from "../dto/user/user";
 
 export const getUsersValidation: ValidationChain[] = [
   query("signupMethod").optional(),
@@ -70,7 +69,7 @@ export async function getUsers(
       {
         $project: {
           total: { $arrayElemAt: ["$total.count", 0] },
-          users: adminReadUserProjection,
+          users: UserProjection.admin,
         },
       },
     ]);
@@ -139,23 +138,23 @@ export async function getFlags(
         .skip(skip)
         .limit(limit)
         .populate("target")
-        .populate("user", adminReadUserProjection),
+        .populate("user", UserProjection.admin),
     ]);
 
     for (const flag of result) {
       switch (flag.targetType) {
         case "Review":
           await Promise.all([
-            flag.populate("target.writer", privateReadUserProjection),
+            flag.populate("target.writer", UserProjection.private),
             flag.populate("target.images", "_id src caption type"),
             flag.populate("target.videos", "_id src caption type"),
           ]);
         case "Comment":
-          await flag.populate("target.author", privateReadUserProjection);
+          await flag.populate("target.author", UserProjection.private);
         case "CheckIn":
-          await flag.populate("target.user", privateReadUserProjection);
+          await flag.populate("target.user", UserProjection.private);
         case "Homemade":
-          await flag.populate("target.user", privateReadUserProjection);
+          await flag.populate("target.user", UserProjection.private);
         default:
           break;
       }

@@ -19,7 +19,7 @@ import strings, { dStrings, dynamicMessage } from "../../strings";
 import { createError, handleInputErrors } from "../../utilities/errorHandlers";
 import { readFormattedPlaceLocationProjection } from "../dto/place/place-dto";
 import { readPlaceBriefProjection } from "../dto/place/read-place-brief.dto";
-import { publicReadUserEssentialProjection } from "../dto/user/read-user-public.dto";
+import UserProjection from "../dto/user/user";
 import { checkinEarning } from "../services/earning.service";
 import logger from "../services/logger";
 import { addReward } from "../services/reward/reward.service";
@@ -102,7 +102,7 @@ export async function getCheckIns(
     ];
     if (user) {
       //PRIVACY
-      const userObject = (await User.findById(user)) as IUser;
+      const userObject: IUser | null = await User.findById(user);
       if (userObject) {
         const isFollowed = await Follow.countDocuments({
           user: authId,
@@ -167,7 +167,7 @@ export async function getCheckIns(
                 as: "user",
                 pipeline: [
                   {
-                    $project: publicReadUserEssentialProjection,
+                    $project: UserProjection.essentials,
                   },
                 ],
               },
@@ -214,7 +214,7 @@ export async function getCheckIns(
                 as: "tags",
                 pipeline: [
                   {
-                    $project: publicReadUserEssentialProjection,
+                    $project: UserProjection.essentials,
                   },
                 ],
               },

@@ -9,10 +9,8 @@ import PrizeRedemption, {
   type IPrizeRedemption,
 } from "../../models/PrizeRedemption";
 import User, { type IUser } from "../../models/User";
-import strings from "../../strings";
+import strings, { dStrings, dynamicMessage } from "../../strings";
 import { createError, handleInputErrors } from "../../utilities/errorHandlers";
-import { privateReadUserProjection } from "../dto/user/read-user-private.dto";
-import { publicReadUserEssentialProjection } from "../dto/user/read-user-public.dto";
 import { BrevoService } from "../services/brevo.service";
 import logger from "../services/logger";
 import {
@@ -23,6 +21,7 @@ import {
   updateUserCoinsAndStreak,
 } from "../services/reward/coinReward.service";
 import validate from "./validators";
+import UserProjection from "../dto/user/user";
 
 export const dailyCoinInformationValidation: ValidationChain[] = [];
 export async function dailyCoinInformation(
@@ -128,11 +127,11 @@ export async function redeemPrize(
     handleInputErrors(req);
     const { id: authId } = req.user!;
     const { id } = req.params;
-    const user = (await User.findById(authId)) as IUser;
+    const user: IUser | null = await User.findById(authId);
     if (!user) {
       throw createError(strings.user.notFound, StatusCodes.NOT_FOUND);
     }
-    const prize = (await Prize.findById(id)) as IPrize;
+    const prize: IPrize | null = await Prize.findById(id);
     if (!prize) {
       throw createError("prize not found", StatusCodes.NOT_FOUND);
     }
@@ -184,7 +183,7 @@ export async function getPrizeRedemptionHistory(
 ) {
   try {
     const { id: authId } = req.user!;
-    let user: IUser | null = await User.findById(authId);
+    const user: IUser | null = await User.findById(authId);
     const { page: reqPage, limit: reqLimit } = req.query;
     const page = parseInt(reqPage as string) || 1;
     const limit = parseInt(reqLimit as string) || 500;
@@ -197,7 +196,7 @@ export async function getPrizeRedemptionHistory(
     const redemptions = await PrizeRedemption.find({
       userId: user._id,
     })
-      .populate("userId", publicReadUserEssentialProjection)
+      .populate("userId", UserProjection.essentials)
       .sort({ _id: -1 })
       .skip(skip)
       .limit(limit)
@@ -225,7 +224,7 @@ export async function getAllPrizeRedemptionHistory(
     const skip = (page - 1) * limit;
 
     let redemptions = await PrizeRedemption.find({})
-      .populate("userId", privateReadUserProjection)
+      .populate("userId", UserProjection.private)
       .populate("prizeId")
       .sort({ _id: -1 })
       .skip(skip)
@@ -251,9 +250,10 @@ export async function reviewRedemption(
   try {
     const { id } = req.params;
     const { validation, note } = req.body;
-    const { id: authId } = req.user!;
 
-    const redemption = (await PrizeRedemption.findById(id)) as IPrizeRedemption;
+    const redemption: IPrizeRedemption | null = await PrizeRedemption.findById(
+      id
+    );
     if (!redemption) {
       throw createError("Prize Redemption Not Found", StatusCodes.NOT_FOUND);
     }
@@ -264,11 +264,21 @@ export async function reviewRedemption(
       );
     }
 
-    const prize = (await Prize.findById(redemption.prizeId)) as IPrize;
+    const prize: IPrize | null = await Prize.findById(redemption.prizeId);
 
-    const user = (await User.findById(redemption.userId)) as IUser;
+    if (!prize) {
+      throw createError(
+        dynamicMessage(dStrings.notFound, "Prize"),
+        StatusCodes.NOT_FOUND
+      );
+    }
+
+    const user: IUser | null = await User.findById(redemption.userId);
     if (!user) {
-      throw createError("USER NOT FOUND", 404);
+      throw createError(
+        dynamicMessage(dStrings.notFound, "User"),
+        StatusCodes.NOT_FOUND
+      );
     }
 
     switch (validation) {
@@ -323,7 +333,7 @@ export async function getLatestReferredUsers(
 
     const latestReferredUsers = await User.find({ referredBy: authId })
       .sort({ createdAt: -1 })
-      .select(publicReadUserEssentialProjection)
+      .select(UserProjection.essentials)
       .skip(skip)
       .limit(limit);
 

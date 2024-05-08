@@ -1,4 +1,5 @@
 import { StatusCodes } from "http-status-codes";
+import mongoose from "mongoose";
 
 import { dailyCoinsCFG } from "../../../config/dailyCoins";
 import CheckIn from "../../../models/CheckIn";
@@ -11,7 +12,6 @@ import UserActivity, {
 } from "../../../models/UserActivity";
 import { dStrings, dynamicMessage } from "../../../strings";
 import { createError } from "../../../utilities/errorHandlers";
-import mongoose from "mongoose";
 
 const DAY_HOURS = 24;
 
