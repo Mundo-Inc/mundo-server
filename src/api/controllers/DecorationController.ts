@@ -24,8 +24,8 @@ export async function getDecorations(
 ) {
   try {
     handleInputErrors(req);
-    const { id: authId } = req.user!;
-    const user: IUser | null = await User.findById(authId);
+    const authUser = req.user!;
+    const user: IUser | null = await User.findById(authUser._id);
     if (!user) {
       throw createError(strings.user.notFound, StatusCodes.NOT_FOUND);
     }
@@ -53,8 +53,8 @@ export async function getDecorationRedemption(
 ) {
   try {
     handleInputErrors(req);
-    const { id: authId } = req.user!;
-    const user: IUser | null = await User.findById(authId);
+    const authUser = req.user!;
+    const user: IUser | null = await User.findById(authUser._id);
     if (!user) {
       throw createError(strings.user.notFound, StatusCodes.NOT_FOUND);
     }
@@ -82,9 +82,9 @@ export async function redeemDecoration(
 ) {
   try {
     handleInputErrors(req);
-    const { id: authId } = req.user!;
+    const authUser = req.user!;
     const { id, type } = req.params;
-    const user: IUser | null = await User.findById(authId);
+    const user: IUser | null = await User.findById(authUser._id);
     if (!user) {
       throw createError(strings.user.notFound, StatusCodes.NOT_FOUND);
     }
@@ -158,9 +158,9 @@ export async function activateDecoration(
 ) {
   try {
     handleInputErrors(req);
-    const { id: authId } = req.user!;
+    const authUser = req.user!;
     const { id, type } = req.params;
-    const user: IUser | null = await User.findById(authId);
+    const user: IUser | null = await User.findById(authUser._id);
     if (!user) {
       throw createError(strings.user.notFound, StatusCodes.NOT_FOUND);
     }
@@ -221,9 +221,9 @@ export async function deactivateDecoration(
 ) {
   try {
     handleInputErrors(req);
-    const { id: authId } = req.user!;
+    const authUser = req.user!;
     const { id, type } = req.params;
-    const user: IUser | null = await User.findById(authId);
+    const user: IUser | null = await User.findById(authUser._id);
     if (!user) {
       throw createError(strings.user.notFound, StatusCodes.NOT_FOUND);
     }

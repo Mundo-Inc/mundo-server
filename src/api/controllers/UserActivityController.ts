@@ -1,7 +1,7 @@
 import type { NextFunction, Request, Response } from "express";
 import { param, query, type ValidationChain } from "express-validator";
 import { StatusCodes } from "http-status-codes";
-import mongoose, { type FilterQuery } from "mongoose";
+import mongoose, { Types, type FilterQuery } from "mongoose";
 
 import Comment from "../../models/Comment";
 import Follow from "../../models/Follow";
@@ -42,9 +42,9 @@ export async function getActivitiesOfaUser(
   try {
     handleInputErrors(req);
 
-    const { id: authId } = req.user!;
+    const authUser = req.user!;
 
-    const userId = req.params.id;
+    const userId = new Types.ObjectId(req.params.id);
     const page = Number(req.query.page) || 1;
     const limit = Number(req.query.limit) || 20;
 
@@ -52,7 +52,7 @@ export async function getActivitiesOfaUser(
     const userObject: IUser | null = await User.findById(userId);
     if (userObject) {
       const isFollowed = await Follow.countDocuments({
-        user: authId,
+        user: authUser._id,
         target: userObject._id,
       });
       if (!isFollowed && userObject.isPrivate) {
@@ -92,26 +92,20 @@ export async function getActivitiesOfaUser(
         followsUser,
       ] = await Promise.all([
         getResourceInfo(activity as IUserActivity),
-        getReactionsOfActivity(
-          activity._id as mongoose.Types.ObjectId,
-          new mongoose.Types.ObjectId(userId)
-        ),
-        getCommentsOfActivity(
-          activity._id as mongoose.Types.ObjectId,
-          new mongoose.Types.ObjectId(userId)
-        ),
+        getReactionsOfActivity(activity._id as mongoose.Types.ObjectId, userId),
+        getCommentsOfActivity(activity._id as mongoose.Types.ObjectId, userId),
         Comment.countDocuments({
           userActivity: activity._id,
         }),
-        authId !== userId
-          ? Follow.exists({ user: authId, target: userId })
+        !authUser._id.equals(userId)
+          ? Follow.exists({ user: authUser._id, target: userId })
           : null,
-        authId !== userId
-          ? Follow.exists({ user: userId, target: authId })
+        !authUser._id.equals(userId)
+          ? Follow.exists({ user: userId, target: authUser._id })
           : null,
       ]);
 
-      if (authId !== userId) {
+      if (!authUser._id.equals(userId)) {
         userInfo.connectionStatus = {
           followedByUser: !!followedByUser,
           followsUser: !!followsUser,

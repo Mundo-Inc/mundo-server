@@ -49,6 +49,7 @@ const dailyRewardSchema = new Schema<IDailyReward>(
 );
 
 export interface IUser extends Document {
+  _id: mongoose.Types.ObjectId;
   accepted_eula: Date;
   uid: string;
   username: string;
@@ -56,7 +57,7 @@ export interface IUser extends Document {
     address: string;
     verified: boolean;
   };
-  role?: string;
+  role: "admin" | "user";
   isActive?: boolean;
   name: string;
   phone?: string;
@@ -67,8 +68,8 @@ export interface IUser extends Document {
     verificationToken: string;
     lastEmailSent: Date;
     emailTokenExpiry: Date;
-    resetPasswordToken: String;
-    resetPasswordTokenExpiry: Date;
+    resetPasswordToken?: String;
+    resetPasswordTokenExpiry?: Date;
   };
   signupMethod: string;
   devices?: UserDevice[];
@@ -361,8 +362,10 @@ UserSchema.pre(
 
 UserSchema.pre("deleteOne", async function (next) {
   try {
-    const user = await this.model.findOne(this.getQuery());
-    await removeDependencies(user);
+    const user: IUser | null = await this.model.findOne(this.getQuery());
+    if (user) {
+      await removeDependencies(user);
+    }
     next();
   } catch (error) {
     next(error as CallbackError);

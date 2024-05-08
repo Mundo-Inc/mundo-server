@@ -33,7 +33,7 @@ export async function getMapActivities(
   try {
     handleInputErrors(req);
 
-    const { id: authId } = req.user!;
+    const authUser = req.user!;
 
     const {
       northEastLat,
@@ -101,7 +101,7 @@ export async function getMapActivities(
     } else {
       const followingsObj: FilterQuery<IFollow> = await Follow.find(
         {
-          user: authId,
+          user: authUser._id,
         },
         {
           target: 1,

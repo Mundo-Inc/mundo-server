@@ -3,7 +3,11 @@ import { body, param, type ValidationChain } from "express-validator";
 
 import { createCron } from "../../cronjobs/bots";
 import Bot, { IBotTargetEnum, IBotTypeEnum } from "../../models/Bot";
-import User, { SignupMethodEnum, UserRoleEnum } from "../../models/User";
+import User, {
+  type IUser,
+  SignupMethodEnum,
+  UserRoleEnum,
+} from "../../models/User";
 import { createError, handleInputErrors } from "../../utilities/errorHandlers";
 import validate from "./validators";
 
@@ -20,9 +24,10 @@ export async function createBot(
   try {
     handleInputErrors(req);
     const { name, username, email } = req.body;
-    let user = await User.findOne({
+    let user: IUser | null = await User.findOne({
       "email.address": email.toLowerCase(),
     });
+
     if (user) {
       throw createError("User already exists", 409);
     }

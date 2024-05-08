@@ -32,7 +32,7 @@ export async function createFlag(
   try {
     handleInputErrors(req);
 
-    const { id: authId } = req.user!;
+    const authUser = req.user!;
     const { flagType, note, activity, review, comment, homemade, checkIn } =
       req.body;
 
@@ -101,7 +101,7 @@ export async function createFlag(
     }
 
     const newFlag = await Flag.create({
-      user: authId,
+      user: authUser._id,
       target: target,
       targetType: targetType,
       flagType,

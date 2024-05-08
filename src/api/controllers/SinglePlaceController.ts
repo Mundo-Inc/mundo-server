@@ -20,6 +20,7 @@ import { dStrings, dynamicMessage } from "../../strings";
 import type { IYelpPlaceDetails } from "../../types/yelpPlace.interface";
 import { createError, handleInputErrors } from "../../utilities/errorHandlers";
 import { filterObjectByConfig } from "../../utilities/filtering";
+import UserProjection from "../dto/user/user";
 import logger from "../services/logger";
 import {
   findYelpId,
@@ -27,7 +28,6 @@ import {
   getYelpReviews,
 } from "../services/provider.service";
 import validate from "./validators";
-import UserProjection from "../dto/user/user";
 
 export const getPlaceValidation: ValidationChain[] = [
   param("id").isMongoId().withMessage("Invalid place id"),
@@ -382,7 +382,7 @@ export async function getPlaceReviews(
   try {
     handleInputErrors(req);
 
-    const authId = req.user?.id;
+    const authUser = req.user;
     const { id } = req.params;
 
     const type = (req.query.type || "phantom") as
@@ -443,12 +443,12 @@ export async function getPlaceReviews(
       const skip = (page - 1) * limit;
 
       let userReactionPipeline: any = {};
-      if (authId) {
+      if (authUser) {
         userReactionPipeline = {
           user: [
             {
               $match: {
-                user: new mongoose.Types.ObjectId(authId),
+                user: authUser._id,
               },
             },
             {
@@ -613,10 +613,10 @@ export async function getPlaceReviews(
                   mentions: 1,
                   author: { $arrayElemAt: ["$author", 0] },
                   likes: { $size: "$likes" },
-                  ...(authId
+                  ...(authUser
                     ? {
                         liked: {
-                          $in: [new mongoose.Types.ObjectId(authId), "$likes"],
+                          $in: [authUser._id, "$likes"],
                         },
                       }
                     : {}),
@@ -671,11 +671,11 @@ export async function getExistInLists(
 ) {
   try {
     handleInputErrors(req);
-    const authId = req.user!.id;
+    const authUser = req.user!;
     const { id } = req.params;
 
     const lists = await List.find({
-      "collaborators.user": authId,
+      "collaborators.user": authUser._id,
       "places.place": id,
     })
       .select("_id")

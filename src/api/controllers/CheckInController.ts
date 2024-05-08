@@ -52,7 +52,7 @@ export async function getCheckIns(
   try {
     handleInputErrors(req);
 
-    const { id: authId } = req.user!;
+    const authUser = req.user!;
 
     const { user, place, event, page: reqPage, limit: reqLimit } = req.query;
     const page = parseInt(reqPage as string) || 1;
@@ -77,10 +77,7 @@ export async function getCheckIns(
                 input: "$followDetails",
                 as: "followDetail",
                 in: {
-                  $eq: [
-                    "$$followDetail.user",
-                    new mongoose.Types.ObjectId(authId),
-                  ],
+                  $eq: ["$$followDetail.user", authUser._id],
                 },
               },
             },
@@ -93,7 +90,7 @@ export async function getCheckIns(
             { privacyType: "PUBLIC" },
             {
               privacyType: "PRIVATE",
-              user: new mongoose.Types.ObjectId(authId),
+              user: authUser._id,
             },
             { privacyType: "FOLLOWING", isFollowed: true },
           ],
@@ -105,7 +102,7 @@ export async function getCheckIns(
       const userObject: IUser | null = await User.findById(user);
       if (userObject) {
         const isFollowed = await Follow.countDocuments({
-          user: authId,
+          user: authUser._id,
           target: userObject._id,
         });
         if (!isFollowed && userObject.isPrivate) {
@@ -248,12 +245,12 @@ export async function getCheckIns(
       },
     ]).then((result) => result[0]);
 
-    if (!user || user === authId) {
+    if (!user || user === authUser._id.toString()) {
       // anonymize user data
       result.checkins = result.checkins.map((checkin: any) => {
         if (
           checkin.privacyType === ActivityPrivacyTypeEnum.PRIVATE &&
-          checkin.user._id.toString() !== authId
+          !authUser._id.equals(checkin.user._id)
         ) {
           checkin._id = Math.random()
             .toString(16)
@@ -289,7 +286,10 @@ export async function getCheckIns(
   }
 }
 
-async function enforceCheckInInterval(authId: string, authRole: string) {
+async function enforceCheckInInterval(
+  authId: mongoose.Types.ObjectId,
+  authRole: string
+) {
   if (authRole !== "admin") {
     const lastCheckIn = await CheckIn.findOne({ user: authId }).sort(
       "-createdAt"
@@ -308,7 +308,10 @@ async function enforceCheckInInterval(authId: string, authRole: string) {
   }
 }
 
-async function addCheckInReward(authId: string, checkin: ICheckIn) {
+async function addCheckInReward(
+  authId: mongoose.Types.ObjectId,
+  checkin: ICheckIn
+) {
   return addReward(authId, {
     refType: "CheckIn",
     refId: checkin._id,
@@ -317,13 +320,13 @@ async function addCheckInReward(authId: string, checkin: ICheckIn) {
 }
 
 async function processCheckInActivities(
-  authId: string,
+  user: mongoose.Types.ObjectId,
   checkin: ICheckIn,
   place: string,
   privacyType?: ActivityPrivacyTypeEnum
 ) {
   try {
-    await checkinEarning(authId, checkin);
+    await checkinEarning(user, checkin);
     const populatedPlace = await Place.findById(place);
     if (!populatedPlace) {
       throw createError(
@@ -333,7 +336,7 @@ async function processCheckInActivities(
     }
     const hasMedia = Boolean(checkin.image);
     const activity = await addCheckInActivity(
-      authId,
+      user._id,
       checkin._id,
       place,
       privacyType || ActivityPrivacyTypeEnum.PUBLIC,
@@ -341,14 +344,17 @@ async function processCheckInActivities(
     );
     checkin.userActivityId = activity._id;
     await checkin.save();
-    await User.updateOne({ _id: authId }, { latestPlace: place });
+    await User.updateOne({ _id: user._id }, { latestPlace: place });
   } catch (e) {
     logger.error(`Something happened during checkin activities: ${e}`);
     throw e;
   }
 }
 
-async function sendNotificiationToFollowers(authId: string, checkin: ICheckIn) {
+async function sendNotificiationToFollowers(
+  authId: mongoose.Types.ObjectId,
+  checkin: ICheckIn
+) {
   const followers = await Follow.find({
     target: authId,
   }).lean();
@@ -401,7 +407,7 @@ export async function createCheckIn(
   try {
     handleInputErrors(req);
 
-    const { id: authId, role: authRole } = req.user!;
+    const authUser = req.user!;
     const { place, event, privacyType, caption, tags, image } = req.body;
 
     let placeId;
@@ -426,7 +432,7 @@ export async function createCheckIn(
       logger.verbose("Check-in to event");
     }
 
-    await enforceCheckInInterval(authId, authRole);
+    await enforceCheckInInterval(authUser._id, authUser.role);
 
     logger.verbose("validate tags");
     if (tags) {
@@ -451,7 +457,7 @@ export async function createCheckIn(
           StatusCodes.NOT_FOUND
         );
       }
-      if (upload.user.toString() !== authId) {
+      if (!authUser._id.equals(upload.user)) {
         throw createError(
           strings.authorization.otherUser,
           StatusCodes.FORBIDDEN
@@ -463,7 +469,7 @@ export async function createCheckIn(
 
       const mediaBody: any = {
         type: MediaTypeEnum.image,
-        user: authId,
+        user: authUser._id,
         place: placeId,
         caption: caption,
         src: upload.src,
@@ -477,7 +483,7 @@ export async function createCheckIn(
     }
 
     const checkinBody: any = {
-      user: authId,
+      user: authUser._id,
       place: placeId,
       caption: caption,
       tags: tags,
@@ -491,16 +497,16 @@ export async function createCheckIn(
     await checkin.save();
     // console.log(checkin);
 
-    await processCheckInActivities(authId, checkin, placeId, privacyType);
+    await processCheckInActivities(authUser._id, checkin, placeId, privacyType);
 
-    const reward = await addCheckInReward(authId, checkin);
+    const reward = await addCheckInReward(authUser._id, checkin);
 
     const placeObject = await Place.findById(placeId);
     placeObject.activities.checkinCount =
       placeObject.activities.checkinCount + 1;
     await placeObject.save();
 
-    await sendNotificiationToFollowers(authId, checkin);
+    await sendNotificiationToFollowers(authUser._id, checkin);
 
     logger.verbose("check-in successful!");
 
@@ -523,7 +529,7 @@ export async function deleteCheckIn(
   try {
     handleInputErrors(req);
 
-    const { id: authId, role: authRole } = req.user!;
+    const authUser = req.user!;
 
     const { id } = req.params;
 
@@ -536,7 +542,7 @@ export async function deleteCheckIn(
       );
     }
 
-    if (checkin.user.toString() !== authId && authRole !== "admin") {
+    if (!authUser._id.equals(checkin.user) && authUser.role !== "admin") {
       throw createError(strings.authorization.otherUser, StatusCodes.FORBIDDEN);
     }
 

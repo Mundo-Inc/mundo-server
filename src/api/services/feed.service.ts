@@ -8,7 +8,7 @@ import Follow from "../../models/Follow";
 import Homemade from "../../models/Homemade";
 import Place, { type IPlace } from "../../models/Place";
 import Review from "../../models/Review";
-import User from "../../models/User";
+import User, { type IUser } from "../../models/User";
 import UserActivity, {
   ActivityPrivacyTypeEnum,
   ActivityResourceTypeEnum,
@@ -558,7 +558,7 @@ const calculateDistance = async (
 };
 
 const calculateScore = async (
-  userId: string,
+  user: IUser,
   targetId: string,
   activity: IUserActivity,
   place: IPlace,
@@ -571,8 +571,6 @@ const calculateScore = async (
   const DISTANCE_WEIGHT = 0.3;
   const FOLLOWING_WEIGHT = 0.1;
   const FOLLOWER_WEIGHT = 0.1;
-
-  const user = await User.findById(userId);
 
   let distanceScore;
   if (location && place) {
@@ -589,7 +587,7 @@ const calculateScore = async (
 
   let followingScore = 0;
   const followingStatus = await Follow.findOne({
-    user: userId,
+    user: user._id,
     target: targetId,
   });
   if (followingStatus) {
@@ -597,7 +595,10 @@ const calculateScore = async (
   }
 
   let followerScore = 0;
-  const followerStatus = await Follow.find({ user: targetId, target: userId });
+  const followerStatus = await Follow.find({
+    user: targetId,
+    target: user._id,
+  });
   if (followerStatus) {
     followerScore = 1;
   }
@@ -616,7 +617,7 @@ const calculateScore = async (
 };
 
 export const getUserFeed = async (
-  userId: string,
+  userId: mongoose.Types.ObjectId,
   isForYou: boolean,
   page: number,
   limit: number

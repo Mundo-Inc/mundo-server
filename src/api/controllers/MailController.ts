@@ -4,7 +4,7 @@ import type { NextFunction, Request, Response } from "express";
 import { body, query, type ValidationChain } from "express-validator";
 import { StatusCodes } from "http-status-codes";
 
-import User, { SignupMethodEnum } from "../../models/User";
+import User, { SignupMethodEnum, type IUser } from "../../models/User";
 import strings, { dStrings as ds, dynamicMessage } from "../../strings";
 import { createError, handleInputErrors } from "../../utilities/errorHandlers";
 import { BrevoService } from "../services/brevo.service";
@@ -26,7 +26,7 @@ export async function resetPassword(
 
     const { action, email } = req.body;
     if (action === "generate") {
-      const user = await User.findOne({
+      const user: IUser | null = await User.findOne({
         "email.address": {
           $regex: new RegExp(email, "i"),
         },
@@ -52,10 +52,10 @@ export async function resetPassword(
       // Set token and expiry date on the user document
       const tokenExpiryDate = Date.now() + 3600000; // 1 hour from now
       if (
-        // if 1 minute has not passed since the last email
-        user.token.resetPasswordTokenExpiry &&
+        user.token?.resetPasswordTokenExpiry &&
         user.token.resetPasswordTokenExpiry.getTime() - 3540000 > Date.now()
       ) {
+        // if 1 minute has not passed since the last email
         throw createError(
           strings.mail.resetPasswordWaiting,
           StatusCodes.TOO_MANY_REQUESTS
@@ -93,13 +93,13 @@ export async function resetPassword(
     } else if (action === "update") {
       // to update the password
       const { newPassword, resetPasswordToken, email } = req.body;
-      const user = await User.findOne({
+      const user: IUser | null = await User.findOne({
         "email.address": {
           $regex: new RegExp(email, "i"),
         },
       });
 
-      if (!user || !user.token.resetPasswordToken) {
+      if (!user || !user.token?.resetPasswordToken) {
         throw createError(
           strings.mail.userNotRequestedResetPassword,
           StatusCodes.BAD_REQUEST
@@ -163,9 +163,9 @@ export async function sendEmailVerification(
   try {
     handleInputErrors(req);
 
-    const { id: authId } = req.user!;
+    const authUser = req.user!;
 
-    const user = await User.findById(authId);
+    const user: IUser | null = await User.findById(authUser._id);
 
     if (!user) {
       throw createError(
@@ -181,7 +181,7 @@ export async function sendEmailVerification(
     const now = new Date();
     // Check if it's been more than 30 minutes since the last email was sent
     if (
-      user.token.lastEmailSent &&
+      user.token?.lastEmailSent &&
       now.getTime() - user.token.lastEmailSent.getTime() < 30 * 60 * 1000
     ) {
       throw createError(
@@ -192,7 +192,7 @@ export async function sendEmailVerification(
 
     const verificationToken = crypto.randomBytes(20).toString("hex");
     await User.updateOne(
-      { _id: authId },
+      { _id: authUser._id },
       {
         $set: {
           "token.verificationToken": verificationToken,
@@ -241,10 +241,10 @@ export async function verifyEmail(
   try {
     handleInputErrors(req);
 
-    const { id: authId } = req.user!;
+    const authUser = req.user!;
     const { token } = req.query;
 
-    const user = await User.findById(authId);
+    const user: IUser | null = await User.findById(authUser._id);
     if (!user) {
       throw createError(strings.user.notFound, StatusCodes.NOT_FOUND);
     }
@@ -254,6 +254,14 @@ export async function verifyEmail(
     }
 
     const now = new Date();
+
+    if (!user.token) {
+      throw createError(
+        "No email verification token found. Please request a new one.",
+        StatusCodes.BAD_REQUEST
+      );
+    }
+
     // Check if the token has expired
     if (user.token.emailTokenExpiry.getTime() < now.getTime()) {
       throw createError(
@@ -264,7 +272,7 @@ export async function verifyEmail(
 
     if (token === user.token.verificationToken) {
       await User.updateOne(
-        { _id: authId },
+        { _id: authUser._id },
         { $set: { "email.verified": true } }
       );
       res.status(StatusCodes.OK).json({ message: strings.mail.emailVerified });

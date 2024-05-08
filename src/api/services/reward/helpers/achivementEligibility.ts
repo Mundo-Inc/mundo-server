@@ -1,4 +1,5 @@
 import moment from "moment-timezone";
+import type { Types } from "mongoose";
 import tzlookup from "tz-lookup";
 
 import Achievement, {
@@ -13,7 +14,7 @@ import logger from "../../logger";
 import { thresholds } from "../utils/threshold";
 
 export const eligibleForAchivement = async (
-  userId: string,
+  userId: Types.ObjectId,
   AchievementType: string
 ) => {
   try {

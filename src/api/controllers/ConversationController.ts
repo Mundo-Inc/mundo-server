@@ -27,7 +27,7 @@ export async function getToken(
   try {
     handleInputErrors(req);
 
-    const { id: authId } = req.user!;
+    const authUser = req.user!;
 
     const chatGrant = new ChatGrant({
       serviceSid: process.env.TWILIO_SERVICE_SID,
@@ -39,7 +39,7 @@ export async function getToken(
       process.env.TWILIO_API_KEY!,
       process.env.TWILIO_API_SECRET!,
       {
-        identity: authId,
+        identity: authUser._id.toString(),
       }
     );
     token.addGrant(chatGrant);
@@ -63,7 +63,7 @@ export async function createConversation(
   try {
     handleInputErrors(req);
 
-    const { id: authId } = req.user!;
+    const authUser = req.user!;
 
     const {
       user,
@@ -72,7 +72,7 @@ export async function createConversation(
     } = req.body;
 
     const [creatorUser, participant]: [IUser | null, IUser | null] =
-      await Promise.all([User.findById(authId), User.findById(user)]);
+      await Promise.all([User.findById(authUser._id), User.findById(user)]);
 
     if (!creatorUser) {
       throw createError(
@@ -94,7 +94,7 @@ export async function createConversation(
           participants: {
             $all: [
               { $elemMatch: { user: new mongoose.Types.ObjectId(user) } },
-              { $elemMatch: { user: new mongoose.Types.ObjectId(authId) } },
+              { $elemMatch: { user: authUser._id } },
             ],
           },
         },
@@ -123,7 +123,7 @@ export async function createConversation(
         .json({ success: true, data: alreadyExists });
     }
 
-    const friendlyName = authId + "_" + user;
+    const friendlyName = authUser._id.toString() + "_" + user;
 
     const twilioConversation =
       await client.conversations.v1.conversations.create({
@@ -136,7 +136,7 @@ export async function createConversation(
       client.conversations.v1
         .conversations(twilioConversation.sid)
         .participants.create({
-          identity: authId.toString(),
+          identity: authUser._id.toString(),
           attributes: JSON.stringify({
             name: creatorUser.name,
           }),
@@ -156,7 +156,7 @@ export async function createConversation(
       friendlyName: friendlyName, // Assuming friendlyName is defined elsewhere
       participants: [
         {
-          user: new mongoose.Types.ObjectId(authId),
+          user: authUser._id,
           role: "participant",
           chat: creatorUserParticipant.sid,
         },
@@ -166,7 +166,7 @@ export async function createConversation(
           chat: userParticipant.sid,
         },
       ],
-      createdBy: new mongoose.Types.ObjectId(authId),
+      createdBy: authUser._id,
       isClosed: false,
     });
 
@@ -176,7 +176,7 @@ export async function createConversation(
         { $push: { conversations: conversation._id } }
       ),
       User.updateOne(
-        { _id: authId },
+        { _id: authUser._id },
         { $push: { conversations: conversation._id } }
       ),
     ]);
@@ -207,7 +207,7 @@ export async function createGroupConversation(
       users: [string];
       name: string | undefined;
     } = req.body;
-    const { id: authId } = req.user!;
+    const authUser = req.user!;
 
     const friendlyName = name || "Group Chat";
 
@@ -216,7 +216,7 @@ export async function createGroupConversation(
         friendlyName: friendlyName,
       });
 
-    const creatorUser: IUser | null = await User.findById(authId).lean();
+    const creatorUser: IUser | null = await User.findById(authUser._id).lean();
 
     if (!creatorUser) {
       throw createError(
@@ -233,7 +233,7 @@ export async function createGroupConversation(
     const creatorUserParticipant = await client.conversations.v1
       .conversations(twilioConversation.sid)
       .participants.create({
-        identity: authId.toString(),
+        identity: authUser._id.toString(),
         attributes: JSON.stringify({
           name: creatorUser.name,
         }),
@@ -241,7 +241,7 @@ export async function createGroupConversation(
 
     const twilioParticipants = [
       {
-        user: new mongoose.Types.ObjectId(authId),
+        user: authUser._id,
         role: "participant",
         chat: creatorUserParticipant.sid,
       },
@@ -268,7 +268,7 @@ export async function createGroupConversation(
       _id: twilioConversation.sid, // Use the SID as the unique ID
       friendlyName: friendlyName, // Assuming friendlyName is defined elsewhere
       participants: twilioParticipants,
-      createdBy: new mongoose.Types.ObjectId(authId),
+      createdBy: authUser._id,
       isClosed: false,
     });
 
@@ -280,7 +280,7 @@ export async function createGroupConversation(
     }
 
     await User.updateOne(
-      { _id: authId },
+      { _id: authUser._id },
       { $push: { conversations: conversation._id } }
     );
 
@@ -377,12 +377,12 @@ export async function getConversations(
   try {
     handleInputErrors(req);
 
-    const { id: authId } = req.user!;
+    const authUser = req.user!;
 
     const conversations = await User.aggregate([
       {
         $match: {
-          _id: new mongoose.Types.ObjectId(authId),
+          _id: authUser._id,
         },
       },
       {
@@ -449,13 +449,13 @@ export async function getConversation(
   try {
     handleInputErrors(req);
 
-    const { id: authId } = req.user!;
+    const authUser = req.user!;
     const { id } = req.params;
 
     const conversation = await Conversation.findOne({
       _id: id,
       participants: {
-        $elemMatch: { user: new mongoose.Types.ObjectId(authId) },
+        $elemMatch: { user: authUser._id },
       },
     })
       .populate({
@@ -478,8 +478,8 @@ export async function getConversation(
 }
 
 export async function sendAttributtedMessage(
-  by: string,
-  to: string,
+  by: mongoose.Types.ObjectId,
+  to: mongoose.Types.ObjectId,
   message: string,
   attributes: object
 ) {
@@ -505,10 +505,7 @@ export async function sendAttributtedMessage(
     {
       $match: {
         participants: {
-          $all: [
-            { $elemMatch: { user: new mongoose.Types.ObjectId(by) } },
-            { $elemMatch: { user: new mongoose.Types.ObjectId(to) } },
-          ],
+          $all: [{ $elemMatch: { user: by } }, { $elemMatch: { user: to } }],
         },
       },
     },
@@ -545,8 +542,8 @@ export async function sendAttributtedMessage(
     }
 
     if (
-      !participants.find((p) => p.identity === by) ||
-      !participants.find((p) => p.identity === to)
+      !participants.find((p) => p.identity === by.toString()) ||
+      !participants.find((p) => p.identity === to.toString())
     ) {
       sent = false;
       logger.error(
@@ -556,7 +553,7 @@ export async function sendAttributtedMessage(
       await client.conversations.v1
         .conversations(alreadyExists._id)
         .messages.create({
-          author: by,
+          author: by.toString(),
           body: message,
           attributes: JSON.stringify(attributes),
         });
@@ -625,7 +622,7 @@ export async function sendAttributtedMessage(
     await client.conversations.v1
       .conversations(twilioConversation.sid)
       .messages.create({
-        author: by,
+        author: by.toString(),
         body: message,
         attributes: JSON.stringify(attributes),
       });
@@ -634,7 +631,7 @@ export async function sendAttributtedMessage(
 
   if (!sent) {
     logger.error(
-      `Failed to send message from ${by} to ${to} with message ${message}`
+      `Failed to send message from ${by.toString()} to ${to.toString()} with message ${message}`
     );
   }
 }

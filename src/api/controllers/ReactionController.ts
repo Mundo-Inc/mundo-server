@@ -1,6 +1,7 @@
 import type { NextFunction, Request, Response } from "express";
 import { body, param, type ValidationChain } from "express-validator";
 import { StatusCodes } from "http-status-codes";
+import { Types } from "mongoose";
 
 import Notification, { ResourceTypeEnum } from "../../models/Notification";
 import Reaction, { type IReaction } from "../../models/Reaction";
@@ -23,12 +24,12 @@ export async function createReaction(
   try {
     handleInputErrors(req);
 
-    const { id: authId } = req.user!;
+    const authUser = req.user!;
 
     const { target, type, reaction } = req.body;
 
     const existingReaction = await Reaction.findOne({
-      user: authId,
+      user: authUser._id,
       target,
       type,
       reaction,
@@ -39,7 +40,7 @@ export async function createReaction(
     }
 
     const newReaction = await Reaction.create({
-      user: authId,
+      user: authUser._id,
       target,
       type,
       reaction,
@@ -51,7 +52,7 @@ export async function createReaction(
     );
 
     // adding reward
-    const reward = await addReward(authId, {
+    const reward = await addReward(authUser._id, {
       refType: "Reaction",
       refId: newReaction._id,
       userActivityId: target,
@@ -76,13 +77,13 @@ export async function deleteReaction(
   try {
     handleInputErrors(req);
 
-    const { id: authId } = req.user!;
+    const authUser = req.user!;
     const { id } = req.params;
 
     const reaction = await findReactionById(id);
-    validateReactionOwnership(reaction, authId);
+    validateReactionOwnership(reaction, authUser._id);
 
-    await removeReaction(id, authId);
+    await removeReaction(new Types.ObjectId(id), authUser._id);
     await updateUserActivity(reaction.target);
     await removeAssociatedNotifications(id);
 
@@ -104,14 +105,20 @@ async function findReactionById(id: string) {
   return reaction;
 }
 
-function validateReactionOwnership(reaction: IReaction, userId: string) {
-  if (reaction.user.toString() !== userId) {
+function validateReactionOwnership(
+  reaction: IReaction,
+  userId: Types.ObjectId
+) {
+  if (!reaction.user.equals(userId)) {
     logger.debug("not authorized for this action");
     throw createError(strings.authorization.userOnly, StatusCodes.FORBIDDEN);
   }
 }
 
-async function removeReaction(reactionId: string, userId: string) {
+async function removeReaction(
+  reactionId: Types.ObjectId,
+  userId: Types.ObjectId
+) {
   const result = await Reaction.deleteOne({ _id: reactionId, user: userId });
   if (result.deletedCount === 0) {
     throw createError(

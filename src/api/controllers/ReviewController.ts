@@ -41,7 +41,7 @@ export async function getReviews(
   try {
     handleInputErrors(req);
 
-    const { id: authId } = req.user!;
+    const authUser = req.user!;
 
     const {
       writer,
@@ -198,7 +198,7 @@ export async function getReviews(
                 user: [
                   {
                     $match: {
-                      user: new mongoose.Types.ObjectId(authId),
+                      user: authUser._id,
                     },
                   },
                   {
@@ -303,14 +303,16 @@ export async function createReview(
   try {
     handleInputErrors(req);
 
-    const { id: authId, role } = req.user!;
+    const authUser = req.user!;
 
     const { place, scores, content, images, videos, language, recommend } =
       req.body;
 
-    const writer = req.body.writer || authId;
+    const writer = req.body.writer
+      ? new mongoose.Types.ObjectId(req.body.writer as string)
+      : authUser._id;
 
-    if (writer !== authId && role !== "admin") {
+    if (!authUser._id.equals(writer) && authUser.role !== "admin") {
       throw createError(strings.authorization.otherUser, StatusCodes.FORBIDDEN);
     }
 
@@ -322,7 +324,7 @@ export async function createReview(
       );
     }
 
-    if (role !== "admin") {
+    if (authUser.role !== "admin") {
       const lastReview = await Review.findOne({
         writer,
         place,
@@ -350,7 +352,7 @@ export async function createReview(
             StatusCodes.NOT_FOUND
           );
         }
-        if (upload.user.toString() !== authId) {
+        if (!authUser._id.equals(upload.user)) {
           throw createError(
             strings.authorization.otherUser,
             StatusCodes.FORBIDDEN
@@ -366,7 +368,7 @@ export async function createReview(
 
         await Media.create({
           type: MediaTypeEnum.image,
-          user: authId,
+          user: authUser._id,
           place,
           caption: image.caption,
           src: upload.src,
@@ -386,7 +388,7 @@ export async function createReview(
             StatusCodes.NOT_FOUND
           );
         }
-        if (upload.user.toString() !== authId) {
+        if (!authUser._id.equals(upload.user)) {
           throw createError(
             strings.authorization.otherUser,
             StatusCodes.FORBIDDEN
@@ -402,7 +404,7 @@ export async function createReview(
 
         await Media.create({
           type: MediaTypeEnum.video,
-          user: authId,
+          user: authUser._id,
           place,
           caption: video.caption,
           src: upload.src,
@@ -414,7 +416,7 @@ export async function createReview(
     }
 
     await User.updateOne(
-      { _id: authId },
+      { _id: authUser._id },
       {
         latestPlace: place,
       }
@@ -440,7 +442,7 @@ export async function createReview(
     populatedPlace.activities.reviewCount += 1;
     await populatedPlace.save();
 
-    const reward = await addReward(authId, {
+    const reward = await addReward(authUser._id, {
       refType: "Review",
       refId: review._id,
       placeId: place,
@@ -477,12 +479,17 @@ export async function createReview(
     }
 
     try {
-      await reviewEarning(authId, review);
+      await reviewEarning(authUser._id, review);
       let _act;
       if (!images && !videos && !content) {
-        _act = await addRecommendActivity(authId, review._id, place);
+        _act = await addRecommendActivity(authUser._id, review._id, place);
       } else {
-        _act = await addReviewActivity(authId, review._id, place, hasMedia);
+        _act = await addReviewActivity(
+          authUser._id,
+          review._id,
+          place,
+          hasMedia
+        );
       }
       if (_act) {
         review.userActivityId = _act._id;
@@ -522,7 +529,7 @@ export async function getReview(
     handleInputErrors(req);
 
     const { id } = req.params;
-    const { id: authId } = req.user!;
+    const authUser = req.user!;
 
     const reviews = await Review.aggregate([
       {
@@ -663,7 +670,7 @@ export async function getReview(
                 user: [
                   {
                     $match: {
-                      user: new mongoose.Types.ObjectId(authId),
+                      user: authUser._id,
                     },
                   },
                   {
@@ -724,7 +731,7 @@ export async function removeReview(
     handleInputErrors(req);
 
     const { id } = req.params;
-    const { id: authId } = req.user!;
+    const authUser = req.user!;
 
     const review: IReview | null = await Review.findById(id);
 
@@ -735,7 +742,7 @@ export async function removeReview(
       );
     }
 
-    if (review.writer.toString() !== authId) {
+    if (!authUser._id.equals(review.writer)) {
       throw createError(strings.authorization.otherUser, StatusCodes.FORBIDDEN);
     }
 

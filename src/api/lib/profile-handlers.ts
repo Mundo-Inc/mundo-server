@@ -1,4 +1,6 @@
 import crypto from "crypto";
+
+import { StatusCodes } from "http-status-codes";
 import User, { SignupMethodEnum, UserRoleEnum } from "../../models/User";
 import { createError } from "../../utilities/errorHandlers";
 
@@ -11,13 +13,13 @@ export const handleSignUp = async (
   uid?: string,
   profileImage?: string
 ) => {
-  let user = await User.findOne({
-    "email.address": email.toLowerCase(),
-  });
-  if (user) {
-    throw createError("User already exists", 409);
+  const exists = await User.exists({ "email.address": email.toLowerCase() });
+
+  if (exists) {
+    throw createError("User already exists", StatusCodes.CONFLICT);
   }
-  user = await User.create({
+
+  const user = new User({
     name,
     username: username || Math.random().toString(36).substring(2, 15),
     email: {
@@ -28,15 +30,16 @@ export const handleSignUp = async (
     signupMethod,
     password: password || null,
     verificationToken: crypto.randomBytes(20).toString("hex"),
+    profileImage: profileImage || "",
   });
+
   if (uid) {
     user.uid = uid;
   } else {
     user.uid = user._id.toString();
   }
-  if (profileImage) {
-    user.profileImage = profileImage;
-  }
+
   await user.save();
+
   return user;
 };

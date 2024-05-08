@@ -1,3 +1,4 @@
+import { type Types } from "mongoose";
 import UserActivity, {
   ActivityPrivacyTypeEnum,
   ActivityResourceTypeEnum,
@@ -15,7 +16,7 @@ const addActivity = async (params: any, existCheck: boolean = false) => {
 };
 
 export const addNewPlaceActivity = async (
-  userId: string,
+  userId: Types.ObjectId,
   placeId: string,
   privacyType: string = ActivityPrivacyTypeEnum.PUBLIC,
   createdAt?: Date
@@ -37,7 +38,7 @@ export const addNewPlaceActivity = async (
 };
 
 export const addCheckInActivity = async (
-  userId: string,
+  userId: Types.ObjectId,
   checkinId: string,
   placeId: string | null = null,
   privacyType: string = ActivityPrivacyTypeEnum.PUBLIC,
@@ -62,7 +63,7 @@ export const addCheckInActivity = async (
 };
 
 export const addReviewActivity = async (
-  userId: string,
+  userId: Types.ObjectId,
   reviewId: string,
   placeId: string | null = null,
   hasMedia: boolean = false,
@@ -87,7 +88,7 @@ export const addReviewActivity = async (
 };
 
 export const addHomemadeActivity = async (
-  userId: string,
+  userId: Types.ObjectId,
   homemadeId: string,
   hasMedia: boolean = true,
   privacyType: string = ActivityPrivacyTypeEnum.PUBLIC,
@@ -110,7 +111,7 @@ export const addHomemadeActivity = async (
 };
 
 export const addRecommendActivity = async (
-  userId: string,
+  userId: Types.ObjectId,
   reviewId: string,
   placeId: string | null = null,
   privacyType: string = ActivityPrivacyTypeEnum.PUBLIC
@@ -127,7 +128,7 @@ export const addRecommendActivity = async (
 };
 
 export const addReactionToPlaceActivity = async (
-  userId: string,
+  userId: Types.ObjectId,
   reactionId: string,
   placeId: string | null = null,
   privacyType: string = ActivityPrivacyTypeEnum.PUBLIC,
@@ -150,7 +151,7 @@ export const addReactionToPlaceActivity = async (
 };
 
 export const addGotBadgeActivity = async (
-  userId: string,
+  userId: Types.ObjectId,
   privacyType: string = ActivityPrivacyTypeEnum.PUBLIC
 ) => {
   const activityParams = {
@@ -164,7 +165,7 @@ export const addGotBadgeActivity = async (
 };
 
 export const addLevelUpActivity = async (
-  userId: string,
+  userId: Types.ObjectId,
   newLevel: number,
   privacyType: string = ActivityPrivacyTypeEnum.PUBLIC
 ) => {
@@ -180,7 +181,7 @@ export const addLevelUpActivity = async (
 };
 
 export const addNewFollowingActivity = async (
-  userId: string,
+  userId: Types.ObjectId,
   targetId: string,
   privacyType: string = ActivityPrivacyTypeEnum.PUBLIC,
   createdAt?: Date

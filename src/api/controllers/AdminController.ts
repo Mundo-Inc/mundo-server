@@ -188,7 +188,7 @@ export async function resolveFlag(
 ) {
   try {
     handleInputErrors(req);
-    const { id: userId } = req.user!;
+    const authUser = req.user!;
     const { action } = req.body;
     const { id } = req.params;
 
@@ -223,7 +223,7 @@ export async function resolveFlag(
     const adminAction = {
       type: action,
       note: req.body.note,
-      admin: new Types.ObjectId(userId),
+      admin: authUser._id,
       createdAt: new Date(),
     };
 

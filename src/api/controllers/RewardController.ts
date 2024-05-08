@@ -11,6 +11,7 @@ import PrizeRedemption, {
 import User, { type IUser } from "../../models/User";
 import strings, { dStrings, dynamicMessage } from "../../strings";
 import { createError, handleInputErrors } from "../../utilities/errorHandlers";
+import UserProjection from "../dto/user/user";
 import { BrevoService } from "../services/brevo.service";
 import logger from "../services/logger";
 import {
@@ -21,7 +22,6 @@ import {
   updateUserCoinsAndStreak,
 } from "../services/reward/coinReward.service";
 import validate from "./validators";
-import UserProjection from "../dto/user/user";
 
 export const dailyCoinInformationValidation: ValidationChain[] = [];
 export async function dailyCoinInformation(
@@ -30,8 +30,8 @@ export async function dailyCoinInformation(
   next: NextFunction
 ) {
   try {
-    const { id: authId } = req.user!;
-    let user: IUser | null = await User.findById(authId);
+    const authUser = req.user!;
+    let user: IUser | null = await User.findById(authUser._id);
 
     if (!user) {
       throw createError("User not found", StatusCodes.NOT_FOUND);
@@ -59,8 +59,8 @@ export async function claimDailyCoins(
 ) {
   try {
     handleInputErrors(req);
-    const { id: authId } = req.user!;
-    let user: IUser | null = await User.findById(authId);
+    const authUser = req.user!;
+    let user: IUser | null = await User.findById(authUser._id);
 
     if (!user) {
       throw createError("User not found", StatusCodes.NOT_FOUND);
@@ -125,9 +125,9 @@ export async function redeemPrize(
 ) {
   try {
     handleInputErrors(req);
-    const { id: authId } = req.user!;
+    const authUser = req.user!;
     const { id } = req.params;
-    const user: IUser | null = await User.findById(authId);
+    const user: IUser | null = await User.findById(authUser._id);
     if (!user) {
       throw createError(strings.user.notFound, StatusCodes.NOT_FOUND);
     }
@@ -182,8 +182,8 @@ export async function getPrizeRedemptionHistory(
   next: NextFunction
 ) {
   try {
-    const { id: authId } = req.user!;
-    const user: IUser | null = await User.findById(authId);
+    const authUser = req.user!;
+    const user: IUser | null = await User.findById(authUser._id);
     const { page: reqPage, limit: reqLimit } = req.query;
     const page = parseInt(reqPage as string) || 1;
     const limit = parseInt(reqLimit as string) || 500;
@@ -223,12 +223,12 @@ export async function getAllPrizeRedemptionHistory(
     const limit = parseInt(reqLimit as string) || 500;
     const skip = (page - 1) * limit;
 
-    let redemptions = await PrizeRedemption.find({})
-      .populate("userId", UserProjection.private)
-      .populate("prizeId")
+    const redemptions = await PrizeRedemption.find({})
       .sort({ _id: -1 })
       .skip(skip)
       .limit(limit)
+      .populate("userId", UserProjection.private)
+      .populate("prizeId")
       .lean();
 
     res.status(StatusCodes.OK).json({ success: true, data: redemptions });
@@ -325,19 +325,19 @@ export async function getLatestReferredUsers(
   next: NextFunction
 ) {
   try {
-    const { id: authId } = req.user!;
+    const authUser = req.user!;
 
     const page = Number(req.query.page) || 1;
     const limit = Number(req.query.limit) || 20;
     const skip = (page - 1) * limit;
 
-    const latestReferredUsers = await User.find({ referredBy: authId })
+    const latestReferredUsers = await User.find({ referredBy: authUser._id })
       .sort({ createdAt: -1 })
       .select(UserProjection.essentials)
       .skip(skip)
       .limit(limit);
 
-    const total = await User.countDocuments({ referredBy: authId });
+    const total = await User.countDocuments({ referredBy: authUser._id });
 
     res.json({
       success: true,

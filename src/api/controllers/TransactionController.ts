@@ -39,9 +39,9 @@ export async function getSecret(
   try {
     handleInputErrors(req);
 
-    const { id: authId } = req.user!;
+    const authUser = req.user!;
 
-    const user: IUser | null = await User.findById(authId);
+    const user: IUser | null = await User.findById(authUser._id);
     if (!user) {
       throw createError(
         dynamicMessage(dStrings.notFound, "User"),
@@ -83,10 +83,17 @@ export async function addOrUpdatePaymentMethod(
   try {
     handleInputErrors(req);
 
-    const { id: authId } = req.user!;
+    const authUser = req.user!;
     const { paymentMethodId } = req.body;
 
-    const user = await User.findById(authId);
+    const user: IUser | null = await User.findById(authUser._id);
+
+    if (!user) {
+      throw createError(
+        dynamicMessage(dStrings.notFound, "User"),
+        StatusCodes.NOT_FOUND
+      );
+    }
 
     if (!user.stripe.paymentMethod) {
       // Assuming you have a Stripe Customer ID stored or you create a new Customer
@@ -119,9 +126,9 @@ export async function getPaymentMethod(
   try {
     handleInputErrors(req);
 
-    const { id: authId } = req.user!;
+    const authUser = req.user!;
 
-    const user = await User.findById(authId);
+    const user: IUser | null = await User.findById(authUser._id);
     if (!user || !user.stripe.paymentMethod) {
       throw createError("No payment method found", StatusCodes.NOT_FOUND);
     }
@@ -157,9 +164,9 @@ export async function addOrUpdatePayoutMethod(
   try {
     handleInputErrors(req);
 
-    const { id: authId } = req.user!;
+    const authUser = req.user!;
 
-    const user = await User.findById(authId);
+    const user: IUser | null = await User.findById(authUser._id);
 
     if (!user) {
       throw createError(
@@ -231,9 +238,9 @@ export async function onboarding(
   try {
     handleInputErrors(req);
 
-    const { id: authId } = req.user!;
+    const authUser = req.user!;
 
-    let user: IUser | null = await User.findById(authId);
+    let user: IUser | null = await User.findById(authUser._id);
 
     if (!user) {
       throw createError(
@@ -281,9 +288,9 @@ export async function sendGift(
   try {
     handleInputErrors(req);
 
-    const { id: authId } = req.user!;
+    const authUser = req.user!;
     const { amount, receiverId, paymentMethodId, message } = req.body;
-    const sender = await User.findById(authId);
+    const sender = await User.findById(authUser._id);
     const receiver = await User.findById(receiverId);
 
     if (!sender || !receiver) {
@@ -331,7 +338,7 @@ export async function sendGift(
     });
 
     // Send message to receiver
-    sendAttributtedMessage(authId, receiverId, message || "", {
+    sendAttributtedMessage(authUser._id, receiverId, message || "", {
       action: "gift",
       transactionId: transaction._id.toString(),
     });
@@ -357,16 +364,16 @@ export async function withdraw(
   try {
     handleInputErrors(req);
 
-    const { id: authId } = req.user!;
+    const authUser = req.user!;
     const { amount } = req.body;
-    const user = await User.findById(authId);
+    const user: IUser | null = await User.findById(authUser._id);
 
     if (!user) {
       throw createError("User not found", StatusCodes.BAD_REQUEST);
     }
 
     // Ensure the user's balance is sufficient
-    if (user.balance < amount) {
+    if (user.stripe.balance < amount) {
       throw createError("Insufficient Balance", StatusCodes.BAD_REQUEST);
     }
 
@@ -421,7 +428,7 @@ export async function withdraw(
     );
 
     // Deduct the payout amount from the user's balance
-    user.balance -= amount;
+    user.stripe.balance -= amount;
     await user.save();
 
     // Log the transaction in your database
@@ -429,7 +436,7 @@ export async function withdraw(
       amount: amount,
       serviceFee: 0, // Assuming no service fee for withdrawal; adjust if needed
       totalAmount: amount,
-      sender: authId, // Assuming the withdrawal deducts from the user's own balance
+      sender: authUser._id, // Assuming the withdrawal deducts from the user's own balance
       receiver: user._id, // There is no receiver in a withdrawal
       paymentIntentId: payout.id, // Use the payout ID for the transaction record
     });
@@ -455,7 +462,7 @@ export async function getTransaction(
   try {
     handleInputErrors(req);
 
-    const { id: authId } = req.user!;
+    const authUser = req.user!;
     const { id } = req.params;
 
     const transaction: ITransaction | null = await Transaction.findById(
@@ -474,8 +481,8 @@ export async function getTransaction(
     }
 
     if (
-      authId !== transaction.sender._id.toString() &&
-      authId !== transaction.receiver._id.toString()
+      !authUser._id.equals(transaction.sender._id) &&
+      !authUser._id.equals(transaction.receiver._id)
     ) {
       throw createError(
         "You are not authorized to view this transaction",

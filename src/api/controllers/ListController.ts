@@ -5,19 +5,19 @@ import mongoose from "mongoose";
 
 import List, { AccessEnum, type IList } from "../../models/List";
 import Place, { type IPlace } from "../../models/Place";
-import User from "../../models/User";
+import User, { type IUser } from "../../models/User";
 import strings, { dStrings as ds, dynamicMessage } from "../../strings";
 import { createError, handleInputErrors } from "../../utilities/errorHandlers";
 import { getListOfListsDTO } from "../dto/list/readLists";
 import { readPlaceBriefProjection } from "../dto/place/read-place-brief.dto";
-import UserProjection from "../dto/user/user";
+import UserProjection, { type UserEssentialsKeys } from "../dto/user/user";
 
 export const getListValidation: ValidationChain[] = [param("id").isMongoId()];
 
 export async function getList(req: Request, res: Response, next: NextFunction) {
   try {
     handleInputErrors(req);
-    const { id: authId } = req.user!;
+    const authUser = req.user!;
     const { id } = req.params;
 
     const list = await List.aggregate([
@@ -61,15 +61,18 @@ export async function getList(req: Request, res: Response, next: NextFunction) {
     }
 
     // Authorization
-    const isCollaborator = result.collaborators.find(
-      (c: any) => c.user.toString() === authId
+    const isCollaborator = result.collaborators.find((c: any) =>
+      authUser._id.equals(c.user)
     );
     if (result.isPrivate && !isCollaborator) {
-      throw createError("UNAUTHORIZED", StatusCodes.UNAUTHORIZED);
+      throw createError(
+        strings.authorization.accessDenied,
+        StatusCodes.UNAUTHORIZED
+      );
     }
 
     for (let i = 0; i < result.collaborators.length; i++) {
-      let user = await User.findById(
+      let user: Pick<IUser, UserEssentialsKeys> | null = await User.findById(
         result.collaborators[i].user,
         UserProjection.essentials
       ).lean();
@@ -86,7 +89,7 @@ export async function getList(req: Request, res: Response, next: NextFunction) {
         result.places[i].place,
         readPlaceBriefProjection
       ).lean();
-      let user = await User.findById(
+      let user: Pick<IUser, UserEssentialsKeys> | null = await User.findById(
         result.places[i].user,
         UserProjection.essentials
       ).lean();
@@ -137,10 +140,10 @@ export async function createList(
   try {
     handleInputErrors(req);
 
-    const { id: authId } = req.user!;
+    const authUser = req.user!;
     const {
       name,
-      owner = authId,
+      owner = authUser._id,
       collaborators = [],
       icon,
       isPrivate = false,
@@ -185,7 +188,7 @@ export async function deleteList(
   try {
     handleInputErrors(req);
 
-    const { id: authId } = req.user!;
+    const authUser = req.user!;
     const { id } = req.params;
 
     const list = await List.findById(id);
@@ -198,13 +201,13 @@ export async function deleteList(
     }
 
     // Check if the reaction belongs to the authenticated user
-    if (list.owner.toString() !== authId) {
+    if (!authUser._id.equals(list.owner)) {
       throw createError(strings.authorization.userOnly, StatusCodes.FORBIDDEN);
     }
 
     const deletedList = await List.findOne({
       _id: id,
-      owner: authId,
+      owner: authUser._id,
     });
     await deletedList.deleteOne();
 
@@ -236,7 +239,7 @@ export async function editList(
   try {
     handleInputErrors(req);
 
-    const { id: authId } = req.user!;
+    const authUser = req.user!;
     const { id } = req.params;
     const { name, icon, isPrivate } = req.body;
     const list = (await List.findById(id)) as IList;
@@ -247,7 +250,7 @@ export async function editList(
         StatusCodes.NOT_FOUND
       );
     }
-    if (list.owner.toString() !== authId) {
+    if (!authUser._id.equals(list.owner)) {
       throw createError("UNAUTHORIZED", StatusCodes.FORBIDDEN);
     }
 
@@ -300,7 +303,7 @@ export async function addToList(
   try {
     handleInputErrors(req);
     const { id, placeId } = req.params;
-    const { id: authId } = req.user!;
+    const authUser = req.user!;
     const list = (await List.findById(id)) as IList;
 
     if (!list) {
@@ -319,14 +322,14 @@ export async function addToList(
     }
 
     const collaborator = list.collaborators.find(
-      (c) => c.user.equals(authId) && c.access === AccessEnum.edit
+      (c) => c.user.equals(authUser._id) && c.access === AccessEnum.edit
     );
 
     if (!collaborator) {
       throw createError("UNAUTHORIZED", StatusCodes.UNAUTHORIZED);
     }
 
-    if (list.places?.find((p) => p.place.toString() === placeId)) {
+    if (list.places?.find((p) => p.place.equals(placeId))) {
       throw createError(
         dynamicMessage(ds.alreadyExists, "Place"),
         StatusCodes.BAD_REQUEST
@@ -335,15 +338,15 @@ export async function addToList(
 
     if (list.places) {
       list.places.push({
-        place: placeId as any,
-        user: authId as any,
+        place: new mongoose.Types.ObjectId(placeId),
+        user: authUser._id,
         createdAt: new Date(),
       });
     }
 
     await list.save();
 
-    return res.status(StatusCodes.OK).json({
+    res.status(StatusCodes.OK).json({
       success: true,
       data: list,
     });
@@ -366,7 +369,7 @@ export async function removeFromList(
     handleInputErrors(req);
 
     const { id, placeId } = req.params;
-    const { id: authId } = req.user!;
+    const authUser = req.user!;
 
     const list: IList | null = await List.findById(id);
 
@@ -386,14 +389,14 @@ export async function removeFromList(
     }
 
     const collaborator = list.collaborators.find(
-      (c) => c.user.equals(authId) && c.access === AccessEnum.edit
+      (c) => c.user.equals(authUser._id) && c.access === AccessEnum.edit
     );
 
     if (!collaborator) {
       throw createError("UNAUTHORIZED", StatusCodes.FORBIDDEN);
     }
 
-    if (!list.places?.find((p) => p.place.toString() === placeId)) {
+    if (!list.places?.find((p) => p.place.equals(placeId))) {
       throw createError(
         dynamicMessage(ds.notFound, "Place"),
         StatusCodes.NOT_FOUND
@@ -402,7 +405,7 @@ export async function removeFromList(
 
     if (list.places) {
       list.places = list.places.filter((place) => {
-        return place.place.toString() !== placeId;
+        return !place.place.equals(placeId);
       });
     }
 
@@ -429,7 +432,7 @@ export async function addCollaborator(
     handleInputErrors(req);
 
     const { id, userId } = req.params;
-    const { id: authId } = req.user!;
+    const authUser = req.user!;
     const { access } = req.body;
 
     const list: IList | null = await List.findById(id);
@@ -448,11 +451,11 @@ export async function addCollaborator(
       );
     }
 
-    if (list.owner.toString() !== authId) {
+    if (!authUser._id.equals(list.owner)) {
       throw createError("UNAUTHORIZED", StatusCodes.UNAUTHORIZED);
     }
 
-    if (list.collaborators?.find((c) => c.user.toString() === userId)) {
+    if (list.collaborators?.find((c) => c.user.equals(userId))) {
       throw createError(
         dynamicMessage(ds.alreadyExists, "User"),
         StatusCodes.BAD_REQUEST
@@ -460,8 +463,8 @@ export async function addCollaborator(
     }
 
     list.collaborators.push({
-      user: userId as any,
-      access: access as any,
+      user: new mongoose.Types.ObjectId(userId),
+      access: access,
     });
 
     await list.save();
@@ -489,7 +492,7 @@ export async function removeFromCollaborators(
     handleInputErrors(req);
 
     const { id, userId } = req.params;
-    const { id: authId } = req.user!;
+    const authUser = req.user!;
 
     const list: IList | null = await List.findById(id);
 
@@ -508,17 +511,17 @@ export async function removeFromCollaborators(
       );
     }
 
-    if (list.owner.toString() !== authId) {
+    if (!authUser._id.equals(list.owner)) {
       throw createError("UNAUTHORIZED", StatusCodes.UNAUTHORIZED);
     }
-    if (list.owner.toString() === userId) {
+    if (list.owner.equals(userId)) {
       throw createError(
         "you can't remove the owner of the list",
         StatusCodes.BAD_REQUEST
       );
     }
 
-    if (!list.collaborators?.find((c) => c.user.toString() === userId)) {
+    if (!list.collaborators?.find((c) => c.user.equals(userId))) {
       throw createError(
         dynamicMessage(ds.notFound, "User"),
         StatusCodes.NOT_FOUND
@@ -554,7 +557,7 @@ export async function editCollaboratorAccess(
     handleInputErrors(req);
 
     const { id, userId } = req.params;
-    const { id: authId } = req.user!;
+    const authUser = req.user!;
     const { access } = req.body;
 
     const list: IList | null = await List.findById(id);
@@ -574,12 +577,12 @@ export async function editCollaboratorAccess(
       );
     }
 
-    if (list.owner.toString() !== authId) {
+    if (!list.owner.equals(authUser._id)) {
       throw createError("UNAUTHORIZED", StatusCodes.UNAUTHORIZED);
     }
 
-    const collaboratorIndex = list.collaborators.findIndex(
-      (c) => c.user.toString() === userId
+    const collaboratorIndex = list.collaborators.findIndex((c) =>
+      c.user.equals(userId)
     );
 
     if (collaboratorIndex === -1) {
@@ -611,7 +614,7 @@ export async function getUserLists(
   try {
     handleInputErrors(req);
 
-    const { id: authId } = req.user!; //person who wants to see the lists
+    const authUser = req.user!; //person who wants to see the lists
     const { id } = req.params; // person who has the lists (or collaborates in)
 
     const lists = await List.aggregate([
@@ -621,7 +624,7 @@ export async function getUserLists(
           $or: [
             { isPrivate: false },
             {
-              "collaborators.user": new mongoose.Types.ObjectId(authId),
+              "collaborators.user": authUser._id,
               isPrivate: true,
             },
           ],

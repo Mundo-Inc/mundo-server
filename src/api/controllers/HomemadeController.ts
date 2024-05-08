@@ -35,7 +35,7 @@ export async function getHomemadePosts(
   try {
     handleInputErrors(req);
 
-    const { id: authId } = req.user!;
+    const authUser = req.user!;
 
     const {
       user,
@@ -138,7 +138,7 @@ export async function getHomemadePosts(
                 user: [
                   {
                     $match: {
-                      user: new mongoose.Types.ObjectId(authId),
+                      user: authUser._id,
                     },
                   },
                   {
@@ -198,13 +198,15 @@ export async function createHomemadePost(
   try {
     handleInputErrors(req);
 
-    const { id: authId, role } = req.user!;
+    const authUser = req.user!;
 
     const { content, media, tags, privacyType } = req.body;
 
-    const userId = req.body.user || authId;
+    const userId = req.body.user
+      ? new mongoose.Types.ObjectId(req.body.user as string)
+      : authUser._id;
 
-    if (userId !== authId && role !== "admin") {
+    if (!userId.equals(authUser._id) && authUser.role !== "admin") {
       throw createError(strings.authorization.otherUser, StatusCodes.FORBIDDEN);
     }
 
@@ -219,7 +221,7 @@ export async function createHomemadePost(
           StatusCodes.NOT_FOUND
         );
       }
-      if (upload.user.toString() !== authId) {
+      if (!authUser._id.equals(upload.user)) {
         throw createError(
           strings.authorization.otherUser,
           StatusCodes.FORBIDDEN
@@ -230,7 +232,7 @@ export async function createHomemadePost(
       await Media.create({
         type:
           upload.type === "video" ? MediaTypeEnum.video : MediaTypeEnum.image,
-        user: authId,
+        user: authUser._id,
         caption: m.caption,
         src: upload.src,
       }).then(async (media) => {
@@ -267,7 +269,7 @@ export async function createHomemadePost(
       privacyType: privacyType || ActivityPrivacyTypeEnum.PUBLIC,
     });
 
-    const reward = await addReward(authId, {
+    const reward = await addReward(authUser._id, {
       refType: "Homemade",
       refId: homemade._id,
     });
@@ -306,7 +308,7 @@ export async function createHomemadePost(
     try {
       //TODO: ADD COIN REWARDS TO THE USERS IF APPROVED BY NABZ
       // await reviewEarning(authId, review);
-      let _act = await addHomemadeActivity(authId, homemade._id);
+      let _act = await addHomemadeActivity(authUser._id, homemade._id);
       if (_act) {
         homemade.userActivityId = _act._id;
         await homemade.save();
@@ -333,7 +335,7 @@ export async function getHomemadePost(
     handleInputErrors(req);
 
     const { id } = req.params;
-    const { id: authId } = req.user!;
+    const authUser = req.user!;
 
     const homemades = await Homemade.aggregate([
       {
@@ -420,7 +422,7 @@ export async function getHomemadePost(
                 user: [
                   {
                     $match: {
-                      user: new mongoose.Types.ObjectId(authId),
+                      user: authUser._id,
                     },
                   },
                   {
@@ -478,7 +480,7 @@ export async function removeHomemadePost(
     handleInputErrors(req);
 
     const { id } = req.params;
-    const { id: authId } = req.user!;
+    const authUser = req.user!;
 
     const homemade: IHomemade | null = await Homemade.findById(id);
 
@@ -489,7 +491,7 @@ export async function removeHomemadePost(
       );
     }
 
-    if (homemade.user.toString() !== authId) {
+    if (!authUser._id.equals(homemade.user)) {
       throw createError(strings.authorization.otherUser, StatusCodes.FORBIDDEN);
     }
 

@@ -58,7 +58,7 @@ export async function uploadFile(
   try {
     handleInputErrors(req);
 
-    const { id: authId } = req.user!;
+    const authUser = req.user!;
 
     const { convert } = req.query;
     const { fields, files } = await parseForm(req);
@@ -75,7 +75,7 @@ export async function uploadFile(
 
       let fileBuffer = readFileSync(filepath);
 
-      const { key } = generateFileKey(usecase, authId, "jpg");
+      const { key } = generateFileKey(usecase, authUser._id.toString(), "jpg");
 
       await s3.send(
         new PutObjectCommand({
@@ -88,7 +88,7 @@ export async function uploadFile(
       );
 
       if (usecase === "profileImage") {
-        await User.findByIdAndUpdate(authId, {
+        await User.findByIdAndUpdate(authUser._id, {
           profileImage: `https://${bucketName}.s3.${region}.amazonaws.com/${key}`,
         });
         res.status(StatusCodes.CREATED).json({
@@ -99,7 +99,7 @@ export async function uploadFile(
         });
       } else {
         const upload = await Upload.create({
-          user: authId,
+          user: authUser._id,
           key,
           src: `https://${bucketName}.s3.${region}.amazonaws.com/${key}`,
           usecase,
@@ -119,14 +119,14 @@ export async function uploadFile(
 
       const { key, name: tempFileName } = generateFileKey(
         usecase,
-        authId,
+        authUser._id.toString(),
         "mp4"
       );
       const outputPath = `./tmp/${tempFileName}`;
 
       if (convert) {
         const upload = await Upload.create({
-          user: authId,
+          user: authUser._id,
           key,
           src: `https://${bucketName}.s3.${region}.amazonaws.com/${key}`,
           usecase,
@@ -156,7 +156,7 @@ export async function uploadFile(
         );
 
         const upload = await Upload.create({
-          user: authId,
+          user: authUser._id,
           key,
           src: `https://${bucketName}.s3.${region}.amazonaws.com/${key}`,
           usecase,

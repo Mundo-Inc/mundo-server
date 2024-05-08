@@ -30,7 +30,7 @@ export async function getEngagements(
   try {
     handleInputErrors(req);
 
-    const { id: authId } = req.user!;
+    const authUser = req.user!;
     const { id } = req.params;
 
     const before = req.query.before
@@ -39,19 +39,19 @@ export async function getEngagements(
 
     const limit = Number(req.query.limit) || 20;
 
-    const blockedUsers = (await Block.find({ target: authId }, "user")).map(
-      (block) => block.user
-    );
+    const blockedUsers = (
+      await Block.find({ target: authUser._id }, "user")
+    ).map((block) => block.user);
 
-    const comments = await getComments(id, authId, blockedUsers, before, limit);
-
-    const reactions = await getReactions(
+    const comments = await getComments(
       id,
-      authId,
+      authUser._id,
       blockedUsers,
       before,
       limit
     );
+
+    const reactions = await getReactions(id, blockedUsers, before, limit);
 
     // Merge and sort by createdAt
     const mergedArray = [...comments, ...reactions].sort(
@@ -69,7 +69,7 @@ export async function getEngagements(
 
 async function getComments(
   id: string,
-  authId: string,
+  authId: mongoose.Types.ObjectId,
   blockedUsers: IUser[],
   before: Date,
   limit: number
@@ -115,7 +115,7 @@ async function getComments(
           author: { $arrayElemAt: ["$author", 0] },
           likes: { $size: "$likes" },
           liked: {
-            $in: [new mongoose.Types.ObjectId(authId), "$likes"],
+            $in: [authId, "$likes"],
           },
         },
       },
@@ -127,7 +127,6 @@ async function getComments(
 
 async function getReactions(
   id: string,
-  authId: string,
   blockedUsers: IUser[],
   before: Date,
   limit: number

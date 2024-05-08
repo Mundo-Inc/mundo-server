@@ -37,7 +37,7 @@ export async function createMedia(
   try {
     handleInputErrors(req);
 
-    const { id: authId } = req.user!;
+    const authUser = req.user!;
 
     const { isConverted } = req.query;
     const { fields, files } = await parseForm(req);
@@ -50,7 +50,7 @@ export async function createMedia(
       // if (!isConverted) {
       //   fileBuffer = await resizeImage(fileBuffer);
       // }
-      const key = `${authId}/${imagesDirectory}/${crypto
+      const key = `${authUser._id.toString()}/${imagesDirectory}/${crypto
         .randomBytes(16)
         .toString("hex")}.jpg`;
       await s3.send(
@@ -67,7 +67,7 @@ export async function createMedia(
         src: location,
         caption: caption ? caption[0] : "",
         place: new mongoose.Types.ObjectId(place![0]),
-        user: new mongoose.Types.ObjectId(authId),
+        user: authUser._id,
         type: MediaTypeEnum.image,
       };
       const media = await Media.create(createMediaDto);
@@ -82,14 +82,14 @@ export async function createMedia(
       const tempFileName = `${randomBytes}.mp4`;
       const outputPath = `./tmp/${tempFileName}`;
 
-      const key = `${authId}/${videosDirectory}/${randomBytes}.mp4`;
+      const key = `${authUser._id.toString()}/${videosDirectory}/${randomBytes}.mp4`;
 
       const location = `https://${bucketName}.s3.${region}.amazonaws.com/${key}`;
       const createMediaDto: CreateMediaDto = {
         src: location,
         caption: caption ? caption[0] : "",
         place: new mongoose.Types.ObjectId(place![0]),
-        user: new mongoose.Types.ObjectId(authId),
+        user: authUser._id,
         type: MediaTypeEnum.video,
       };
       const media = await Media.create(createMediaDto);

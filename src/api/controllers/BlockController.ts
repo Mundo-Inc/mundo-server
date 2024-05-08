@@ -13,9 +13,9 @@ export async function block(req: Request, res: Response, next: NextFunction) {
   try {
     handleInputErrors(req);
     const { id } = req.params;
-    const { id: authId } = req.user!;
+    const authUser = req.user!;
 
-    let block = await Block.findOne({ user: authId, target: id });
+    let block = await Block.findOne({ user: authUser._id, target: id });
     if (block) {
       throw createError(strings.blocks.alreadyExists, StatusCodes.CONFLICT);
     }
@@ -26,7 +26,7 @@ export async function block(req: Request, res: Response, next: NextFunction) {
     }
 
     block = await Block.create({
-      user: authId,
+      user: authUser._id,
       target: id,
     });
 
@@ -40,10 +40,12 @@ export async function unblock(req: Request, res: Response, next: NextFunction) {
   try {
     handleInputErrors(req);
     const { id } = req.params;
-    const { id: authId } = req.user!;
-    let block = await Block.findOne({ user: authId, target: id });
-    if (!block)
+    const authUser = req.user!;
+
+    const block = await Block.findOne({ user: authUser._id, target: id });
+    if (!block) {
       throw createError(strings.blocks.notFound, StatusCodes.NOT_FOUND);
+    }
     await block.deleteOne();
 
     res.sendStatus(StatusCodes.NO_CONTENT);

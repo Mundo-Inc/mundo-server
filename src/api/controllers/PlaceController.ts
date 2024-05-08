@@ -11,6 +11,7 @@ import { dStrings, dynamicMessage } from "../../strings";
 import { createError, handleInputErrors } from "../../utilities/errorHandlers";
 import { bucketName, parseForm, region, s3 } from "../../utilities/storage";
 import { areStrictlySimilar } from "../../utilities/stringHelper";
+import UserProjection from "../dto/user/user";
 import {
   findFoursquareId,
   findTripAdvisorId,
@@ -21,7 +22,6 @@ import {
 } from "../services/provider.service";
 import { getDetailedPlace } from "./SinglePlaceController";
 import validate from "./validators";
-import UserProjection from "../dto/user/user";
 
 export const createPlaceValidation: ValidationChain[] = [
   // validate.name(body("name")),
@@ -38,7 +38,7 @@ export async function createPlace(
   try {
     handleInputErrors(req);
 
-    const { id: authId } = req.user!;
+    const authUser = req.user!;
 
     const { fields, files } = await parseForm(req);
 
@@ -76,7 +76,7 @@ export async function createPlace(
       scores: {
         overall: null,
       },
-      addedBy: authId,
+      addedBy: authUser._id,
     };
     if (placeInfo.description) {
       body.description = placeInfo.description;
@@ -344,7 +344,7 @@ export async function getThirdPartyRating(
 ) {
   try {
     handleInputErrors(req);
-    const authId = req.user?.id;
+
     const { id, provider } = req.params;
     let place = await Place.findById(id);
 

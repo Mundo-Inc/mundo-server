@@ -2,7 +2,6 @@ import type { NextFunction, Request, Response } from "express";
 import { body, param, query, type ValidationChain } from "express-validator";
 import { StatusCodes } from "http-status-codes";
 
-import mongoose from "mongoose";
 import CoinReward, { CoinRewardTypeEnum } from "../../models/CoinReward";
 import Mission, { TaskTypeEnum, type IMission } from "../../models/Mission";
 import Prize from "../../models/Prize";
@@ -87,7 +86,7 @@ export async function getMissions(
   try {
     handleInputErrors(req);
 
-    const { id: authId } = req.user!;
+    const authUser = req.user!;
 
     // Get page and limit from query parameters
     const page = parseInt(req.query.page as string) || 1;
@@ -111,10 +110,7 @@ export async function getMissions(
     const populatedMissions = [];
     for (const mission of missions) {
       populatedMissions.push(
-        await populateMissionProgress(
-          mission as IMission,
-          new mongoose.Types.ObjectId(authId)
-        )
+        await populateMissionProgress(mission as IMission, authUser._id)
       );
     }
 
@@ -142,9 +138,9 @@ export async function claimMissionReward(
   next: NextFunction
 ) {
   const { id } = req.params;
-  const { id: authId } = req.user!;
+  const authUser = req.user!;
   try {
-    const user: IUser | null = await User.findById(authId);
+    const user: IUser | null = await User.findById(authUser._id);
     if (!user) {
       throw createError("user not found", StatusCodes.NOT_FOUND);
     }
@@ -172,7 +168,7 @@ export async function claimMissionReward(
 
     const gotRewardBefore =
       (await CoinReward.countDocuments({
-        userId: authId,
+        userId: authUser._id,
         missionId: id,
       })) > 0;
 
@@ -184,7 +180,7 @@ export async function claimMissionReward(
     }
 
     const coinReward = await CoinReward.create({
-      userId: authId,
+      userId: authUser._id,
       amount: mission.rewardAmount,
       coinRewardType: CoinRewardTypeEnum.mission,
       missionId: id,

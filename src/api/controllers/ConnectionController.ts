@@ -31,15 +31,15 @@ export async function connectionFollowStatus(
     handleInputErrors(req);
 
     const { id } = req.params;
-    const { id: authId } = req.user!;
+    const authUser = req.user!;
 
     const [followedByUser, followsUser] = await Promise.all([
-      Follow.exists({ user: authId, target: id }),
-      Follow.exists({ user: id, target: authId }),
+      Follow.exists({ user: authUser._id, target: id }),
+      Follow.exists({ user: id, target: authUser._id }),
     ]);
 
     const isRequestPending =
-      (await FollowRequest.exists({ user: authId, target: id })) !== null;
+      (await FollowRequest.exists({ user: authUser._id, target: id })) !== null;
 
     return res.status(StatusCodes.OK).json({
       success: true,
@@ -62,7 +62,10 @@ export const createUserConnectionValidation: ValidationChain[] = [
   param("id").isMongoId(),
 ];
 
-async function logFollowingActivity(authId: string, targetId: string) {
+async function logFollowingActivity(
+  authId: mongoose.Types.ObjectId,
+  targetId: string
+) {
   try {
     await addNewFollowingActivity(authId, targetId);
   } catch (e) {
@@ -83,10 +86,13 @@ export async function createUserConnection(
     handleInputErrors(req);
 
     const { id } = req.params;
-    const { id: authId } = req.user!;
+    const authUser = req.user!;
 
     // Check if the follow relationship already exists
-    const existingFollow = await Follow.findOne({ user: authId, target: id });
+    const existingFollow = await Follow.findOne({
+      user: authUser._id,
+      target: id,
+    });
     if (existingFollow) {
       logger.debug("You already followed this person");
       throw createError(strings.follows.alreadyExists, StatusCodes.CONFLICT);
@@ -103,7 +109,7 @@ export async function createUserConnection(
 
     if (targetUser.isPrivate) {
       const existingFollowRequest = await FollowRequest.findOne({
-        user: authId,
+        user: authUser._id,
         target: id,
       });
 
@@ -115,7 +121,7 @@ export async function createUserConnection(
       }
 
       await FollowRequest.create({
-        user: authId,
+        user: authUser._id,
         target: id,
       });
 
@@ -124,9 +130,9 @@ export async function createUserConnection(
       //TODO: Send Notification to Target that they have a follow request
     } else {
       // Create new follow relationship
-      const follow = await Follow.create({ user: authId, target: id });
+      const follow = await Follow.create({ user: authUser._id, target: id });
       // Log new following activity
-      await logFollowingActivity(authId, id);
+      await logFollowingActivity(authUser._id, id);
       res.status(StatusCodes.CREATED).json({ success: true, data: follow });
     }
   } catch (err) {
@@ -143,10 +149,10 @@ export async function getPendingConnections(
 ) {
   try {
     handleInputErrors(req);
-    const { id: authId } = req.user!;
+    const authUser = req.user!;
 
     const followRequests = await FollowRequest.find({
-      target: authId,
+      target: authUser._id,
     }).populate("user", UserProjection.essentials);
 
     res
@@ -169,11 +175,11 @@ export async function acceptConnectionRequest(
   try {
     handleInputErrors(req);
     const { id } = req.body;
-    const { id: authId } = req.user!;
+    const authUser = req.user!;
 
     const followRequest: IFollowRequest | null = await FollowRequest.findOne({
       _id: id,
-      target: authId,
+      target: authUser._id,
     });
 
     if (!followRequest) {
@@ -205,11 +211,11 @@ export async function deleteUserConnection(
     handleInputErrors(req);
 
     const { id } = req.params;
-    const { id: authId } = req.user!;
+    const authUser = req.user!;
 
     const deletedDoc = await Follow.findOneAndDelete(
       {
-        user: authId,
+        user: authUser._id,
         target: id,
       },
       {
@@ -219,7 +225,7 @@ export async function deleteUserConnection(
 
     try {
       await UserActivity.deleteOne({
-        userId: new mongoose.Types.ObjectId(authId),
+        userId: authUser._id,
         resourceId: new mongoose.Types.ObjectId(id as string),
         activityType: ActivityTypeEnum.FOLLOWING,
         resourceType: ActivityResourceTypeEnum.USER,
@@ -262,14 +268,14 @@ export async function getUserConnections(
     handleInputErrors(req);
 
     const { id, type } = req.params;
-    const { id: authId } = req.user!;
+    const authUser = req.user!;
 
     const { limit: reqLimit, page: reqPage } = req.query;
     const limit = parseInt(reqLimit as string) || 50;
     const page = parseInt(reqPage as string) || 1;
     const skip = (page - 1) * limit;
 
-    const theUserId = id || authId;
+    const theUserId = id ? new mongoose.Types.ObjectId(id) : authUser._id;
 
     const userExists = await User.findById(theUserId).lean();
     if (!userExists) {
@@ -279,8 +285,7 @@ export async function getUserConnections(
     const data = await Follow.aggregate([
       {
         $match: {
-          [type === "followers" ? "target" : "user"]:
-            new mongoose.Types.ObjectId(theUserId as string),
+          [type === "followers" ? "target" : "user"]: theUserId,
         },
       },
       {
@@ -338,8 +343,8 @@ export async function getUserConnections(
       total: data[0]?.total || 0,
       pagination: {
         totalCount: data[0]?.total || 0,
-        page: page || 1,
-        limit: limit || 50,
+        page: page,
+        limit: limit,
       },
     });
   } catch (err) {

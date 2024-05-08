@@ -45,7 +45,7 @@ export async function getUsers(
   try {
     handleInputErrors(req);
 
-    const authId = req.user?.id;
+    const authUser = req.user;
 
     const { q } = req.query;
     const page = Number(req.query.page) || 1;
@@ -85,8 +85,8 @@ export async function getUsers(
           $project: UserProjection.public,
         },
       ]);
-    } else if (authId) {
-      const followings = await Follow.find({ user: authId })
+    } else if (authUser) {
+      const followings = await Follow.find({ user: authUser._id })
         .populate({
           path: "target",
           select: UserProjection.public,
@@ -101,8 +101,8 @@ export async function getUsers(
       users = followings.map((following) => following.target);
     }
 
-    if (users.length === 0 && authId) {
-      const followers = await Follow.find({ target: authId })
+    if (users.length === 0 && authUser) {
+      const followers = await Follow.find({ target: authUser._id })
         .populate({
           path: "user",
           select: UserProjection.public,
@@ -302,7 +302,7 @@ export async function getLeaderBoard(
   try {
     handleInputErrors(req);
 
-    const { id: authId } = req.user!;
+    const authUser = req.user!;
 
     const page = Number(req.query.page) || 1;
     const limit = Number(req.query.limit) || 10;
@@ -340,7 +340,7 @@ export async function getLeaderBoard(
 
     leaderboard.forEach((user) => {
       const userId = user._id.toString();
-      if (!usersObject[userId] && userId !== authId) {
+      if (!usersObject[userId] && !authUser._id.equals(userId)) {
         usersObject[userId] = {
           followedByUser: false,
           followsUser: false,
@@ -351,11 +351,11 @@ export async function getLeaderBoard(
     const followItems = await Follow.find({
       $or: [
         {
-          user: authId,
+          user: authUser._id,
           target: Object.keys(usersObject),
         },
         {
-          target: authId,
+          target: authUser._id,
           user: Object.keys(usersObject),
         },
       ],
@@ -368,7 +368,7 @@ export async function getLeaderBoard(
 
     followItems.forEach((f) => {
       const userId = f.user.toString();
-      if (userId === authId) {
+      if (authUser._id.equals(userId)) {
         usersObject[f.target.toString()].followedByUser = true;
       } else {
         usersObject[userId].followsUser = true;
@@ -420,7 +420,7 @@ export async function getUser(req: Request, res: Response, next: NextFunction) {
   try {
     handleInputErrors(req);
 
-    const authId = req.user?.id;
+    const authUser = req.user;
     let { id } = req.params;
     const { idType } = req.query;
     const view = req.query.view || "contextual";
@@ -465,7 +465,7 @@ export async function getUser(req: Request, res: Response, next: NextFunction) {
       followsUser: false,
     };
 
-    if (authId && id === authId) {
+    if (authUser && authUser._id.equals(id)) {
       // own profile
 
       user = await User.findById(id, UserProjection.private)
@@ -497,18 +497,18 @@ export async function getUser(req: Request, res: Response, next: NextFunction) {
         }
       }
       user.progress.achievements = Object.values(achievements);
-    } else if (authId && view === "contextual") {
+    } else if (authUser && view === "contextual") {
       // contextual view
 
       const isBlocked = await Block.findOne({
         $or: [
-          { user: id, target: authId },
-          { user: authId, target: id },
+          { user: id, target: authUser._id },
+          { user: authUser._id, target: id },
         ],
       });
 
       if (isBlocked) {
-        if (isBlocked.user.toString() === authId) {
+        if (authUser._id.equals(isBlocked.user)) {
           throw createError(
             strings.blocks.user.isBlocked,
             StatusCodes.FORBIDDEN
@@ -552,8 +552,8 @@ export async function getUser(req: Request, res: Response, next: NextFunction) {
       user.progress.achievements = Object.values(achievements);
 
       const [followedByUser, followsUser] = await Promise.all([
-        Follow.exists({ user: authId, target: id }),
-        Follow.exists({ user: id, target: authId }),
+        Follow.exists({ user: authUser._id, target: id }),
+        Follow.exists({ user: id, target: authUser._id }),
       ]);
 
       connectionStatus.followedByUser = !!followedByUser;
@@ -657,15 +657,23 @@ export async function editUser(
   try {
     handleInputErrors(req);
     const { id } = req.params;
+    const authUser = req.user!;
 
-    if (id !== req.user!.id && req.user!.role !== "admin") {
+    if (!authUser._id.equals(id) && authUser.role !== "admin") {
       throw createError(
         strings.authorization.accessDenied,
         StatusCodes.FORBIDDEN
       );
     }
 
-    const user = await User.findById(id);
+    const user: IUser | null = await User.findById(id);
+
+    if (!user) {
+      throw createError(
+        dynamicMessage(ds.notFound, "User"),
+        StatusCodes.NOT_FOUND
+      );
+    }
 
     const { name, bio, username, removeProfileImage, eula, referrer } =
       req.body;
@@ -677,7 +685,7 @@ export async function editUser(
           StatusCodes.BAD_REQUEST
         );
       }
-      if (user.referrer) {
+      if (user.referredBy) {
         throw createError("Referrer already set", StatusCodes.BAD_REQUEST);
       }
       if (!eula) {
@@ -776,15 +784,21 @@ export async function deleteUser(
   try {
     handleInputErrors(req);
     const { id } = req.params;
+    const authUser = req.user!;
 
-    if (id !== req.user!.id && req.user!.role !== "admin") {
+    if (!authUser._id.equals(id) && authUser.role !== "admin") {
       throw createError(
         strings.authorization.accessDenied,
         StatusCodes.FORBIDDEN
       );
     }
-    const user = await User.findById(id);
-    if (!user) throw createError(strings.user.notFound, StatusCodes.NOT_FOUND);
+    const user: IUser | null = await User.findById(id);
+    if (!user) {
+      throw createError(
+        dynamicMessage(ds.notFound, "User"),
+        StatusCodes.NOT_FOUND
+      );
+    }
 
     await user.deleteOne();
 
@@ -808,9 +822,9 @@ export async function putUserPrivacy(
 
     const { id } = req.params;
     const { isPrivate } = req.body;
-    const { id: authId, role: authRole } = req.user!;
+    const authUser = req.user!;
 
-    if (id !== authId && authRole !== "admin") {
+    if (!authUser._id.equals(id) && authUser.role !== "admin") {
       throw createError("UNAUTHORIZED", StatusCodes.FORBIDDEN);
     }
 
@@ -825,7 +839,7 @@ export async function putUserPrivacy(
 
     if (user.isPrivate && !isPrivate) {
       const followReqs: IFollowRequest[] = await FollowRequest.find({
-        target: authId,
+        target: authUser._id,
       });
 
       for (const followReq of followReqs) {
@@ -868,9 +882,9 @@ export async function putUserSettings(
     handleInputErrors(req);
 
     const { id } = req.params;
-    const { id: authId, role: authRole } = req.user!;
+    const authUser = req.user!;
 
-    if (id !== authId && authRole !== "admin") {
+    if (!authUser._id.equals(id) && authUser.role !== "admin") {
       throw createError(
         strings.authorization.accessDenied,
         StatusCodes.FORBIDDEN
@@ -887,10 +901,15 @@ export async function putUserSettings(
           StatusCodes.BAD_REQUEST
         );
       }
-      const user = await User.findById(id, ["devices"]);
+      const user: IUser | null = await User.findById(id, ["devices"]);
       if (!user) {
         throw createError(strings.user.notFound, StatusCodes.NOT_FOUND);
       }
+
+      if (!user.devices) {
+        user.devices = [];
+      }
+
       const found = user.devices.find(
         (device: UserDevice) =>
           device.apnToken === apnToken || device.fcmToken === fcmToken
@@ -927,8 +946,10 @@ export async function getLatestPlace(
     handleInputErrors(req);
 
     const { id } = req.params;
+    const authUser = req.user!;
+
     let user: any;
-    if (id === req.user!.id || req.user!.role === "admin") {
+    if (authUser._id.equals(id) || authUser.role === "admin") {
       user = await User.findById(id, {
         latestPlace: true,
       }).lean();
@@ -981,7 +1002,7 @@ export async function usernameAvailability(
     handleInputErrors(req);
 
     const { username } = req.params;
-    const authId = req.user?.id;
+    const authUser = req.user;
 
     if (!username) {
       throw createError(
@@ -1005,14 +1026,14 @@ export async function usernameAvailability(
     }
 
     let user;
-    if (authId) {
+    if (authUser) {
       user = await User.findOne({
         username: {
           $regex: `^${username}$`,
           $options: "i",
         },
         _id: {
-          $ne: authId,
+          $ne: authUser._id,
         },
       });
     } else {

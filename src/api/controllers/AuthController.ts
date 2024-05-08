@@ -5,7 +5,7 @@ import { StatusCodes } from "http-status-codes";
 import jwt from "jsonwebtoken";
 
 import { config } from "../../config";
-import User, { SignupMethodEnum } from "../../models/User";
+import User, { SignupMethodEnum, type IUser } from "../../models/User";
 import strings from "../../strings";
 import { createError, handleInputErrors } from "../../utilities/errorHandlers";
 import { handleSignUp } from "../lib/profile-handlers";
@@ -21,7 +21,7 @@ export const signinValidation: ValidationChain[] = [
   validate.password(body("password")),
 ];
 
-function generateJwtToken(user: { _id: string; role: string }) {
+function generateJwtToken(user: IUser) {
   return jwt.sign({ userId: user._id, role: user.role }, config.JWT_SECRET, {
     expiresIn: "30d",
   });
@@ -41,7 +41,7 @@ export async function authPost(
     const { email, password, action } = req.body;
 
     if (action === "signin") {
-      const user = await User.findOne({
+      const user: IUser | null = await User.findOne({
         "email.address": { $regex: new RegExp(email, "i") },
       });
       if (!user) {
@@ -112,7 +112,7 @@ export async function firebaseSync(
       // Proceed with handling the request
       const userData = req.body;
 
-      const user = await User.findOne({
+      const user: IUser | null = await User.findOne({
         uid: userData.uid,
         "email.address": userData.email,
       });

@@ -4,11 +4,11 @@ import { StatusCodes } from "http-status-codes";
 import mongoose from "mongoose";
 
 import Comment, { type IComment } from "../../models/Comment";
-import User from "../../models/User";
+import User, { type IUser } from "../../models/User";
 import UserActivity from "../../models/UserActivity";
 import strings, { dStrings as ds, dynamicMessage } from "../../strings";
 import { createError, handleInputErrors } from "../../utilities/errorHandlers";
-import UserProjection from "../dto/user/user";
+import UserProjection, { type UserEssentialsKeys } from "../dto/user/user";
 import { addReward } from "../services/reward/reward.service";
 
 export const createCommentValidation: ValidationChain[] = [
@@ -24,9 +24,12 @@ export async function createComment(
     handleInputErrors(req);
 
     const { content, activity } = req.body;
-    const { id: authId } = req.user!;
+    const authUser = req.user!;
 
-    const user = await User.findById(authId, UserProjection.essentials);
+    const user: Pick<IUser, UserEssentialsKeys> | null = await User.findById(
+      authUser._id,
+      UserProjection.essentials
+    ).lean();
 
     if (!user) {
       throw createError(
@@ -47,7 +50,7 @@ export async function createComment(
     const body: {
       [key: string]: any;
     } = {
-      author: authId,
+      author: authUser._id,
       userActivity: activity,
       content,
     };
@@ -57,7 +60,7 @@ export async function createComment(
 
     if (mentions) {
       const toAdd: {
-        user: string;
+        user: mongoose.Types.ObjectId;
         username: string;
       }[] = [];
 
@@ -66,7 +69,7 @@ export async function createComment(
           continue;
         }
 
-        const user = await User.findOne(
+        const user: Pick<IUser, "_id" | "username"> | null = await User.findOne(
           {
             username: new RegExp(`^${mention.slice(1)}$`, "i"),
           },
@@ -125,7 +128,7 @@ export async function likeComment(
   try {
     handleInputErrors(req);
 
-    const { id: authId } = req.user!;
+    const authUser = req.user!;
     const { id } = req.params;
 
     const comment: IComment | null = await Comment.findById(id);
@@ -136,11 +139,13 @@ export async function likeComment(
       );
     }
 
-    if (comment.likes.find((l: any) => l.toString() === authId)) {
+    if (
+      comment.likes.find((l: mongoose.Types.ObjectId) => authUser._id.equals(l))
+    ) {
       throw createError(strings.comments.alreadyLiked, StatusCodes.CONFLICT);
     }
 
-    comment.likes.push(new mongoose.Types.ObjectId(authId));
+    comment.likes.push(authUser._id);
     await comment.save();
 
     await comment.populate({
@@ -177,7 +182,7 @@ export async function deleteCommentLike(
   try {
     handleInputErrors(req);
 
-    const { id: authId } = req.user!;
+    const authUser = req.user!;
     const { id } = req.params;
 
     const comment: IComment | null = await Comment.findById(id);
@@ -188,11 +193,17 @@ export async function deleteCommentLike(
       );
     }
 
-    if (!comment.likes.find((l: any) => l.toString() === authId)) {
+    if (
+      !comment.likes.find((l: mongoose.Types.ObjectId) =>
+        authUser._id.equals(l)
+      )
+    ) {
       throw createError(strings.comments.notLiked, StatusCodes.BAD_REQUEST);
     }
 
-    comment.likes = comment.likes.filter((l: any) => l.toString() !== authId);
+    comment.likes = comment.likes.filter(
+      (l: mongoose.Types.ObjectId) => !authUser._id.equals(l)
+    );
     await comment.save();
 
     await comment.populate({

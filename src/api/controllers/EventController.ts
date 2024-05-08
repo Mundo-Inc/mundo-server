@@ -66,7 +66,7 @@ export async function createEvent(
   try {
     handleInputErrors(req);
 
-    const { id: authId } = req.user!;
+    const authUser = req.user!;
 
     const { name, description, logo, place } = req.body;
 
@@ -117,7 +117,7 @@ export async function createEvent(
       description,
       logo,
       place: eventPlace._id,
-      createdBy: authId,
+      createdBy: authUser._id,
     });
 
     const eventObj = event.toObject();

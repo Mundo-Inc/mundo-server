@@ -197,7 +197,7 @@ export async function getNotifications(
   try {
     handleInputErrors(req);
 
-    const { id: authId } = req.user!;
+    const authUser = req.user!;
 
     const { unread } = req.query;
     const limit = parseInt(req.query.limit as string) || 10;
@@ -208,7 +208,7 @@ export async function getNotifications(
     const matchPipeline: any[] = [
       {
         $match: {
-          user: new mongoose.Types.ObjectId(authId),
+          user: authUser._id,
         },
       },
     ];
@@ -324,12 +324,12 @@ export async function readNotifications(
   try {
     handleInputErrors(req);
 
-    const { id: authId } = req.user!;
+    const authUser = req.user!;
     const { date } = req.body;
 
     await Notification.updateMany(
       {
-        user: authId,
+        user: authUser._id,
         readAt: null,
         createdAt: {
           $lte: new Date(date),

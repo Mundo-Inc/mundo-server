@@ -111,7 +111,7 @@ const saveRewardAndUpdateUser = async (
 };
 
 export const addReward = async (
-  userId: string,
+  userId: mongoose.Types.ObjectId,
   reason: {
     refType: string;
     refId: mongoose.Types.ObjectId | undefined;
@@ -120,8 +120,9 @@ export const addReward = async (
   }
 ) => {
   try {
-    const user = await User.findById(userId);
-    if (!reason.refId) return;
+    const user: IUser | null = await User.findById(userId);
+
+    if (!reason.refId || !user) return;
 
     const validatedEntity = await getValidatedEntity(
       reason.refType,
@@ -161,11 +162,14 @@ export const addReward = async (
 };
 
 export const checkForCustomAchivements = async (
-  userId: string,
+  userId: mongoose.Types.ObjectId,
   activityType: string
 ) => {
   try {
-    const user = await User.findById(userId);
+    const user: IUser | null = await User.findById(userId);
+
+    if (!user) return;
+
     let newAchivements = [];
     switch (activityType) {
       case "Review":

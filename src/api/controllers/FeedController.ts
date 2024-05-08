@@ -30,13 +30,13 @@ export async function getFeed(req: Request, res: Response, next: NextFunction) {
   try {
     handleInputErrors(req);
 
-    const { id: authId } = req.user!;
+    const authUser = req.user!;
 
     const page = Number(req.query.page) || 1;
     const limit = Number(req.query.limit) || 30;
     const isForYou = Boolean(req.query.isForYou) || false;
 
-    const result = await getUserFeed(authId, isForYou, page, limit);
+    const result = await getUserFeed(authUser._id, isForYou, page, limit);
 
     // Get follow status for each user
     const usersObject: {
@@ -48,7 +48,7 @@ export async function getFeed(req: Request, res: Response, next: NextFunction) {
 
     result.forEach((activity) => {
       const userId = activity.user._id.toString();
-      if (!usersObject[userId] && userId !== authId) {
+      if (!usersObject[userId] && !authUser._id.equals(userId)) {
         usersObject[userId] = {
           followedByUser: false,
           followsUser: false,
@@ -57,7 +57,7 @@ export async function getFeed(req: Request, res: Response, next: NextFunction) {
 
       if (activity.resourceType === "User") {
         const resourceId = activity.resource._id.toString();
-        if (!usersObject[resourceId] && resourceId !== authId) {
+        if (!usersObject[resourceId] && !authUser._id.equals(resourceId)) {
           usersObject[resourceId] = {
             followedByUser: false,
             followsUser: false,
@@ -69,11 +69,11 @@ export async function getFeed(req: Request, res: Response, next: NextFunction) {
     const followItems = await Follow.find({
       $or: [
         {
-          user: authId,
+          user: authUser._id,
           target: Object.keys(usersObject),
         },
         {
-          target: authId,
+          target: authUser._id,
           user: Object.keys(usersObject),
         },
       ],
@@ -86,7 +86,7 @@ export async function getFeed(req: Request, res: Response, next: NextFunction) {
 
     followItems.forEach((f) => {
       const userId = f.user.toString();
-      if (userId === authId) {
+      if (authUser._id.equals(userId)) {
         usersObject[f.target.toString()].followedByUser = true;
       } else {
         usersObject[userId].followsUser = true;
@@ -120,7 +120,7 @@ export async function getActivity(
   try {
     handleInputErrors(req);
 
-    const { id: authId } = req.user!;
+    const authUser = req.user!;
     const { id } = req.params;
 
     // const followings: IFollow[] = await Follow.find(
@@ -162,19 +162,13 @@ export async function getActivity(
 
     const [reactions, comments, commentsCount, followedByUser, followsUser] =
       await Promise.all([
-        getReactionsOfActivity(
-          activity._id,
-          new mongoose.Types.ObjectId(authId)
-        ),
-        getCommentsOfActivity(
-          activity._id,
-          new mongoose.Types.ObjectId(authId)
-        ),
+        getReactionsOfActivity(activity._id, authUser._id),
+        getCommentsOfActivity(activity._id, authUser._id),
         Comment.countDocuments({
           userActivity: activity._id,
         }),
-        Follow.exists({ user: authId, target: id }),
-        Follow.exists({ user: id, target: authId }),
+        Follow.exists({ user: authUser._id, target: id }),
+        Follow.exists({ user: id, target: authUser._id }),
       ]);
 
     userInfo.connectionStatus = {
@@ -215,20 +209,20 @@ export async function activitySeen(
   try {
     handleInputErrors(req);
 
-    const { id: authId } = req.user!;
+    const authUser = req.user!;
     const { id } = req.params;
 
     const activity = await UserActivity.findById(id);
     const seen = await ActivitySeen.findOne({
       subjectId: activity.userId,
-      observerId: authId,
+      observerId: authUser._id,
       activityId: id,
     });
     const weight = seen ? seen.weight + 1 : 1;
     await ActivitySeen.updateOne(
       {
         subjectId: activity.userId,
-        observerId: authId,
+        observerId: authUser._id,
         activityId: id,
       },
       {
@@ -256,14 +250,14 @@ export async function getComments(
   try {
     handleInputErrors(req);
 
-    const { id: authId } = req.user!;
+    const authUser = req.user!;
     const { id } = req.params;
     const page = Number(req.query.page) || 1;
     const limit = Number(req.query.limit) || 20;
 
-    const blockedUsers = (await Block.find({ target: authId }, "user")).map(
-      (block) => block.user
-    );
+    const blockedUsers = (
+      await Block.find({ target: authUser._id }, "user")
+    ).map((block) => block.user);
 
     const result = await Comment.aggregate([
       {
@@ -309,7 +303,7 @@ export async function getComments(
                 author: { $arrayElemAt: ["$author", 0] },
                 likes: { $size: "$likes" },
                 liked: {
-                  $in: [new mongoose.Types.ObjectId(authId), "$likes"],
+                  $in: [authUser._id, "$likes"],
                 },
               },
             },

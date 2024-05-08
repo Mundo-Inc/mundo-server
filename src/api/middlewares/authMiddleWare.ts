@@ -5,6 +5,8 @@ import jwt from "jsonwebtoken";
 
 import { config } from "../../config";
 import User, { type IUser } from "../../models/User";
+import UserProjection, { type UserPrivateKeys } from "../dto/user/user";
+import { createError } from "../../utilities/errorHandlers";
 
 interface DecodedUser {
   userId: string;
@@ -13,61 +15,67 @@ interface DecodedUser {
   exp: number;
 }
 
+async function verifyAndFetchUser(req: Request) {
+  const token = req.headers.authorization || req.cookies.token;
+
+  if (!token) {
+    throw createError("Token is required", StatusCodes.BAD_REQUEST);
+  }
+
+  let user: Pick<IUser, UserPrivateKeys> | null = null;
+
+  try {
+    const decoded = jwt.decode(token, { complete: true });
+
+    if (
+      decoded?.payload &&
+      typeof decoded?.payload == "object" &&
+      decoded?.payload.iss &&
+      decoded?.payload.iss.includes("securetoken.google.com")
+    ) {
+      const firebaseUser = await getAuth().verifyIdToken(token);
+
+      user = await User.findOne(
+        {
+          uid: firebaseUser.uid,
+        },
+        UserProjection.private
+      ).lean();
+    } else {
+      const oldTokenPayload = jwt.verify(
+        token,
+        config.JWT_SECRET
+      ) as DecodedUser;
+
+      user = await User.findOne(
+        {
+          uid: oldTokenPayload.userId,
+        },
+        UserProjection.private
+      ).lean();
+    }
+  } catch (err) {
+    throw createError("Invalid or expired token", StatusCodes.UNAUTHORIZED);
+  }
+
+  if (!user) {
+    throw createError("User not found", StatusCodes.NOT_FOUND);
+  }
+
+  return user;
+}
+
 export async function authMiddleware(
   req: Request,
   res: Response,
   next: NextFunction
 ) {
-  const token = req.header("Authorization") || req.cookies?.token;
-
-  if (!token) {
-    return res.status(StatusCodes.UNAUTHORIZED).json({
-      success: false,
-      error: {
-        message: "No authentication token provided.",
-      },
-    });
-  }
-
   try {
-    const decoded = jwt.decode(token, { complete: true });
-    const payload = decoded?.payload;
-    if (payload && typeof payload == "object") {
-      if (payload.iss && payload.iss.includes("securetoken.google.com")) {
-        const firebaseUser = await getAuth().verifyIdToken(token);
-        const uid = firebaseUser.uid;
-        const user: IUser | null = await User.findOne({ uid: uid }).lean();
-        if (!user) {
-          return res.status(StatusCodes.NOT_FOUND).json({
-            success: false,
-            error: {
-              message: "User not found",
-            },
-          });
-        }
-        req.user = {
-          id: user._id.toString(),
-          role: user.role as "user" | "admin",
-        };
-      } else if (payload.userId) {
-        const oldTokenPayload = jwt.verify(
-          token,
-          config.JWT_SECRET
-        ) as DecodedUser;
-        req.user = {
-          id: oldTokenPayload.userId.toString(),
-          role: oldTokenPayload.role as "user" | "admin",
-        };
-      }
-    }
+    req.user = await verifyAndFetchUser(req);
+
     next();
   } catch (err) {
-    return res.status(StatusCodes.UNAUTHORIZED).json({
-      success: false,
-      error: {
-        message: "Invalid or expired authentication token.",
-      },
-    });
+    next(err);
   }
 }
 
@@ -76,39 +84,11 @@ export async function optionalAuthMiddleware(
   res: Response,
   next: NextFunction
 ) {
-  const token = req.header("Authorization") || req.cookies?.token;
-
-  if (!token) {
-    return next();
-  }
-
   try {
-    const decoded = jwt.decode(token, { complete: true });
-    const payload = decoded?.payload;
-    if (payload && typeof payload == "object") {
-      if (payload.iss && payload.iss.includes("securetoken.google.com")) {
-        const firebaseUser = await getAuth().verifyIdToken(token);
-        const uid = firebaseUser.uid;
-        const user: IUser | null = await User.findOne({ uid: uid }).lean();
-        if (user) {
-          req.user = {
-            id: user._id.toString(),
-            role: user.role as "user" | "admin",
-          };
-        }
-      } else if (payload.userId) {
-        const oldTokenPayload = jwt.verify(
-          token,
-          config.JWT_SECRET
-        ) as DecodedUser;
-        req.user = {
-          id: oldTokenPayload.userId.toString(),
-          role: oldTokenPayload.role as "user" | "admin",
-        };
-      }
-    }
+    req.user = await verifyAndFetchUser(req);
+
     next();
-  } catch (err) {
+  } catch {
     next();
   }
 }
@@ -118,77 +98,25 @@ export async function adminAuthMiddleware(
   res: Response,
   next: NextFunction
 ) {
-  const token = req.header("Authorization") || req.cookies?.token;
-
-  if (!token) {
-    return res.status(StatusCodes.UNAUTHORIZED).json({
-      success: false,
-      error: {
-        message: "No authentication token provided.",
-      },
-    });
-  }
-
   try {
-    const decoded = jwt.decode(token, { complete: true });
-    const payload = decoded?.payload;
-    if (payload && typeof payload == "object") {
-      if (payload.iss && payload.iss.includes("securetoken.google.com")) {
-        const firebaseUser = await getAuth().verifyIdToken(token);
-        const uid = firebaseUser.uid;
-        const user: IUser | null = await User.findOne({ uid: uid }).lean();
-        if (!user || user.role !== "admin") {
-          return res.status(StatusCodes.FORBIDDEN).json({
-            success: false,
-            error: {
-              message: "Admins only.",
-            },
-          });
-        }
-        req.user = {
-          id: user._id.toString(),
-          role: user.role as "user" | "admin",
-        };
-      } else if (payload.userId) {
-        const oldTokenPayload = jwt.verify(
-          token,
-          config.JWT_SECRET
-        ) as DecodedUser;
-        const user: IUser | null = await User.findById(
-          oldTokenPayload.userId
-        ).lean();
-        if (!user || user.role !== "admin") {
-          return res.status(StatusCodes.FORBIDDEN).json({
-            success: false,
-            error: {
-              message: "Admins only.",
-            },
-          });
-        }
-        req.user = {
-          id: oldTokenPayload.userId.toString(),
-          role: oldTokenPayload.role as "user" | "admin",
-        };
-      }
+    const user = await verifyAndFetchUser(req);
+
+    if (user.role !== "admin") {
+      throw createError("Insufficient Privileges", StatusCodes.UNAUTHORIZED);
     }
+
+    req.user = user;
+
     next();
   } catch (err) {
-    return res.status(StatusCodes.UNAUTHORIZED).json({
-      success: false,
-      error: {
-        message: "Invalid or expired authentication token.",
-      },
-    });
+    next(err);
   }
 }
 
 declare global {
   namespace Express {
     interface Request {
-      user?: {
-        id: string;
-        role: "user" | "admin";
-      };
+      user?: Pick<IUser, UserPrivateKeys>;
     }
   }
 }
