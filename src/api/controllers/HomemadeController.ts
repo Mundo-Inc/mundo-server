@@ -4,7 +4,7 @@ import { StatusCodes } from "http-status-codes";
 import mongoose from "mongoose";
 
 import Follow from "../../models/Follow";
-import Homemade, { IHomemade } from "../../models/Homemade";
+import Homemade from "../../models/Homemade";
 import Media, { MediaTypeEnum } from "../../models/Media";
 import Notification, {
   NotificationTypeEnum,
@@ -12,13 +12,13 @@ import Notification, {
 } from "../../models/Notification";
 import Upload from "../../models/Upload";
 import User from "../../models/User";
-import { ActivityPrivacyTypeEnum } from "../../models/UserActivity";
+import { ResourcePrivacyEnum } from "../../models/UserActivity";
 import strings, { dStrings as ds, dynamicMessage } from "../../strings";
 import { createError, handleInputErrors } from "../../utilities/errorHandlers";
-import UserProjection from "../dto/user/user";
+import UserProjection from "../dto/user";
+import { UserActivityManager } from "../services/UserActivityManager";
 import logger from "../services/logger";
 import { addReward } from "../services/reward/reward.service";
-import { addHomemadeActivity } from "../services/user.activity.service";
 import validate from "./validators";
 
 export const getHomemadePostsValidation: ValidationChain[] = [
@@ -37,13 +37,11 @@ export async function getHomemadePosts(
 
     const authUser = req.user!;
 
-    const {
-      user,
-      sort,
-    }: {
-      user?: string;
-      sort?: "newest" | "oldest";
-    } = req.query;
+    const { sort }: { sort?: "newest" | "oldest" } = req.query;
+
+    const user = req.query.user
+      ? new mongoose.Types.ObjectId(req.query.user as string)
+      : null;
     const page = Number(req.query.page) || 1;
     const limit = Number(req.query.limit) || 10;
     const skip = (page - 1) * limit;
@@ -52,9 +50,10 @@ export async function getHomemadePosts(
 
     if (user) {
       pipeline.push({
-        $match: { user: new mongoose.Types.ObjectId(user as string) },
+        $match: { user: user },
       });
     }
+
     pipeline.push(
       { $sort: { createdAt: sort === "oldest" ? 1 : -1 } },
       { $skip: skip },
@@ -188,7 +187,7 @@ export const createHomemadeValidationPost: ValidationChain[] = [
   body("tags.*").optional().isMongoId(),
   body("privacyType")
     .optional()
-    .isIn([ActivityPrivacyTypeEnum.PUBLIC, ActivityPrivacyTypeEnum.FOLLOWING]),
+    .isIn([ResourcePrivacyEnum.PRIVATE, ResourcePrivacyEnum.FOLLOWERS]),
 ];
 export async function createHomemadePost(
   req: Request,
@@ -200,7 +199,13 @@ export async function createHomemadePost(
 
     const authUser = req.user!;
 
-    const { content, media, tags, privacyType } = req.body;
+    const { content, media, tags } = req.body;
+
+    const privacyType = req.body.privacyType
+      ? (req.body.privacyType as
+          | ResourcePrivacyEnum.PUBLIC
+          | ResourcePrivacyEnum.FOLLOWERS)
+      : ResourcePrivacyEnum.PUBLIC;
 
     const userId = req.body.user
       ? new mongoose.Types.ObjectId(req.body.user as string)
@@ -210,17 +215,16 @@ export async function createHomemadePost(
       throw createError(strings.authorization.otherUser, StatusCodes.FORBIDDEN);
     }
 
-    const uploadIds: string[] = [];
-    const mediaIds: string[] = [];
+    const uploadIds: mongoose.Types.ObjectId[] = [];
+    const mediaIds: mongoose.Types.ObjectId[] = [];
 
     for (const m of media) {
-      const upload = await Upload.findById(m.uploadId);
-      if (!upload) {
-        throw createError(
+      const upload = await Upload.findById(m.uploadId).orFail(
+        createError(
           dynamicMessage(ds.notFound, "Uploaded media"),
           StatusCodes.NOT_FOUND
-        );
-      }
+        )
+      );
       if (!authUser._id.equals(upload.user)) {
         throw createError(
           strings.authorization.otherUser,
@@ -248,16 +252,12 @@ export async function createHomemadePost(
       );
     }
 
-    logger.verbose("validate tags");
     if (tags) {
+      logger.verbose("validate tags");
       for (const userId of tags) {
-        const taggedUser = await User.exists({ _id: userId });
-        if (!taggedUser) {
-          throw createError(
-            "Tagged user does not exist",
-            StatusCodes.NOT_FOUND
-          );
-        }
+        await User.exists({ _id: userId }).orFail(
+          createError("Tagged user does not exist", StatusCodes.NOT_FOUND)
+        );
       }
     }
 
@@ -266,7 +266,7 @@ export async function createHomemadePost(
       content: content || "",
       media: mediaIds,
       tags,
-      privacyType: privacyType || ActivityPrivacyTypeEnum.PUBLIC,
+      privacyType: privacyType,
     });
 
     const reward = await addReward(authUser._id, {
@@ -308,11 +308,13 @@ export async function createHomemadePost(
     try {
       //TODO: ADD COIN REWARDS TO THE USERS IF APPROVED BY NABZ
       // await reviewEarning(authId, review);
-      let _act = await addHomemadeActivity(authUser._id, homemade._id);
-      if (_act) {
-        homemade.userActivityId = _act._id;
-        await homemade.save();
-      }
+      // const _act = await addHomemadeActivity(authUser._id, homemade._id);
+      const activity = await UserActivityManager.createHomemadeActivity(
+        authUser,
+        homemade._id
+      );
+      homemade.userActivityId = activity._id;
+      await homemade.save();
     } catch (e) {
       logger.error("Internal server error during creating the review", {
         error: e,
@@ -334,13 +336,14 @@ export async function getHomemadePost(
   try {
     handleInputErrors(req);
 
-    const { id } = req.params;
     const authUser = req.user!;
 
-    const homemades = await Homemade.aggregate([
+    const id = new mongoose.Types.ObjectId(req.params.id);
+
+    const post = await Homemade.aggregate([
       {
         $match: {
-          _id: new mongoose.Types.ObjectId(id as string),
+          _id: id,
         },
       },
       {
@@ -453,16 +456,16 @@ export async function getHomemadePost(
           },
         },
       },
-    ]);
+    ]).then((res) => res[0]);
 
-    if (homemades.length === 0) {
+    if (!post) {
       throw createError(
         dynamicMessage(ds.notFound, "Post"),
         StatusCodes.NOT_FOUND
       );
     }
 
-    res.status(StatusCodes.OK).json({ success: true, data: homemades[0] });
+    res.status(StatusCodes.OK).json({ success: true, data: post });
   } catch (err) {
     next(err);
   }
@@ -479,17 +482,13 @@ export async function removeHomemadePost(
   try {
     handleInputErrors(req);
 
-    const { id } = req.params;
     const authUser = req.user!;
 
-    const homemade: IHomemade | null = await Homemade.findById(id);
+    const id = new mongoose.Types.ObjectId(req.params.id);
 
-    if (!homemade) {
-      throw createError(
-        dynamicMessage(ds.notFound, "Post"),
-        StatusCodes.NOT_FOUND
-      );
-    }
+    const homemade = await Homemade.findById(id).orFail(
+      createError(dynamicMessage(ds.notFound, "Post"), StatusCodes.NOT_FOUND)
+    );
 
     if (!authUser._id.equals(homemade.user)) {
       throw createError(strings.authorization.otherUser, StatusCodes.FORBIDDEN);

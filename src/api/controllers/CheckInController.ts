@@ -1,10 +1,10 @@
 import type { NextFunction, Request, Response } from "express";
 import { body, param, query, type ValidationChain } from "express-validator";
 import { StatusCodes } from "http-status-codes";
-import mongoose from "mongoose";
+import mongoose, { type Document } from "mongoose";
 
 import CheckIn, { type ICheckIn } from "../../models/CheckIn";
-import Event, { type IEvent } from "../../models/Event";
+import Event from "../../models/Event";
 import Follow from "../../models/Follow";
 import Media, { MediaTypeEnum } from "../../models/Media";
 import Notification, {
@@ -14,16 +14,15 @@ import Notification, {
 import Place from "../../models/Place";
 import Upload from "../../models/Upload";
 import User, { type IUser } from "../../models/User";
-import { ActivityPrivacyTypeEnum } from "../../models/UserActivity";
+import { ResourcePrivacyEnum } from "../../models/UserActivity";
 import strings, { dStrings, dynamicMessage } from "../../strings";
 import { createError, handleInputErrors } from "../../utilities/errorHandlers";
-import { readFormattedPlaceLocationProjection } from "../dto/place/place-dto";
-import { readPlaceBriefProjection } from "../dto/place/read-place-brief.dto";
-import UserProjection from "../dto/user/user";
+import PlaceProjection from "../dto/place";
+import UserProjection from "../dto/user";
+import { UserActivityManager } from "../services/UserActivityManager";
 import { checkinEarning } from "../services/earning.service";
 import logger from "../services/logger";
 import { addReward } from "../services/reward/reward.service";
-import { addCheckInActivity } from "../services/user.activity.service";
 import validate from "./validators";
 
 const checkInWaitTime = 1; // minutes
@@ -54,7 +53,16 @@ export async function getCheckIns(
 
     const authUser = req.user!;
 
-    const { user, place, event, page: reqPage, limit: reqLimit } = req.query;
+    const user = req.query.user
+      ? new mongoose.Types.ObjectId(req.query.user as string)
+      : null;
+    const place = req.query.place
+      ? new mongoose.Types.ObjectId(req.query.place as string)
+      : null;
+    const event = req.query.event
+      ? new mongoose.Types.ObjectId(req.query.event as string)
+      : null;
+    const { page: reqPage, limit: reqLimit } = req.query;
     const page = parseInt(reqPage as string) || 1;
     const limit = parseInt(reqLimit as string) || 500;
     const skip = (page - 1) * limit;
@@ -99,42 +107,40 @@ export async function getCheckIns(
     ];
     if (user) {
       //PRIVACY
-      const userObject: IUser | null = await User.findById(user);
-      if (userObject) {
-        const isFollowed = await Follow.countDocuments({
+      const userObject = await User.findById(user).orFail(
+        createError(
+          dynamicMessage(dStrings.notFound, "User"),
+          StatusCodes.NOT_FOUND
+        )
+      );
+
+      if (userObject.isPrivate) {
+        await Follow.exists({
           user: authUser._id,
           target: userObject._id,
-        });
-        if (!isFollowed && userObject.isPrivate) {
-          throw createError(
-            strings.authorization.accessDenied,
-            StatusCodes.UNAUTHORIZED
-          );
-        }
+        }).orFail(
+          createError(
+            "You are not allowed to view this user's check-ins",
+            StatusCodes.FORBIDDEN
+          )
+        );
       }
+
       matchPipeline.push({
-        $match: { user: new mongoose.Types.ObjectId(user as string) },
+        $match: { user: user },
       });
     }
     if (place) {
       // TODO: Add privacy check here
       matchPipeline.push({
-        $match: { place: new mongoose.Types.ObjectId(place as string) },
+        $match: { place: place },
       });
     }
     if (event) {
       matchPipeline.push({
-        $match: { event: new mongoose.Types.ObjectId(event as string) },
+        $match: { event: event },
       });
     }
-
-    // if (user && user !== authId) {
-    //   matchPipeline.push({
-    //     $match: {
-    //       privacyType: ActivityPrivacyTypeEnum.PUBLIC,
-    //     },
-    //   });
-    // }
 
     const result = await CheckIn.aggregate([
       ...matchPipeline,
@@ -178,8 +184,8 @@ export async function getCheckIns(
                 pipeline: [
                   {
                     $project: {
-                      ...readPlaceBriefProjection,
-                      location: readFormattedPlaceLocationProjection,
+                      ...PlaceProjection.brief,
+                      location: PlaceProjection.locationProjection,
                     },
                   },
                 ],
@@ -245,11 +251,11 @@ export async function getCheckIns(
       },
     ]).then((result) => result[0]);
 
-    if (!user || user === authUser._id.toString()) {
+    if (!user || !user.equals(authUser._id)) {
       // anonymize user data
       result.checkins = result.checkins.map((checkin: any) => {
         if (
-          checkin.privacyType === ActivityPrivacyTypeEnum.PRIVATE &&
+          checkin.privacyType === ResourcePrivacyEnum.PRIVATE &&
           !authUser._id.equals(checkin.user._id)
         ) {
           checkin._id = Math.random()
@@ -319,38 +325,6 @@ async function addCheckInReward(
   });
 }
 
-async function processCheckInActivities(
-  user: mongoose.Types.ObjectId,
-  checkin: ICheckIn,
-  place: string,
-  privacyType?: ActivityPrivacyTypeEnum
-) {
-  try {
-    await checkinEarning(user, checkin);
-    const populatedPlace = await Place.findById(place);
-    if (!populatedPlace) {
-      throw createError(
-        dynamicMessage(dStrings.notFound, "Place"),
-        StatusCodes.NOT_FOUND
-      );
-    }
-    const hasMedia = Boolean(checkin.image);
-    const activity = await addCheckInActivity(
-      user._id,
-      checkin._id,
-      place,
-      privacyType || ActivityPrivacyTypeEnum.PUBLIC,
-      hasMedia
-    );
-    checkin.userActivityId = activity._id;
-    await checkin.save();
-    await User.updateOne({ _id: user._id }, { latestPlace: place });
-  } catch (e) {
-    logger.error(`Something happened during checkin activities: ${e}`);
-    throw e;
-  }
-}
-
 async function sendNotificiationToFollowers(
   authId: mongoose.Types.ObjectId,
   checkin: ICheckIn
@@ -392,7 +366,7 @@ export const createCheckInValidation: ValidationChain[] = [
     .if((_, { req }) => !req.body.place)
     .isMongoId()
     .withMessage("Invalid event id"),
-  body("privacyType").optional().isIn(Object.values(ActivityPrivacyTypeEnum)),
+  body("privacyType").optional().isIn(Object.values(ResourcePrivacyEnum)),
   body("caption").optional().isString(),
   body("image").optional().isMongoId(),
   body("tags").optional().isArray(),
@@ -408,55 +382,67 @@ export async function createCheckIn(
     handleInputErrors(req);
 
     const authUser = req.user!;
-    const { place, event, privacyType, caption, tags, image } = req.body;
+    const { caption, tags, image } = req.body;
+    const privacyType =
+      (req.body.privacyType as ResourcePrivacyEnum) ||
+      ResourcePrivacyEnum.PUBLIC;
+    const event = req.body.event
+      ? new mongoose.Types.ObjectId(req.body.event as string)
+      : null;
+    const place = req.body.place
+      ? new mongoose.Types.ObjectId(req.body.place as string)
+      : null;
 
-    let placeId;
+    let placeId: mongoose.Types.ObjectId;
     if (place) {
-      const placeExists = await Place.exists({ _id: place });
-      if (!placeExists) {
-        throw createError(
+      await Place.exists({ _id: place }).orFail(
+        createError(
           dynamicMessage(dStrings.notFound, "Place"),
           StatusCodes.NOT_FOUND
-        );
-      }
+        )
+      );
       placeId = place;
     } else if (event) {
-      const theEvent: IEvent | null = await Event.findById(event).lean();
-      if (!theEvent) {
-        throw createError(
-          dynamicMessage(dStrings.notFound, "Event"),
-          StatusCodes.NOT_FOUND
-        );
-      }
+      const theEvent = await Event.findById(event)
+        .orFail(
+          createError(
+            dynamicMessage(dStrings.notFound, "Event"),
+            StatusCodes.NOT_FOUND
+          )
+        )
+        .lean();
       placeId = theEvent.place;
       logger.verbose("Check-in to event");
+    } else {
+      throw createError(
+        "Either place or event is required",
+        StatusCodes.BAD_REQUEST
+      );
     }
 
     await enforceCheckInInterval(authUser._id, authUser.role);
 
-    logger.verbose("validate tags");
     if (tags) {
+      logger.verbose("validate tags");
       for (const userId of tags) {
-        const taggedUser = await User.exists({ _id: userId });
-        if (!taggedUser) {
-          throw createError(
-            "Tagged user does not exist",
+        await User.exists({ _id: userId }).orFail(
+          createError(
+            dynamicMessage(dStrings.notFound, "Tagged user"),
             StatusCodes.NOT_FOUND
-          );
-        }
+          )
+        );
       }
     }
 
     let media;
     if (image) {
       logger.verbose("validate image");
-      const upload = await Upload.findById(image);
-      if (!upload) {
-        throw createError(
+      const upload = await Upload.findById(image).orFail(
+        createError(
           dynamicMessage(dStrings.notFound, "Uploaded image"),
           StatusCodes.NOT_FOUND
-        );
-      }
+        )
+      );
       if (!authUser._id.equals(upload.user)) {
         throw createError(
           strings.authorization.otherUser,
@@ -487,28 +473,39 @@ export async function createCheckIn(
       place: placeId,
       caption: caption,
       tags: tags,
-      privacyType: privacyType || ActivityPrivacyTypeEnum.PUBLIC,
+      privacyType: privacyType || ResourcePrivacyEnum.PUBLIC,
     };
 
     if (media) checkinBody.image = media._id;
     if (event) checkinBody.event = event;
 
     const checkin = await CheckIn.create(checkinBody);
-    await checkin.save();
-    // console.log(checkin);
-
-    await processCheckInActivities(authUser._id, checkin, placeId, privacyType);
 
     const reward = await addCheckInReward(authUser._id, checkin);
 
-    const placeObject = await Place.findById(placeId);
-    placeObject.activities.checkinCount =
-      placeObject.activities.checkinCount + 1;
-    await placeObject.save();
+    await checkinEarning(authUser._id, checkin);
+
+    const hasMedia = Boolean(checkin.image);
+
+    const activity = await UserActivityManager.createCheckInActivity(
+      authUser,
+      placeId,
+      hasMedia,
+      checkin._id,
+      privacyType
+    );
+
+    checkin.userActivityId = activity._id;
+    await checkin.save();
+
+    await Place.updateOne(
+      { _id: placeId },
+      { $inc: { "activities.checkinCount": 1 } }
+    );
+
+    await User.updateOne({ _id: authUser._id }, { latestPlace: placeId });
 
     await sendNotificiationToFollowers(authUser._id, checkin);
-
-    logger.verbose("check-in successful!");
 
     res
       .status(StatusCodes.CREATED)
@@ -533,14 +530,12 @@ export async function deleteCheckIn(
 
     const { id } = req.params;
 
-    const checkin = await CheckIn.findById(id);
-
-    if (!checkin) {
-      throw createError(
+    const checkin = await CheckIn.findById(id).orFail(
+      createError(
         dynamicMessage(dStrings.notFound, "Check-in"),
         StatusCodes.NOT_FOUND
-      );
-    }
+      )
+    );
 
     if (!authUser._id.equals(checkin.user) && authUser.role !== "admin") {
       throw createError(strings.authorization.otherUser, StatusCodes.FORBIDDEN);

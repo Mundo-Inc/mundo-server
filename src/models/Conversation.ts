@@ -1,12 +1,12 @@
-import mongoose, { Schema, type Document } from "mongoose";
+import mongoose, { Schema, type Model } from "mongoose";
 
 export interface IParticipant {
-  user: mongoose.Types.ObjectId | string;
+  user: mongoose.Types.ObjectId;
   role: string;
   chat: string;
 }
-export interface IConversation extends Document {
-  _id: string; // MongoDB's unique identifier for the document
+export interface IConversation {
+  _id: string; // Twilio Conversation SID
   friendlyName: string; // A human-readable name for the conversation
   participants: IParticipant[];
   tags?: string[]; // An optional array of tags for categorization
@@ -55,5 +55,8 @@ const ConversationSchema = new Schema<IConversation>(
   }
 );
 
-export default mongoose.models.Conversation ||
+const model =
+  (mongoose.models.Conversation as Model<IConversation>) ||
   mongoose.model<IConversation>("Conversation", ConversationSchema);
+
+export default model;

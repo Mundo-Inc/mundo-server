@@ -1,13 +1,14 @@
-import mongoose, { Schema, type Document } from "mongoose";
+import mongoose, { Schema, type Model } from "mongoose";
 
-export interface IActivitySeen extends Document {
+export interface IActivitySeen {
+  _id: mongoose.Types.ObjectId;
   observerId: mongoose.Types.ObjectId; // user who seen the activity
   activityId: mongoose.Types.ObjectId; // id of activity
   seenAt: Date;
   count: Number; // occurrence of an seen by a user
 }
 
-const ActivitySeenSchema: Schema = new Schema<IActivitySeen>({
+const ActivitySeenSchema = new Schema<IActivitySeen>({
   observerId: {
     type: Schema.Types.ObjectId,
     ref: "User",
@@ -31,5 +32,8 @@ ActivitySeenSchema.index({
   count: 1,
 });
 
-export default mongoose.models.ActivitySeen ||
+const model =
+  (mongoose.models.ActivitySeen as Model<IActivitySeen>) ||
   mongoose.model<IActivitySeen>("ActivitySeen", ActivitySeenSchema);
+
+export default model;

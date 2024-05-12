@@ -1,6 +1,7 @@
-import mongoose, { Schema, type Document } from "mongoose";
+import mongoose, { Schema, type Document, type Model } from "mongoose";
 
-export interface ITransaction extends Document {
+export interface ITransaction {
+  _id: mongoose.Types.ObjectId;
   amount: Number;
   serviceFee: Number;
   totalAmount: Number;
@@ -10,7 +11,7 @@ export interface ITransaction extends Document {
   createdAt: Date;
 }
 
-const TransactionSchema: Schema = new Schema<ITransaction>({
+const TransactionSchema = new Schema<ITransaction>({
   amount: { type: Number, required: true },
   serviceFee: { type: Number, required: true },
   totalAmount: { type: Number, required: true },
@@ -24,5 +25,8 @@ const TransactionSchema: Schema = new Schema<ITransaction>({
   createdAt: { type: Date, default: Date.now },
 });
 
-export default mongoose.models.Transaction ||
+const model =
+  (mongoose.models.Transaction as Model<ITransaction>) ||
   mongoose.model<ITransaction>("Transaction", TransactionSchema);
+
+export default model;

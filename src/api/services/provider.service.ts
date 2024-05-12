@@ -97,20 +97,13 @@ export const getYelpReviews = async (yelpId: string) => {
       logger.debug("yelp result", { yelpResult });
       throw createError("Unexpected response.", yelpResult.status);
     }
-  } catch (error) {
-    console.error("Error fetching Yelp rating:", error);
+  } catch (error: any) {
+    console.error("Error fetching Yelp reviews:", error);
     throw createError(
       "Something went wrong",
       StatusCodes.INTERNAL_SERVER_ERROR
     );
   }
-};
-
-export const findTripAdvisorId = async (place: IPlace) => {
-  return "";
-};
-export const getTripAdvisorRating = async (tripAdvisorId: string) => {
-  return -1;
 };
 
 export const findFoursquareId = async (place: IPlace) => {

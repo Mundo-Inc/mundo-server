@@ -1,4 +1,4 @@
-import mongoose, { Schema, type Document } from "mongoose";
+import mongoose, { Schema, type Model } from "mongoose";
 
 import { weights } from "../config/trendFactors";
 import ScoreWeight, { type IScoreWeight } from "./ScoreWeight";
@@ -8,18 +8,15 @@ export enum ActivityTypeEnum {
   NEW_REVIEW = "NEW_REVIEW",
   NEW_HOMEMADE = "NEW_HOMEMADE",
   NEW_RECOMMEND = "NEW_RECOMMEND",
-  REACT_TO_REVIEW = "REACT_TO_REVIEW",
-  REACT_TO_PLACE = "REACT_TO_PLACE",
   ADD_PLACE = "ADD_PLACE",
-  GOT_BADGE = "GOT_BADGE",
   LEVEL_UP = "LEVEL_UP",
   FOLLOWING = "FOLLOWING",
 }
 
-export enum ActivityPrivacyTypeEnum {
+export enum ResourcePrivacyEnum {
   PUBLIC = "PUBLIC",
   PRIVATE = "PRIVATE",
-  FOLLOWING = "FOLLOWING",
+  FOLLOWERS = "FOLLOWERS",
 }
 
 export enum ActivityResourceTypeEnum {
@@ -32,30 +29,43 @@ export enum ActivityResourceTypeEnum {
   HOMEMADE = "Homemade",
 }
 
-export interface IUserActivity extends Document {
+export interface IUserActivity {
+  _id: mongoose.Types.ObjectId;
   userId: mongoose.Types.ObjectId;
   activityType: ActivityTypeEnum;
-  resourceType: ActivityResourceTypeEnum;
   resourceId: mongoose.Types.ObjectId;
+  resourceType: ActivityResourceTypeEnum;
+  resourcePrivacy: ResourcePrivacyEnum;
+  isAccountPrivate: boolean;
   placeId?: mongoose.Types.ObjectId;
   geoLocation?: {
     type: string;
     coordinates: number[];
   }; // { type: "Point", coordinates: [ longitude, latitude ] }
-  privacyType: ActivityPrivacyTypeEnum;
   newLevel?: number;
   hasMedia: boolean;
   hotnessScore: number;
-  createdAt: Date;
-  updatedAt: Date;
   engagements: {
     reactions: number;
     comments: number;
     views: number;
   };
+  createdAt: Date;
+  updatedAt: Date;
 }
 
-const UserActivitySchema: Schema = new Schema<IUserActivity>(
+interface IUserActivityMethods {
+  calculateHotnessScore(): Promise<number>;
+  updateHotnessScore(): Promise<IUserActivity>;
+}
+
+type UserActivityModel = Model<IUserActivity, {}, IUserActivityMethods>;
+
+const UserActivitySchema = new Schema<
+  IUserActivity,
+  UserActivityModel,
+  IUserActivityMethods
+>(
   {
     userId: { type: Schema.Types.ObjectId, ref: "User", required: true },
     activityType: {
@@ -73,6 +83,15 @@ const UserActivitySchema: Schema = new Schema<IUserActivity>(
       required: true,
       refPath: "resourceType",
     },
+    resourcePrivacy: {
+      type: String,
+      enum: Object.values(ResourcePrivacyEnum),
+      required: true,
+    },
+    isAccountPrivate: {
+      type: Boolean,
+      default: false,
+    },
     placeId: {
       type: Schema.Types.ObjectId,
       ref: "Place",
@@ -81,11 +100,6 @@ const UserActivitySchema: Schema = new Schema<IUserActivity>(
     geoLocation: {
       type: { type: String },
       coordinates: { type: [Number], required: false },
-    },
-    privacyType: {
-      type: String,
-      enum: Object.values(ActivityPrivacyTypeEnum),
-      required: true,
     },
     newLevel: {
       type: Number,
@@ -159,7 +173,7 @@ UserActivitySchema.methods.calculateHotnessScore = async function () {
   const newPostBoost = weights.newPostInitialBoost / hoursValue;
   let finalScore = score + newPostBoost + getFreshHoursBoost(hoursValue);
 
-  const scoreWeightEntry: IScoreWeight | null = await ScoreWeight.findOne({
+  const scoreWeightEntry = await ScoreWeight.findOne({
     userId: this.userId,
   }).lean();
   if (scoreWeightEntry) {
@@ -174,7 +188,7 @@ UserActivitySchema.methods.updateHotnessScore = async function () {
   return this.save();
 };
 
-UserActivitySchema.pre<IUserActivity>("save", async function (next) {
+UserActivitySchema.pre("save", async function (next) {
   // Check if placeId is set for this UserActivity
   if (this.placeId && (!this.geoLocation || !this.geoLocation.coordinates)) {
     try {
@@ -197,5 +211,11 @@ UserActivitySchema.pre<IUserActivity>("save", async function (next) {
 
 UserActivitySchema.index({ geoLocation: "2dsphere" });
 
-export default mongoose.models.UserActivity ||
-  mongoose.model<IUserActivity>("UserActivity", UserActivitySchema);
+const model =
+  (mongoose.models.UserActivity as UserActivityModel) ||
+  mongoose.model<IUserActivity, UserActivityModel>(
+    "UserActivity",
+    UserActivitySchema
+  );
+
+export default model;

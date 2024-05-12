@@ -1,35 +1,44 @@
-import mongoose, { Schema, type CallbackError, type Document } from "mongoose";
+import mongoose, {
+  Schema,
+  type CallbackError,
+  type Model,
+  type Types,
+} from "mongoose";
 
 import logger from "../api/services/logger";
 import Media from "./Media";
 import Place from "./Place";
-import UserActivity, { ActivityPrivacyTypeEnum } from "./UserActivity";
+import UserActivity, { ResourcePrivacyEnum } from "./UserActivity";
 
-export interface ICheckIn extends Document {
-  user: mongoose.Types.ObjectId;
-  place: mongoose.Types.ObjectId;
-  event?: mongoose.Types.ObjectId;
-  image?: mongoose.Types.ObjectId;
-  tags?: mongoose.Types.ObjectId[];
+export interface ICheckIn {
+  _id: Types.ObjectId;
+  user: Types.ObjectId;
+  place: Types.ObjectId;
+  event?: Types.ObjectId;
+  image?: Types.ObjectId;
+  tags: Types.ObjectId[];
   caption?: string;
   createdAt: Date;
-  userActivityId?: mongoose.Types.ObjectId;
-  privacyType: ActivityPrivacyTypeEnum;
+  userActivityId?: Types.ObjectId;
+  privacyType: ResourcePrivacyEnum;
 }
 
-const CheckInSchema: Schema = new Schema<ICheckIn>({
+const CheckInSchema = new Schema<ICheckIn>({
   user: { type: Schema.Types.ObjectId, ref: "User", required: true },
   place: { type: Schema.Types.ObjectId, ref: "Place", required: true },
   event: { type: Schema.Types.ObjectId, ref: "Event" },
   image: { type: Schema.Types.ObjectId, ref: "Media" },
   caption: { type: String },
-  tags: [{ type: Schema.Types.ObjectId, ref: "User" }],
+  tags: {
+    type: [{ type: Schema.Types.ObjectId, ref: "User" }],
+    default: [],
+  },
   createdAt: { type: Date, default: Date.now },
   userActivityId: { type: Schema.Types.ObjectId, ref: "UserActivity" },
   privacyType: {
     type: String,
-    enum: Object.values(ActivityPrivacyTypeEnum),
-    default: ActivityPrivacyTypeEnum.PUBLIC,
+    enum: Object.values(ResourcePrivacyEnum),
+    default: ResourcePrivacyEnum.PUBLIC,
     required: true,
   },
 });
@@ -48,7 +57,7 @@ async function removeDependencies(checkin: ICheckIn) {
   }
 }
 
-CheckInSchema.pre<ICheckIn>(
+CheckInSchema.pre(
   "deleteOne",
   { document: true, query: false },
   async function (next) {
@@ -57,10 +66,11 @@ CheckInSchema.pre<ICheckIn>(
       await removeDependencies(this);
 
       logger.verbose("decreasing checkin count of the place");
-      const placeObject = await Place.findById(this.place);
-      placeObject.activities.checkinCount =
-        placeObject.activities.checkinCount - 1;
-      await placeObject.save();
+
+      await Place.updateOne(
+        { _id: this.place },
+        { $inc: { "activities.checkinCount": -1 } }
+      );
 
       next();
     } catch (error) {
@@ -73,16 +83,22 @@ CheckInSchema.pre("deleteOne", async function (next) {
   try {
     const checkin = await this.model.findOne(this.getQuery());
     await removeDependencies(checkin);
+
     logger.verbose("decreasing checkin count of the place");
-    const placeObject = await Place.findById(checkin.place);
-    placeObject.activities.checkinCount =
-      placeObject.activities.checkinCount - 1;
-    await placeObject.save();
+
+    await Place.updateOne(
+      { _id: checkin.place },
+      { $inc: { "activities.checkinCount": -1 } }
+    );
+
     next();
   } catch (error) {
     next(error as CallbackError);
   }
 });
 
-export default mongoose.models.CheckIn ||
+const model =
+  (mongoose.models.CheckIn as Model<ICheckIn>) ||
   mongoose.model<ICheckIn>("CheckIn", CheckInSchema);
+
+export default model;

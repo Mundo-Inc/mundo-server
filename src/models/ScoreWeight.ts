@@ -1,6 +1,7 @@
-import mongoose, { Schema, type Document } from "mongoose";
+import mongoose, { Schema, type Model } from "mongoose";
 
-export interface IScoreWeight extends Document {
+export interface IScoreWeight {
+  _id: mongoose.Types.ObjectId;
   userId: mongoose.Types.ObjectId;
   value: number;
 }
@@ -18,5 +19,8 @@ const ScoreWeightSchema = new Schema<IScoreWeight>({
   },
 });
 
-export default mongoose.models.ScoreWeight ||
+const model =
+  (mongoose.models.ScoreWeight as Model<IScoreWeight>) ||
   mongoose.model<IScoreWeight>("ScoreWeight", ScoreWeightSchema);
+
+export default model;

@@ -1,11 +1,13 @@
-import mongoose, { CallbackError, Schema, type Document } from "mongoose";
-import logger from "../api/services/logger";
-import Reaction from "./Reaction";
-import Comment from "./Comment";
-import UserActivity, { ActivityPrivacyTypeEnum } from "./UserActivity";
-import Media from "./Media";
+import mongoose, { Schema, type CallbackError, type Model } from "mongoose";
 
-export interface IHomemade extends Document {
+import logger from "../api/services/logger";
+import Comment from "./Comment";
+import Media from "./Media";
+import Reaction from "./Reaction";
+import UserActivity, { ResourcePrivacyEnum } from "./UserActivity";
+
+export interface IHomemade {
+  _id: mongoose.Types.ObjectId;
   user: mongoose.Types.ObjectId;
   content: string;
   media: mongoose.Types.ObjectId[];
@@ -13,10 +15,10 @@ export interface IHomemade extends Document {
   createdAt: Date;
   updatedAt: Date;
   userActivityId?: mongoose.Types.ObjectId;
-  privacyType: ActivityPrivacyTypeEnum;
+  privacyType: ResourcePrivacyEnum;
 }
 
-const HomemadeSchema: Schema = new Schema<IHomemade>(
+const HomemadeSchema = new Schema<IHomemade>(
   {
     user: { type: Schema.Types.ObjectId, ref: "User", required: true },
     content: { type: String, default: "" },
@@ -28,8 +30,8 @@ const HomemadeSchema: Schema = new Schema<IHomemade>(
     userActivityId: { type: Schema.Types.ObjectId, ref: "UserActivity" },
     privacyType: {
       type: String,
-      enum: Object.values(ActivityPrivacyTypeEnum),
-      default: ActivityPrivacyTypeEnum.PUBLIC,
+      enum: Object.values(ResourcePrivacyEnum),
+      default: ResourcePrivacyEnum.PUBLIC,
       required: true,
     },
   },
@@ -64,7 +66,7 @@ async function removeHomemadeDependencies(homemade: IHomemade) {
 }
 
 // Middleware for homemade.deleteOne (document)
-HomemadeSchema.pre<IHomemade>(
+HomemadeSchema.pre(
   "deleteOne",
   { document: true, query: false },
   async function (next) {
@@ -99,5 +101,8 @@ HomemadeSchema.pre(
   }
 );
 
-export default mongoose.models.Homemade ||
+const model =
+  (mongoose.models.Homemade as Model<IHomemade>) ||
   mongoose.model<IHomemade>("Homemade", HomemadeSchema);
+
+export default model;

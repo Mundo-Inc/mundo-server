@@ -1,15 +1,14 @@
 import type { NextFunction, Request, Response } from "express";
 import { body, param, type ValidationChain } from "express-validator";
 
+import { StatusCodes } from "http-status-codes";
 import { createCron } from "../../cronjobs/bots";
 import Bot, { IBotTargetEnum, IBotTypeEnum } from "../../models/Bot";
-import User, {
-  type IUser,
-  SignupMethodEnum,
-  UserRoleEnum,
-} from "../../models/User";
+import User, { SignupMethodEnum, UserRoleEnum } from "../../models/User";
+import { dStrings, dynamicMessage } from "../../strings";
 import { createError, handleInputErrors } from "../../utilities/errorHandlers";
 import validate from "./validators";
+import { Types } from "mongoose";
 
 export const createBotValidation: ValidationChain[] = [
   validate.email(body("email")),
@@ -24,12 +23,12 @@ export async function createBot(
   try {
     handleInputErrors(req);
     const { name, username, email } = req.body;
-    let user: IUser | null = await User.findOne({
+    let user = await User.findOne({
       "email.address": email.toLowerCase(),
     });
 
     if (user) {
-      throw createError("User already exists", 409);
+      throw createError("User already exists", StatusCodes.CONFLICT);
     }
 
     if (username) {
@@ -37,7 +36,7 @@ export async function createBot(
         username: username,
       });
       if (user) {
-        throw createError("User already exists", 409);
+        throw createError("User already exists", StatusCodes.CONFLICT);
       }
     }
     user = await User.create({
@@ -67,7 +66,9 @@ export const getBotValidation: ValidationChain[] = [param("id").isMongoId()];
 export async function getBot(req: Request, res: Response, next: NextFunction) {
   try {
     handleInputErrors(req);
-    const { id } = req.params;
+
+    const id = new Types.ObjectId(req.params.id);
+
     const bot = await User.findById(id);
     if (!bot) {
       throw createError("Bot Not Found!");
@@ -102,15 +103,13 @@ export async function createDuty(
 ) {
   try {
     handleInputErrors(req);
-    const {
-      target,
-      type,
-      targetThresholdHours,
-      interval,
-      reactions,
-      comments,
-    } = req.body;
-    const { id } = req.params;
+
+    const { targetThresholdHours, interval, reactions, comments } = req.body;
+
+    const id = new Types.ObjectId(req.params.id);
+    const target = req.body.target as IBotTargetEnum;
+    const type = req.body.type as IBotTypeEnum;
+
     const duty = await Bot.create({
       userId: id,
       target,
@@ -120,9 +119,17 @@ export async function createDuty(
       reactions,
       comments,
     });
-    const botUser = await User.findById(id);
+
+    const botUser = await User.findById(id).orFail(
+      createError(
+        dynamicMessage(dStrings.notFound, "User"),
+        StatusCodes.NOT_FOUND
+      )
+    );
+
     createCron(duty._id.toString(), duty, botUser)?.start();
-    return res.json({
+
+    return res.status(StatusCodes.CREATED).json({
       sucess: true,
       data: { duty },
     });

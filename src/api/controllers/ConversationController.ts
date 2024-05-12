@@ -5,11 +5,11 @@ import mongoose from "mongoose";
 import twilio, { Twilio } from "twilio";
 
 import Conversation, { type IConversation } from "../../models/Conversation";
-import User, { type IUser } from "../../models/User";
+import User from "../../models/User";
 import { dStrings, dynamicMessage } from "../../strings";
 import { createError, handleInputErrors } from "../../utilities/errorHandlers";
+import UserProjection from "../dto/user";
 import logger from "../services/logger";
-import UserProjection from "../dto/user/user";
 
 const AccessToken = twilio.jwt.AccessToken;
 const ChatGrant = AccessToken.ChatGrant;
@@ -65,35 +65,29 @@ export async function createConversation(
 
     const authUser = req.user!;
 
-    const {
-      user,
-    }: {
-      user: string;
-    } = req.body;
+    const user = new mongoose.Types.ObjectId(req.body.user as string);
 
-    const [creatorUser, participant]: [IUser | null, IUser | null] =
-      await Promise.all([User.findById(authUser._id), User.findById(user)]);
-
-    if (!creatorUser) {
-      throw createError(
-        dynamicMessage(dStrings.notFound, "User"),
-        StatusCodes.NOT_FOUND
-      );
-    }
-
-    if (!participant) {
-      throw createError(
-        dynamicMessage(dStrings.notFound, "Participant"),
-        StatusCodes.NOT_FOUND
-      );
-    }
+    const [creatorUser, participant] = await Promise.all([
+      User.findById(authUser._id).orFail(
+        createError(
+          dynamicMessage(dStrings.notFound, "User"),
+          StatusCodes.NOT_FOUND
+        )
+      ),
+      User.findById(user).orFail(
+        createError(
+          dynamicMessage(dStrings.notFound, "User"),
+          StatusCodes.NOT_FOUND
+        )
+      ),
+    ]);
 
     const alreadyExists = await Conversation.aggregate([
       {
         $match: {
           participants: {
             $all: [
-              { $elemMatch: { user: new mongoose.Types.ObjectId(user) } },
+              { $elemMatch: { user: user } },
               { $elemMatch: { user: authUser._id } },
             ],
           },
@@ -161,7 +155,7 @@ export async function createConversation(
           chat: creatorUserParticipant.sid,
         },
         {
-          user: new mongoose.Types.ObjectId(user),
+          user: user,
           role: "participant",
           chat: userParticipant.sid,
         },
@@ -200,13 +194,11 @@ export async function createGroupConversation(
   try {
     handleInputErrors(req);
 
-    const {
-      users,
-      name,
-    }: {
-      users: [string];
-      name: string | undefined;
-    } = req.body;
+    const name: string | undefined = req.body.name;
+    const users = Array.from(new Set(req.body.users as string[])).map(
+      (user) => new mongoose.Types.ObjectId(user)
+    );
+
     const authUser = req.user!;
 
     const friendlyName = name || "Group Chat";
@@ -216,18 +208,20 @@ export async function createGroupConversation(
         friendlyName: friendlyName,
       });
 
-    const creatorUser: IUser | null = await User.findById(authUser._id).lean();
+    const creatorUser = await User.findById(authUser._id)
+      .orFail(
+        createError(
+          dynamicMessage(dStrings.notFound, "User"),
+          StatusCodes.NOT_FOUND
+        )
+      )
+      .lean();
 
-    if (!creatorUser) {
-      throw createError(
-        dynamicMessage(dStrings.notFound, "User"),
-        StatusCodes.NOT_FOUND
-      );
-    }
-
-    const participantsUsers: IUser[] = await User.find({
+    const participantsUsers = await User.find({
       _id: { $in: users },
-    }).lean();
+    })
+      .select<{ name: string }>("name")
+      .lean();
 
     // Add participants to the Twilio conversation
     const creatorUserParticipant = await client.conversations.v1
@@ -304,7 +298,7 @@ export async function removeUserFromGroupConversation(
     handleInputErrors(req);
 
     const { id } = req.params;
-    const { user } = req.body;
+    const user = new mongoose.Types.ObjectId(req.body.user as string);
 
     //check if we are the creator of the channel
 
@@ -314,7 +308,7 @@ export async function removeUserFromGroupConversation(
       .participants.list();
 
     const participantToRemove = participants.find(
-      (participant) => participant.identity === user
+      (participant) => participant.identity === user.toString()
     );
 
     if (participantToRemove && participants.length === 1) {
@@ -340,20 +334,15 @@ export async function removeUserFromGroupConversation(
     }
 
     // Update the database to reflect participant removal
-    const conversation: IConversation | null = await Conversation.findById(id);
-
-    if (!conversation) {
-      logger.error(
-        `Conversation with id ${id} not found in the database. but it was found in Twilio.`
-      );
-      throw createError(
+    const conversation = await Conversation.findById(id).orFail(
+      createError(
         dynamicMessage(dStrings.notFound, "Conversation"),
         StatusCodes.NOT_FOUND
-      );
-    }
+      )
+    );
 
     conversation.participants = conversation.participants.filter(
-      (p) => p.user.toString() !== user
+      (p) => !p.user.equals(user)
     );
 
     await Promise.all([
@@ -458,18 +447,17 @@ export async function getConversation(
         $elemMatch: { user: authUser._id },
       },
     })
+      .orFail(
+        createError(
+          dynamicMessage(dStrings.notFound, "Conversation"),
+          StatusCodes.NOT_FOUND
+        )
+      )
       .populate({
         path: "participants.user",
         select: UserProjection.essentials,
       })
       .lean();
-
-    if (!conversation) {
-      throw createError(
-        dynamicMessage(dStrings.notFound, "Conversation"),
-        StatusCodes.NOT_FOUND
-      );
-    }
 
     res.status(StatusCodes.OK).json({ success: true, data: conversation });
   } catch (err) {
@@ -484,14 +472,8 @@ export async function sendAttributtedMessage(
   attributes: object
 ) {
   const [byUser, toUser] = await Promise.all([
-    User.findById(by, "name").lean() as Promise<Pick<
-      IUser,
-      "_id" | "name"
-    > | null>,
-    User.findById(to, "name").lean() as Promise<Pick<
-      IUser,
-      "_id" | "name"
-    > | null>,
+    User.findById(by).select<{ name: string }>("name").lean(),
+    User.findById(to).select<{ name: string }>("name").lean(),
   ]);
 
   if (!byUser || !toUser) {

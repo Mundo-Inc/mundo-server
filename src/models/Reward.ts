@@ -1,6 +1,7 @@
-import mongoose, { Schema, type Document } from "mongoose";
+import mongoose, { Schema, type Model } from "mongoose";
 
-export interface IReward extends Document {
+export interface IReward {
+  _id: mongoose.Types.ObjectId;
   userId: mongoose.Types.ObjectId;
   reason: {
     refType: string;
@@ -12,7 +13,7 @@ export interface IReward extends Document {
   createdAt: Date;
 }
 
-const RewardSchema: Schema = new Schema<IReward>({
+const RewardSchema = new Schema<IReward>({
   userId: { type: Schema.Types.ObjectId, ref: "User", required: true },
   reason: {
     refType: { type: String, required: true }, //TODO: REVIEW, COMMENT, REACTION, PLACE, Homemade
@@ -36,5 +37,8 @@ const RewardSchema: Schema = new Schema<IReward>({
   createdAt: { type: Date, default: Date.now },
 });
 
-export default mongoose.models.Reward ||
+const model =
+  (mongoose.models.Reward as Model<IReward>) ||
   mongoose.model<IReward>("Reward", RewardSchema);
+
+export default model;

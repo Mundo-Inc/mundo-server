@@ -1,4 +1,4 @@
-import mongoose, { Schema, type Document } from "mongoose";
+import mongoose, { Schema, type Model } from "mongoose";
 
 export enum IBotTypeEnum {
   REACT = "REACT",
@@ -12,7 +12,8 @@ export enum IBotTargetEnum {
   HAS_MEDIA = "HAS_MEDIA",
 }
 
-export interface IBot extends Document {
+export interface IBot {
+  _id: mongoose.Types.ObjectId;
   userId: mongoose.Types.ObjectId;
   type: IBotTypeEnum;
   target: String;
@@ -20,7 +21,9 @@ export interface IBot extends Document {
   reactions: String[];
   comments: String[];
   interval: string;
-  isActive?: boolean;
+  isActive: boolean;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 const BotSchema = new Schema<IBot>(
@@ -48,4 +51,8 @@ const BotSchema = new Schema<IBot>(
   { timestamps: true }
 );
 
-export default mongoose.models.Bot || mongoose.model<IBot>("Bot", BotSchema);
+const model =
+  (mongoose.models.Bot as Model<IBot>) ||
+  mongoose.model<IBot>("Bot", BotSchema);
+
+export default model;

@@ -1,11 +1,12 @@
-import mongoose, { Schema, type Document } from "mongoose";
+import mongoose, { Schema, type Model } from "mongoose";
 
 export enum MediaTypeEnum {
   image = "image",
   video = "video",
 }
 
-export interface IMedia extends Document {
+export interface IMedia {
+  _id: mongoose.Types.ObjectId;
   src: string;
   caption?: string;
   place?: mongoose.Types.ObjectId;
@@ -47,5 +48,8 @@ const MediaSchema = new Schema<IMedia>({
 
 MediaSchema.index({ place: 1 }, { sparse: true });
 
-export default mongoose.models.Media ||
+const model =
+  (mongoose.models.Media as Model<IMedia>) ||
   mongoose.model<IMedia>("Media", MediaSchema);
+
+export default model;

@@ -1,11 +1,18 @@
-import mongoose, { Schema, type Document } from "mongoose";
+import mongoose, { Schema, type Model } from "mongoose";
 
 import Notification, {
   NotificationTypeEnum,
   ResourceTypeEnum,
 } from "./Notification";
 
-export interface IFollow extends Document {
+export enum FollowStatusEnum {
+  FOLLOWING = "following",
+  NOT_FOLLOWING = "notFollowing",
+  REQUESTED = "requested",
+}
+
+export interface IFollow {
+  _id: mongoose.Types.ObjectId;
   user: mongoose.Types.ObjectId;
   target: mongoose.Types.ObjectId;
   createdAt: Date;
@@ -46,5 +53,8 @@ FollowSchema.post("save", async function (doc, next) {
   next();
 });
 
-export default mongoose.models.Follow ||
+const model =
+  (mongoose.models.Follow as Model<IFollow>) ||
   mongoose.model<IFollow>("Follow", FollowSchema);
+
+export default model;

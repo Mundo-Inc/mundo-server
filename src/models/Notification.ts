@@ -1,4 +1,4 @@
-import mongoose, { Schema, type Document } from "mongoose";
+import mongoose, { Schema, type Model } from "mongoose";
 
 export enum NotificationTypeEnum {
   REACTION = "REACTION",
@@ -37,7 +37,8 @@ interface Metadata {
   link?: string;
 }
 
-export interface INotification extends Document {
+export interface INotification {
+  _id: mongoose.Types.ObjectId;
   user: mongoose.Types.ObjectId;
   type: NotificationTypeEnum;
   readAt: Date | null;
@@ -56,7 +57,7 @@ export interface INotification extends Document {
   updatedAt: Date;
 }
 
-const NotificationSchema: Schema = new Schema<INotification>(
+const NotificationSchema = new Schema<INotification>(
   {
     user: {
       type: Schema.Types.ObjectId,
@@ -150,5 +151,8 @@ const NotificationSchema: Schema = new Schema<INotification>(
 
 NotificationSchema.index({ updatedAt: 1 });
 
-export default mongoose.models.Notification ||
+const model =
+  (mongoose.models.Notification as Model<INotification>) ||
   mongoose.model<INotification>("Notification", NotificationSchema);
+
+export default model;

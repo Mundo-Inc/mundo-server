@@ -1,4 +1,4 @@
-import { type Types } from "mongoose";
+import { type Document, type Types } from "mongoose";
 
 import type { ICheckIn } from "../../models/CheckIn";
 import Earning, { EarningTypeEnum } from "../../models/Earning";
@@ -16,7 +16,7 @@ export const reviewEarning = async (
   userId: Types.ObjectId,
   review: IReview
 ) => {
-  const user: IUser | null = await User.findById(userId);
+  const user = await User.findById(userId);
 
   if (!user) return;
 
@@ -50,7 +50,7 @@ export const checkinEarning = async (
   userId: Types.ObjectId,
   checkin: ICheckIn
 ) => {
-  const user: IUser | null = await User.findById(userId);
+  const user = await User.findById(userId);
 
   if (!user) return;
 
@@ -73,7 +73,10 @@ export const checkinEarning = async (
     coins: totalCoins,
   });
 };
-export const placeEarning = async (user: IUser, place: IPlace) => {
+export const placeEarning = async (
+  user: IUser & Document<any, any, IUser>,
+  place: IPlace
+) => {
   const placeEarns = await Earning.find({
     userId: user._id,
     earningType: EarningTypeEnum.Place,

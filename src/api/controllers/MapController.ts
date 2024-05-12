@@ -3,17 +3,15 @@ import { query, type ValidationChain } from "express-validator";
 import { StatusCodes } from "http-status-codes";
 import mongoose, { type FilterQuery } from "mongoose";
 
-import Follow, { type IFollow } from "../../models/Follow";
+import Follow from "../../models/Follow";
 import UserActivity, {
-  ActivityPrivacyTypeEnum,
+  type IUserActivity,
+  ResourcePrivacyEnum,
 } from "../../models/UserActivity";
 import { createError, handleInputErrors } from "../../utilities/errorHandlers";
-import { readFormattedPlaceLocationProjection } from "../dto/place/place-dto";
-import { readPlaceBriefProjection } from "../dto/place/read-place-brief.dto";
-import UserProjection from "../dto/user/user";
+import PlaceProjection from "../dto/place";
+import UserProjection from "../dto/user";
 import validate from "./validators";
-
-const API_KEY = process.env.GOOGLE_GEO_API_KEY!;
 
 export const getMapActivitiesValidation: ValidationChain[] = [
   validate.lat(query("northEastLat")),
@@ -75,8 +73,9 @@ export async function getMapActivities(
           })
       : [];
 
-    let query;
+    let query: FilterQuery<IUserActivity> = {};
     if (usersArrayStr.length > 0) {
+      // TODO: Check followers
       query = {
         userId: {
           $in: usersArrayStr,
@@ -86,7 +85,8 @@ export async function getMapActivities(
             $box: boundingBox,
           },
         },
-        privacyType: ActivityPrivacyTypeEnum.PUBLIC,
+        resourcePrivacy: { $ne: ResourcePrivacyEnum.PRIVATE },
+        isAccountPrivate: false,
         createdAt: { $gte: createdAtFrom },
       };
     } else if (scope === "GLOBAL") {
@@ -97,18 +97,20 @@ export async function getMapActivities(
           },
         },
         createdAt: { $gte: createdAtFrom },
+        resourcePrivacy: { $ne: ResourcePrivacyEnum.PRIVATE },
+        isAccountPrivate: false,
       };
     } else {
-      const followingsObj: FilterQuery<IFollow> = await Follow.find(
+      const followingsIds = await Follow.find(
         {
           user: authUser._id,
         },
         {
           target: 1,
         }
-      );
-
-      const followingsIds = [...followingsObj.map((f: IFollow) => f.target)];
+      )
+        .lean()
+        .then((followings) => followings.map((f) => f.target));
 
       query = {
         userId: {
@@ -119,7 +121,7 @@ export async function getMapActivities(
             $box: boundingBox,
           },
         },
-        privacyType: ActivityPrivacyTypeEnum.PUBLIC,
+        resourcePrivacy: { $ne: ResourcePrivacyEnum.PRIVATE },
         createdAt: { $gte: createdAtFrom },
       };
     }
@@ -143,8 +145,8 @@ export async function getMapActivities(
           pipeline: [
             {
               $project: {
-                ...readPlaceBriefProjection,
-                location: readFormattedPlaceLocationProjection,
+                ...PlaceProjection.brief,
+                location: PlaceProjection.locationProjection,
               },
             },
           ],

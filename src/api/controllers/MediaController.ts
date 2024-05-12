@@ -22,8 +22,7 @@ import {
   resizeVideo,
   s3,
 } from "../../utilities/storage";
-import type { CreateMediaDto } from "../dto/media/create-media.dto";
-import UserProjection from "../dto/user/user";
+import UserProjection from "../dto/user";
 import validate from "./validators";
 
 const imagesDirectory = "images";
@@ -63,14 +62,13 @@ export async function createMedia(
         })
       );
       const location = `https://${bucketName}.s3.${region}.amazonaws.com/${key}`;
-      const createMediaDto: CreateMediaDto = {
+      const media = await Media.create({
         src: location,
         caption: caption ? caption[0] : "",
         place: new mongoose.Types.ObjectId(place![0]),
         user: authUser._id,
         type: MediaTypeEnum.image,
-      };
-      const media = await Media.create(createMediaDto);
+      });
 
       fs.unlinkSync(filepath);
       res.status(StatusCodes.CREATED).json({ success: true, data: media });
@@ -85,14 +83,13 @@ export async function createMedia(
       const key = `${authUser._id.toString()}/${videosDirectory}/${randomBytes}.mp4`;
 
       const location = `https://${bucketName}.s3.${region}.amazonaws.com/${key}`;
-      const createMediaDto: CreateMediaDto = {
+      const media = await Media.create({
         src: location,
         caption: caption ? caption[0] : "",
         place: new mongoose.Types.ObjectId(place![0]),
         user: authUser._id,
         type: MediaTypeEnum.video,
-      };
-      const media = await Media.create(createMediaDto);
+      });
       res.status(StatusCodes.CREATED).json({ success: true, data: media });
 
       if (!isConverted) {
@@ -161,23 +158,21 @@ export async function getMedia(
     const { event, place } = req.query;
 
     if (place) {
-      const exists = await Place.exists({ _id: place });
-      if (!exists) {
-        throw createError(
+      await Place.exists({ _id: place }).orFail(
+        createError(
           dynamicMessage(dStrings.notFound, "Place"),
           StatusCodes.NOT_FOUND
-        );
-      }
+        )
+      );
     }
 
     if (event) {
-      const exists = await Event.exists({ _id: event });
-      if (!exists) {
-        throw createError(
+      await Event.exists({ _id: event }).orFail(
+        createError(
           dynamicMessage(dStrings.notFound, "Event"),
           StatusCodes.NOT_FOUND
-        );
-      }
+        )
+      );
     }
 
     const medias = await Media.find({

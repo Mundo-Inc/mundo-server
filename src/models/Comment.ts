@@ -1,4 +1,4 @@
-import mongoose, { Schema, type CallbackError, type Document } from "mongoose";
+import mongoose, { Schema, type CallbackError, type Model } from "mongoose";
 
 import logger from "../api/services/logger";
 import Notification, {
@@ -7,7 +7,8 @@ import Notification, {
 } from "./Notification";
 import UserActivity, { type IUserActivity } from "./UserActivity";
 
-export interface IComment extends Document {
+export interface IComment {
+  _id: mongoose.Types.ObjectId;
   author: mongoose.Types.ObjectId;
   userActivity: mongoose.Types.ObjectId;
   content: string;
@@ -76,9 +77,7 @@ CommentSchema.index({ "mentions.user": 1 });
 CommentSchema.post("save", async function (doc, next) {
   // create notification
   if (doc.createdAt.getTime() === doc.updatedAt.getTime()) {
-    const activity: IUserActivity | null = await UserActivity.findById(
-      doc.userActivity
-    ).lean();
+    const activity = await UserActivity.findById(doc.userActivity).lean();
 
     if (activity) {
       await Notification.create({
@@ -126,7 +125,7 @@ async function removeCommentDependencies(comment: IComment) {
   );
 }
 
-CommentSchema.pre<IComment>(
+CommentSchema.pre(
   "deleteOne",
   { document: true, query: false },
   async function (next) {
@@ -153,5 +152,8 @@ CommentSchema.pre("deleteOne", async function (next) {
   }
 });
 
-export default mongoose.models.Comment ||
+const model =
+  (mongoose.models.Comment as Model<IComment>) ||
   mongoose.model<IComment>("Comment", CommentSchema);
+
+export default model;

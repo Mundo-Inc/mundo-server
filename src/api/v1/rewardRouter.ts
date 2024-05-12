@@ -17,9 +17,7 @@ import {
 } from "../controllers/MissionController";
 import {
   claimDailyCoins,
-  claimDailyCoinsValidation,
   dailyCoinInformation,
-  dailyCoinInformationValidation,
   getAllPrizeRedemptionHistory,
   getAllPrizeRedemptionHistoryValidation,
   getPrizeRedemptionHistory,
@@ -38,10 +36,8 @@ const router = express.Router();
 router.use(express.json());
 router.use(authMiddleware);
 
-router
-  .route("/daily")
-  .get(dailyCoinInformationValidation, dailyCoinInformation);
-router.route("/daily/claim").post(claimDailyCoinsValidation, claimDailyCoins);
+router.route("/daily").get(dailyCoinInformation);
+router.route("/daily/claim").post(claimDailyCoins);
 
 router
   .route("/missions")

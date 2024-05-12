@@ -1,4 +1,4 @@
-import mongoose, { Schema } from "mongoose";
+import mongoose, { Schema, type Model } from "mongoose";
 import {
   NotificationTypeEnum,
   ResourceTypeEnum,
@@ -9,7 +9,7 @@ export interface IArchiveNotification extends INotification {
   archivedAt: Date;
 }
 
-const ArchiveNotificationSchema: Schema = new Schema<IArchiveNotification>({
+const ArchiveNotificationSchema = new Schema<IArchiveNotification>({
   user: {
     type: Schema.Types.ObjectId,
     required: true,
@@ -93,8 +93,11 @@ const ArchiveNotificationSchema: Schema = new Schema<IArchiveNotification>({
 
 ArchiveNotificationSchema.index({ updatedAt: 1 });
 
-export default mongoose.models.ArchiveNotification ||
-  mongoose.model<INotification>(
+const model =
+  (mongoose.models.ArchiveNotification as Model<IArchiveNotification>) ||
+  mongoose.model<IArchiveNotification>(
     "ArchiveNotification",
     ArchiveNotificationSchema
   );
+
+export default model;

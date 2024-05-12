@@ -1,6 +1,7 @@
-import mongoose, { Schema, type Document } from "mongoose";
+import mongoose, { Schema, type Model } from "mongoose";
 
-export interface IPrize extends Document {
+export interface IPrize {
+  _id: mongoose.Types.ObjectId;
   title: string;
   thumbnail: string;
   amount: number;
@@ -8,7 +9,7 @@ export interface IPrize extends Document {
   createdAt: Date;
 }
 
-const PrizeSchema: Schema = new Schema<IPrize>({
+const PrizeSchema = new Schema<IPrize>({
   title: { type: String, required: true },
   thumbnail: { type: String, required: true },
   amount: { type: Number, required: true },
@@ -16,5 +17,8 @@ const PrizeSchema: Schema = new Schema<IPrize>({
   createdAt: { type: Date, default: Date.now },
 });
 
-export default mongoose.models.Prize ||
+const model =
+  (mongoose.models.Prize as Model<IPrize>) ||
   mongoose.model<IPrize>("Prize", PrizeSchema);
+
+export default model;

@@ -1,4 +1,4 @@
-import mongoose, { Schema, type Document } from "mongoose";
+import mongoose, { Schema, type Model } from "mongoose";
 
 export enum EarningTypeEnum {
   Place = "Place",
@@ -6,7 +6,8 @@ export enum EarningTypeEnum {
   CheckIn = "CheckIn",
 }
 
-export interface IEarning extends Document {
+export interface IEarning {
+  _id: mongoose.Types.ObjectId;
   userId: mongoose.Types.ObjectId;
   earningType: String;
   earning: mongoose.Types.ObjectId;
@@ -14,7 +15,7 @@ export interface IEarning extends Document {
   createdAt: Date;
 }
 
-const EarningSchema: Schema = new Schema({
+const EarningSchema = new Schema({
   userId: { type: Schema.Types.ObjectId, ref: "User", required: true },
   earningType: {
     type: String,
@@ -31,5 +32,8 @@ const EarningSchema: Schema = new Schema({
   createdAt: { type: Date, default: Date.now },
 });
 
-export default mongoose.models.Earning ||
+const model =
+  (mongoose.models.Earning as Model<IEarning>) ||
   mongoose.model<IEarning>("Earning", EarningSchema);
+
+export default model;

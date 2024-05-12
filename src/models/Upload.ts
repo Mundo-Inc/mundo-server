@@ -1,8 +1,9 @@
-import mongoose, { Schema, type Document } from "mongoose";
+import mongoose, { Schema, type Model } from "mongoose";
 
 export type UploadUsecase = "profileImage" | "placeReview" | "checkin";
 
-export interface IUpload extends Document {
+export interface IUpload {
+  _id: mongoose.Types.ObjectId;
   user: mongoose.Types.ObjectId;
   key: string;
   src: string;
@@ -11,7 +12,7 @@ export interface IUpload extends Document {
   createdAt: Date;
 }
 
-const UploadSchema: Schema = new Schema<IUpload>({
+const UploadSchema = new Schema<IUpload>({
   user: {
     type: Schema.Types.ObjectId,
     ref: "User",
@@ -39,5 +40,8 @@ const UploadSchema: Schema = new Schema<IUpload>({
   },
 });
 
-export default mongoose.models.Upload ||
+const model =
+  (mongoose.models.Upload as Model<IUpload>) ||
   mongoose.model<IUpload>("Upload", UploadSchema);
+
+export default model;

@@ -41,15 +41,15 @@ export async function authPost(
     const { email, password, action } = req.body;
 
     if (action === "signin") {
-      const user: IUser | null = await User.findOne({
+      const user = await User.findOne({
         "email.address": { $regex: new RegExp(email, "i") },
-      });
-      if (!user) {
-        throw createError(
+      }).orFail(
+        createError(
           strings.authorization.invalidCredentials,
           StatusCodes.UNAUTHORIZED
-        );
-      }
+        )
+      );
+
       if (!user.password) {
         throw createError(
           "This account was created using a social login method. Please sign in using the same method.",
@@ -112,7 +112,7 @@ export async function firebaseSync(
       // Proceed with handling the request
       const userData = req.body;
 
-      const user: IUser | null = await User.findOne({
+      const user = await User.findOne({
         uid: userData.uid,
         "email.address": userData.email,
       });

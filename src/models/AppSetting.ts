@@ -1,6 +1,7 @@
-import mongoose, { Schema, type Document } from "mongoose";
+import mongoose, { Schema, type Model } from "mongoose";
 
-export interface IAppSetting extends Document {
+export interface IAppSetting {
+  _id: mongoose.Types.ObjectId;
   key: string;
   value: string;
   createdAt: Date;
@@ -24,5 +25,8 @@ const AppSettingSchema = new Schema<IAppSetting>(
   }
 );
 
-export default mongoose.models.AppSetting ||
+const model =
+  (mongoose.models.AppSetting as Model<IAppSetting>) ||
   mongoose.model<IAppSetting>("AppSetting", AppSettingSchema);
+
+export default model;

@@ -1,7 +1,6 @@
 import type { NextFunction, Request, Response } from "express";
 import { body, query, type ValidationChain } from "express-validator";
 import { StatusCodes } from "http-status-codes";
-import mongoose from "mongoose";
 
 import CheckIn from "../../models/CheckIn";
 import Comment from "../../models/Comment";
@@ -10,10 +9,11 @@ import Notification, {
   NotificationTypeEnum,
   type INotification,
 } from "../../models/Notification";
+import { type IPlace } from "../../models/Place";
 import Reaction from "../../models/Reaction";
 import Review from "../../models/Review";
 import { handleInputErrors } from "../../utilities/errorHandlers";
-import UserProjection from "../dto/user/user";
+import UserProjection, { type UserProjectionEssentials } from "../dto/user";
 import validate from "./validators";
 
 async function handleResourceNotFound(notification: INotification) {
@@ -30,7 +30,9 @@ async function getNotificationContent(notification: INotification) {
   switch (notification.type) {
     case NotificationTypeEnum.COMMENT:
       await Comment.findById(notification.resources![0]._id)
-        .populate({
+        .populate<{
+          author: UserProjectionEssentials;
+        }>({
           path: "author",
           select: UserProjection.essentials,
         })
@@ -41,13 +43,15 @@ async function getNotificationContent(notification: INotification) {
             user = comment.author;
             title = "Commented on your activity";
             content = comment.content;
-            activity = comment.userActivity;
+            activity = comment.userActivity.toString();
           }
         });
       break;
     case NotificationTypeEnum.FOLLOW:
       await Follow.findById(notification.resources![0]._id)
-        .populate({
+        .populate<{
+          user: UserProjectionEssentials;
+        }>({
           path: "user",
           select: UserProjection.essentials,
         })
@@ -62,7 +66,9 @@ async function getNotificationContent(notification: INotification) {
       break;
     case NotificationTypeEnum.COMMENT_MENTION:
       await Comment.findById(notification.resources![0]._id)
-        .populate({
+        .populate<{
+          author: UserProjectionEssentials;
+        }>({
           path: "author",
           select: UserProjection.essentials,
         })
@@ -73,13 +79,15 @@ async function getNotificationContent(notification: INotification) {
             user = comment.author;
             title = "Mentioned you in a comment.";
             content = comment.content;
-            activity = comment.userActivity;
+            activity = comment.userActivity.toString();
           }
         });
       break;
     case NotificationTypeEnum.REACTION:
       await Reaction.findById(notification.resources![0]._id)
-        .populate({
+        .populate<{
+          user: UserProjectionEssentials;
+        }>({
           path: "user",
           select: UserProjection.essentials,
         })
@@ -93,7 +101,7 @@ async function getNotificationContent(notification: INotification) {
             } else {
               title = "Added an special reaction to your activity.";
             }
-            activity = reaction.target;
+            activity = reaction.target.toString();
           }
         });
       break;
@@ -107,11 +115,18 @@ async function getNotificationContent(notification: INotification) {
       break;
     case NotificationTypeEnum.FOLLOWING_REVIEW:
       await Review.findById(notification.resources![0]._id)
-        .populate({
+        .populate<{
+          writer: UserProjectionEssentials;
+        }>({
           path: "writer",
           select: UserProjection.essentials,
         })
-        .populate("place")
+        .populate<{
+          place: Pick<IPlace, "name">;
+        }>({
+          path: "place",
+          select: "name",
+        })
         .then((review) => {
           if (!review) {
             handleResourceNotFound(notification);
@@ -133,13 +148,15 @@ async function getNotificationContent(notification: INotification) {
             } else {
               content = `${review.writer.name} reviewed ${review.place.name}`;
             }
-            activity = review.userActivityId;
+            activity = review.userActivityId?.toString();
           }
         });
       break;
     case NotificationTypeEnum.FOLLOWING_HOMEMADE:
       await Review.findById(notification.resources![0]._id)
-        .populate({
+        .populate<{
+          userId: UserProjectionEssentials;
+        }>({
           path: "userId",
           select: UserProjection.essentials,
         })
@@ -149,24 +166,32 @@ async function getNotificationContent(notification: INotification) {
           } else {
             user = homemade.userId;
             title = "Posted a new homemade recipe";
-            activity = homemade.userActivityId;
+            activity = homemade.userActivityId?.toString();
           }
         });
       break;
     case NotificationTypeEnum.FOLLOWING_CHECKIN:
       await CheckIn.findById(notification.resources![0]._id)
-        .populate({
+        .populate<{
+          user: UserProjectionEssentials;
+        }>({
           path: "user",
           select: UserProjection.essentials,
         })
-        .populate("place", "name")
+        .populate<{
+          place: Pick<IPlace, "name">;
+        }>({
+          path: "place",
+          select: "name",
+        })
         .then((checkin) => {
           if (!checkin) {
             handleResourceNotFound(notification);
+          } else {
+            user = checkin.user;
+            title = `Checked into ${checkin.place.name}`;
+            activity = checkin.userActivityId?.toString();
           }
-          user = checkin.user;
-          title = `Checked into ${checkin.place.name}`;
-          activity = checkin.userActivityId;
         });
       break;
     case NotificationTypeEnum.REFERRAL_REWARD:

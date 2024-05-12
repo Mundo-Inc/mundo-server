@@ -1,6 +1,7 @@
-import mongoose, { Schema, type Document } from "mongoose";
+import mongoose, { Schema, type Model } from "mongoose";
 
-export interface IEvent extends Document {
+export interface IEvent {
+  _id: mongoose.Types.ObjectId;
   place: mongoose.Types.ObjectId;
   name: string;
   description: string;
@@ -11,7 +12,7 @@ export interface IEvent extends Document {
   updatedAt: Date;
 }
 
-const EventSchema: Schema = new Schema<IEvent>(
+const EventSchema = new Schema<IEvent>(
   {
     place: {
       type: Schema.Types.ObjectId,
@@ -42,5 +43,8 @@ const EventSchema: Schema = new Schema<IEvent>(
   }
 );
 
-export default mongoose.models.Event ||
+const model =
+  (mongoose.models.Event as Model<IEvent>) ||
   mongoose.model<IEvent>("Event", EventSchema);
+
+export default model;

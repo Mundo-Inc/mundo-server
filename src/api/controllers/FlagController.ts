@@ -1,13 +1,14 @@
 import type { NextFunction, Request, Response } from "express";
 import { body, type ValidationChain } from "express-validator";
 import { StatusCodes } from "http-status-codes";
+import mongoose from "mongoose";
 
 import CheckIn from "../../models/CheckIn";
 import Comment from "../../models/Comment";
 import Flag, { FlagTypeEnum } from "../../models/Flag";
 import Homemade from "../../models/Homemade";
 import Review from "../../models/Review";
-import UserActivity, { type IUserActivity } from "../../models/UserActivity";
+import UserActivity from "../../models/UserActivity";
 import { dStrings, dynamicMessage } from "../../strings";
 import { createError, handleInputErrors } from "../../utilities/errorHandlers";
 import logger from "../services/logger";
@@ -33,67 +34,85 @@ export async function createFlag(
     handleInputErrors(req);
 
     const authUser = req.user!;
-    const { flagType, note, activity, review, comment, homemade, checkIn } =
-      req.body;
+    const { note } = req.body;
 
-    let target: string, targetType: string;
+    const flagType = req.body.flagType as FlagTypeEnum;
+
+    const activity = req.body.activity
+      ? new mongoose.Types.ObjectId(req.body.activity as string)
+      : null;
+
+    const comment = req.body.comment
+      ? new mongoose.Types.ObjectId(req.body.comment as string)
+      : null;
+
+    const homemade = req.body.homemade
+      ? new mongoose.Types.ObjectId(req.body.homemade as string)
+      : null;
+
+    const checkIn = req.body.checkIn
+      ? new mongoose.Types.ObjectId(req.body.checkIn as string)
+      : null;
+
+    const review = req.body.review
+      ? new mongoose.Types.ObjectId(req.body.review as string)
+      : null;
+
+    let target: mongoose.Types.ObjectId, targetType: string;
 
     if (activity) {
-      const userActivity: IUserActivity | null = await UserActivity.findById(
-        activity
-      ).lean();
-      if (!userActivity) {
-        throw createError(
-          dynamicMessage(dStrings.notFound, "Activity"),
-          StatusCodes.NOT_FOUND
-        );
-      }
+      const userActivity = await UserActivity.findById(activity)
+        .orFail(
+          createError(
+            dynamicMessage(dStrings.notFound, "Activity"),
+            StatusCodes.NOT_FOUND
+          )
+        )
+        .lean();
+
       if (!userActivity.resourceId) {
         throw createError(
           "Activity does not have a resourceId",
           StatusCodes.BAD_REQUEST
         );
       }
-      target = userActivity.resourceId.toString();
+      target = userActivity.resourceId;
       targetType = userActivity.resourceType;
     } else if (review) {
-      const reviewExists = await Review.exists({ _id: review });
-      if (!reviewExists) {
-        throw createError(
+      await Review.exists({ _id: review }).orFail(
+        createError(
           dynamicMessage(dStrings.notFound, "Review"),
           StatusCodes.NOT_FOUND
-        );
-      }
+        )
+      );
+
       target = review;
       targetType = "Review";
     } else if (comment) {
-      const commentExists = await Comment.exists({ _id: comment });
-      if (!commentExists) {
-        throw createError(
+      await Comment.exists({ _id: comment }).orFail(
+        createError(
           dynamicMessage(dStrings.notFound, "Review"),
           StatusCodes.NOT_FOUND
-        );
-      }
+        )
+      );
       target = comment;
       targetType = "Comment";
     } else if (homemade) {
-      const homemadeExists = await Homemade.exists({ _id: homemade });
-      if (!homemadeExists) {
-        throw createError(
+      await Homemade.exists({ _id: homemade }).orFail(
+        createError(
           dynamicMessage(dStrings.notFound, "Homemade"),
           StatusCodes.NOT_FOUND
-        );
-      }
+        )
+      );
       target = homemade;
       targetType = "Homemade";
     } else if (checkIn) {
-      const checkinExists = await CheckIn.exists({ _id: checkIn });
-      if (!checkinExists) {
-        throw createError(
+      await CheckIn.exists({ _id: checkIn }).orFail(
+        createError(
           dynamicMessage(dStrings.notFound, "CheckIn"),
           StatusCodes.NOT_FOUND
-        );
-      }
+        )
+      );
       target = checkIn;
       targetType = "CheckIn";
     } else {

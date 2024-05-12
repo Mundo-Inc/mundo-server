@@ -1,6 +1,7 @@
-import mongoose, { Schema, type Document } from "mongoose";
+import mongoose, { Schema, type Model } from "mongoose";
 
-export interface IProfileDecorationRedemption extends Document {
+export interface IProfileDecorationRedemption {
+  _id: mongoose.Types.ObjectId;
   userId: mongoose.Types.ObjectId;
   decorationType: string;
   decorationId: mongoose.Types.ObjectId;
@@ -26,8 +27,12 @@ const ProfileDecorationRedemption: Schema =
     { timestamps: true }
   );
 
-export default mongoose.models.ProfileDecorationRedemption ||
+const model =
+  (mongoose.models
+    .ProfileDecorationRedemption as Model<IProfileDecorationRedemption>) ||
   mongoose.model<IProfileDecorationRedemption>(
     "ProfileDecorationRedemption",
     ProfileDecorationRedemption
   );
+
+export default model;

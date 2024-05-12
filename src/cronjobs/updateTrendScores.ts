@@ -24,29 +24,28 @@ async function updateHotnessScores(
   }
 
   const activities = await UserActivity.find(query);
-  try {
-    for (const activity of activities) {
+
+  for (const activity of activities) {
+    try {
       const hotnessScore = await activity.calculateHotnessScore();
       activity.hotnessScore = hotnessScore;
       await activity.save();
+    } catch (error) {
+      logger.error("error while updating hotness scores", error);
     }
-  } catch (error) {
-    logger.error("error while updating hotness scores", error);
   }
 }
-const now = new Date();
-const lastMonth = new Date(now.getTime() - 4 * 7 * 24 * 60 * 60 * 1000);
-logger.verbose("Hotness scores updated (since last month)");
-updateHotnessScores(now, lastMonth);
 
 cron.schedule("*/5 * * * *", async () => {
   const now = new Date();
   const last24Hours = new Date(now.getTime() - 24 * 60 * 60 * 1000);
   await updateHotnessScores(now, last24Hours);
+  logger.verbose("Updated hotness scores for last 24 hours");
 });
 
 cron.schedule("0 * * * *", async () => {
   const now = new Date();
   const last24Hours = new Date(now.getTime() - 24 * 60 * 60 * 1000);
   await updateHotnessScores(last24Hours, undefined);
+  logger.verbose("Updated hotness scores for activity older than 24 hours");
 });

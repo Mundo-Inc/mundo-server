@@ -4,12 +4,14 @@ import { StatusCodes } from "http-status-codes";
 import Stripe from "stripe";
 import { Twilio } from "twilio";
 
-import Transaction, { type ITransaction } from "../../models/Transaction";
+import Transaction from "../../models/Transaction";
 import User, { type IUser } from "../../models/User";
 import { dStrings, dynamicMessage } from "../../strings";
 import { createError, handleInputErrors } from "../../utilities/errorHandlers";
-import { publicReadTransactionProjection } from "../dto/transaction/read-transaction-public.dto";
-import UserProjection from "../dto/user/user";
+import TransactionProjection, {
+  type TransactionProjectionPublic,
+} from "../dto/transaction";
+import UserProjection, { type UserProjectionEssentials } from "../dto/user";
 import { sendAttributtedMessage } from "./ConversationController";
 
 const accountSid = process.env.TWILIO_ACCOUNT_SID; // Replace with your Account SID
@@ -41,13 +43,13 @@ export async function getSecret(
 
     const authUser = req.user!;
 
-    const user: IUser | null = await User.findById(authUser._id);
-    if (!user) {
-      throw createError(
+    const user = await User.findById(authUser._id).orFail(
+      createError(
         dynamicMessage(dStrings.notFound, "User"),
         StatusCodes.NOT_FOUND
-      );
-    }
+      )
+    );
+
     const customerId =
       user.stripe.customerId || (await createStripeCustomer(user)).id;
     user.stripe.customerId = customerId;
@@ -84,16 +86,15 @@ export async function addOrUpdatePaymentMethod(
     handleInputErrors(req);
 
     const authUser = req.user!;
+
     const { paymentMethodId } = req.body;
 
-    const user: IUser | null = await User.findById(authUser._id);
-
-    if (!user) {
-      throw createError(
+    const user = await User.findById(authUser._id).orFail(
+      createError(
         dynamicMessage(dStrings.notFound, "User"),
         StatusCodes.NOT_FOUND
-      );
-    }
+      )
+    );
 
     if (!user.stripe.paymentMethod) {
       // Assuming you have a Stripe Customer ID stored or you create a new Customer
@@ -128,8 +129,14 @@ export async function getPaymentMethod(
 
     const authUser = req.user!;
 
-    const user: IUser | null = await User.findById(authUser._id);
-    if (!user || !user.stripe.paymentMethod) {
+    const user = await User.findById(authUser._id).orFail(
+      createError(
+        dynamicMessage(dStrings.notFound, "User"),
+        StatusCodes.NOT_FOUND
+      )
+    );
+
+    if (!user.stripe.paymentMethod) {
       throw createError("No payment method found", StatusCodes.NOT_FOUND);
     }
 
@@ -166,14 +173,12 @@ export async function addOrUpdatePayoutMethod(
 
     const authUser = req.user!;
 
-    const user: IUser | null = await User.findById(authUser._id);
-
-    if (!user) {
-      throw createError(
+    const user = await User.findById(authUser._id).orFail(
+      createError(
         dynamicMessage(dStrings.notFound, "User"),
         StatusCodes.NOT_FOUND
-      );
-    }
+      )
+    );
 
     let accountId = user.stripe.connectAccountId;
 
@@ -240,14 +245,12 @@ export async function onboarding(
 
     const authUser = req.user!;
 
-    let user: IUser | null = await User.findById(authUser._id);
-
-    if (!user) {
-      throw createError(
+    let user = await User.findById(authUser._id).orFail(
+      createError(
         dynamicMessage(dStrings.notFound, "User"),
         StatusCodes.NOT_FOUND
-      );
-    }
+      )
+    );
 
     const accountId = user.stripe.connectAccountId;
 
@@ -290,16 +293,32 @@ export async function sendGift(
 
     const authUser = req.user!;
     const { amount, receiverId, paymentMethodId, message } = req.body;
-    const sender = await User.findById(authUser._id);
-    const receiver = await User.findById(receiverId);
 
-    if (!sender || !receiver) {
-      throw createError("Sender or receiver not found", StatusCodes.NOT_FOUND);
-    }
+    const [sender, receiver] = await Promise.all([
+      User.findById(authUser._id).orFail(
+        createError(
+          dynamicMessage(dStrings.notFound, "User (sender)"),
+          StatusCodes.NOT_FOUND
+        )
+      ),
+      User.findById(receiverId).orFail(
+        createError(
+          dynamicMessage(dStrings.notFound, "User (receiver)"),
+          StatusCodes.NOT_FOUND
+        )
+      ),
+    ]);
 
     if (!sender.stripe.customerId) {
       throw createError(
         "No customerID found. Please contact support.",
+        StatusCodes.BAD_REQUEST
+      );
+    }
+
+    if (!receiver.stripe.connectAccountId) {
+      throw createError(
+        "No connectAccountId found. Please contact support.",
         StatusCodes.BAD_REQUEST
       );
     }
@@ -315,7 +334,7 @@ export async function sendGift(
       confirm: true, // Automatically confirm the payment
       description: `Gift transaction from ${sender._id} to ${receiver._id}`,
       transfer_data: {
-        destination: receiver.stripe.accountId,
+        destination: receiver.stripe.connectAccountId,
       },
       automatic_payment_methods: {
         enabled: true,
@@ -365,12 +384,15 @@ export async function withdraw(
     handleInputErrors(req);
 
     const authUser = req.user!;
-    const { amount } = req.body;
-    const user: IUser | null = await User.findById(authUser._id);
 
-    if (!user) {
-      throw createError("User not found", StatusCodes.BAD_REQUEST);
-    }
+    const { amount } = req.body;
+
+    const user = await User.findById(authUser._id).orFail(
+      createError(
+        dynamicMessage(dStrings.notFound, "User"),
+        StatusCodes.NOT_FOUND
+      )
+    );
 
     // Ensure the user's balance is sufficient
     if (user.stripe.balance < amount) {
@@ -465,20 +487,21 @@ export async function getTransaction(
     const authUser = req.user!;
     const { id } = req.params;
 
-    const transaction: ITransaction | null = await Transaction.findById(
-      id,
-      publicReadTransactionProjection
-    )
-      .populate("sender", UserProjection.essentials)
-      .populate("receiver", UserProjection.essentials)
+    const transaction = await Transaction.findById(id)
+      .select<TransactionProjectionPublic>(TransactionProjection.public)
+      .orFail(
+        createError(
+          dynamicMessage(dStrings.notFound, "Transaction"),
+          StatusCodes.NOT_FOUND
+        )
+      )
+      .populate<{
+        sender: UserProjectionEssentials;
+      }>("sender", UserProjection.essentials)
+      .populate<{
+        receiver: UserProjectionEssentials;
+      }>("receiver", UserProjection.essentials)
       .lean();
-
-    if (!transaction) {
-      throw createError(
-        dynamicMessage(dStrings.notFound, "Transaction"),
-        StatusCodes.NOT_FOUND
-      );
-    }
 
     if (
       !authUser._id.equals(transaction.sender._id) &&

@@ -1,4 +1,4 @@
-import mongoose, { Schema, type Document } from "mongoose";
+import mongoose, { Schema, type Model } from "mongoose";
 
 export enum PrizeRedemptionStatusTypeEnum {
   PENDING = "PENDING",
@@ -6,7 +6,8 @@ export enum PrizeRedemptionStatusTypeEnum {
   SUCCESSFUL = "SUCCESSFUL",
 }
 
-export interface IPrizeRedemption extends Document {
+export interface IPrizeRedemption {
+  _id: mongoose.Types.ObjectId;
   userId: mongoose.Types.ObjectId;
   prizeId: mongoose.Types.ObjectId;
   status: PrizeRedemptionStatusTypeEnum;
@@ -15,7 +16,7 @@ export interface IPrizeRedemption extends Document {
   updatedAt: Date;
 }
 
-const PrizeRedemptionSchema: Schema = new Schema<IPrizeRedemption>(
+const PrizeRedemptionSchema = new Schema<IPrizeRedemption>(
   {
     userId: { type: Schema.Types.ObjectId, ref: "User" },
     prizeId: { type: Schema.Types.ObjectId, ref: "Prize" },
@@ -35,5 +36,8 @@ const PrizeRedemptionSchema: Schema = new Schema<IPrizeRedemption>(
   }
 );
 
-export default mongoose.models.PrizeRedemption ||
+const model =
+  (mongoose.models.PrizeRedemption as Model<IPrizeRedemption>) ||
   mongoose.model<IPrizeRedemption>("PrizeRedemption", PrizeRedemptionSchema);
+
+export default model;

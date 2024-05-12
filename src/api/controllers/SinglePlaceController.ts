@@ -1,7 +1,7 @@
 import type { NextFunction, Request, Response } from "express";
 import { param, query, type ValidationChain } from "express-validator";
 import { StatusCodes } from "http-status-codes";
-import mongoose from "mongoose";
+import mongoose, { type Document } from "mongoose";
 
 import {
   GoogleDataManager,
@@ -20,7 +20,7 @@ import { dStrings, dynamicMessage } from "../../strings";
 import type { IYelpPlaceDetails } from "../../types/yelpPlace.interface";
 import { createError, handleInputErrors } from "../../utilities/errorHandlers";
 import { filterObjectByConfig } from "../../utilities/filtering";
-import UserProjection from "../dto/user/user";
+import UserProjection from "../dto/user";
 import logger from "../services/logger";
 import {
   findYelpId,
@@ -41,7 +41,7 @@ export async function getPlace(
   try {
     handleInputErrors(req);
 
-    const { id } = req.params;
+    const id = new mongoose.Types.ObjectId(req.params.id);
 
     const response = await getDetailedPlace(id);
 
@@ -150,15 +150,13 @@ export async function getPlaceOverview(
   }
 }
 
-export async function getDetailedPlace(id: string) {
-  const place = await Place.findById(id);
-
-  if (!place) {
-    throw createError(
+export async function getDetailedPlace(id: mongoose.Types.ObjectId) {
+  const place = await Place.findById(id).orFail(
+    createError(
       dynamicMessage(dStrings.notFound, "Place"),
       StatusCodes.NOT_FOUND
-    );
-  }
+    )
+  );
 
   const [googleResults, yelpResults] = await Promise.all([
     fetchGoogle(place),
@@ -213,7 +211,7 @@ export async function getDetailedPlace(id: string) {
     await place.processReviews();
   }
 
-  const placeObject = place.toObject();
+  const placeObject: any = place.toObject();
 
   // get 5 media items
   placeObject.media = await Media.find({ place: id })
@@ -391,14 +389,14 @@ export async function getPlaceReviews(
       | "yelp";
 
     if (type === "googlePlaces") {
-      const place: IPlace | null = await Place.findById(id).lean();
-
-      if (!place) {
-        throw createError(
-          dynamicMessage(dStrings.notFound, "Place"),
-          StatusCodes.NOT_FOUND
-        );
-      }
+      const place = await Place.findById(id)
+        .orFail(
+          createError(
+            dynamicMessage(dStrings.notFound, "Place"),
+            StatusCodes.NOT_FOUND
+          )
+        )
+        .lean();
 
       let reviews: GooglePlaceReview[] = [];
 
@@ -418,14 +416,14 @@ export async function getPlaceReviews(
         data: reviews,
       });
     } else if (type === "yelp") {
-      const place: IPlace | null = await Place.findById(id).lean();
-
-      if (!place) {
-        throw createError(
-          dynamicMessage(dStrings.notFound, "Place"),
-          StatusCodes.NOT_FOUND
-        );
-      }
+      const place = await Place.findById(id)
+        .orFail(
+          createError(
+            dynamicMessage(dStrings.notFound, "Place"),
+            StatusCodes.NOT_FOUND
+          )
+        )
+        .lean();
 
       let reviews = [];
 
@@ -692,7 +690,7 @@ export async function getExistInLists(
   }
 }
 
-async function fetchYelp(place: IPlace) {
+async function fetchYelp(place: IPlace & Document<any, any, IPlace>) {
   try {
     let yelpId = place.otherSources?.yelp?._id;
     let yelpData: IYelpPlaceDetails | undefined;
@@ -740,7 +738,7 @@ async function fetchYelp(place: IPlace) {
   }
 }
 
-async function fetchGoogle(place: IPlace) {
+async function fetchGoogle(place: IPlace & Document<any, any, IPlace>) {
   try {
     let googlePlacesId = place.otherSources?.googlePlaces?._id;
     let googlePlacesData;

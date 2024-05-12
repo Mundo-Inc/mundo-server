@@ -1,11 +1,13 @@
 import type { NextFunction, Request, Response } from "express";
 import { body, param, query, type ValidationChain } from "express-validator";
 import { StatusCodes } from "http-status-codes";
+import mongoose from "mongoose";
 
 import CoinReward, { CoinRewardTypeEnum } from "../../models/CoinReward";
-import Mission, { TaskTypeEnum, type IMission } from "../../models/Mission";
+import Mission, { TaskTypeEnum } from "../../models/Mission";
 import Prize from "../../models/Prize";
-import User, { type IUser } from "../../models/User";
+import User from "../../models/User";
+import { dStrings, dynamicMessage } from "../../strings";
 import { createError, handleInputErrors } from "../../utilities/errorHandlers";
 import { populateMissionProgress } from "../services/reward/coinReward.service";
 
@@ -110,7 +112,7 @@ export async function getMissions(
     const populatedMissions = [];
     for (const mission of missions) {
       populatedMissions.push(
-        await populateMissionProgress(mission as IMission, authUser._id)
+        await populateMissionProgress(mission, authUser._id)
       );
     }
 
@@ -140,15 +142,20 @@ export async function claimMissionReward(
   const { id } = req.params;
   const authUser = req.user!;
   try {
-    const user: IUser | null = await User.findById(authUser._id);
-    if (!user) {
-      throw createError("user not found", StatusCodes.NOT_FOUND);
-    }
-
-    const mission: IMission | null = await Mission.findById(id);
-    if (!mission) {
-      throw createError("mission not found", StatusCodes.NOT_FOUND);
-    }
+    const [user, mission] = await Promise.all([
+      User.findById(authUser._id).orFail(
+        createError(
+          dynamicMessage(dStrings.notFound, "User"),
+          StatusCodes.NOT_FOUND
+        )
+      ),
+      Mission.findById(id).orFail(
+        createError(
+          dynamicMessage(dStrings.notFound, "Mission"),
+          StatusCodes.NOT_FOUND
+        )
+      ),
+    ]);
 
     const missionWithProgress = await populateMissionProgress(
       mission,
@@ -166,11 +173,10 @@ export async function claimMissionReward(
       );
     }
 
-    const gotRewardBefore =
-      (await CoinReward.countDocuments({
-        userId: authUser._id,
-        missionId: id,
-      })) > 0;
+    const gotRewardBefore = await CoinReward.exists({
+      userId: authUser._id,
+      missionId: id,
+    }).then((exists) => Boolean(exists));
 
     if (gotRewardBefore) {
       throw createError(
@@ -267,14 +273,11 @@ export async function getAllMissions(
     const limit = parseInt(req.query.limit as string) || 10; // Default to 10 items per page
     const skip = (page - 1) * limit;
 
-    const missionsQuery = Mission.find({})
-      .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(limit)
-      .lean();
-    // Get the total count for pagination
-    const totalMissions = await Mission.countDocuments({});
-    const missions = await missionsQuery;
+    const [missions, totalMissions] = await Promise.all([
+      Mission.find({}).sort({ createdAt: -1 }).skip(skip).limit(limit).lean(),
+      Mission.countDocuments({}),
+    ]);
+
     res.status(StatusCodes.OK).json({
       success: true,
       data: missions,
@@ -299,9 +302,13 @@ export async function deleteMission(
   res: Response,
   next: NextFunction
 ) {
-  const { id } = req.params;
   try {
+    handleInputErrors(req);
+
+    const id = new mongoose.Types.ObjectId(req.params.id);
+
     await Mission.deleteOne({ _id: id });
+
     res.sendStatus(StatusCodes.NO_CONTENT);
   } catch (error) {
     next(error);

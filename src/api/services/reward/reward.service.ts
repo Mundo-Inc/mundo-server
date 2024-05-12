@@ -1,4 +1,5 @@
-import mongoose from "mongoose";
+import { StatusCodes } from "http-status-codes";
+import mongoose, { type Document } from "mongoose";
 
 import CheckIn from "../../../models/CheckIn";
 import Comment from "../../../models/Comment";
@@ -8,8 +9,8 @@ import Review from "../../../models/Review";
 import Reward from "../../../models/Reward";
 import User, { type IUser } from "../../../models/User";
 import { createError } from "../../../utilities/errorHandlers";
+import { UserActivityManager } from "../UserActivityManager";
 import logger from "../logger";
-import { addLevelUpActivity } from "../user.activity.service";
 import { eligibleForAchivement } from "./helpers/achivementEligibility";
 import { checkNewLevelupAchivements } from "./helpers/achivements";
 import { calcLevel, calcReviewReward } from "./helpers/levelCalculations";
@@ -30,8 +31,11 @@ const getValidatedEntity = async (
   switch (refType) {
     case "Homemade":
       const homemade = await Homemade.findById(refId);
-      if (!homemade || !(await validateHomemadeReward(user, homemade)))
+
+      if (!homemade || !(await validateHomemadeReward(user))) {
         return null;
+      }
+
       return { entity: homemade, rewardAmount: rewards_amounts.HOMEMADE };
     case "CheckIn":
       const checkin = await CheckIn.findById(refId);
@@ -62,7 +66,7 @@ const getValidatedEntity = async (
 };
 
 const saveRewardAndUpdateUser = async (
-  user: IUser,
+  user: IUser & Document<any, any, IUser>,
   refType: string,
   refId: mongoose.Types.ObjectId,
   amount: number,
@@ -92,7 +96,10 @@ const saveRewardAndUpdateUser = async (
     await user.save();
 
     if (oldLevel && oldLevel !== user.progress.level) {
-      await addLevelUpActivity(user._id, user.progress.level);
+      await UserActivityManager.createLevelUpActivity(
+        user,
+        user.progress.level
+      );
     }
 
     return {
@@ -105,7 +112,7 @@ const saveRewardAndUpdateUser = async (
   } catch (error) {
     throw createError(
       "error creating reward and assigning to the user" + error,
-      500
+      StatusCodes.INTERNAL_SERVER_ERROR
     );
   }
 };
@@ -120,7 +127,7 @@ export const addReward = async (
   }
 ) => {
   try {
-    const user: IUser | null = await User.findById(userId);
+    const user = await User.findById(userId);
 
     if (!reason.refId || !user) return;
 
@@ -161,12 +168,12 @@ export const addReward = async (
   }
 };
 
-export const checkForCustomAchivements = async (
+const checkForCustomAchivements = async (
   userId: mongoose.Types.ObjectId,
   activityType: string
 ) => {
   try {
-    const user: IUser | null = await User.findById(userId);
+    const user = await User.findById(userId);
 
     if (!user) return;
 

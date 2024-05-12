@@ -7,7 +7,7 @@ import Place from "../../models/Place";
 import { dStrings, dynamicMessage } from "../../strings";
 import { createError, handleInputErrors } from "../../utilities/errorHandlers";
 import { filterObjectByConfig } from "../../utilities/filtering";
-import { readPlaceBriefProjection } from "../dto/place/read-place-brief.dto";
+import PlaceProjection, { PlaceProjectionBrief } from "../dto/place";
 
 export const getEventValidation: ValidationChain[] = [param("id").isMongoId()];
 export async function getEvent(
@@ -20,13 +20,12 @@ export async function getEvent(
 
     const { id } = req.params;
 
-    const event: any = await Event.findById(id)
-      .populate("place", readPlaceBriefProjection)
+    const event = await Event.findById(id)
+      .orFail(createError(dynamicMessage(dStrings.notFound, "Event")))
+      .populate<{
+        place: PlaceProjectionBrief;
+      }>("place", PlaceProjection.brief)
       .lean();
-
-    if (!event) {
-      throw createError(dynamicMessage(dStrings.notFound, "Event"));
-    }
 
     if (!event.place) {
       throw createError(dynamicMessage(dStrings.notFound, "Place"));
@@ -34,7 +33,7 @@ export async function getEvent(
       event.place.location.geoLocation = {
         lat: event.place.location.geoLocation.coordinates[1],
         lng: event.place.location.geoLocation.coordinates[0],
-      };
+      } as any;
     }
 
     res.status(StatusCodes.OK).json({ success: true, data: event });
@@ -72,10 +71,9 @@ export async function createEvent(
 
     let eventPlace;
     if (place.id) {
-      eventPlace = await Place.findById(place.id);
-      if (!eventPlace) {
-        throw createError(dynamicMessage(dStrings.notFound, "Place"));
-      }
+      eventPlace = await Place.findById(place.id).orFail(
+        createError(dynamicMessage(dStrings.notFound, "Place"))
+      );
     } else {
       const {
         name: placeName,
@@ -105,7 +103,7 @@ export async function createEvent(
       });
     }
 
-    const eventPlaceObj = eventPlace.toObject();
+    const eventPlaceObj: any = eventPlace.toObject();
 
     eventPlaceObj.location.geoLocation = {
       lat: eventPlaceObj.location.geoLocation.coordinates[1],
@@ -120,12 +118,9 @@ export async function createEvent(
       createdBy: authUser._id,
     });
 
-    const eventObj = event.toObject();
+    const eventObj: any = event.toObject();
 
-    eventObj.place = filterObjectByConfig(
-      eventPlaceObj,
-      readPlaceBriefProjection
-    );
+    eventObj.place = filterObjectByConfig(eventPlaceObj, PlaceProjection.brief);
 
     res.status(StatusCodes.CREATED).json({ success: true, data: eventObj });
   } catch (error) {
@@ -155,7 +150,9 @@ export async function getEvents(
     }
 
     const events = await Event.find(query)
-      .populate("place", readPlaceBriefProjection)
+      .populate<{
+        place: PlaceProjectionBrief;
+      }>("place", PlaceProjection.brief)
       .lean();
 
     for (const event of events) {
@@ -166,7 +163,7 @@ export async function getEvents(
           event.place.location.geoLocation = {
             lat: event.place.location.geoLocation.coordinates[1],
             lng: event.place.location.geoLocation.coordinates[0],
-          };
+          } as any;
         }
       }
     }

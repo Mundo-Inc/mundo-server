@@ -4,26 +4,28 @@ import type { NextFunction, Request, Response } from "express";
 import { body, param, query, type ValidationChain } from "express-validator";
 import { getAuth } from "firebase-admin/auth";
 import { StatusCodes } from "http-status-codes";
+import { Types } from "mongoose";
 
 import Block from "../../models/Block";
 import CheckIn from "../../models/CheckIn";
 import CoinReward, { CoinRewardTypeEnum } from "../../models/CoinReward";
-import Follow from "../../models/Follow";
-import FollowRequest, { type IFollowRequest } from "../../models/FollowRequest";
+import Follow, { FollowStatusEnum } from "../../models/Follow";
+import FollowRequest from "../../models/FollowRequest";
 import Notification, { NotificationTypeEnum } from "../../models/Notification";
 import Place from "../../models/Place";
 import Review from "../../models/Review";
-import User, {
-  SignupMethodEnum,
-  type IUser,
-  type UserDevice,
-} from "../../models/User";
+import User, { SignupMethodEnum, type IUser } from "../../models/User";
 import strings, { dStrings as ds, dynamicMessage } from "../../strings";
+import {
+  getConnectionStatus,
+  getConnectionStatuses,
+  type ConnectionStatus,
+} from "../../utilities/connections";
 import { createError, handleInputErrors } from "../../utilities/errorHandlers";
 import { bucketName, s3 } from "../../utilities/storage";
-import UserProjection from "../dto/user/user";
+import UserProjection from "../dto/user";
 import { handleSignUp } from "../lib/profile-handlers";
-import { BrevoService } from "../services/brevo.service";
+import { BrevoService } from "../services/BrevoService";
 import logger from "../services/logger";
 import { calcRemainingXP } from "../services/reward/helpers/levelCalculations";
 import { getLevelThresholds } from "../services/reward/utils/levelupThresholds";
@@ -151,7 +153,7 @@ async function notifyReferrer(
   try {
     // Sending app notification
     await Notification.create({
-      user: referredBy,
+      user: referredBy._id,
       type: NotificationTypeEnum.REFERRAL_REWARD,
       additionalData: {
         amount,
@@ -166,6 +168,7 @@ async function notifyReferrer(
     const subject = "PhantomPhood - Referral Reward";
     const brevoService = new BrevoService();
     const referredByName = referredBy.name;
+
     await brevoService.sendTemplateEmail(
       receivers,
       subject,
@@ -206,7 +209,7 @@ export async function createUser(
 
     const { name, username, email, password, referrer } = req.body;
 
-    const existingUser = await User.findOne({
+    const existingUser = await User.exists({
       "email.address": { $regex: new RegExp(email, "i") },
     });
 
@@ -218,13 +221,12 @@ export async function createUser(
     }
 
     if (referrer) {
-      const referredBy = await User.findById(referrer);
-      if (!referredBy) {
-        throw createError(
+      const referredBy = await User.findById(referrer).orFail(
+        createError(
           dynamicMessage(ds.notFound, "Referrer"),
           StatusCodes.NOT_FOUND
-        );
-      }
+        )
+      );
       const amount = 250;
       referredBy.phantomCoins.balance += amount;
       await referredBy.save();
@@ -331,49 +333,10 @@ export async function getLeaderBoard(
       },
     ]);
 
-    const usersObject: {
-      [key: string]: {
-        followedByUser: boolean;
-        followsUser: boolean;
-      };
-    } = {};
-
-    leaderboard.forEach((user) => {
-      const userId = user._id.toString();
-      if (!usersObject[userId] && !authUser._id.equals(userId)) {
-        usersObject[userId] = {
-          followedByUser: false,
-          followsUser: false,
-        };
-      }
-    });
-
-    const followItems = await Follow.find({
-      $or: [
-        {
-          user: authUser._id,
-          target: Object.keys(usersObject),
-        },
-        {
-          target: authUser._id,
-          user: Object.keys(usersObject),
-        },
-      ],
-    })
-      .select({
-        target: 1,
-        user: 1,
-      })
-      .lean();
-
-    followItems.forEach((f) => {
-      const userId = f.user.toString();
-      if (authUser._id.equals(userId)) {
-        usersObject[f.target.toString()].followedByUser = true;
-      } else {
-        usersObject[userId].followsUser = true;
-      }
-    });
+    const usersObject = await getConnectionStatuses(
+      authUser._id,
+      leaderboard.map((u) => u._id)
+    );
 
     for (const user of leaderboard) {
       const achievements: any = {};
@@ -427,60 +390,55 @@ export async function getUser(req: Request, res: Response, next: NextFunction) {
 
     if (idType === "uid") {
       // if id type is uid -> get user by uid
-      const user: IUser | null = await User.findOne({ uid: id }).lean();
+      const user = (await User.findOne({ uid: id })
+        .orFail(
+          createError(dynamicMessage(ds.notFound, "User"), StatusCodes.CONFLICT)
+        )
+        .lean()) as IUser;
 
-      if (user) {
-        id = user._id.toString();
-      } else {
-        throw createError(
-          dynamicMessage(ds.notFound, "User"),
-          StatusCodes.NOT_FOUND
-        );
-      }
+      id = user._id.toString();
     } else if (id[0] == "@") {
       // if id starts with @ -> get user by username
-      const user: IUser | null = await User.findOne({
+      const user = (await User.findOne({
         username: {
           $regex: `^${id.slice(1)}$`,
           $options: "i",
         },
-      }).lean();
+      })
+        .orFail(
+          createError(
+            dynamicMessage(ds.notFound, "User"),
+            StatusCodes.NOT_FOUND
+          )
+        )
+        .lean()) as IUser;
 
-      if (user) {
-        id = user._id.toString();
-      } else {
-        throw createError(
-          dynamicMessage(ds.notFound, "User"),
-          StatusCodes.NOT_FOUND
-        );
-      }
+      id = user._id.toString();
     }
 
     let user: any;
-    const connectionStatus: {
-      followedByUser: boolean;
-      followsUser: boolean;
-    } = {
+    let connectionStatus: ConnectionStatus = {
       followedByUser: false,
       followsUser: false,
+      followingStatus: FollowStatusEnum.NOT_FOLLOWING,
+      followedByStatus: FollowStatusEnum.NOT_FOLLOWING,
     };
 
     if (authUser && authUser._id.equals(id)) {
       // own profile
 
       user = await User.findById(id, UserProjection.private)
+        .orFail(
+          createError(
+            dynamicMessage(ds.notFound, "User"),
+            StatusCodes.NOT_FOUND
+          )
+        )
         .populate({
           path: "progress.achievements",
           select: "type createdAt",
         })
         .lean();
-
-      if (!user) {
-        throw createError(
-          dynamicMessage(ds.notFound, "User"),
-          StatusCodes.NOT_FOUND
-        );
-      }
 
       const achievements: any = {};
       for (const achievement of user.progress.achievements) {
@@ -502,8 +460,8 @@ export async function getUser(req: Request, res: Response, next: NextFunction) {
 
       const isBlocked = await Block.findOne({
         $or: [
-          { user: id, target: authUser._id },
-          { user: authUser._id, target: id },
+          { user: new Types.ObjectId(id), target: authUser._id },
+          { user: authUser._id, target: new Types.ObjectId(id) },
         ],
       });
 
@@ -522,18 +480,17 @@ export async function getUser(req: Request, res: Response, next: NextFunction) {
       }
 
       user = await User.findById(id, UserProjection.public)
+        .orFail(
+          createError(
+            dynamicMessage(ds.notFound, "User"),
+            StatusCodes.NOT_FOUND
+          )
+        )
         .populate({
           path: "progress.achievements",
           select: "type createdAt",
         })
         .lean();
-
-      if (!user) {
-        throw createError(
-          dynamicMessage(ds.notFound, "User"),
-          StatusCodes.NOT_FOUND
-        );
-      }
 
       const achievements: any = {};
       for (const achievement of user.progress.achievements) {
@@ -551,29 +508,22 @@ export async function getUser(req: Request, res: Response, next: NextFunction) {
       }
       user.progress.achievements = Object.values(achievements);
 
-      const [followedByUser, followsUser] = await Promise.all([
-        Follow.exists({ user: authUser._id, target: id }),
-        Follow.exists({ user: id, target: authUser._id }),
-      ]);
-
-      connectionStatus.followedByUser = !!followedByUser;
-      connectionStatus.followsUser = !!followsUser;
+      connectionStatus = await getConnectionStatus(authUser._id, id);
     } else if (view === "basic") {
       // basic view
 
       user = await User.findById(id, UserProjection.public)
+        .orFail(
+          createError(
+            dynamicMessage(ds.notFound, "User"),
+            StatusCodes.NOT_FOUND
+          )
+        )
         .populate({
           path: "progress.achievements",
           select: "type createdAt",
         })
         .lean();
-
-      if (!user) {
-        throw createError(
-          dynamicMessage(ds.notFound, "User"),
-          StatusCodes.NOT_FOUND
-        );
-      }
 
       const achievements: any = {};
       for (const achievement of user.progress.achievements) {
@@ -666,14 +616,9 @@ export async function editUser(
       );
     }
 
-    const user: IUser | null = await User.findById(id);
-
-    if (!user) {
-      throw createError(
-        dynamicMessage(ds.notFound, "User"),
-        StatusCodes.NOT_FOUND
-      );
-    }
+    const user = await User.findById(id).orFail(
+      createError(dynamicMessage(ds.notFound, "User"), StatusCodes.NOT_FOUND)
+    );
 
     const { name, bio, username, removeProfileImage, eula, referrer } =
       req.body;
@@ -692,13 +637,12 @@ export async function editUser(
         throw createError("EULA must be accepted", StatusCodes.BAD_REQUEST);
       }
 
-      const referredBy = await User.findById(referrer);
-      if (!referredBy) {
-        throw createError(
+      const referredBy = await User.findById(referrer).orFail(
+        createError(
           dynamicMessage(ds.notFound, "Referrer"),
           StatusCodes.NOT_FOUND
-        );
-      }
+        )
+      );
 
       referredBy.phantomCoins.balance += 250;
       await referredBy.save();
@@ -792,13 +736,9 @@ export async function deleteUser(
         StatusCodes.FORBIDDEN
       );
     }
-    const user: IUser | null = await User.findById(id);
-    if (!user) {
-      throw createError(
-        dynamicMessage(ds.notFound, "User"),
-        StatusCodes.NOT_FOUND
-      );
-    }
+    const user = await User.findById(id).orFail(
+      createError(dynamicMessage(ds.notFound, "User"), StatusCodes.NOT_FOUND)
+    );
 
     await user.deleteOne();
 
@@ -828,17 +768,12 @@ export async function putUserPrivacy(
       throw createError("UNAUTHORIZED", StatusCodes.FORBIDDEN);
     }
 
-    const user: IUser | null = await User.findById(id);
-
-    if (!user) {
-      throw createError(
-        dynamicMessage(ds.notFound, "User"),
-        StatusCodes.NOT_FOUND
-      );
-    }
+    const user = await User.findById(id).orFail(
+      createError(dynamicMessage(ds.notFound, "User"), StatusCodes.NOT_FOUND)
+    );
 
     if (user.isPrivate && !isPrivate) {
-      const followReqs: IFollowRequest[] = await FollowRequest.find({
+      const followReqs = await FollowRequest.find({
         target: authUser._id,
       });
 
@@ -901,18 +836,13 @@ export async function putUserSettings(
           StatusCodes.BAD_REQUEST
         );
       }
-      const user: IUser | null = await User.findById(id, ["devices"]);
-      if (!user) {
-        throw createError(strings.user.notFound, StatusCodes.NOT_FOUND);
-      }
 
-      if (!user.devices) {
-        user.devices = [];
-      }
+      const user = await User.findById(id).orFail(
+        createError(dynamicMessage(ds.notFound, "User"), StatusCodes.NOT_FOUND)
+      );
 
       const found = user.devices.find(
-        (device: UserDevice) =>
-          device.apnToken === apnToken || device.fcmToken === fcmToken
+        (device) => device.apnToken === apnToken || device.fcmToken === fcmToken
       );
       if (found) {
         if (found.fcmToken !== fcmToken) {
@@ -945,21 +875,23 @@ export async function getLatestPlace(
   try {
     handleInputErrors(req);
 
-    const { id } = req.params;
     const authUser = req.user!;
 
-    let user: any;
-    if (authUser._id.equals(id) || authUser.role === "admin") {
-      user = await User.findById(id, {
-        latestPlace: true,
-      }).lean();
+    const id = new Types.ObjectId(req.params.id);
 
-      if (!user) {
-        throw createError(strings.user.notFound, StatusCodes.BAD_REQUEST);
-      }
-    } else {
-      throw createError(strings.authorization.adminOnly, StatusCodes.FORBIDDEN);
+    if (!authUser._id.equals(id) && authUser.role !== "admin") {
+      throw createError(
+        strings.authorization.accessDenied,
+        StatusCodes.FORBIDDEN
+      );
     }
+
+    const user = await User.findById(id)
+      .select<Pick<IUser, "latestPlace">>("latestPlace")
+      .orFail(
+        createError(dynamicMessage(ds.notFound, "User"), StatusCodes.NOT_FOUND)
+      )
+      .lean();
 
     if (!user.latestPlace) {
       throw createError(strings.user.noLatestPlace, StatusCodes.NOT_FOUND);

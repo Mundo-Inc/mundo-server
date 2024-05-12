@@ -1,4 +1,4 @@
-import mongoose, { Schema, type Document } from "mongoose";
+import mongoose, { Schema, type Model } from "mongoose";
 
 // Define the achievement types as string literals
 export enum AchievementTypeEnum {
@@ -30,13 +30,14 @@ export enum AchievementTypeEnum {
   // ... add more achievement types as needed
 }
 
-export interface IAchievement extends Document {
+export interface IAchievement {
+  _id: mongoose.Types.ObjectId;
   userId: mongoose.Types.ObjectId;
   type: AchievementTypeEnum;
   createdAt: Date;
 }
 
-const AchievementSchema: Schema = new Schema<IAchievement>({
+const AchievementSchema = new Schema<IAchievement>({
   userId: {
     type: Schema.Types.ObjectId,
     ref: "User",
@@ -53,5 +54,8 @@ const AchievementSchema: Schema = new Schema<IAchievement>({
   },
 });
 
-export default mongoose.models.Achievement ||
+const model =
+  (mongoose.models.Achievement as Model<IAchievement>) ||
   mongoose.model<IAchievement>("Achievement", AchievementSchema);
+
+export default model;

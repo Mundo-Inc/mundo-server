@@ -1,17 +1,14 @@
-import { StatusCodes } from "http-status-codes";
-import mongoose from "mongoose";
+import mongoose, { type Document } from "mongoose";
 
 import { dailyCoinsCFG } from "../../../config/dailyCoins";
 import CheckIn from "../../../models/CheckIn";
-import CoinReward, { CoinRewardTypeEnum } from "../../../models/CoinReward";
+import CoinReward from "../../../models/CoinReward";
 import { TaskTypeEnum, type IMission } from "../../../models/Mission";
 import Reaction from "../../../models/Reaction";
 import type { IDailyReward, IUser } from "../../../models/User";
 import UserActivity, {
   ActivityResourceTypeEnum,
 } from "../../../models/UserActivity";
-import { dStrings, dynamicMessage } from "../../../strings";
-import { createError } from "../../../utilities/errorHandlers";
 
 const DAY_HOURS = 24;
 
@@ -35,15 +32,9 @@ export function getDailyRewardAmount(dailyRewards: IDailyReward): number {
 }
 
 export async function updateUserCoinsAndStreak(
-  user: IUser,
+  user: IUser & Document<any, any, IUser>,
   rewardAmount: number
 ) {
-  if (!user) {
-    throw createError(
-      dynamicMessage(dStrings.notFound, "User"),
-      StatusCodes.NOT_FOUND
-    );
-  }
   user.phantomCoins.balance += rewardAmount;
   const now = new Date();
   user.phantomCoins.daily.streak += 1;
@@ -51,15 +42,9 @@ export async function updateUserCoinsAndStreak(
   return await user.save();
 }
 
-export async function saveCoinReward(user: IUser, rewardAmount: number) {
-  await CoinReward.create({
-    userId: user._id,
-    amount: rewardAmount,
-    coinRewardType: CoinRewardTypeEnum.daily,
-  });
-}
-
-export async function applyDailyStreakResetIfNeeded(user: IUser) {
+export async function applyDailyStreakResetIfNeeded(
+  user: IUser & Document<any, any, IUser>
+) {
   let updatedUser = user;
   if (user.phantomCoins.daily.lastClaim) {
     const now = new Date();
@@ -77,22 +62,15 @@ export async function applyDailyStreakResetIfNeeded(user: IUser) {
   return updatedUser;
 }
 
-export async function isMissionRewardClaimedByUser(
-  mission: IMission,
-  userId: mongoose.Types.ObjectId
-) {
-  const isClaimed = await CoinReward.countDocuments({
-    userId: userId,
-    missionId: mission._id,
-  });
-  return isClaimed > 0;
-}
-
 export async function populateMissionProgress(
   mission: IMission,
   userId: mongoose.Types.ObjectId
 ) {
-  const isClaimed = await isMissionRewardClaimedByUser(mission, userId);
+  const isClaimed = await CoinReward.exists({
+    userId: userId,
+    missionId: mission._id,
+  }).then((exists) => Boolean(exists));
+
   const populatedMission = {
     ...mission,
     isClaimed,

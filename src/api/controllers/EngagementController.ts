@@ -5,9 +5,8 @@ import mongoose from "mongoose";
 import Block from "../../models/Block";
 import Comment from "../../models/Comment";
 import Reaction from "../../models/Reaction";
-import type { IUser } from "../../models/User";
 import { handleInputErrors } from "../../utilities/errorHandlers";
-import UserProjection from "../dto/user/user";
+import UserProjection from "../dto/user";
 import validate from "./validators";
 
 export const getEngagementsValidation: ValidationChain[] = [
@@ -31,7 +30,7 @@ export async function getEngagements(
     handleInputErrors(req);
 
     const authUser = req.user!;
-    const { id } = req.params;
+    const id = new mongoose.Types.ObjectId(req.params.id);
 
     const before = req.query.before
       ? new Date(Number(req.query.before))
@@ -68,9 +67,9 @@ export async function getEngagements(
 }
 
 async function getComments(
-  id: string,
+  id: mongoose.Types.ObjectId,
   authId: mongoose.Types.ObjectId,
-  blockedUsers: IUser[],
+  blockedUsers: mongoose.Types.ObjectId[],
   before: Date,
   limit: number
 ) {
@@ -126,15 +125,15 @@ async function getComments(
 }
 
 async function getReactions(
-  id: string,
-  blockedUsers: IUser[],
+  id: mongoose.Types.ObjectId,
+  blockedUsers: mongoose.Types.ObjectId[],
   before: Date,
   limit: number
 ) {
   const reactions = await Reaction.aggregate([
     {
       $match: {
-        target: new mongoose.Types.ObjectId(id),
+        target: id,
         createdAt: { $lt: before },
         user: { $nin: blockedUsers },
       },

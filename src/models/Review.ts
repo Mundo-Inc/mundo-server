@@ -1,13 +1,14 @@
-import mongoose, { Schema, type CallbackError, type Document } from "mongoose";
+import mongoose, { Schema, type CallbackError, type Model } from "mongoose";
 
 import logger from "../api/services/logger";
 import Comment from "./Comment";
 import Media from "./Media";
 import Place from "./Place";
 import Reaction from "./Reaction";
-import UserActivity, { ActivityPrivacyTypeEnum } from "./UserActivity";
+import UserActivity, { ResourcePrivacyEnum } from "./UserActivity";
 
-export interface IReview extends Document {
+export interface IReview {
+  _id: mongoose.Types.ObjectId;
   writer: mongoose.Types.ObjectId;
   place: mongoose.Types.ObjectId;
   scores: {
@@ -31,10 +32,10 @@ export interface IReview extends Document {
   source?: "yelp" | "google";
   lastProcessDate?: Date;
   processError?: "rateLimit" | "notValidResponse" | "parseError";
-  // privacyType: ActivityPrivacyTypeEnum;
+  privacyType: ResourcePrivacyEnum;
 }
 
-const ReviewSchema: Schema = new Schema<IReview>(
+const ReviewSchema = new Schema<IReview>(
   {
     writer: { type: Schema.Types.ObjectId, ref: "User", required: true },
     place: { type: Schema.Types.ObjectId, ref: "Place", required: true },
@@ -66,12 +67,12 @@ const ReviewSchema: Schema = new Schema<IReview>(
       type: String,
       enum: ["rateLimit", "notValidResponse", "parseError"],
     },
-    // privacyType: {
-    //   type: String,
-    //   enum: Object.values(ActivityPrivacyTypeEnum),
-    //   default: ActivityPrivacyTypeEnum.PUBLIC,
-    //   required: true,
-    // },
+    privacyType: {
+      type: String,
+      enum: Object.values(ResourcePrivacyEnum),
+      default: ResourcePrivacyEnum.PUBLIC,
+      required: true,
+    },
   },
   { timestamps: true }
 );
@@ -116,22 +117,17 @@ async function removeReviewDependencies(review: IReview) {
 }
 
 // Middleware for review.deleteOne (document)
-ReviewSchema.pre<IReview>(
+ReviewSchema.pre(
   "deleteOne",
   { document: true, query: false },
   async function (next) {
     try {
       await removeReviewDependencies(this);
 
-      const placeObject = await Place.findById(this.place);
-      if (!placeObject) {
-        logger.warn(
-          `Place with ID ${this.place} not found. failed to reduce review count`
-        );
-        return next();
-      }
-      placeObject.activities.reviewCount -= 1;
-      await placeObject.save();
+      await Place.updateOne(
+        { _id: this.place },
+        { $inc: { "activities.reviewCount": -1 } }
+      );
 
       next();
     } catch (error) {
@@ -148,6 +144,7 @@ ReviewSchema.pre(
   async function (next) {
     try {
       const review = await this.model.findOne(this.getQuery());
+
       if (!review) {
         logger.warn("Review not found in deleteOne query middleware.");
         return next();
@@ -155,15 +152,10 @@ ReviewSchema.pre(
 
       await removeReviewDependencies(review);
 
-      const placeObject = await Place.findById(review.place);
-      if (!placeObject) {
-        logger.warn(
-          `Place with ID ${review.place} not found. failed to reduce review count`
-        );
-        return next();
-      }
-      placeObject.activities.reviewCount -= 1;
-      await placeObject.save();
+      await Place.updateOne(
+        { _id: review.place },
+        { $inc: { "activities.reviewCount": -1 } }
+      );
 
       next();
     } catch (error) {
@@ -173,5 +165,8 @@ ReviewSchema.pre(
   }
 );
 
-export default mongoose.models.Review ||
+const model =
+  (mongoose.models.Review as Model<IReview>) ||
   mongoose.model<IReview>("Review", ReviewSchema);
+
+export default model;

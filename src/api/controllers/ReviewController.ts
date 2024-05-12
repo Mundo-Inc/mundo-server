@@ -1,7 +1,7 @@
 import type { NextFunction, Request, Response } from "express";
 import { body, param, query, type ValidationChain } from "express-validator";
 import { StatusCodes } from "http-status-codes";
-import mongoose from "mongoose";
+import mongoose, { type PipelineStage } from "mongoose";
 
 import Follow from "../../models/Follow";
 import Media, { MediaTypeEnum } from "../../models/Media";
@@ -10,22 +10,19 @@ import Notification, {
   ResourceTypeEnum,
 } from "../../models/Notification";
 import Place from "../../models/Place";
-import Review, { type IReview } from "../../models/Review";
+import Review from "../../models/Review";
 import Upload from "../../models/Upload";
 import User from "../../models/User";
+import { ResourcePrivacyEnum } from "../../models/UserActivity";
 import strings, { dStrings as ds, dynamicMessage } from "../../strings";
 import { createError, handleInputErrors } from "../../utilities/errorHandlers";
 import { openAiAnalyzeReview } from "../../utilities/openAi";
+import UserProjection from "../dto/user";
+import { UserActivityManager } from "../services/UserActivityManager";
 import { reviewEarning } from "../services/earning.service";
 import logger from "../services/logger";
 import { addReward } from "../services/reward/reward.service";
-import {
-  addRecommendActivity,
-  addReviewActivity,
-} from "../services/user.activity.service";
 import validate from "./validators";
-import UserProjection from "../dto/user/user";
-// import { ActivityPrivacyTypeEnum } from "../../models/UserActivity";
 
 export const getReviewsValidation: ValidationChain[] = [
   query("writer").optional().isMongoId(),
@@ -43,24 +40,22 @@ export async function getReviews(
 
     const authUser = req.user!;
 
-    const {
-      writer,
-      sort,
-    }: {
-      writer?: string;
-      sort?: "newest" | "oldest";
-    } = req.query;
+    const writer = req.query.writer
+      ? new mongoose.Types.ObjectId(req.query.writer as string)
+      : undefined;
+    const sort = (req.query.sort as "newest" | "oldest") || "newest";
     const page = Number(req.query.page) || 1;
     const limit = Number(req.query.limit) || 10;
     const skip = (page - 1) * limit;
 
-    let pipeline: any[] = [];
+    let pipeline: PipelineStage[] = [];
 
     if (writer) {
       pipeline.push({
-        $match: { writer: new mongoose.Types.ObjectId(writer as string) },
+        $match: { writer: writer },
       });
     }
+
     pipeline.push(
       { $sort: { createdAt: sort === "oldest" ? 1 : -1 } },
       { $skip: skip },
@@ -293,7 +288,7 @@ export const createReviewValidation: ValidationChain[] = [
   body("videos.*.caption").optional().isString(),
   body("language").optional().isString(),
   body("recommend").optional().isBoolean(),
-  // body("privacyType").optional().isIn(Object.values(ActivityPrivacyTypeEnum)),
+  body("privacyType").optional().isIn(Object.values(ResourcePrivacyEnum)),
 ];
 export async function createReview(
   req: Request,
@@ -305,8 +300,11 @@ export async function createReview(
 
     const authUser = req.user!;
 
-    const { place, scores, content, images, videos, language, recommend } =
-      req.body;
+    const { scores, content, images, videos, language, recommend } = req.body;
+    const place = new mongoose.Types.ObjectId(req.body.place as string);
+    const privacyType = req.body.privacyType
+      ? (req.body.privacyType as ResourcePrivacyEnum)
+      : ResourcePrivacyEnum.PUBLIC;
 
     const writer = req.body.writer
       ? new mongoose.Types.ObjectId(req.body.writer as string)
@@ -338,80 +336,84 @@ export async function createReview(
       }
     }
 
-    const uploadIds: string[] = [];
-    const imageMediaIds: string[] = [];
-    const videoMediaIds: string[] = [];
+    const uploadIds: mongoose.Types.ObjectId[] = [];
+    const imageMediaIds: mongoose.Types.ObjectId[] = [];
+    const videoMediaIds: mongoose.Types.ObjectId[] = [];
     let hasMedia = false;
     if (images && images.length > 0) {
       hasMedia = true;
       for (const image of images) {
-        const upload = await Upload.findById(image.uploadId);
-        if (!upload) {
-          throw createError(
+        const upload = await Upload.findById(image.uploadId).orFail(
+          createError(
             dynamicMessage(ds.notFound, "Uploaded image"),
             StatusCodes.NOT_FOUND
-          );
-        }
+          )
+        );
+
         if (!authUser._id.equals(upload.user)) {
           throw createError(
             strings.authorization.otherUser,
             StatusCodes.FORBIDDEN
           );
         }
+
         if (upload.type !== "image") {
           throw createError(
             strings.upload.invalidType,
             StatusCodes.BAD_REQUEST
           );
         }
+
         uploadIds.push(image.uploadId);
 
-        await Media.create({
+        const media = await Media.create({
           type: MediaTypeEnum.image,
           user: authUser._id,
           place,
           caption: image.caption,
           src: upload.src,
-        }).then(async (media) => {
-          imageMediaIds.push(media._id);
-          await Upload.findByIdAndDelete(image.uploadId);
         });
+
+        imageMediaIds.push(media._id);
+        await Upload.findByIdAndDelete(image.uploadId);
       }
     }
     if (videos && videos.length > 0) {
       hasMedia = true;
       for (const video of videos) {
-        const upload = await Upload.findById(video.uploadId);
-        if (!upload) {
-          throw createError(
+        const upload = await Upload.findById(video.uploadId).orFail(
+          createError(
             dynamicMessage(ds.notFound, "Uploaded video"),
             StatusCodes.NOT_FOUND
-          );
-        }
+          )
+        );
+
         if (!authUser._id.equals(upload.user)) {
           throw createError(
             strings.authorization.otherUser,
             StatusCodes.FORBIDDEN
           );
         }
+
         if (upload.type !== "video") {
           throw createError(
             strings.upload.invalidType,
             StatusCodes.BAD_REQUEST
           );
         }
+
         uploadIds.push(video.uploadId);
 
-        await Media.create({
+        const media = await Media.create({
           type: MediaTypeEnum.video,
           user: authUser._id,
           place,
           caption: video.caption,
           src: upload.src,
-        }).then(async (media) => {
-          videoMediaIds.push(media._id);
-          await Upload.findByIdAndDelete(video.uploadId);
         });
+
+        videoMediaIds.push(media._id);
+        await Upload.findByIdAndDelete(video.uploadId);
       }
     }
 
@@ -435,7 +437,7 @@ export async function createReview(
           ? false
           : Boolean(recommend)
         : undefined,
-      // privacyType: privacyType || ActivityPrivacyTypeEnum.PUBLIC,
+      privacyType: privacyType,
     });
 
     logger.verbose("adding review count to the place");
@@ -480,19 +482,24 @@ export async function createReview(
 
     try {
       await reviewEarning(authUser._id, review);
-      let _act;
+      let activity;
       if (!images && !videos && !content) {
-        _act = await addRecommendActivity(authUser._id, review._id, place);
-      } else {
-        _act = await addReviewActivity(
-          authUser._id,
-          review._id,
+        // activity = await addRecommendActivity(authUser._id, review._id, place);
+        activity = await UserActivityManager.createRecommendedActivity(
+          authUser,
           place,
-          hasMedia
+          review._id
+        );
+      } else {
+        activity = await UserActivityManager.createReviewActivity(
+          authUser,
+          place,
+          hasMedia,
+          review._id
         );
       }
-      if (_act) {
-        review.userActivityId = _act._id;
+      if (activity) {
+        review.userActivityId = activity._id;
         //TODO: send notification to the follower + nearby users if they haven't seen the post.
         await review.save();
       }
@@ -528,13 +535,14 @@ export async function getReview(
   try {
     handleInputErrors(req);
 
-    const { id } = req.params;
     const authUser = req.user!;
+
+    const id = new mongoose.Types.ObjectId(req.params.id);
 
     const reviews = await Review.aggregate([
       {
         $match: {
-          _id: new mongoose.Types.ObjectId(id as string),
+          _id: id,
         },
       },
       {
@@ -730,17 +738,13 @@ export async function removeReview(
   try {
     handleInputErrors(req);
 
-    const { id } = req.params;
     const authUser = req.user!;
 
-    const review: IReview | null = await Review.findById(id);
+    const id = new mongoose.Types.ObjectId(req.params.id);
 
-    if (!review) {
-      throw createError(
-        dynamicMessage(ds.notFound, "Review"),
-        StatusCodes.NOT_FOUND
-      );
-    }
+    const review = await Review.findById(id).orFail(
+      createError(dynamicMessage(ds.notFound, "Review"), StatusCodes.NOT_FOUND)
+    );
 
     if (!authUser._id.equals(review.writer)) {
       throw createError(strings.authorization.otherUser, StatusCodes.FORBIDDEN);

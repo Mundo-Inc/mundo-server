@@ -1,5 +1,11 @@
-import * as SibApiV3Sdk from "@sendinblue/client";
-import { SendSmtpEmail, SendSmtpEmailTo } from "@sendinblue/client";
+import {
+  AccountApi,
+  AccountApiApiKeys,
+  SendSmtpEmail,
+  SendSmtpEmailToInner,
+  TransactionalEmailsApi,
+  TransactionalEmailsApiApiKeys,
+} from "@getbrevo/brevo";
 import * as fs from "fs";
 import * as hbs from "handlebars";
 import path from "path";
@@ -12,25 +18,25 @@ export interface EmailSender {
 }
 
 export class BrevoService {
-  private accountInstance: SibApiV3Sdk.AccountApi;
-  private apiInstance: SibApiV3Sdk.TransactionalEmailsApi;
+  private accountInstance: AccountApi;
+  private apiInstance: TransactionalEmailsApi;
 
   constructor() {
-    this.accountInstance = new SibApiV3Sdk.AccountApi();
+    this.accountInstance = new AccountApi();
     this.accountInstance.setApiKey(
-      SibApiV3Sdk.AccountApiApiKeys.apiKey,
+      AccountApiApiKeys.apiKey,
       process.env.BREVO_API_KEY as string
     );
 
-    this.apiInstance = new SibApiV3Sdk.TransactionalEmailsApi();
+    this.apiInstance = new TransactionalEmailsApi();
     this.apiInstance.setApiKey(
-      SibApiV3Sdk.TransactionalEmailsApiApiKeys.apiKey,
+      TransactionalEmailsApiApiKeys.apiKey,
       process.env.BREVO_API_KEY as string
     );
 
     this.accountInstance
       .getAccount()
-      .then((data) => logger.info(`Brevo service is "UP", data: ${data}`))
+      .then((_) => logger.info(`Brevo service is "UP"`))
       .catch((err) => logger.error(`Brevo service is "DOWN", err: ${err}`));
   }
 
@@ -56,7 +62,7 @@ export class BrevoService {
   }
 
   public async sendTemplateEmail(
-    receivers: SendSmtpEmailTo[],
+    receivers: SendSmtpEmailToInner[],
     subject: string,
     sender: EmailSender,
     templatePath: string,

@@ -1,4 +1,4 @@
-import mongoose, { Schema, type Document } from "mongoose";
+import mongoose, { Schema, type Model } from "mongoose";
 
 import { OtherScoresSchema, type IOtherSources } from "./Place/OtherSources";
 import { ScoresSchema, type IScores } from "./Place/Scores";
@@ -6,7 +6,8 @@ import Review from "./Review";
 
 const GOOGLE_PLACES_PERCENTAGE = 0.3;
 
-export interface IPlace extends Document {
+export interface IPlace {
+  _id: mongoose.Types.ObjectId;
   name: string;
   otherNames: string[];
   description: string;
@@ -47,7 +48,13 @@ export interface IPlace extends Document {
   isCustom?: boolean;
 }
 
-const PlaceSchema: Schema = new Schema<IPlace>(
+interface IPlaceMethods {
+  processReviews(): Promise<void>;
+}
+
+type PlaceModel = Model<IPlace, {}, IPlaceMethods>;
+
+const PlaceSchema = new Schema<IPlace, PlaceModel, IPlaceMethods>(
   {
     name: {
       type: String,
@@ -276,5 +283,8 @@ PlaceSchema.index({ "scores.phantom": -1 });
 PlaceSchema.index({ "otherSources.appleMaps._id": 1 });
 PlaceSchema.index({ "otherSources.googlePlaces._id": 1 });
 
-export default mongoose.models.Place ||
-  mongoose.model<IPlace>("Place", PlaceSchema);
+const model =
+  (mongoose.models.Place as PlaceModel) ||
+  mongoose.model<IPlace, PlaceModel>("Place", PlaceSchema);
+
+export default model;

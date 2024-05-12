@@ -1,3 +1,5 @@
+import { type Document } from "mongoose";
+
 import Achievement, { type IAchievement } from "../../../../models/Achievement";
 import type { IUser } from "../../../../models/User";
 import logger from "../../logger";
@@ -21,7 +23,7 @@ export const levelup_achivements: LevelupAcivement = {
 };
 
 export const checkNewLevelupAchivements = async (
-  user: IUser,
+  user: IUser & Document<any, any, IUser>,
   oldLevel: number,
   currentLevel: number
 ) => {

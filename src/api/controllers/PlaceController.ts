@@ -1,6 +1,6 @@
 import { PutObjectCommand } from "@aws-sdk/client-s3";
 import type { NextFunction, Request, Response } from "express";
-import { param, query, type ValidationChain } from "express-validator";
+import { query, type ValidationChain } from "express-validator";
 import { type File } from "formidable";
 import { readFileSync, unlinkSync } from "fs";
 import { StatusCodes } from "http-status-codes";
@@ -11,15 +11,7 @@ import { dStrings, dynamicMessage } from "../../strings";
 import { createError, handleInputErrors } from "../../utilities/errorHandlers";
 import { bucketName, parseForm, region, s3 } from "../../utilities/storage";
 import { areStrictlySimilar } from "../../utilities/stringHelper";
-import UserProjection from "../dto/user/user";
-import {
-  findFoursquareId,
-  findTripAdvisorId,
-  findYelpId,
-  getFoursquareRating,
-  getTripAdvisorRating,
-  getYelpData,
-} from "../services/provider.service";
+import UserProjection from "../dto/user";
 import { getDetailedPlace } from "./SinglePlaceController";
 import validate from "./validators";
 
@@ -331,90 +323,6 @@ export async function getPlaces(
   }
 }
 
-export const getThirdPartyRatingValidation: ValidationChain[] = [
-  param("id").isMongoId().withMessage("Invalid place id"),
-  param("provider")
-    .isIn(["googlePlaces", "tripAdvisor", "yelp", "foursquare", "phantomphood"])
-    .withMessage("Invalid Third Party Provider"),
-];
-export async function getThirdPartyRating(
-  req: Request,
-  res: Response,
-  next: NextFunction
-) {
-  try {
-    handleInputErrors(req);
-
-    const { id, provider } = req.params;
-    let place = await Place.findById(id);
-
-    let rating = -1;
-    let reviewCount = 0;
-    switch (provider) {
-      case "yelp":
-        const yelpId = place.otherSources?.yelp?._id;
-        if (typeof yelpId === "string" && yelpId !== "") {
-          const yelpData = await getYelpData(yelpId);
-          rating = parseFloat(yelpData.rating ?? "-1");
-          reviewCount = yelpData.review_count;
-        } else {
-          // Getting the yelpId
-          const yelpId = await findYelpId(place);
-          // Storing the yelpId
-          if (!place.otherSources) place.otherSources = {};
-          place.otherSources.yelp = { _id: yelpId };
-          await place.save();
-          // Returning the yelpRating
-          const yelpData = await getYelpData(yelpId);
-          rating = parseFloat(yelpData.rating ?? "-1");
-          reviewCount = yelpData.review_count;
-        }
-        break;
-      case "tripAdvisor":
-        const tripAdvisorId = place.otherSources?.tripAdvisor?._id;
-        if (typeof tripAdvisorId === "string" && tripAdvisorId !== "") {
-          rating = await getTripAdvisorRating(tripAdvisorId);
-        } else {
-          // Getting the tripAdvisorId
-          const tripAdvisorId = await findTripAdvisorId(place);
-          // Storing the tripAdvisorId
-          if (!place.otherSources) place.otherSources = {};
-          place.otherSources.tripAdvisor = { _id: tripAdvisorId };
-          await place.save();
-          // Returning the tripAdvisorRating
-          rating = await getTripAdvisorRating(tripAdvisorId);
-        }
-        break;
-      case "foursquare":
-        const foursquareId = place.otherSources?.foursquare?._id;
-        if (typeof foursquareId === "string" && foursquareId !== "") {
-          rating = await getFoursquareRating(foursquareId);
-        } else {
-          // Getting the id
-          const foursquareId = await findFoursquareId(place);
-          // Storing the id
-          if (!place.otherSources) place.otherSources = {};
-          place.otherSources.foursquare = { _id: foursquareId };
-          await place.save();
-          // Returning the rating
-          rating = await getFoursquareRating(foursquareId);
-        }
-        break;
-      default:
-        break;
-    }
-    res.status(StatusCodes.OK).json({
-      success: true,
-      data: {
-        rating,
-        reviewCount,
-      },
-    });
-  } catch (err) {
-    next(err);
-  }
-}
-
 async function getClusteredPlaces(
   northEast: { lat: number; lng: number },
   southWest: { lat: number; lng: number }
@@ -525,6 +433,10 @@ export async function getPlacesByContext(
     const latitude = Number(lat);
     const longitude = Number(lng);
 
+    if (typeof title !== "string") {
+      throw createError("Invalid title", StatusCodes.BAD_REQUEST);
+    }
+
     // get the place or if it doesn't exist create it
 
     const nearbyPlaces = await Place.find({
@@ -542,16 +454,12 @@ export async function getPlacesByContext(
     let matchedPlace: IPlace | null = null;
     let existing: Boolean = false;
 
-    if (typeof title === "string") {
-      for (const place of nearbyPlaces) {
-        if (areStrictlySimilar(title, place.name)) {
-          matchedPlace = place;
-          existing = true;
-          break;
-        }
+    for (const place of nearbyPlaces) {
+      if (areStrictlySimilar(title, place.name)) {
+        matchedPlace = place;
+        existing = true;
+        break;
       }
-    } else {
-      throw createError("Invalid title", StatusCodes.BAD_REQUEST);
     }
 
     if (!matchedPlace) {
@@ -572,8 +480,7 @@ export async function getPlacesByContext(
 
     if (!existing && !result.thirdParty.google?.id) {
       // If the place is new and doesn't exist on Google, delete it
-      const place = await Place.findById(matchedPlace?._id);
-      await place.deleteOne();
+      await Place.deleteOne({ _id: matchedPlace?._id });
       throw createError("Place doesn't exist", StatusCodes.NOT_FOUND);
     } else {
       res.status(StatusCodes.OK).json({

@@ -4,7 +4,7 @@ import { StatusCodes } from "http-status-codes";
 import { Types } from "mongoose";
 
 import Notification, { ResourceTypeEnum } from "../../models/Notification";
-import Reaction, { type IReaction } from "../../models/Reaction";
+import Reaction from "../../models/Reaction";
 import UserActivity from "../../models/UserActivity";
 import strings, { dStrings as ds, dynamicMessage } from "../../strings";
 import { createError, handleInputErrors } from "../../utilities/errorHandlers";
@@ -26,7 +26,9 @@ export async function createReaction(
 
     const authUser = req.user!;
 
-    const { target, type, reaction } = req.body;
+    const reaction: string = req.body.reaction;
+    const type: "emoji" | "special" = req.body.type;
+    const target = new Types.ObjectId(req.body.target as string);
 
     const existingReaction = await Reaction.findOne({
       user: authUser._id,
@@ -36,7 +38,10 @@ export async function createReaction(
     }).lean();
 
     if (existingReaction) {
-      throw createError(strings.data.duplicate, StatusCodes.CONFLICT);
+      throw createError(
+        dynamicMessage(ds.alreadyExists, "Reaction"),
+        StatusCodes.CONFLICT
+      );
     }
 
     const newReaction = await Reaction.create({
@@ -78,13 +83,29 @@ export async function deleteReaction(
     handleInputErrors(req);
 
     const authUser = req.user!;
-    const { id } = req.params;
 
-    const reaction = await findReactionById(id);
-    validateReactionOwnership(reaction, authUser._id);
+    const id = new Types.ObjectId(req.params.id);
 
-    await removeReaction(new Types.ObjectId(id), authUser._id);
-    await updateUserActivity(reaction.target);
+    const reaction = await Reaction.findById(id).orFail(
+      createError(
+        dynamicMessage(ds.notFound, "Reaction"),
+        StatusCodes.NOT_FOUND
+      )
+    );
+
+    if (!reaction.user.equals(authUser._id)) {
+      throw createError(
+        "You are not authorized to perform this action",
+        StatusCodes.FORBIDDEN
+      );
+    }
+
+    await Reaction.deleteOne({ _id: id, user: authUser._id });
+    await UserActivity.updateOne(
+      { _id: reaction.target },
+      { $inc: { "engagements.reactions": -1 } }
+    );
+
     await removeAssociatedNotifications(id);
 
     res.sendStatus(StatusCodes.NO_CONTENT);
@@ -93,49 +114,7 @@ export async function deleteReaction(
   }
 }
 
-async function findReactionById(id: string) {
-  const reaction = await Reaction.findById(id);
-  if (!reaction) {
-    logger.debug("reaction not found");
-    throw createError(
-      dynamicMessage(ds.notFound, "Reaction"),
-      StatusCodes.NOT_FOUND
-    );
-  }
-  return reaction;
-}
-
-function validateReactionOwnership(
-  reaction: IReaction,
-  userId: Types.ObjectId
-) {
-  if (!reaction.user.equals(userId)) {
-    logger.debug("not authorized for this action");
-    throw createError(strings.authorization.userOnly, StatusCodes.FORBIDDEN);
-  }
-}
-
-async function removeReaction(
-  reactionId: Types.ObjectId,
-  userId: Types.ObjectId
-) {
-  const result = await Reaction.deleteOne({ _id: reactionId, user: userId });
-  if (result.deletedCount === 0) {
-    throw createError(
-      strings.general.deleteFailed,
-      StatusCodes.INTERNAL_SERVER_ERROR
-    );
-  }
-}
-
-async function updateUserActivity(targetId: string) {
-  await UserActivity.updateOne(
-    { _id: targetId },
-    { $inc: { "engagements.reactions": -1 } }
-  );
-}
-
-async function removeAssociatedNotifications(reactionId: string) {
+async function removeAssociatedNotifications(reactionId: Types.ObjectId) {
   try {
     await Notification.deleteMany({
       resources: {

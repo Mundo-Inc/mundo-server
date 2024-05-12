@@ -1,6 +1,5 @@
 import type { ICheckIn } from "../../../../models/CheckIn";
 import type { IComment } from "../../../../models/Comment";
-import { IHomemade } from "../../../../models/Homemade";
 import type { IReaction } from "../../../../models/Reaction";
 import type { IReview } from "../../../../models/Review";
 import Reward from "../../../../models/Reward";
@@ -87,10 +86,7 @@ export const validateCheckInReward = async (user: IUser, checkIn: ICheckIn) => {
   }
 };
 
-export const validateHomemadeReward = async (
-  user: IUser,
-  homemade: IHomemade
-) => {
+export const validateHomemadeReward = async (user: IUser) => {
   try {
     // check if the user has already been rewarded for the
     const existingRewards = await Reward.find({

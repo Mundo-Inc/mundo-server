@@ -8,7 +8,7 @@ import {
   NotificationsService,
   type NotificationItemByToken,
   type NotificationItemByUser,
-} from "../services/notifications.service";
+} from "../services/NotificationsService";
 
 export const notifyUsersValidation: ValidationChain[] = [
   body("audience").isString().isIn(["all", "referredBy", "list"]),
@@ -87,7 +87,7 @@ export async function notifyUsers(
       const items: NotificationItemByToken[] = [];
 
       for (const user of users) {
-        if (user.devices && user.devices.length > 0) {
+        if (user.devices.length > 0) {
           items.push(
             ...user.devices
               .filter((d: UserDevice) => d.fcmToken)

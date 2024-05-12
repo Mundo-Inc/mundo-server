@@ -1,4 +1,4 @@
-import mongoose, { Schema, type Document } from "mongoose";
+import mongoose, { Schema, type Model } from "mongoose";
 
 export enum TaskTypeEnum {
   REVIEW = "REVIEW",
@@ -12,7 +12,8 @@ export interface ITask {
   count: number;
 }
 
-export interface IMission extends Document {
+export interface IMission {
+  _id: mongoose.Types.ObjectId;
   title: string;
   subtitle?: string;
   icon: string;
@@ -23,7 +24,7 @@ export interface IMission extends Document {
   createdAt: Date;
 }
 
-const MissionSchema: Schema = new Schema<IMission>({
+const MissionSchema = new Schema<IMission>({
   title: { type: String, required: true },
   subtitle: { type: String, required: false },
   icon: { type: String, required: true },
@@ -37,5 +38,8 @@ const MissionSchema: Schema = new Schema<IMission>({
   createdAt: { type: Date, default: Date.now },
 });
 
-export default mongoose.models.Mission ||
+const model =
+  (mongoose.models.Mission as Model<IMission>) ||
   mongoose.model<IMission>("Mission", MissionSchema);
+
+export default model;

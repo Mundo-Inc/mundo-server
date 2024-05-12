@@ -92,7 +92,7 @@ export class NotificationsService {
     for (const item of items) {
       const user: {
         _id: Types.ObjectId;
-        devices?: UserDevice[];
+        devices: UserDevice[];
       } | null = await User.findById(item.user, "devices").lean();
 
       if (!user) {
@@ -100,17 +100,15 @@ export class NotificationsService {
         continue;
       }
 
-      if (user.devices && user.devices.length > 0) {
-        for (const device of user.devices) {
-          if (device.fcmToken) {
-            tokenMessages.push({
-              tokenMessage: {
-                ...item.message,
-                token: device.fcmToken,
-              },
-              user: item.user,
-            });
-          }
+      for (const device of user.devices) {
+        if (device.fcmToken) {
+          tokenMessages.push({
+            tokenMessage: {
+              ...item.message,
+              token: device.fcmToken,
+            },
+            user: item.user,
+          });
         }
       }
     }

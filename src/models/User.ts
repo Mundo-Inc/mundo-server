@@ -1,4 +1,4 @@
-import mongoose, { Schema, type CallbackError, type Document } from "mongoose";
+import mongoose, { Schema, type CallbackError, type Model } from "mongoose";
 
 import Achievement from "./Achievement";
 import ActivitySeen from "./ActivitySeen";
@@ -48,7 +48,7 @@ const dailyRewardSchema = new Schema<IDailyReward>(
   { _id: false }
 );
 
-export interface IUser extends Document {
+export interface IUser {
   _id: mongoose.Types.ObjectId;
   accepted_eula: Date;
   uid: string;
@@ -72,7 +72,7 @@ export interface IUser extends Document {
     resetPasswordTokenExpiry?: Date;
   };
   signupMethod: string;
-  devices?: UserDevice[];
+  devices: UserDevice[];
   progress: {
     level: number;
     xp: number;
@@ -362,7 +362,7 @@ UserSchema.pre(
 
 UserSchema.pre("deleteOne", async function (next) {
   try {
-    const user: IUser | null = await this.model.findOne(this.getQuery());
+    const user = await this.model.findOne(this.getQuery());
     if (user) {
       await removeDependencies(user);
     }
@@ -372,5 +372,8 @@ UserSchema.pre("deleteOne", async function (next) {
   }
 });
 
-export default mongoose.models.User ||
+const model =
+  (mongoose.models.User as Model<IUser>) ||
   mongoose.model<IUser>("User", UserSchema);
+
+export default model;

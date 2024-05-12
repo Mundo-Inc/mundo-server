@@ -1,13 +1,14 @@
-import mongoose, { Schema, type Document } from "mongoose";
+import mongoose, { Schema, type Model, type Types } from "mongoose";
 
 import Notification, {
   NotificationTypeEnum,
   ResourceTypeEnum,
 } from "./Notification";
 
-export interface IFollowRequest extends Document {
-  user: mongoose.Types.ObjectId;
-  target: mongoose.Types.ObjectId;
+export interface IFollowRequest {
+  _id: Types.ObjectId;
+  user: Types.ObjectId;
+  target: Types.ObjectId;
   createdAt: Date;
 }
 
@@ -46,5 +47,8 @@ FollowRequestSchema.post("save", async function (doc, next) {
   next();
 });
 
-export default mongoose.models.FollowRequest ||
+const model =
+  (mongoose.models.FollowRequest as Model<IFollowRequest>) ||
   mongoose.model<IFollowRequest>("FollowRequest", FollowRequestSchema);
+
+export default model;

@@ -4,10 +4,14 @@ import type { NextFunction, Request, Response } from "express";
 import { body, query, type ValidationChain } from "express-validator";
 import { StatusCodes } from "http-status-codes";
 
-import User, { SignupMethodEnum, type IUser } from "../../models/User";
-import strings, { dStrings as ds, dynamicMessage } from "../../strings";
+import User, { SignupMethodEnum } from "../../models/User";
+import strings, {
+  dStrings,
+  dStrings as ds,
+  dynamicMessage,
+} from "../../strings";
 import { createError, handleInputErrors } from "../../utilities/errorHandlers";
-import { BrevoService } from "../services/brevo.service";
+import { BrevoService } from "../services/BrevoService";
 import validate from "./validators";
 
 export const resetPasswordValidation: ValidationChain[] = [
@@ -24,9 +28,11 @@ export async function resetPassword(
   try {
     handleInputErrors(req);
 
-    const { action, email } = req.body;
+    const { email } = req.body;
+    const action: "generate" | "update" = req.body.action;
+
     if (action === "generate") {
-      const user: IUser | null = await User.findOne({
+      const user = await User.findOne({
         "email.address": {
           $regex: new RegExp(email, "i"),
         },
@@ -93,7 +99,7 @@ export async function resetPassword(
     } else if (action === "update") {
       // to update the password
       const { newPassword, resetPasswordToken, email } = req.body;
-      const user: IUser | null = await User.findOne({
+      const user = await User.findOne({
         "email.address": {
           $regex: new RegExp(email, "i"),
         },
@@ -152,9 +158,6 @@ export async function resetPassword(
   }
 }
 
-/**
- * required auth
- */
 export async function sendEmailVerification(
   req: Request,
   res: Response,
@@ -165,14 +168,9 @@ export async function sendEmailVerification(
 
     const authUser = req.user!;
 
-    const user: IUser | null = await User.findById(authUser._id);
-
-    if (!user) {
-      throw createError(
-        dynamicMessage(ds.notFound, "User"),
-        StatusCodes.NOT_FOUND
-      );
-    }
+    const user = await User.findById(authUser._id).orFail(
+      createError(dynamicMessage(ds.notFound, "User"), StatusCodes.NOT_FOUND)
+    );
 
     if (user.email.verified) {
       throw createError(strings.mail.alreadyVerified, StatusCodes.BAD_REQUEST);
@@ -227,11 +225,11 @@ export async function sendEmailVerification(
   }
 }
 
-/**
- * required auth
- */
 export const verifyEmailValidation: ValidationChain[] = [
-  query("token").notEmpty().withMessage(strings.mail.tokenIsRequired),
+  query("token")
+    .isString()
+    .notEmpty()
+    .withMessage(strings.mail.tokenIsRequired),
 ];
 export async function verifyEmail(
   req: Request,
@@ -242,12 +240,15 @@ export async function verifyEmail(
     handleInputErrors(req);
 
     const authUser = req.user!;
-    const { token } = req.query;
 
-    const user: IUser | null = await User.findById(authUser._id);
-    if (!user) {
-      throw createError(strings.user.notFound, StatusCodes.NOT_FOUND);
-    }
+    const token = req.query.token as string;
+
+    const user = await User.findById(authUser._id).orFail(
+      createError(
+        dynamicMessage(dStrings.notFound, "User"),
+        StatusCodes.NOT_FOUND
+      )
+    );
 
     if (user.email.verified) {
       throw createError(strings.mail.alreadyVerified, StatusCodes.BAD_REQUEST);
@@ -270,15 +271,18 @@ export async function verifyEmail(
       );
     }
 
-    if (token === user.token.verificationToken) {
-      await User.updateOne(
-        { _id: authUser._id },
-        { $set: { "email.verified": true } }
-      );
-      res.status(StatusCodes.OK).json({ message: strings.mail.emailVerified });
-    } else {
+    if (token !== user.token.verificationToken) {
       throw createError(strings.mail.invalidToken, StatusCodes.BAD_REQUEST);
     }
+
+    await User.updateOne(
+      { _id: authUser._id },
+      { $set: { "email.verified": true } }
+    );
+
+    res
+      .status(StatusCodes.OK)
+      .json({ success: true, message: strings.mail.emailVerified });
   } catch (err) {
     next(err);
   }

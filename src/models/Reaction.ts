@@ -1,4 +1,4 @@
-import mongoose, { Schema, type CallbackError, type Document } from "mongoose";
+import mongoose, { Schema, type CallbackError, type Model } from "mongoose";
 
 import logger from "../api/services/logger";
 import Notification, {
@@ -7,7 +7,8 @@ import Notification, {
 } from "./Notification";
 import UserActivity from "./UserActivity";
 
-export interface IReaction extends Document {
+export interface IReaction {
+  _id: mongoose.Types.ObjectId;
   user: mongoose.Types.ObjectId;
   target: mongoose.Types.ObjectId;
   type: "emoji" | "special";
@@ -65,7 +66,7 @@ async function removeDependencies(reaction: IReaction) {
   );
 }
 
-ReactionSchema.pre<IReaction>(
+ReactionSchema.pre(
   "deleteOne",
   { document: true, query: false },
   async function (next) {
@@ -107,5 +108,8 @@ ReactionSchema.post("save", async function (doc, next) {
   next();
 });
 
-export default mongoose.models.Reaction ||
+const model =
+  (mongoose.models.Reaction as Model<IReaction>) ||
   mongoose.model<IReaction>("Reaction", ReactionSchema);
+
+export default model;

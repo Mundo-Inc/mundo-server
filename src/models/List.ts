@@ -1,11 +1,12 @@
-import mongoose, { Schema, type Document } from "mongoose";
+import mongoose, { Schema, type Model } from "mongoose";
 
 export enum AccessEnum {
   view = "view",
   edit = "edit",
 }
 
-export interface IList extends Document {
+export interface IList {
+  _id: mongoose.Types.ObjectId;
   name: string;
   icon: string;
   places: {
@@ -53,19 +54,22 @@ const ListSchema = new Schema<IList>(
       ],
       default: [],
     },
-    collaborators: [
-      {
-        user: {
-          type: Schema.Types.ObjectId,
-          ref: "User",
+    collaborators: {
+      type: [
+        {
+          user: {
+            type: Schema.Types.ObjectId,
+            ref: "User",
+          },
+          access: {
+            type: String,
+            default: AccessEnum.edit,
+            enum: Object.values(AccessEnum),
+          },
         },
-        access: {
-          type: String,
-          default: AccessEnum.edit,
-          enum: Object.values(AccessEnum),
-        },
-      },
-    ],
+      ],
+      default: [],
+    },
     isPrivate: {
       type: Boolean,
       default: false,
@@ -74,7 +78,7 @@ const ListSchema = new Schema<IList>(
   { timestamps: true }
 );
 
-ListSchema.pre<IList>("save", function (next) {
+ListSchema.pre("save", function (next) {
   // Check if this is a new document and it doesn't have the owner in the collaborators
   if (this.isNew) {
     const ownerAsCollaborator = this.collaborators.find((collaborator) =>
@@ -90,5 +94,8 @@ ListSchema.pre<IList>("save", function (next) {
   next();
 });
 
-export default mongoose.models.List ||
+const model =
+  (mongoose.models.List as Model<IList>) ||
   mongoose.model<IList>("List", ListSchema);
+
+export default model;

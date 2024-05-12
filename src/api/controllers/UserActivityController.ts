@@ -6,11 +6,12 @@ import mongoose, { Types, type FilterQuery } from "mongoose";
 import Comment from "../../models/Comment";
 import Follow from "../../models/Follow";
 import Reaction from "../../models/Reaction";
-import User, { type IUser } from "../../models/User";
+import User from "../../models/User";
 import UserActivity, { type IUserActivity } from "../../models/UserActivity";
-import strings from "../../strings";
+import { dStrings, dynamicMessage } from "../../strings";
+import { getConnectionStatuses } from "../../utilities/connections";
 import { createError, handleInputErrors } from "../../utilities/errorHandlers";
-import UserProjection from "../dto/user/user";
+import UserProjection from "../dto/user";
 import { getResourceInfo } from "../services/feed.service";
 import validate from "./validators";
 
@@ -23,10 +24,7 @@ export const getActivitiesOfaUserValidation: ValidationChain[] = [
       "NEW_CHECKIN",
       "NEW_REVIEW",
       "NEW_RECOMMEND",
-      "REACT_TO_REVIEW",
-      "REACT_TO_PLACE",
       "ADD_PLACE",
-      "GOT_BADGE",
       "LEVEL_UP",
       "FOLLOWING",
     ]),
@@ -49,18 +47,23 @@ export async function getActivitiesOfaUser(
     const limit = Number(req.query.limit) || 20;
 
     //PRIVACY
-    const userObject: IUser | null = await User.findById(userId);
-    if (userObject) {
-      const isFollowed = await Follow.countDocuments({
+    const userObject = await User.findById(userId).orFail(
+      createError(
+        dynamicMessage(dStrings.notFound, "User"),
+        StatusCodes.NOT_FOUND
+      )
+    );
+
+    if (userObject.isPrivate) {
+      await Follow.exists({
         user: authUser._id,
         target: userObject._id,
-      });
-      if (!isFollowed && userObject.isPrivate) {
-        throw createError(
-          strings.authorization.accessDenied,
-          StatusCodes.UNAUTHORIZED
-        );
-      }
+      }).orFail(
+        createError(
+          "You are not allowed to view this user's activities.",
+          StatusCodes.FORBIDDEN
+        )
+      );
     }
 
     let query: FilterQuery<IUserActivity> = {
@@ -81,6 +84,7 @@ export async function getActivitiesOfaUser(
     ]);
 
     const result = [];
+    const userIds: Types.ObjectId[] = [];
 
     for (const activity of userActivities) {
       const [
@@ -88,8 +92,6 @@ export async function getActivitiesOfaUser(
         reactions,
         comments,
         commentsCount,
-        followedByUser,
-        followsUser,
       ] = await Promise.all([
         getResourceInfo(activity as IUserActivity),
         getReactionsOfActivity(activity._id as mongoose.Types.ObjectId, userId),
@@ -97,20 +99,9 @@ export async function getActivitiesOfaUser(
         Comment.countDocuments({
           userActivity: activity._id,
         }),
-        !authUser._id.equals(userId)
-          ? Follow.exists({ user: authUser._id, target: userId })
-          : null,
-        !authUser._id.equals(userId)
-          ? Follow.exists({ user: userId, target: authUser._id })
-          : null,
       ]);
 
-      if (!authUser._id.equals(userId)) {
-        userInfo.connectionStatus = {
-          followedByUser: !!followedByUser,
-          followsUser: !!followsUser,
-        };
-      }
+      userIds.push(userInfo._id);
 
       result.push({
         _id: activity._id,
@@ -119,7 +110,9 @@ export async function getActivitiesOfaUser(
         activityType: activity.activityType,
         resourceType: activity.resourceType,
         resource: resourceInfo,
-        privacyType: activity.privacyType,
+        privacyType: "PUBLIC", // TODO: remove on next update
+        resourcePrivacy: activity.resourcePrivacy,
+        isAccountPrivate: activity.isAccountPrivate,
         createdAt: activity.createdAt,
         updatedAt: activity.updatedAt,
         reactions: reactions[0],
@@ -128,9 +121,16 @@ export async function getActivitiesOfaUser(
       });
     }
 
+    const usersObject = await getConnectionStatuses(authUser._id, userIds);
+
+    for (const activity of result) {
+      activity.user.connectionStatus =
+        usersObject[activity.user._id.toString()];
+    }
+
     res.status(StatusCodes.OK).json({
       success: true,
-      data: result || [],
+      data: result,
       pagination: {
         totalCount: total,
         page,

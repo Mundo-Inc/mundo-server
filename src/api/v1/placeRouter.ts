@@ -9,8 +9,6 @@ import {
   getPlacesValidation,
   getPlacesWithinBoundaries,
   getPlacesWithinBoundariesValidation,
-  getThirdPartyRating,
-  getThirdPartyRatingValidation,
 } from "../controllers/PlaceController";
 import {
   getExistInLists,
@@ -62,10 +60,6 @@ router
     getPlaceReviewsValidation,
     getPlaceReviews
   );
-
-router
-  .route("/:id/rating/:provider")
-  .get(express.json(), getThirdPartyRatingValidation, getThirdPartyRating);
 
 router
   .route("/:id/lists")

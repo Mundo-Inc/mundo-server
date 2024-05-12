@@ -5,8 +5,6 @@ import {
   getEngagementsValidation,
 } from "../controllers/EngagementController";
 import {
-  activitySeen,
-  activitySeenValidation,
   getActivity,
   getActivityValidation,
   getComments,
@@ -21,10 +19,8 @@ router.use(express.json());
 
 router.get("/", authMiddleware, getFeedValidation, getFeed);
 
-router
-  .route("/:id")
-  .get(authMiddleware, getActivityValidation, getActivity)
-  .post(authMiddleware, activitySeenValidation, activitySeen);
+router.route("/:id").get(authMiddleware, getActivityValidation, getActivity);
+// .post(authMiddleware, activitySeenValidation, activitySeen); // TODO: This endpoint needs to be fixed
 
 router.get("/:id/comments", authMiddleware, getCommentsValidation, getComments);
 

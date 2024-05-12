@@ -3,12 +3,12 @@ import { body, param, type ValidationChain } from "express-validator";
 import { StatusCodes } from "http-status-codes";
 import mongoose from "mongoose";
 
-import Comment, { type IComment } from "../../models/Comment";
-import User, { type IUser } from "../../models/User";
+import Comment from "../../models/Comment";
+import User from "../../models/User";
 import UserActivity from "../../models/UserActivity";
 import strings, { dStrings as ds, dynamicMessage } from "../../strings";
 import { createError, handleInputErrors } from "../../utilities/errorHandlers";
-import UserProjection, { type UserEssentialsKeys } from "../dto/user/user";
+import UserProjection, { type UserProjectionEssentials } from "../dto/user";
 import { addReward } from "../services/reward/reward.service";
 
 export const createCommentValidation: ValidationChain[] = [
@@ -23,35 +23,29 @@ export async function createComment(
   try {
     handleInputErrors(req);
 
-    const { content, activity } = req.body;
+    const { content } = req.body;
+    const activityId = new mongoose.Types.ObjectId(req.body.activity as string);
     const authUser = req.user!;
 
-    const user: Pick<IUser, UserEssentialsKeys> | null = await User.findById(
-      authUser._id,
-      UserProjection.essentials
-    ).lean();
+    const user = await User.findById(authUser._id)
+      .select<UserProjectionEssentials>(UserProjection.essentials)
+      .orFail(
+        createError(dynamicMessage(ds.notFound, "User"), StatusCodes.NOT_FOUND)
+      )
+      .lean();
 
-    if (!user) {
-      throw createError(
-        dynamicMessage(ds.notFound, "User"),
+    await UserActivity.exists({ _id: activityId }).orFail(
+      createError(
+        dynamicMessage(ds.notFound, "Activity"),
         StatusCodes.NOT_FOUND
-      );
-    }
-
-    await UserActivity.findById(activity).then((userActivity) => {
-      if (!userActivity) {
-        throw createError(
-          dynamicMessage(ds.notFound, "Activity"),
-          StatusCodes.NOT_FOUND
-        );
-      }
-    });
+      )
+    );
 
     const body: {
       [key: string]: any;
     } = {
       author: authUser._id,
-      userActivity: activity,
+      userActivity: activityId,
       content,
     };
 
@@ -69,12 +63,12 @@ export async function createComment(
           continue;
         }
 
-        const user: Pick<IUser, "_id" | "username"> | null = await User.findOne(
-          {
-            username: new RegExp(`^${mention.slice(1)}$`, "i"),
-          },
-          ["_id", "username"]
-        );
+        const user = await User.findOne({
+          username: new RegExp(`^${mention.slice(1)}$`, "i"),
+        }).select<{
+          _id: mongoose.Types.ObjectId;
+          username: string;
+        }>("_id username");
 
         if (user) {
           toAdd.push({
@@ -91,11 +85,9 @@ export async function createComment(
 
     const comment = await Comment.create(body);
 
-    let commentObj = comment.toObject();
-
     // update comments count in user activity
     await UserActivity.updateOne(
-      { _id: activity },
+      { _id: activityId },
       { $inc: { "engagements.comments": 1 } }
     );
 
@@ -103,15 +95,20 @@ export async function createComment(
     const reward = await addReward(user._id, {
       refType: "Comment",
       refId: comment._id,
-      userActivityId: activity,
+      userActivityId: activityId,
     });
-    commentObj.author = user;
-    commentObj.likes = 0;
-    commentObj.liked = false;
-    commentObj.status = undefined;
-    res
-      .status(StatusCodes.CREATED)
-      .json({ success: true, data: commentObj, reward: reward });
+
+    res.status(StatusCodes.CREATED).json({
+      success: true,
+      data: {
+        ...comment.toObject(),
+        author: user,
+        likes: 0,
+        liked: false,
+        status: undefined,
+      },
+      reward: reward,
+    });
   } catch (err) {
     next(err);
   }
@@ -129,15 +126,12 @@ export async function likeComment(
     handleInputErrors(req);
 
     const authUser = req.user!;
-    const { id } = req.params;
 
-    const comment: IComment | null = await Comment.findById(id);
-    if (!comment) {
-      throw createError(
-        dynamicMessage(ds.notFound, "Comment"),
-        StatusCodes.NOT_FOUND
-      );
-    }
+    const id = new mongoose.Types.ObjectId(req.params.id);
+
+    const comment = await Comment.findById(id).orFail(
+      createError(dynamicMessage(ds.notFound, "Comment"), StatusCodes.NOT_FOUND)
+    );
 
     if (
       comment.likes.find((l: mongoose.Types.ObjectId) => authUser._id.equals(l))
@@ -183,27 +177,19 @@ export async function deleteCommentLike(
     handleInputErrors(req);
 
     const authUser = req.user!;
-    const { id } = req.params;
 
-    const comment: IComment | null = await Comment.findById(id);
-    if (!comment) {
-      throw createError(
-        dynamicMessage(ds.notFound, "Comment"),
-        StatusCodes.NOT_FOUND
-      );
-    }
+    const id = new mongoose.Types.ObjectId(req.params.id);
 
-    if (
-      !comment.likes.find((l: mongoose.Types.ObjectId) =>
-        authUser._id.equals(l)
-      )
-    ) {
+    const comment = await Comment.findById(id).orFail(
+      createError(dynamicMessage(ds.notFound, "Comment"), StatusCodes.NOT_FOUND)
+    );
+
+    if (!comment.likes.some((l) => authUser._id.equals(l))) {
       throw createError(strings.comments.notLiked, StatusCodes.BAD_REQUEST);
     }
 
-    comment.likes = comment.likes.filter(
-      (l: mongoose.Types.ObjectId) => !authUser._id.equals(l)
-    );
+    comment.likes = comment.likes.filter((l) => !authUser._id.equals(l));
+
     await comment.save();
 
     await comment.populate({

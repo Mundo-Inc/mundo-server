@@ -13,7 +13,7 @@ import User from "../../models/User";
 import { dStrings as ds, dynamicMessage } from "../../strings";
 import { createError, handleInputErrors } from "../../utilities/errorHandlers";
 import validate from "./validators";
-import UserProjection from "../dto/user/user";
+import UserProjection from "../dto/user";
 
 export const getUsersValidation: ValidationChain[] = [
   query("signupMethod").optional(),

@@ -4,9 +4,10 @@ import { StatusCodes } from "http-status-codes";
 import jwt from "jsonwebtoken";
 
 import { config } from "../../config";
-import User, { type IUser } from "../../models/User";
-import UserProjection, { type UserPrivateKeys } from "../dto/user/user";
+import User from "../../models/User";
 import { createError } from "../../utilities/errorHandlers";
+import UserProjection, { type UserProjectionPrivate } from "../dto/user";
+import { dStrings, dynamicMessage } from "../../strings";
 
 interface DecodedUser {
   userId: string;
@@ -22,7 +23,7 @@ async function verifyAndFetchUser(req: Request) {
     throw createError("Token is required", StatusCodes.BAD_REQUEST);
   }
 
-  let user: Pick<IUser, UserPrivateKeys> | null = null;
+  let user: UserProjectionPrivate | null = null;
 
   try {
     const decoded = jwt.decode(token, { complete: true });
@@ -35,31 +36,23 @@ async function verifyAndFetchUser(req: Request) {
     ) {
       const firebaseUser = await getAuth().verifyIdToken(token);
 
-      user = await User.findOne(
-        {
-          uid: firebaseUser.uid,
-        },
-        UserProjection.private
-      ).lean();
+      user = await User.findOne({
+        uid: firebaseUser.uid,
+      })
+        .select<UserProjectionPrivate>(UserProjection.private)
+        .lean();
     } else {
       const oldTokenPayload = jwt.verify(
         token,
         config.JWT_SECRET
       ) as DecodedUser;
 
-      user = await User.findOne(
-        {
-          uid: oldTokenPayload.userId,
-        },
-        UserProjection.private
-      ).lean();
+      user = await User.findById(oldTokenPayload.userId)
+        .select<UserProjectionPrivate>(UserProjection.private)
+        .lean();
     }
   } catch (err) {
     throw createError("Invalid or expired token", StatusCodes.UNAUTHORIZED);
-  }
-
-  if (!user) {
-    throw createError("User not found", StatusCodes.NOT_FOUND);
   }
 
   return user;
@@ -71,7 +64,13 @@ export async function authMiddleware(
   next: NextFunction
 ) {
   try {
-    req.user = await verifyAndFetchUser(req);
+    const user = await verifyAndFetchUser(req);
+
+    if (!user) {
+      throw createError("Unauthorized", StatusCodes.UNAUTHORIZED);
+    }
+
+    req.user = user;
 
     next();
   } catch (err) {
@@ -101,6 +100,10 @@ export async function adminAuthMiddleware(
   try {
     const user = await verifyAndFetchUser(req);
 
+    if (!user) {
+      throw createError("Unauthorized", StatusCodes.UNAUTHORIZED);
+    }
+
     if (user.role !== "admin") {
       throw createError("Insufficient Privileges", StatusCodes.UNAUTHORIZED);
     }
@@ -116,7 +119,7 @@ export async function adminAuthMiddleware(
 declare global {
   namespace Express {
     interface Request {
-      user?: Pick<IUser, UserPrivateKeys>;
+      user: UserProjectionPrivate | null;
     }
   }
 }

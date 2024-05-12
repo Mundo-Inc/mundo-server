@@ -1,24 +1,17 @@
 const strings = {
   server: {
     internalError: "Internal server error",
-    methodNotAllowed: "Method not allowed",
     invalidAction:
       "The action you have specified is not supported. Please use a valid action.",
   },
   validations: {
-    emailRequired: "Email is required",
-    idRequired: "Id is required",
-    invalidId: "Invalid id",
     missRequiredFields: "Missing required fields",
     invalidType: "Invalid type",
     invalidUsername:
       "Username can only contain letters, numbers and underscores",
     invalidUsernameLength: "Username must be between 5 and 20 characters",
-    shortContent: "Short content",
-    longContent: "Long content",
   },
   authorization: {
-    adminOnly: "This route is only for admin users",
     otherUser: "Not authorized to perform this action for other user",
     userOnly: "Not authorized to perform this action",
     loginRequired: "Login required",
@@ -28,12 +21,6 @@ const strings = {
   comments: {
     alreadyLiked: "You have already liked this comment",
     notLiked: "You have not liked this comment",
-  },
-  general: {
-    itemNotExists: "Item does not exist",
-    updateSuccess: "Update successful",
-    deleteSuccess: "Delete successful",
-    deleteFailed: "Delete failed",
   },
   media: {
     notProvided: "Media not provided",
@@ -45,7 +32,6 @@ const strings = {
     resetPassLinkInvalid: "This password reset link is invalid or has expired.",
     tokenIsInvalid: "Provided token for reset password is invalid.",
     passwordReset: "Password has beed reset and updated.",
-    passwordResetTokenAccepted: "Password reset token is valid and accepted.",
     resetPasswordWaiting:
       "You must wait 1 minute between sending reset password emails.",
     userNotRequestedResetPassword: "User has not requested reset password.",
@@ -58,57 +44,24 @@ const strings = {
     alreadyVerified: "This email is already verified",
     verifyLinkExpired: "Verification link has expired",
   },
-  category: {
-    alreadyExists: "Category already exists",
-  },
-  follows: {
-    alreadyExists: "Follow already exists",
-    notFound: "Follow not found",
-  },
-  followRequest: {
-    notFound: "Follow Request not found",
-  },
   blocks: {
-    alreadyExists: "Block already exists",
-    notFound: "Block not found",
     user: {
       isBlocked: "You have blocked this user",
       hasBlocked: "This user has blocked you",
     },
   },
   user: {
-    notFound: "User not found",
     noLatestPlace: "No latest place",
     usernameTaken: "Username is already taken",
-  },
-  place: {
-    notFound: "Place not found",
-    alreadyExists: "Place already exists",
-  },
-  reaction: {
-    notFound: "Reaction not found",
-    alreadyExists: "Reaction already exists",
   },
   upload: {
     invalidFile: "Invalid file",
     invalidType: "Invalid file type",
   },
   review: {
-    notFound: "Review not found",
     invalidScore: "Invalid score provided",
     invalidScoreKey: "Invalid score key provided",
     invalidScoreValue: "Invalid score value",
-    missingType: "Missing type",
-  },
-  feed: {
-    notFound: "Feed not found",
-    alreadyExists: "Feed already exists",
-    activitySeenUpdated: "Activity-Seen has been updated",
-  },
-  data: {
-    duplicate: "Data already exists",
-    notFound: "Data not found",
-    noResult: "No result",
   },
 };
 export default strings;

@@ -1,6 +1,7 @@
+import "dotenv/config";
+
 import cookieParser from "cookie-parser";
 import cors from "cors";
-import "dotenv/config";
 import express from "express";
 import rateLimit from "express-rate-limit";
 import helmet from "helmet";
@@ -21,7 +22,7 @@ app.set("trust proxy", 1); // If there's one proxy in front of your app
 const limiter = rateLimit({
   windowMs: 60 * 1000, // 1 minute
   max: 60,
-  message: "Too many requests.",
+  standardHeaders: true,
 });
 
 app.use(cors());

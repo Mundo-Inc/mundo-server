@@ -8,10 +8,15 @@ export const slackChannels = {
 export async function sendSlackMessage(
   channel: keyof typeof slackChannels,
   message: string,
-  image?: string
+  image?: string,
+  sendInDevEnvironment: boolean = false
 ) {
   let prefix = "";
-  if (process.env.MODE === "development") {
+  if (process.env.NODE_ENV !== "production") {
+    if (!sendInDevEnvironment) {
+      return;
+    }
+
     channel = "devAssistant";
     prefix = ":technologist: From local dev environment\n\n";
   }

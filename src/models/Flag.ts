@@ -1,4 +1,4 @@
-import mongoose, { Schema, type Document } from "mongoose"; // Corrected the import statement
+import mongoose, { Schema, type Model } from "mongoose"; // Corrected the import statement
 
 // Flag reasons
 export enum FlagTypeEnum {
@@ -32,7 +32,8 @@ interface AdminAction {
   createdAt: Date;
 }
 
-export interface IFlag extends Document {
+export interface IFlag {
+  _id: mongoose.Types.ObjectId;
   user: mongoose.Types.ObjectId;
   target: mongoose.Types.ObjectId;
   targetType: TargetTypeEnum;
@@ -100,4 +101,8 @@ const FlagSchema = new Schema<IFlag>(
 
 FlagSchema.index({ user: 1, target: 1 });
 
-export default mongoose.model<IFlag>("Flag", FlagSchema);
+const model =
+  (mongoose.models.Flag as Model<IFlag>) ||
+  mongoose.model<IFlag>("Flag", FlagSchema);
+
+export default model;

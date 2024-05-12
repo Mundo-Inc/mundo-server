@@ -1,6 +1,7 @@
 import type { NextFunction, Request, Response } from "express";
 import { param, type ValidationChain } from "express-validator";
 import { StatusCodes } from "http-status-codes";
+import mongoose from "mongoose";
 
 import {
   ProfileCover,
@@ -11,8 +12,8 @@ import {
 import ProfileDecorationRedemption, {
   ProfileDecorationEnum,
 } from "../../models/ProfileDecorationRedemption";
-import User, { type IUser } from "../../models/User";
-import strings, { dStrings, dynamicMessage } from "../../strings";
+import User from "../../models/User";
+import { dStrings, dynamicMessage } from "../../strings";
 import { createError, handleInputErrors } from "../../utilities/errorHandlers";
 
 export const getDecorationsValidation: ValidationChain[] = [];
@@ -24,11 +25,9 @@ export async function getDecorations(
 ) {
   try {
     handleInputErrors(req);
+
     const authUser = req.user!;
-    const user: IUser | null = await User.findById(authUser._id);
-    if (!user) {
-      throw createError(strings.user.notFound, StatusCodes.NOT_FOUND);
-    }
+
     const frames = await ProfileFrame.find({});
     const covers = await ProfileCover.find({});
     const decorations = {
@@ -53,14 +52,13 @@ export async function getDecorationRedemption(
 ) {
   try {
     handleInputErrors(req);
+
     const authUser = req.user!;
-    const user: IUser | null = await User.findById(authUser._id);
-    if (!user) {
-      throw createError(strings.user.notFound, StatusCodes.NOT_FOUND);
-    }
+
     const decorationRedemptions = await ProfileDecorationRedemption.find({
-      userId: user._id,
+      userId: authUser._id,
     });
+
     res.status(StatusCodes.OK).json({
       success: true,
       data: decorationRedemptions,
@@ -83,23 +81,30 @@ export async function redeemDecoration(
   try {
     handleInputErrors(req);
     const authUser = req.user!;
-    const { id, type } = req.params;
-    const user: IUser | null = await User.findById(authUser._id);
-    if (!user) {
-      throw createError(strings.user.notFound, StatusCodes.NOT_FOUND);
-    }
+
+    const type = req.params.type as ProfileDecorationEnum;
+    const id = new mongoose.Types.ObjectId(req.params.id);
+
+    const user = await User.findById(authUser._id).orFail(
+      createError(
+        dynamicMessage(dStrings.notFound, "User"),
+        StatusCodes.NOT_FOUND
+      )
+    );
 
     let decoration: IProfileCover | IProfileFrame | null = null;
 
     if (type === ProfileDecorationEnum.PROFILE_COVER) {
-      const cover: IProfileCover | null = await ProfileCover.findById(id);
+      const cover = await ProfileCover.findById(id).orFail(
+        createError("decoration not found", StatusCodes.NOT_FOUND)
+      );
       decoration = cover;
     } else if (type === ProfileDecorationEnum.PROFILE_FRAME) {
-      const frame: IProfileFrame | null = await ProfileFrame.findById(id);
+      const frame = await ProfileFrame.findById(id).orFail(
+        createError("decoration not found", StatusCodes.NOT_FOUND)
+      );
       decoration = frame;
-    }
-
-    if (!decoration) {
+    } else {
       throw createError("decoration not found", StatusCodes.NOT_FOUND);
     }
 
@@ -110,11 +115,11 @@ export async function redeemDecoration(
       throw createError("insufficient balance", StatusCodes.BAD_REQUEST);
     }
 
-    const alreadyBought = await ProfileDecorationRedemption.findOne({
+    const alreadyBought = await ProfileDecorationRedemption.exists({
       userId: user._id,
       decorationId: decoration._id,
       decorationType: type,
-    });
+    }).then((exists) => Boolean(exists));
 
     if (alreadyBought) {
       throw createError(
@@ -158,43 +163,45 @@ export async function activateDecoration(
 ) {
   try {
     handleInputErrors(req);
-    const authUser = req.user!;
-    const { id, type } = req.params;
-    const user: IUser | null = await User.findById(authUser._id);
-    if (!user) {
-      throw createError(strings.user.notFound, StatusCodes.NOT_FOUND);
-    }
 
-    const alreadyBought = await ProfileDecorationRedemption.findOne({
+    const authUser = req.user!;
+
+    const type = req.params.type as ProfileDecorationEnum;
+    const id = new mongoose.Types.ObjectId(req.params.id);
+
+    const user = await User.findById(authUser._id).orFail(
+      createError(
+        dynamicMessage(dStrings.notFound, "User"),
+        StatusCodes.NOT_FOUND
+      )
+    );
+
+    await ProfileDecorationRedemption.exists({
       userId: user._id,
       decorationId: id,
       decorationType: type,
-    });
-
-    if (!alreadyBought) {
-      throw createError(
+    }).orFail(
+      createError(
         "you have not redeemed this decoration before",
         StatusCodes.BAD_REQUEST
-      );
-    }
+      )
+    );
 
     if (type === ProfileDecorationEnum.PROFILE_COVER) {
-      const cover: IProfileCover | null = await ProfileCover.findById(id);
-      if (!cover) {
-        throw createError(
+      const cover = await ProfileCover.findById(id).orFail(
+        createError(
           dynamicMessage(dStrings.notFound, "Cover"),
           StatusCodes.NOT_FOUND
-        );
-      }
+        )
+      );
       user.decorations.cover = cover.url;
     } else if (type === ProfileDecorationEnum.PROFILE_FRAME) {
-      const frame: IProfileFrame | null = await ProfileFrame.findById(id);
-      if (!frame) {
-        throw createError(
+      const frame = await ProfileFrame.findById(id).orFail(
+        createError(
           dynamicMessage(dStrings.notFound, "Frame"),
           StatusCodes.NOT_FOUND
-        );
-      }
+        )
+      );
       user.decorations.frame = frame.url;
     }
 
@@ -221,24 +228,29 @@ export async function deactivateDecoration(
 ) {
   try {
     handleInputErrors(req);
+
     const authUser = req.user!;
-    const { id, type } = req.params;
-    const user: IUser | null = await User.findById(authUser._id);
-    if (!user) {
-      throw createError(strings.user.notFound, StatusCodes.NOT_FOUND);
-    }
-    const alreadyBought = await ProfileDecorationRedemption.findOne({
+
+    const type = req.params.type as ProfileDecorationEnum;
+    const id = new mongoose.Types.ObjectId(req.params.id);
+
+    const user = await User.findById(authUser._id).orFail(
+      createError(
+        dynamicMessage(dStrings.notFound, "User"),
+        StatusCodes.NOT_FOUND
+      )
+    );
+
+    await ProfileDecorationRedemption.exists({
       userId: user._id,
       decorationId: id,
       decorationType: type,
-    });
-
-    if (!alreadyBought) {
-      throw createError(
+    }).orFail(
+      createError(
         "you have not redeemed this decoration before",
         StatusCodes.BAD_REQUEST
-      );
-    }
+      )
+    );
 
     if (type === ProfileDecorationEnum.PROFILE_COVER) {
       user.decorations.cover = undefined;

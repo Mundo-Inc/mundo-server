@@ -1,48 +1,9 @@
 import type { NextFunction, Request, Response } from "express";
-import { param, query, type ValidationChain } from "express-validator";
+import { param, type ValidationChain } from "express-validator";
 import { StatusCodes } from "http-status-codes";
 
-import AppSetting, { type IAppSetting } from "../../models/AppSetting";
-import Category from "../../models/Category";
+import AppSetting from "../../models/AppSetting";
 import { createError, handleInputErrors } from "../../utilities/errorHandlers";
-import validate from "./validators";
-
-export const getCategoriesValidation: ValidationChain[] = [
-  validate.q(query("q").optional()),
-];
-export async function getCategories(
-  req: Request,
-  res: Response,
-  next: NextFunction
-) {
-  try {
-    handleInputErrors(req);
-
-    const { q } = req.query;
-
-    const query: {
-      [key: string]: any;
-    } = {
-      isActive: true,
-    };
-
-    if (q) {
-      query["$or"] = [
-        { _id: { $regex: q as string, $options: "i" } },
-        { title: { $regex: q as string, $options: "i" } },
-      ];
-    }
-
-    const categories = await Category.find(query, {
-      _id: 1,
-      title: 1,
-    }).limit(5);
-
-    res.status(StatusCodes.OK).json(categories);
-  } catch (err) {
-    next(err);
-  }
-}
 
 export const getVersionInfoValidation: ValidationChain[] = [
   param("version").isString().notEmpty(),
@@ -56,21 +17,21 @@ export async function getVersionInfo(
     handleInputErrors(req);
     const { version } = req.params;
 
-    const [latestAppVersion, minOperationalVersion] = (await Promise.all([
-      AppSetting.findOne({ key: "latestAppVersion" }).lean(),
-      AppSetting.findOne({ key: "minOperationalVersion" }).lean(),
-    ])) as [IAppSetting | null, IAppSetting | null];
-
-    if (!latestAppVersion || !minOperationalVersion) {
-      throw createError("App settings not found", StatusCodes.NOT_FOUND);
-    }
+    const [latestAppVersion, minOperationalVersion] = await Promise.all([
+      AppSetting.findOne({ key: "latestAppVersion" })
+        .orFail(createError("App settings not found", StatusCodes.NOT_FOUND))
+        .lean(),
+      AppSetting.findOne({ key: "minOperationalVersion" })
+        .orFail(createError("App settings not found", StatusCodes.NOT_FOUND))
+        .lean(),
+    ]);
 
     const isLatest = version === latestAppVersion.value;
     const compare = compareVersion(version, minOperationalVersion.value);
 
     const isOperational = compare >= 0;
 
-    return res.status(StatusCodes.OK).json({
+    res.status(StatusCodes.OK).json({
       isLatest,
       latestAppVersion: latestAppVersion.value,
       isOperational,

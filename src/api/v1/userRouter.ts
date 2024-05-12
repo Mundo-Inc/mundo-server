@@ -6,18 +6,20 @@ import {
   unblock,
 } from "../controllers/BlockController";
 import {
-  acceptConnectionRequest,
-  acceptConnectionRequestValidation,
+  acceptFollowRequest,
+  acceptFollowRequestValidation,
   connectionFollowStatus,
   connectionFollowStatusValidation,
   createUserConnection,
   createUserConnectionValidation,
   deleteUserConnection,
   deleteUserConnectionValidation,
-  getPendingConnections,
-  getPendingConnectionsValidation,
+  getFollowRequests,
+  getFollowRequestsValidation,
   getUserConnections,
   getUserConnectionsValidation,
+  rejectFollowRequest,
+  rejectFollowRequestValidation,
 } from "../controllers/ConnectionController";
 import {
   getUserLists,
@@ -80,19 +82,17 @@ router.get(
   usernameAvailability
 );
 
-router.post(
-  "/acceptConnection",
+router.get(
+  "/followRequests",
   authMiddleware,
-  acceptConnectionRequestValidation,
-  acceptConnectionRequest
+  getFollowRequestsValidation,
+  getFollowRequests
 );
 
-router.get(
-  "/pendingConnections",
-  authMiddleware,
-  getPendingConnectionsValidation,
-  getPendingConnections
-);
+router
+  .route("/followRequests/:id")
+  .post(authMiddleware, acceptFollowRequestValidation, acceptFollowRequest)
+  .delete(authMiddleware, rejectFollowRequestValidation, rejectFollowRequest);
 
 router.get(
   "/latestReferrals",

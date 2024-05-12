@@ -1,13 +1,15 @@
-import mongoose, { Schema, type Document } from "mongoose";
+import mongoose, { Schema, type Model } from "mongoose";
 
-export interface IProfileFrame extends Document {
+export interface IProfileFrame {
+  _id: mongoose.Types.ObjectId;
   name: string;
   url: string;
   price: number;
   createdAt: Date;
 }
 
-export interface IProfileCover extends Document {
+export interface IProfileCover {
+  _id: mongoose.Types.ObjectId;
   name: string;
   url: string;
   price: number;
@@ -29,10 +31,9 @@ const profileCoverSchema = new Schema<IProfileCover>({
 });
 
 export const ProfileFrame =
-  mongoose.models.ProfileFrame ||
+  (mongoose.models.ProfileFrame as Model<IProfileFrame>) ||
   mongoose.model<IProfileFrame>("ProfileFrame", profileFrameSchema);
-export const ProfileCover =
-  mongoose.models.ProfileCover ||
-  mongoose.model<IProfileCover>("ProfileCover", profileCoverSchema);
 
-// module.exports = { ProfileFrame, ProfileCover };
+export const ProfileCover =
+  (mongoose.models.ProfileCover as Model<IProfileCover>) ||
+  mongoose.model<IProfileCover>("ProfileCover", profileCoverSchema);

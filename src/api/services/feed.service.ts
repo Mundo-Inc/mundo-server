@@ -6,111 +6,35 @@ import CheckIn from "../../models/CheckIn";
 import Comment from "../../models/Comment";
 import Follow from "../../models/Follow";
 import Homemade from "../../models/Homemade";
-import Place, { type IPlace } from "../../models/Place";
+import Place from "../../models/Place";
 import Review from "../../models/Review";
-import User, { type IUser } from "../../models/User";
+import User from "../../models/User";
 import UserActivity, {
-  ActivityPrivacyTypeEnum,
   ActivityResourceTypeEnum,
+  ResourcePrivacyEnum,
   type IUserActivity,
 } from "../../models/UserActivity";
 import {
   getCommentsOfActivity,
   getReactionsOfActivity,
 } from "../controllers/UserActivityController";
-import { readFormattedPlaceLocationProjection } from "../dto/place/place-dto";
-import { readPlaceDetailProjection } from "../dto/place/read-place-detail.dto";
-import UserProjection from "../dto/user/user";
+import PlaceProjection, { type PlaceProjectionDetail } from "../dto/place";
+import UserProjection, { type UserProjectionEssentials } from "../dto/user";
 import logger from "./logger";
-
-export type IMedia = {
-  _id: string;
-  src: string;
-  caption: string;
-  type: "image" | "video";
-};
-export interface IPlaceReview {
-  _id: string;
-  scores: {
-    overall: number;
-    drinkQuality: number;
-    foodQuality: number;
-    atmosphere: number;
-    service: number;
-    value: number;
-  };
-  content: string;
-  images: IMedia[];
-  videos: IMedia[];
-  reactions: {
-    like: number;
-    dislike: number;
-  };
-  tags: string[];
-  language: string;
-  createdAt: string;
-  updatedAt: string;
-  userReaction?: "like" | "dislike" | undefined;
-  writer: {
-    _id: string;
-    name: string;
-    username: string;
-    profileImage: string;
-    level: number;
-  };
-}
-export interface IPlaceData {
-  _id: string;
-  name: string;
-  thumbnail: string;
-  images: string[];
-  description: string;
-  reviewCount: number;
-  location: {
-    geoLocation: {
-      lng: number;
-      lat: number;
-    };
-    address?: string;
-    city?: string;
-    state?: string;
-    country?: string;
-    zip?: string;
-  };
-  phone?: string | null;
-  website?: string | null;
-  categories?: string[];
-  owner?: string | null;
-  priceRange?: number;
-  scores: {
-    overall?: number;
-    drinkQuality?: number;
-    foodQuality?: number;
-    atmosphere?: number;
-    service?: number;
-    value?: number;
-    phantom?: number;
-  };
-  reviews: IPlaceReview[];
-  // phantomScore?: number;
-  distance?: number;
-}
 
 export const getResourceInfo = async (activity: IUserActivity) => {
   let resourceInfo: any;
   let placeInfo: any;
 
-  const userInfo = await User.findOne(
-    { _id: activity.userId },
-    UserProjection.essentials
-  ).lean();
+  const userInfo = await User.findOne({ _id: activity.userId })
+    .select<UserProjectionEssentials>(UserProjection.essentials)
+    .lean();
 
   switch (activity.resourceType) {
     case ActivityResourceTypeEnum.PLACE:
-      resourceInfo = await Place.findById(
-        activity.resourceId,
-        readPlaceDetailProjection
-      ).lean();
+      resourceInfo = await Place.findById(activity.resourceId)
+        .select<PlaceProjectionDetail>(PlaceProjection.detail)
+        .lean();
 
       placeInfo = resourceInfo;
       break;
@@ -118,7 +42,7 @@ export const getResourceInfo = async (activity: IUserActivity) => {
       const reviews = await Review.aggregate([
         {
           $match: {
-            _id: new mongoose.Types.ObjectId(activity.resourceId),
+            _id: activity.resourceId,
           },
         },
         {
@@ -179,8 +103,8 @@ export const getResourceInfo = async (activity: IUserActivity) => {
             pipeline: [
               {
                 $project: {
-                  ...readPlaceDetailProjection,
-                  location: readFormattedPlaceLocationProjection,
+                  ...PlaceProjection.detail,
+                  location: PlaceProjection.locationProjection,
                   scores: {
                     overall: 1,
                     drinkQuality: 1,
@@ -370,7 +294,7 @@ export const getResourceInfo = async (activity: IUserActivity) => {
       resourceInfo = homemade[0];
       break;
     case ActivityResourceTypeEnum.CHECKIN:
-      const results = await CheckIn.aggregate([
+      const result = await CheckIn.aggregate([
         {
           $match: {
             user: activity.userId,
@@ -386,7 +310,7 @@ export const getResourceInfo = async (activity: IUserActivity) => {
             checkin: [
               {
                 $match: {
-                  _id: new mongoose.Types.ObjectId(activity.resourceId),
+                  _id: activity.resourceId,
                 },
               },
               {
@@ -406,8 +330,8 @@ export const getResourceInfo = async (activity: IUserActivity) => {
                   pipeline: [
                     {
                       $project: {
-                        ...readPlaceDetailProjection,
-                        location: readFormattedPlaceLocationProjection,
+                        ...PlaceProjection.detail,
+                        location: PlaceProjection.locationProjection,
                       },
                     },
                   ],
@@ -455,7 +379,7 @@ export const getResourceInfo = async (activity: IUserActivity) => {
                   _id: 1,
                   createdAt: 1,
                   user: UserProjection.essentials,
-                  place: readPlaceDetailProjection,
+                  place: PlaceProjection.detail,
                   image: { $arrayElemAt: ["$image", 0] },
                   caption: 1,
                   tags: 1,
@@ -464,15 +388,15 @@ export const getResourceInfo = async (activity: IUserActivity) => {
             ],
           },
         },
-      ]);
+      ]).then((res) => res[0]);
 
-      if (!results[0]) {
+      if (!result) {
         return [null, null, userInfo];
       }
 
       resourceInfo = {
-        totalCheckins: results[0].total[0]?.total || 0,
-        ...results[0].checkin[0],
+        totalCheckins: result.total[0]?.total || 0,
+        ...result.checkin[0],
       };
       placeInfo = resourceInfo.place;
       break;
@@ -482,19 +406,17 @@ export const getResourceInfo = async (activity: IUserActivity) => {
         UserProjection.essentials
       ).lean();
       if (activity.placeId) {
-        placeInfo = await Place.findById(
-          activity.placeId,
-          readPlaceDetailProjection
-        ).lean();
+        placeInfo = await Place.findById(activity.placeId)
+          .select<PlaceProjectionDetail>(PlaceProjection.detail)
+          .lean();
       }
       break;
     case ActivityResourceTypeEnum.ACHIEVEMET:
       resourceInfo = await Achievement.findById(activity.resourceId).lean();
       if (activity.placeId) {
-        placeInfo = await Place.findById(
-          activity.placeId,
-          readPlaceDetailProjection
-        ).lean();
+        placeInfo = await Place.findById(activity.placeId)
+          .select<PlaceProjectionDetail>(PlaceProjection.detail)
+          .lean();
       }
       break;
     default:
@@ -510,110 +432,6 @@ export const getResourceInfo = async (activity: IUserActivity) => {
   }
 
   return [resourceInfo, placeInfo, userInfo];
-};
-
-// define the Haversine formula
-const haversine = (lat1: number, lon1: number, lat2: number, lon2: number) => {
-  const rad = Math.PI / 180;
-  const R = 6371; // earth radius in km
-
-  const dLat = (lat2 - lat1) * rad;
-  const dLon = (lon2 - lon1) * rad;
-
-  const a =
-    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-    Math.cos(lat1 * rad) *
-      Math.cos(lat2 * rad) *
-      Math.sin(dLon / 2) *
-      Math.sin(dLon / 2);
-
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-
-  return R * c;
-};
-
-function getLatLng(place: IPlace | IPlaceData) {
-  if ("coordinates" in place.location.geoLocation) {
-    return {
-      lat: place.location.geoLocation.coordinates[1],
-      lng: place.location.geoLocation.coordinates[0],
-    };
-  } else {
-    return {
-      lat: place.location.geoLocation.lat,
-      lng: place.location.geoLocation.lng,
-    };
-  }
-}
-
-// define the calculateDistance method
-const calculateDistance = async (
-  place1: IPlace | IPlaceData,
-  place2: IPlace | IPlaceData
-): Promise<number> => {
-  const { lat: lat1, lng: lon1 } = getLatLng(place1);
-  const { lat: lat2, lng: lon2 } = getLatLng(place2);
-
-  return haversine(lat1, lon1, lat2, lon2);
-};
-
-const calculateScore = async (
-  user: IUser,
-  targetId: string,
-  activity: IUserActivity,
-  place: IPlace,
-  location?: {
-    lng: number;
-    lat: number;
-  }
-) => {
-  const TIME_WEIGHT = 0.5;
-  const DISTANCE_WEIGHT = 0.3;
-  const FOLLOWING_WEIGHT = 0.1;
-  const FOLLOWER_WEIGHT = 0.1;
-
-  let distanceScore;
-  if (location && place) {
-    const { lat: lat2, lng: lon2 } = getLatLng(place);
-    distanceScore =
-      1 / Math.max(haversine(location.lat, location.lng, lat2, lon2), 0.000001);
-  } else if (user.latestPlace && place) {
-    const userPlace = await Place.findById(user.latestPlace);
-    distanceScore =
-      1 / Math.max(await calculateDistance(userPlace, place), 0.000001);
-  } else {
-    distanceScore = 0.000001;
-  }
-
-  let followingScore = 0;
-  const followingStatus = await Follow.findOne({
-    user: user._id,
-    target: targetId,
-  });
-  if (followingStatus) {
-    followingScore = 1;
-  }
-
-  let followerScore = 0;
-  const followerStatus = await Follow.find({
-    user: targetId,
-    target: user._id,
-  });
-  if (followerStatus) {
-    followerScore = 1;
-  }
-
-  let timeScore =
-    (new Date().getTime() - activity.createdAt.getTime()) / 3600 / 1000;
-
-  timeScore *= TIME_WEIGHT;
-  distanceScore *= DISTANCE_WEIGHT;
-  followingScore *= FOLLOWING_WEIGHT;
-  followerScore *= FOLLOWER_WEIGHT;
-
-  const finalScore = timeScore + distanceScore + followingScore + followerScore;
-
-  return finalScore;
 };
 
 export const getUserFeed = async (
@@ -632,7 +450,7 @@ export const getUserFeed = async (
       Block.find({ target: userId }).lean(),
     ]);
 
-    let query: FilterQuery<any> = {};
+    let query: FilterQuery<IUserActivity> = {};
 
     if (isForYou) {
       // For You activities
@@ -642,16 +460,13 @@ export const getUserFeed = async (
         },
         hasMedia: true,
         // Either should be public or it should be followed by the viewer or be the viewer's itself, or private and im looking for my feed
+        resourcePrivacy: { $ne: ResourcePrivacyEnum.PRIVATE },
         $or: [
-          { privacyType: ActivityPrivacyTypeEnum.PUBLIC },
-
           {
-            privacyType: ActivityPrivacyTypeEnum.PRIVATE,
-            userId: new mongoose.Types.ObjectId(userId),
+            isAccountPrivate: false,
           },
-
           {
-            privacyType: ActivityPrivacyTypeEnum.FOLLOWING,
+            isAccountPrivate: true,
             userId: {
               $in: [
                 ...followings.map((f) => f.target),
@@ -666,7 +481,7 @@ export const getUserFeed = async (
       query = {
         $or: [
           {
-            privacyType: { $ne: ActivityPrivacyTypeEnum.PRIVATE },
+            resourcePrivacy: { $ne: ResourcePrivacyEnum.PRIVATE },
             userId: {
               $nin: blocked.map((b) => b.user),
               $in: [
@@ -676,7 +491,7 @@ export const getUserFeed = async (
             },
           },
           {
-            privacyType: ActivityPrivacyTypeEnum.PRIVATE,
+            resourcePrivacy: ResourcePrivacyEnum.PRIVATE,
             userId: new mongoose.Types.ObjectId(userId),
           },
         ],
@@ -742,7 +557,9 @@ export const getUserFeed = async (
         activityType: activity.activityType,
         resourceType: activity.resourceType,
         resource: resourceInfo,
-        privacyType: activity.privacyType,
+        privacyType: "PUBLIC", // TODO: remove on next update
+        resourcePrivacy: activity.resourcePrivacy,
+        isAccountPrivate: activity.isAccountPrivate,
         createdAt: activity.createdAt,
         updatedAt: activity.updatedAt,
         reactions: reactions[0],
