@@ -1,7 +1,7 @@
 import type { NextFunction, Request, Response } from "express";
 import { body, param, query, type ValidationChain } from "express-validator";
 import { StatusCodes } from "http-status-codes";
-import mongoose from "mongoose";
+import mongoose, { type PipelineStage } from "mongoose";
 
 import Follow from "../../models/Follow";
 import Homemade from "../../models/Homemade";
@@ -15,6 +15,7 @@ import User from "../../models/User";
 import { ResourcePrivacyEnum } from "../../models/UserActivity";
 import strings, { dStrings as ds, dynamicMessage } from "../../strings";
 import { createError, handleInputErrors } from "../../utilities/errorHandlers";
+import { getPaginationFromQuery } from "../../utilities/pagination";
 import UserProjection from "../dto/user";
 import { UserActivityManager } from "../services/UserActivityManager";
 import logger from "../services/logger";
@@ -42,11 +43,13 @@ export async function getHomemadePosts(
     const user = req.query.user
       ? new mongoose.Types.ObjectId(req.query.user as string)
       : null;
-    const page = Number(req.query.page) || 1;
-    const limit = Number(req.query.limit) || 10;
-    const skip = (page - 1) * limit;
 
-    const pipeline: any[] = [];
+    const { limit, skip } = getPaginationFromQuery(req, {
+      defaultLimit: 20,
+      maxLimit: 50,
+    });
+
+    const pipeline: PipelineStage[] = [];
 
     if (user) {
       pipeline.push({

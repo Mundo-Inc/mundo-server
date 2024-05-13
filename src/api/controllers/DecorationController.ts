@@ -16,8 +16,6 @@ import User from "../../models/User";
 import { dStrings, dynamicMessage } from "../../strings";
 import { createError, handleInputErrors } from "../../utilities/errorHandlers";
 
-export const getDecorationsValidation: ValidationChain[] = [];
-
 export async function getDecorations(
   req: Request,
   res: Response,
@@ -42,8 +40,6 @@ export async function getDecorations(
     next(error);
   }
 }
-
-export const getDecorationRedemptionValidation: ValidationChain[] = [];
 
 export async function getDecorationRedemption(
   req: Request,

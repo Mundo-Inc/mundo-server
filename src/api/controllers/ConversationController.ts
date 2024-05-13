@@ -297,7 +297,7 @@ export async function removeUserFromGroupConversation(
   try {
     handleInputErrors(req);
 
-    const { id } = req.params;
+    const id: string = req.params.id;
     const user = new mongoose.Types.ObjectId(req.body.user as string);
 
     //check if we are the creator of the channel
@@ -439,7 +439,8 @@ export async function getConversation(
     handleInputErrors(req);
 
     const authUser = req.user!;
-    const { id } = req.params;
+
+    const id: string = req.params.id;
 
     const conversation = await Conversation.findOne({
       _id: id,

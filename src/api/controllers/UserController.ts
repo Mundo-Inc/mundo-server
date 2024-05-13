@@ -22,6 +22,7 @@ import {
   type ConnectionStatus,
 } from "../../utilities/connections";
 import { createError, handleInputErrors } from "../../utilities/errorHandlers";
+import { getPaginationFromQuery } from "../../utilities/pagination";
 import { bucketName, s3 } from "../../utilities/storage";
 import UserProjection from "../dto/user";
 import { handleSignUp } from "../lib/profile-handlers";
@@ -31,8 +32,6 @@ import { calcRemainingXP } from "../services/reward/helpers/levelCalculations";
 import { getLevelThresholds } from "../services/reward/utils/levelupThresholds";
 import { sendSlackMessage } from "./SlackController";
 import validate from "./validators";
-
-// const FIREBASE_WEB_API_KEY = process.env.FIREBASE_WEB_API_KEY;
 
 export const getUsersValidation: ValidationChain[] = [
   validate.q(query("q").optional()),
@@ -50,9 +49,11 @@ export async function getUsers(
     const authUser = req.user;
 
     const { q } = req.query;
-    const page = Number(req.query.page) || 1;
-    const limit = Number(req.query.limit) || 10;
-    const skip = (page - 1) * limit;
+
+    const { limit, skip } = getPaginationFromQuery(req, {
+      defaultLimit: 10,
+      maxLimit: 50,
+    });
 
     let users = [];
 
@@ -306,9 +307,10 @@ export async function getLeaderBoard(
 
     const authUser = req.user!;
 
-    const page = Number(req.query.page) || 1;
-    const limit = Number(req.query.limit) || 10;
-    const skip = (page - 1) * limit;
+    const { limit, skip } = getPaginationFromQuery(req, {
+      defaultLimit: 30,
+      maxLimit: 50,
+    });
 
     const leaderboard = await User.aggregate([
       { $match: { source: { $ne: "yelp" } } },
@@ -390,16 +392,16 @@ export async function getUser(req: Request, res: Response, next: NextFunction) {
 
     if (idType === "uid") {
       // if id type is uid -> get user by uid
-      const user = (await User.findOne({ uid: id })
+      const user = await User.findOne({ uid: id })
         .orFail(
           createError(dynamicMessage(ds.notFound, "User"), StatusCodes.CONFLICT)
         )
-        .lean()) as IUser;
+        .lean();
 
       id = user._id.toString();
     } else if (id[0] == "@") {
       // if id starts with @ -> get user by username
-      const user = (await User.findOne({
+      const user = await User.findOne({
         username: {
           $regex: `^${id.slice(1)}$`,
           $options: "i",
@@ -411,7 +413,7 @@ export async function getUser(req: Request, res: Response, next: NextFunction) {
             StatusCodes.NOT_FOUND
           )
         )
-        .lean()) as IUser;
+        .lean();
 
       id = user._id.toString();
     }
@@ -606,8 +608,10 @@ export async function editUser(
 ) {
   try {
     handleInputErrors(req);
-    const { id } = req.params;
+
     const authUser = req.user!;
+
+    const id = new Types.ObjectId(req.params.id);
 
     if (!authUser._id.equals(id) && authUser.role !== "admin") {
       throw createError(
@@ -727,8 +731,10 @@ export async function deleteUser(
 ) {
   try {
     handleInputErrors(req);
-    const { id } = req.params;
+
     const authUser = req.user!;
+
+    const id = new Types.ObjectId(req.params.id);
 
     if (!authUser._id.equals(id) && authUser.role !== "admin") {
       throw createError(
@@ -736,6 +742,7 @@ export async function deleteUser(
         StatusCodes.FORBIDDEN
       );
     }
+
     const user = await User.findById(id).orFail(
       createError(dynamicMessage(ds.notFound, "User"), StatusCodes.NOT_FOUND)
     );
@@ -760,12 +767,16 @@ export async function putUserPrivacy(
   try {
     handleInputErrors(req);
 
-    const { id } = req.params;
-    const { isPrivate } = req.body;
     const authUser = req.user!;
 
+    const id = new Types.ObjectId(req.params.id);
+    const isPrivate: boolean = req.body.isPrivate;
+
     if (!authUser._id.equals(id) && authUser.role !== "admin") {
-      throw createError("UNAUTHORIZED", StatusCodes.FORBIDDEN);
+      throw createError(
+        strings.authorization.accessDenied,
+        StatusCodes.FORBIDDEN
+      );
     }
 
     const user = await User.findById(id).orFail(
@@ -816,8 +827,9 @@ export async function putUserSettings(
   try {
     handleInputErrors(req);
 
-    const { id } = req.params;
     const authUser = req.user!;
+
+    const id = new Types.ObjectId(req.params.id);
 
     if (!authUser._id.equals(id) && authUser.role !== "admin") {
       throw createError(

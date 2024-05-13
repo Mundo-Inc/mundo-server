@@ -4,10 +4,7 @@ import logger from "../api/services/logger";
 import Bot, { IBotTargetEnum, IBotTypeEnum, type IBot } from "../models/Bot";
 import Reaction from "../models/Reaction";
 import User, { type IUser } from "../models/User";
-import UserActivity, {
-  ActivityResourceTypeEnum,
-  type IUserActivity,
-} from "../models/UserActivity";
+import UserActivity, { ActivityResourceTypeEnum } from "../models/UserActivity";
 
 function getDateHoursAgo(hours: number) {
   let now = new Date();
@@ -50,9 +47,7 @@ export function createCron(id: string, duty: IBot, botUser: IUser) {
             query.createdAt = {
               $gt: getDateHoursAgo(duty.targetThresholdHours),
             };
-          const userActivities: IUserActivity[] = await UserActivity.find(
-            query
-          );
+          const userActivities = await UserActivity.find(query);
           for (const userActivity of userActivities) {
             // check if we already reacted or not!
             const alreadyReacted = await Reaction.findOne({
@@ -94,7 +89,7 @@ export function createCron(id: string, duty: IBot, botUser: IUser) {
 
 User.find({ signupMethod: "bot" }).then(async (botUsers: IUser[]) => {
   for (const botUser of botUsers) {
-    const duties: IBot[] = await Bot.find({
+    const duties = await Bot.find({
       userId: botUser._id,
     });
     for (const duty of duties) {

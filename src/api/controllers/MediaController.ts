@@ -14,6 +14,7 @@ import Media, { MediaTypeEnum } from "../../models/Media";
 import Place from "../../models/Place";
 import strings, { dStrings, dynamicMessage } from "../../strings";
 import { createError, handleInputErrors } from "../../utilities/errorHandlers";
+import { getPaginationFromQuery } from "../../utilities/pagination";
 import {
   bucketName,
   createThumbnail,
@@ -135,7 +136,7 @@ export async function createMedia(
 
 export const getMediaValidation: ValidationChain[] = [
   validate.page(query("page").optional()),
-  validate.limit(query("limit").optional(), 5, 20),
+  validate.limit(query("limit").optional(), 5, 30),
   query("event")
     .if((_, { req }) => !req.query?.place)
     .isMongoId()
@@ -153,9 +154,17 @@ export async function getMedia(
   try {
     handleInputErrors(req);
 
-    const page = parseInt(req.query.page as string) || 1;
-    const limit = parseInt(req.query.limit as string) || 10;
-    const { event, place } = req.query;
+    const { page, limit, skip } = getPaginationFromQuery(req, {
+      defaultLimit: 20,
+      maxLimit: 30,
+    });
+
+    const event = req.query.event
+      ? new mongoose.Types.ObjectId(req.query.event as string)
+      : undefined;
+    const place = req.query.place
+      ? new mongoose.Types.ObjectId(req.query.place as string)
+      : undefined;
 
     if (place) {
       await Place.exists({ _id: place }).orFail(
@@ -180,7 +189,7 @@ export async function getMedia(
       ...(place && { place: place }),
     })
       .sort({ createdAt: -1 })
-      .skip((page - 1) * limit)
+      .skip(skip)
       .limit(limit)
       .populate("user", UserProjection.essentials)
       .lean();

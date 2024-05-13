@@ -1,6 +1,7 @@
 import type { NextFunction, Request, Response } from "express";
 import { body, param, query, type ValidationChain } from "express-validator";
 import { StatusCodes } from "http-status-codes";
+import { Types } from "mongoose";
 
 import Event from "../../models/Event";
 import Place from "../../models/Place";
@@ -18,7 +19,7 @@ export async function getEvent(
   try {
     handleInputErrors(req);
 
-    const { id } = req.params;
+    const id = new Types.ObjectId(req.params.id);
 
     const event = await Event.findById(id)
       .orFail(createError(dynamicMessage(dStrings.notFound, "Event")))

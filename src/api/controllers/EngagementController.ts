@@ -30,6 +30,7 @@ export async function getEngagements(
     handleInputErrors(req);
 
     const authUser = req.user!;
+
     const id = new mongoose.Types.ObjectId(req.params.id);
 
     const before = req.query.before

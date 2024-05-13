@@ -1,7 +1,7 @@
 import type { NextFunction, Request, Response } from "express";
 import { body, param, query, type ValidationChain } from "express-validator";
 import { StatusCodes } from "http-status-codes";
-import { Types } from "mongoose";
+import { type PipelineStage, Types } from "mongoose";
 
 import AppSetting from "../../models/AppSetting";
 import CheckIn from "../../models/CheckIn";
@@ -12,8 +12,9 @@ import Review from "../../models/Review";
 import User from "../../models/User";
 import { dStrings as ds, dynamicMessage } from "../../strings";
 import { createError, handleInputErrors } from "../../utilities/errorHandlers";
-import validate from "./validators";
+import { getPaginationFromQuery } from "../../utilities/pagination";
 import UserProjection from "../dto/user";
+import validate from "./validators";
 
 export const getUsersValidation: ValidationChain[] = [
   query("signupMethod").optional(),
@@ -30,9 +31,11 @@ export async function getUsers(
     handleInputErrors(req);
 
     const { q, signupMethod } = req.query;
-    const page = Number(req.query.page) || 1;
-    const limit = Number(req.query.limit) || 20;
-    const skip = (page - 1) * limit;
+
+    const { page, limit, skip } = getPaginationFromQuery(req, {
+      defaultLimit: 20,
+      maxLimit: 50,
+    });
 
     const matchObject: {
       [key: string]: any;
@@ -48,7 +51,7 @@ export async function getUsers(
     if (signupMethod) {
       matchObject["signupMethod"] = signupMethod;
     }
-    const matchPipeline = [];
+    const matchPipeline: PipelineStage[] = [];
     if (Object.keys(matchObject).length !== 0) {
       matchPipeline.push({ $match: matchObject });
     }
@@ -112,9 +115,11 @@ export async function getFlags(
     handleInputErrors(req);
 
     const { review } = req.query;
-    const page = Number(req.query.page) || 1;
-    const limit = Number(req.query.limit) || 20;
-    const skip = (page - 1) * limit;
+
+    const { page, limit, skip } = getPaginationFromQuery(req, {
+      defaultLimit: 20,
+      maxLimit: 50,
+    });
 
     //check if review exists
     if (review) {
@@ -188,17 +193,17 @@ export async function resolveFlag(
 ) {
   try {
     handleInputErrors(req);
-    const authUser = req.user!;
-    const { action } = req.body;
-    const { id } = req.params;
 
-    const flag = await Flag.findById(id).populate("target");
-    if (!flag) {
-      throw createError(
-        dynamicMessage(ds.notFound, "Flag"),
-        StatusCodes.NOT_FOUND
-      );
-    }
+    const authUser = req.user!;
+
+    const id = new Types.ObjectId(req.params.id);
+    const action = req.body.action as "DELETE" | "IGNORE";
+
+    const flag = await Flag.findById(id)
+      .orFail(
+        createError(dynamicMessage(ds.notFound, "Flag"), StatusCodes.NOT_FOUND)
+      )
+      .populate("target");
 
     if (flag.adminAction) {
       throw createError("Flag already resolved", StatusCodes.BAD_REQUEST);

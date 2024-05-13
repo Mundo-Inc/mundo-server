@@ -48,8 +48,10 @@ export async function block(req: Request, res: Response, next: NextFunction) {
 export async function unblock(req: Request, res: Response, next: NextFunction) {
   try {
     handleInputErrors(req);
-    const { id } = req.params;
+
     const authUser = req.user!;
+
+    const id = new Types.ObjectId(req.params.id);
 
     const block = await Block.findOne({
       user: authUser._id,

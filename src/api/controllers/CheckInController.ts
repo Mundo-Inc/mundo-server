@@ -1,7 +1,7 @@
 import type { NextFunction, Request, Response } from "express";
 import { body, param, query, type ValidationChain } from "express-validator";
 import { StatusCodes } from "http-status-codes";
-import mongoose, { type Document } from "mongoose";
+import mongoose, { type PipelineStage } from "mongoose";
 
 import CheckIn, { type ICheckIn } from "../../models/CheckIn";
 import Event from "../../models/Event";
@@ -13,10 +13,11 @@ import Notification, {
 } from "../../models/Notification";
 import Place from "../../models/Place";
 import Upload from "../../models/Upload";
-import User, { type IUser } from "../../models/User";
+import User from "../../models/User";
 import { ResourcePrivacyEnum } from "../../models/UserActivity";
 import strings, { dStrings, dynamicMessage } from "../../strings";
 import { createError, handleInputErrors } from "../../utilities/errorHandlers";
+import { getPaginationFromQuery } from "../../utilities/pagination";
 import PlaceProjection from "../dto/place";
 import UserProjection from "../dto/user";
 import { UserActivityManager } from "../services/UserActivityManager";
@@ -62,13 +63,15 @@ export async function getCheckIns(
     const event = req.query.event
       ? new mongoose.Types.ObjectId(req.query.event as string)
       : null;
-    const { page: reqPage, limit: reqLimit } = req.query;
-    const page = parseInt(reqPage as string) || 1;
-    const limit = parseInt(reqLimit as string) || 500;
-    const skip = (page - 1) * limit;
-    const matchPipeline: any[] = [];
 
-    const privacyPipeline: any[] = [
+    const { page, limit, skip } = getPaginationFromQuery(req, {
+      defaultLimit: 500,
+      maxLimit: 500,
+    });
+
+    const matchPipeline: PipelineStage[] = [];
+
+    const privacyPipeline: PipelineStage[] = [
       {
         $lookup: {
           from: "follows",
@@ -528,7 +531,7 @@ export async function deleteCheckIn(
 
     const authUser = req.user!;
 
-    const { id } = req.params;
+    const id = new mongoose.Types.ObjectId(req.params.id);
 
     const checkin = await CheckIn.findById(id).orFail(
       createError(

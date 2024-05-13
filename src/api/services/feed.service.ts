@@ -437,12 +437,10 @@ export const getResourceInfo = async (activity: IUserActivity) => {
 export const getUserFeed = async (
   userId: mongoose.Types.ObjectId,
   isForYou: boolean,
-  page: number,
-  limit: number
+  limit: number,
+  skip: number
 ) => {
   try {
-    const skip = (page - 1) * limit;
-
     const activities = [];
 
     const [followings, blocked] = await Promise.all([
@@ -468,10 +466,7 @@ export const getUserFeed = async (
           {
             isAccountPrivate: true,
             userId: {
-              $in: [
-                ...followings.map((f) => f.target),
-                new mongoose.Types.ObjectId(userId),
-              ],
+              $in: [...followings.map((f) => f.target), userId],
             },
           },
         ],
@@ -484,15 +479,12 @@ export const getUserFeed = async (
             resourcePrivacy: { $ne: ResourcePrivacyEnum.PRIVATE },
             userId: {
               $nin: blocked.map((b) => b.user),
-              $in: [
-                ...followings.map((f) => f.target),
-                new mongoose.Types.ObjectId(userId),
-              ],
+              $in: [...followings.map((f) => f.target), userId],
             },
           },
           {
             resourcePrivacy: ResourcePrivacyEnum.PRIVATE,
-            userId: new mongoose.Types.ObjectId(userId),
+            userId: userId,
           },
         ],
       };
@@ -510,7 +502,7 @@ export const getUserFeed = async (
 
     for (const activity of userActivities) {
       const [resourceInfo, placeInfo, userInfo] = await getResourceInfo(
-        activity as IUserActivity
+        activity
       );
 
       if (!resourceInfo) continue;
@@ -537,14 +529,8 @@ export const getUserFeed = async (
       // const weight = seen ? seen.weight + 1 : 1;
 
       const [reactions, comments, commentsCount] = await Promise.all([
-        getReactionsOfActivity(
-          activity._id as mongoose.Types.ObjectId,
-          new mongoose.Types.ObjectId(userId)
-        ),
-        getCommentsOfActivity(
-          activity._id as mongoose.Types.ObjectId,
-          new mongoose.Types.ObjectId(userId)
-        ),
+        getReactionsOfActivity(activity._id, userId),
+        getCommentsOfActivity(activity._id, userId),
         Comment.countDocuments({
           userActivity: activity._id,
         }),

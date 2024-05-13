@@ -14,6 +14,7 @@ import { createError, handleInputErrors } from "../../utilities/errorHandlers";
 import UserProjection from "../dto/user";
 import { getResourceInfo } from "../services/feed.service";
 import validate from "./validators";
+import { getPaginationFromQuery } from "../../utilities/pagination";
 
 export const getActivitiesOfaUserValidation: ValidationChain[] = [
   param("id").isMongoId(),
@@ -43,8 +44,11 @@ export async function getActivitiesOfaUser(
     const authUser = req.user!;
 
     const userId = new Types.ObjectId(req.params.id);
-    const page = Number(req.query.page) || 1;
-    const limit = Number(req.query.limit) || 20;
+
+    const { page, limit, skip } = getPaginationFromQuery(req, {
+      defaultLimit: 20,
+      maxLimit: 50,
+    });
 
     //PRIVACY
     const userObject = await User.findById(userId).orFail(
@@ -78,7 +82,7 @@ export async function getActivitiesOfaUser(
       UserActivity.countDocuments(query),
       UserActivity.find(query)
         .sort({ createdAt: -1 })
-        .skip((page - 1) * limit)
+        .skip(skip)
         .limit(limit)
         .lean(),
     ]);
@@ -93,9 +97,9 @@ export async function getActivitiesOfaUser(
         comments,
         commentsCount,
       ] = await Promise.all([
-        getResourceInfo(activity as IUserActivity),
-        getReactionsOfActivity(activity._id as mongoose.Types.ObjectId, userId),
-        getCommentsOfActivity(activity._id as mongoose.Types.ObjectId, userId),
+        getResourceInfo(activity),
+        getReactionsOfActivity(activity._id, userId),
+        getCommentsOfActivity(activity._id, userId),
         Comment.countDocuments({
           userActivity: activity._id,
         }),

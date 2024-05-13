@@ -12,6 +12,7 @@ import {
   getConnectionStatuses,
 } from "../../utilities/connections";
 import { createError, handleInputErrors } from "../../utilities/errorHandlers";
+import { getPaginationFromQuery } from "../../utilities/pagination";
 import UserProjection from "../dto/user";
 import { getResourceInfo, getUserFeed } from "../services/feed.service";
 import {
@@ -34,11 +35,14 @@ export async function getFeed(req: Request, res: Response, next: NextFunction) {
 
     const authUser = req.user!;
 
-    const page = Number(req.query.page) || 1;
-    const limit = Number(req.query.limit) || 30;
+    const { page, limit, skip } = getPaginationFromQuery(req, {
+      defaultLimit: 30,
+      maxLimit: 50,
+    });
+
     const isForYou = Boolean(req.query.isForYou) || false;
 
-    const result = await getUserFeed(authUser._id, isForYou, page, limit);
+    const result = await getUserFeed(authUser._id, isForYou, limit, skip);
 
     // Get follow status for each user
     const usersIdSet = new Set<string>();
@@ -93,7 +97,8 @@ export async function getActivity(
     handleInputErrors(req);
 
     const authUser = req.user!;
-    const { id } = req.params;
+
+    const id = new mongoose.Types.ObjectId(req.params.id);
 
     const activity = await UserActivity.findById(id).orFail(
       createError(
@@ -201,9 +206,13 @@ export async function getComments(
     handleInputErrors(req);
 
     const authUser = req.user!;
-    const { id } = req.params;
-    const page = Number(req.query.page) || 1;
-    const limit = Number(req.query.limit) || 20;
+
+    const userActivityId = new mongoose.Types.ObjectId(req.params.id);
+
+    const { page, limit, skip } = getPaginationFromQuery(req, {
+      defaultLimit: 20,
+      maxLimit: 50,
+    });
 
     const blockedUsers = (
       await Block.find({ target: authUser._id }, "user")
@@ -212,7 +221,7 @@ export async function getComments(
     const result = await Comment.aggregate([
       {
         $match: {
-          userActivity: new mongoose.Types.ObjectId(id),
+          userActivity: userActivityId,
           author: { $nin: blockedUsers },
         },
       },
@@ -225,7 +234,7 @@ export async function getComments(
               },
             },
             {
-              $skip: (page - 1) * limit,
+              $skip: skip,
             },
             {
               $limit: limit,

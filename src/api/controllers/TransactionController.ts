@@ -1,8 +1,8 @@
 import type { NextFunction, Request, Response } from "express";
 import { body, param, type ValidationChain } from "express-validator";
 import { StatusCodes } from "http-status-codes";
+import { Types } from "mongoose";
 import Stripe from "stripe";
-import { Twilio } from "twilio";
 
 import Transaction from "../../models/Transaction";
 import User, { type IUser } from "../../models/User";
@@ -13,10 +13,6 @@ import TransactionProjection, {
 } from "../dto/transaction";
 import UserProjection, { type UserProjectionEssentials } from "../dto/user";
 import { sendAttributtedMessage } from "./ConversationController";
-
-const accountSid = process.env.TWILIO_ACCOUNT_SID; // Replace with your Account SID
-const authToken = process.env.TWILIO_AUTH_TOKEN; // Replace with your Auth Token
-const client = new Twilio(accountSid, authToken);
 
 const SERVICE_FEE_RATIO = 0.05;
 
@@ -485,7 +481,8 @@ export async function getTransaction(
     handleInputErrors(req);
 
     const authUser = req.user!;
-    const { id } = req.params;
+
+    const id = new Types.ObjectId(req.params.id);
 
     const transaction = await Transaction.findById(id)
       .select<TransactionProjectionPublic>(TransactionProjection.public)

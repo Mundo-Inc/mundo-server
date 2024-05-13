@@ -17,6 +17,7 @@ import { ResourcePrivacyEnum } from "../../models/UserActivity";
 import strings, { dStrings as ds, dynamicMessage } from "../../strings";
 import { createError, handleInputErrors } from "../../utilities/errorHandlers";
 import { openAiAnalyzeReview } from "../../utilities/openAi";
+import { getPaginationFromQuery } from "../../utilities/pagination";
 import UserProjection from "../dto/user";
 import { UserActivityManager } from "../services/UserActivityManager";
 import { reviewEarning } from "../services/earning.service";
@@ -44,9 +45,11 @@ export async function getReviews(
       ? new mongoose.Types.ObjectId(req.query.writer as string)
       : undefined;
     const sort = (req.query.sort as "newest" | "oldest") || "newest";
-    const page = Number(req.query.page) || 1;
-    const limit = Number(req.query.limit) || 10;
-    const skip = (page - 1) * limit;
+
+    const { limit, skip } = getPaginationFromQuery(req, {
+      defaultLimit: 10,
+      maxLimit: 50,
+    });
 
     let pipeline: PipelineStage[] = [];
 

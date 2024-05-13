@@ -17,6 +17,7 @@ import {
   type ConnectionStatus,
 } from "../../utilities/connections";
 import { createError, handleInputErrors } from "../../utilities/errorHandlers";
+import { getPaginationFromQuery } from "../../utilities/pagination";
 import UserProjection, { type UserProjectionEssentials } from "../dto/user";
 import { UserActivityManager } from "../services/UserActivityManager";
 import logger from "../services/logger";
@@ -34,8 +35,9 @@ export async function connectionFollowStatus(
   try {
     handleInputErrors(req);
 
-    const { id } = req.params;
     const authUser = req.user!;
+
+    const id = new mongoose.Types.ObjectId(req.params.id);
 
     const connectionStatus = await getConnectionStatus(authUser._id, id);
 
@@ -85,7 +87,7 @@ export async function createUserConnection(
     );
 
     if (targetUser.isPrivate) {
-      const existingFollowRequest = await FollowRequest.findOne({
+      const existingFollowRequest = await FollowRequest.exists({
         user: authUser._id,
         target: id,
       });
@@ -127,7 +129,7 @@ export async function createUserConnection(
 
 export const getFollowRequestsValidation: ValidationChain[] = [
   validate.page(query("page").optional()),
-  validate.limit(query("limit").optional(), 10, 50),
+  validate.limit(query("limit").optional(), 10, 100),
 ];
 
 export async function getFollowRequests(
@@ -140,9 +142,10 @@ export async function getFollowRequests(
 
     const authUser = req.user!;
 
-    const limit = parseInt(req.query.limit as string) || 50;
-    const page = parseInt(req.query.page as string) || 1;
-    const skip = (page - 1) * limit;
+    const { limit, skip } = getPaginationFromQuery(req, {
+      defaultLimit: 50,
+      maxLimit: 100,
+    });
 
     const [userFollowRequests, followRequests] = await Promise.all([
       FollowRequest.find({
@@ -250,8 +253,9 @@ export async function acceptFollowRequest(
   try {
     handleInputErrors(req);
 
-    const { id } = req.body;
     const authUser = req.user!;
+
+    const id = new mongoose.Types.ObjectId(req.body.id as string);
 
     const followRequest = await FollowRequest.findOne({
       _id: id,
@@ -292,8 +296,9 @@ export async function rejectFollowRequest(
   try {
     handleInputErrors(req);
 
-    const { id } = req.body;
     const authUser = req.user!;
+
+    const id = new mongoose.Types.ObjectId(req.body.id as string);
 
     const followRequest = await FollowRequest.findOne({
       _id: id,
@@ -324,8 +329,9 @@ export async function deleteUserConnection(
   try {
     handleInputErrors(req);
 
-    const { id } = req.params;
     const authUser = req.user!;
+
+    const id = new mongoose.Types.ObjectId(req.params.id);
 
     const deletedDoc = await Follow.findOneAndDelete(
       {
@@ -340,7 +346,7 @@ export async function deleteUserConnection(
     try {
       await UserActivity.deleteOne({
         userId: authUser._id,
-        resourceId: new mongoose.Types.ObjectId(id as string),
+        resourceId: id,
         activityType: ActivityTypeEnum.FOLLOWING,
         resourceType: ActivityResourceTypeEnum.USER,
       });
@@ -383,13 +389,15 @@ export async function getUserConnections(
   try {
     handleInputErrors(req);
 
-    const { id, type } = req.params;
     const authUser = req.user!;
 
-    const { limit: reqLimit, page: reqPage } = req.query;
-    const limit = parseInt(reqLimit as string) || 50;
-    const page = parseInt(reqPage as string) || 1;
-    const skip = (page - 1) * limit;
+    const id = new mongoose.Types.ObjectId(req.params.id);
+    const type = req.params.type as "followers" | "followings";
+
+    const { page, limit, skip } = getPaginationFromQuery(req, {
+      defaultLimit: 50,
+      maxLimit: 100,
+    });
 
     const theUserId = id ? new mongoose.Types.ObjectId(id) : authUser._id;
 

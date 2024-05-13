@@ -4,6 +4,7 @@ import { StatusCodes } from "http-status-codes";
 import { Types } from "mongoose";
 
 import { dailyCoinsCFG } from "../../config/dailyCoins";
+import CoinReward, { CoinRewardTypeEnum } from "../../models/CoinReward";
 import Prize, { type IPrize } from "../../models/Prize";
 import PrizeRedemption, {
   PrizeRedemptionStatusTypeEnum,
@@ -12,6 +13,7 @@ import User, { type IUser } from "../../models/User";
 import { dStrings, dynamicMessage } from "../../strings";
 import { getConnectionStatuses } from "../../utilities/connections";
 import { createError, handleInputErrors } from "../../utilities/errorHandlers";
+import { getPaginationFromQuery } from "../../utilities/pagination";
 import UserProjection, { type UserProjectionEssentials } from "../dto/user";
 import { BrevoService } from "../services/BrevoService";
 import logger from "../services/logger";
@@ -22,7 +24,6 @@ import {
   updateUserCoinsAndStreak,
 } from "../services/reward/coinReward.service";
 import validate from "./validators";
-import CoinReward, { CoinRewardTypeEnum } from "../../models/CoinReward";
 
 export async function dailyCoinInformation(
   req: Request,
@@ -200,10 +201,10 @@ export async function getPrizeRedemptionHistory(
 
     const authUser = req.user!;
 
-    const { page: reqPage, limit: reqLimit } = req.query;
-    const page = parseInt(reqPage as string) || 1;
-    const limit = parseInt(reqLimit as string) || 500;
-    const skip = (page - 1) * limit;
+    const { limit, skip } = getPaginationFromQuery(req, {
+      defaultLimit: 20,
+      maxLimit: 50,
+    });
 
     const user = await User.findById(authUser._id).orFail(
       createError(
@@ -239,10 +240,10 @@ export async function getAllPrizeRedemptionHistory(
   try {
     handleInputErrors(req);
 
-    const { page: reqPage, limit: reqLimit } = req.query;
-    const page = parseInt(reqPage as string) || 1;
-    const limit = parseInt(reqLimit as string) || 500;
-    const skip = (page - 1) * limit;
+    const { limit, skip } = getPaginationFromQuery(req, {
+      defaultLimit: 20,
+      maxLimit: 50,
+    });
 
     const redemptions = await PrizeRedemption.find({})
       .sort({ _id: -1 })
@@ -328,14 +329,8 @@ export async function reviewRedemption(
 }
 
 export const paginationValidation: ValidationChain[] = [
-  query("page")
-    .optional()
-    .isInt({ min: 1 })
-    .withMessage("Page must be at least 1"),
-  query("limit")
-    .optional()
-    .isInt({ min: 1 })
-    .withMessage("Limit must be at least 1"),
+  validate.page(query("page").optional(), 50),
+  validate.limit(query("limit").optional(), 1, 50),
 ];
 
 export async function getLatestReferredUsers(
@@ -348,9 +343,10 @@ export async function getLatestReferredUsers(
 
     const authUser = req.user!;
 
-    const page = Number(req.query.page) || 1;
-    const limit = Number(req.query.limit) || 20;
-    const skip = (page - 1) * limit;
+    const { page, limit, skip } = getPaginationFromQuery(req, {
+      defaultLimit: 20,
+      maxLimit: 50,
+    });
 
     const [latestReferredUsers, total] = await Promise.all([
       User.find({ referredBy: authUser._id })

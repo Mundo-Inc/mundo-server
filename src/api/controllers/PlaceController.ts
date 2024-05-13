@@ -4,11 +4,12 @@ import { query, type ValidationChain } from "express-validator";
 import { type File } from "formidable";
 import { readFileSync, unlinkSync } from "fs";
 import { StatusCodes } from "http-status-codes";
-import mongoose from "mongoose";
+import mongoose, { type PipelineStage } from "mongoose";
 
 import Place, { type IPlace } from "../../models/Place";
 import { dStrings, dynamicMessage } from "../../strings";
 import { createError, handleInputErrors } from "../../utilities/errorHandlers";
+import { getPaginationFromQuery } from "../../utilities/pagination";
 import { bucketName, parseForm, region, s3 } from "../../utilities/storage";
 import { areStrictlySimilar } from "../../utilities/stringHelper";
 import UserProjection from "../dto/user";
@@ -37,10 +38,10 @@ export async function createPlace(
     const placeInfo = {
       name: fields.name![0],
       location: JSON.parse(fields.location![0]),
-      description: fields.description?.[0],
+      description: fields.description?.[0] || "",
       priceRange: fields.priceRange?.[0] ? parseInt(fields.priceRange[0]) : 0,
       categories: fields.categories?.[0] ? fields.categories[0].split(",") : [],
-    } as IPlace;
+    };
 
     let place = await Place.findOne({
       name: placeInfo.name,
@@ -150,12 +151,15 @@ export async function getPlaces(
       : lat && lng
       ? "distance"
       : "score";
-    const limit = Number(req.query.limit) || 50;
-    const page = Number(req.query.page) || 1;
-    const skip = (page - 1) * limit;
+
+    const { limit, skip } = getPaginationFromQuery(req, {
+      defaultLimit: 10,
+      maxLimit: 50,
+    });
+
     const maxPrice = Number(req.query.maxPrice);
     const minScore = Math.min(Number(req.query.minScore), 4) || 0;
-    const matchPipeline: any = [];
+    const matchPipeline: PipelineStage[] = [];
     const matchObject: any = {};
     if (q) {
       matchObject["name"] = { $regex: q || "", $options: "i" };
@@ -181,8 +185,8 @@ export async function getPlaces(
       });
     }
 
-    let distancePipeline: any = [];
-    let sortPipeline: any = [];
+    let distancePipeline: PipelineStage[] = [];
+    let sortPipeline: PipelineStage[] = [];
     const sortItems: {
       [key: string]: string;
       score: string;
@@ -197,9 +201,7 @@ export async function getPlaces(
     };
     if (sort && Object.keys(sortItems).includes(sort as string)) {
       if (sort === "distance" && lat && lng) {
-        const body: {
-          [key: string]: any;
-        } = {
+        const body: PipelineStage.GeoNear["$geoNear"] = {
           near: {
             type: "Point",
             coordinates: [Number(lng), Number(lat)],
@@ -229,7 +231,7 @@ export async function getPlaces(
       }
     }
 
-    const lookupPipeline: any = [];
+    const lookupPipeline: PipelineStage[] = [];
     if (images && parseInt(images as string) > 0) {
       lookupPipeline.push({
         $lookup: {

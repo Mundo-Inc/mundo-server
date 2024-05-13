@@ -9,7 +9,9 @@ import Prize from "../../models/Prize";
 import User from "../../models/User";
 import { dStrings, dynamicMessage } from "../../strings";
 import { createError, handleInputErrors } from "../../utilities/errorHandlers";
+import { getPaginationFromQuery } from "../../utilities/pagination";
 import { populateMissionProgress } from "../services/reward/coinReward.service";
+import validate from "./validators";
 
 export const createMissionValidation: ValidationChain[] = [
   body("title").isString(),
@@ -70,14 +72,8 @@ export async function createMission(
 }
 
 export const getMissionsValidation: ValidationChain[] = [
-  query("page")
-    .optional()
-    .isInt({ min: 1 })
-    .withMessage("Page number must be at least 1"),
-  query("limit")
-    .optional()
-    .isInt({ gt: 0 })
-    .withMessage("Limit must be greater than 0"),
+  validate.page(query("page").optional(), 100),
+  validate.limit(query("limit").optional(), 1, 50),
 ];
 
 export async function getMissions(
@@ -90,10 +86,10 @@ export async function getMissions(
 
     const authUser = req.user!;
 
-    // Get page and limit from query parameters
-    const page = parseInt(req.query.page as string) || 1;
-    const limit = parseInt(req.query.limit as string) || 10; // Default to 10 items per page
-    const skip = (page - 1) * limit;
+    const { page, limit, skip } = getPaginationFromQuery(req, {
+      defaultLimit: 20,
+      maxLimit: 50,
+    });
 
     const query = {
       expiresAt: { $gte: new Date() },
@@ -139,8 +135,12 @@ export async function claimMissionReward(
   res: Response,
   next: NextFunction
 ) {
-  const { id } = req.params;
+  handleInputErrors(req);
+
   const authUser = req.user!;
+
+  const id = new mongoose.Types.ObjectId(req.params.id);
+
   try {
     const [user, mission] = await Promise.all([
       User.findById(authUser._id).orFail(
@@ -200,8 +200,6 @@ export async function claimMissionReward(
     next(error);
   }
 }
-
-export const getPrizesValidation: ValidationChain[] = [];
 
 export async function getPrizes(
   req: Request,
@@ -268,10 +266,10 @@ export async function getAllMissions(
   try {
     handleInputErrors(req);
 
-    // Get page and limit from query parameters
-    const page = parseInt(req.query.page as string) || 1;
-    const limit = parseInt(req.query.limit as string) || 10; // Default to 10 items per page
-    const skip = (page - 1) * limit;
+    const { page, limit, skip } = getPaginationFromQuery(req, {
+      defaultLimit: 20,
+      maxLimit: 50,
+    });
 
     const [missions, totalMissions] = await Promise.all([
       Mission.find({}).sort({ createdAt: -1 }).skip(skip).limit(limit).lean(),

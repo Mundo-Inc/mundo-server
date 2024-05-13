@@ -13,7 +13,6 @@ import {
   getMissions,
   getMissionsValidation,
   getPrizes,
-  getPrizesValidation,
 } from "../controllers/MissionController";
 import {
   claimDailyCoins,
@@ -58,7 +57,7 @@ router
 
 router
   .route("/prizes")
-  .get(getPrizesValidation, getPrizes)
+  .get(getPrizes)
   .post(adminAuthMiddleware, createPrizeValidation, createPrize);
 
 router.route("/prizes/:id/redeem").post(redeemPrizeValidation, redeemPrize);

@@ -1,7 +1,7 @@
 import type { NextFunction, Request, Response } from "express";
 import { param, query, type ValidationChain } from "express-validator";
 import { StatusCodes } from "http-status-codes";
-import mongoose, { type Document } from "mongoose";
+import mongoose, { type Document, type PipelineStage } from "mongoose";
 
 import {
   GoogleDataManager,
@@ -20,6 +20,7 @@ import { dStrings, dynamicMessage } from "../../strings";
 import type { IYelpPlaceDetails } from "../../types/yelpPlace.interface";
 import { createError, handleInputErrors } from "../../utilities/errorHandlers";
 import { filterObjectByConfig } from "../../utilities/filtering";
+import { getPaginationFromQuery } from "../../utilities/pagination";
 import UserProjection from "../dto/user";
 import logger from "../services/logger";
 import {
@@ -66,12 +67,12 @@ export async function getPlaceOverview(
   try {
     handleInputErrors(req);
 
-    const { id } = req.params;
+    const id = new mongoose.Types.ObjectId(req.params.id);
 
     const response = await Place.aggregate([
       {
         $match: {
-          _id: new mongoose.Types.ObjectId(id as string),
+          _id: id,
         },
       },
       {
@@ -132,9 +133,9 @@ export async function getPlaceOverview(
           categories: 1,
         },
       },
-    ]);
+    ]).then((result) => result[0]);
 
-    if (response.length === 0) {
+    if (!response) {
       throw createError(
         dynamicMessage(dStrings.notFound, "Place"),
         StatusCodes.NOT_FOUND
@@ -143,7 +144,7 @@ export async function getPlaceOverview(
 
     res.status(StatusCodes.OK).json({
       success: true,
-      data: response[0],
+      data: response,
     });
   } catch (err) {
     next(err);
@@ -273,7 +274,7 @@ export const getPlaceMediaValidation: ValidationChain[] = [
     .withMessage("Cannot specify both type and priority")
     .isIn(["image", "video"])
     .withMessage("Invalid media type"),
-  validate.limit(query("limit").optional(), 1, 30),
+  validate.limit(query("limit").optional(), 1, 50),
   validate.page(query("page").optional(), 50),
 ];
 
@@ -285,15 +286,17 @@ export async function getPlaceMedia(
   try {
     handleInputErrors(req);
 
-    const { id } = req.params;
+    const id = new mongoose.Types.ObjectId(req.params.id);
 
-    const limit = Number(req.query.limit) || 50;
-    const page = Number(req.query.page) || 1;
-    const skip = (page - 1) * limit;
+    const { page, limit, skip } = getPaginationFromQuery(req, {
+      defaultLimit: 20,
+      maxLimit: 50,
+    });
+
     const type = req.query.type as "image" | "video" | undefined;
     const priority = req.query.priority as "image" | "video" | undefined;
 
-    const priorityPipeline: any = [];
+    const priorityPipeline: PipelineStage[] = [];
 
     if (priority) {
       priorityPipeline.push({
@@ -306,7 +309,7 @@ export async function getPlaceMedia(
     const media = await Media.aggregate([
       {
         $match: {
-          place: new mongoose.Types.ObjectId(id as string),
+          place: id,
           ...(type ? { type } : {}),
         },
       },
@@ -381,7 +384,8 @@ export async function getPlaceReviews(
     handleInputErrors(req);
 
     const authUser = req.user;
-    const { id } = req.params;
+
+    const id = new mongoose.Types.ObjectId(req.params.id);
 
     const type = (req.query.type || "phantom") as
       | "phantom"
@@ -436,11 +440,12 @@ export async function getPlaceReviews(
         data: reviews,
       });
     } else {
-      const limit = Number(req.query.limit) || 20;
-      const page = Number(req.query.page) || 1;
-      const skip = (page - 1) * limit;
+      const { page, limit, skip } = getPaginationFromQuery(req, {
+        defaultLimit: 20,
+        maxLimit: 30,
+      });
 
-      let userReactionPipeline: any = {};
+      let userReactionPipeline: Record<string, PipelineStage[]> = {};
       if (authUser) {
         userReactionPipeline = {
           user: [
@@ -462,13 +467,13 @@ export async function getPlaceReviews(
       }
 
       const total = await Review.countDocuments({
-        place: new mongoose.Types.ObjectId(id as string),
+        place: id,
       });
 
       const results = await Review.aggregate([
         {
           $match: {
-            place: new mongoose.Types.ObjectId(id as string),
+            place: id,
           },
         },
         {
@@ -669,8 +674,10 @@ export async function getExistInLists(
 ) {
   try {
     handleInputErrors(req);
+
     const authUser = req.user!;
-    const { id } = req.params;
+
+    const id = new mongoose.Types.ObjectId(req.params.id);
 
     const lists = await List.find({
       "collaborators.user": authUser._id,

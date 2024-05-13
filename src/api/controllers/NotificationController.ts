@@ -1,6 +1,7 @@
 import type { NextFunction, Request, Response } from "express";
 import { body, query, type ValidationChain } from "express-validator";
 import { StatusCodes } from "http-status-codes";
+import { type PipelineStage } from "mongoose";
 
 import CheckIn from "../../models/CheckIn";
 import Comment from "../../models/Comment";
@@ -13,6 +14,7 @@ import { type IPlace } from "../../models/Place";
 import Reaction from "../../models/Reaction";
 import Review from "../../models/Review";
 import { handleInputErrors } from "../../utilities/errorHandlers";
+import { getPaginationFromQuery } from "../../utilities/pagination";
 import UserProjection, { type UserProjectionEssentials } from "../dto/user";
 import validate from "./validators";
 
@@ -211,7 +213,7 @@ async function getNotificationContent(notification: INotification) {
 export const getNotificationsValidation: ValidationChain[] = [
   validate.page(query("page").optional()),
   validate.limit(query("limit").optional(), 10, 50),
-  query("unread").optional().isBoolean(),
+  query("unread").optional().isBoolean().toBoolean(),
   query("v").optional().isNumeric(),
 ];
 export async function getNotifications(
@@ -224,13 +226,16 @@ export async function getNotifications(
 
     const authUser = req.user!;
 
-    const { unread } = req.query;
-    const limit = parseInt(req.query.limit as string) || 10;
-    const page = parseInt(req.query.page as string) || 1;
-    const skip = (page - 1) * limit;
+    const unread = Boolean(req.query.unread);
+
+    const { page, limit, skip } = getPaginationFromQuery(req, {
+      defaultLimit: 20,
+      maxLimit: 50,
+    });
+
     const v = parseInt(req.query.v as string) || 1;
 
-    const matchPipeline: any[] = [
+    const matchPipeline: PipelineStage[] = [
       {
         $match: {
           user: authUser._id,
