@@ -7,28 +7,46 @@ import Comment from "../../models/Comment";
 import Follow from "../../models/Follow";
 import Reaction from "../../models/Reaction";
 import User from "../../models/User";
-import UserActivity, { type IUserActivity } from "../../models/UserActivity";
+import UserActivity, {
+  ActivityTypeEnum,
+  type IUserActivity,
+} from "../../models/UserActivity";
 import { dStrings, dynamicMessage } from "../../strings";
 import { getConnectionStatuses } from "../../utilities/connections";
 import { createError, handleInputErrors } from "../../utilities/errorHandlers";
+import { getPaginationFromQuery } from "../../utilities/pagination";
 import UserProjection from "../dto/user";
 import { getResourceInfo } from "../services/feed.service";
 import validate from "./validators";
-import { getPaginationFromQuery } from "../../utilities/pagination";
 
 export const getActivitiesOfaUserValidation: ValidationChain[] = [
   param("id").isMongoId(),
-  query("type")
+  query("type").optional().toUpperCase().isIn(Object.values(ActivityTypeEnum)),
+  query("types")
     .optional()
-    .toUpperCase()
-    .isIn([
-      "NEW_CHECKIN",
-      "NEW_REVIEW",
-      "NEW_RECOMMEND",
-      "ADD_PLACE",
-      "LEVEL_UP",
-      "FOLLOWING",
-    ]),
+    .isString()
+    .customSanitizer((value) => {
+      if (!value) {
+        return undefined;
+      }
+
+      return value.split(",");
+    })
+    .custom((value) => {
+      if (!Array.isArray(value)) {
+        throw new Error("Invalid types");
+      }
+
+      for (const type of value) {
+        if (
+          !Object.values(ActivityTypeEnum).includes(type as ActivityTypeEnum)
+        ) {
+          throw new Error(`Invalid type: ${type}`);
+        }
+      }
+
+      return true;
+    }),
   validate.page(query("page").optional()),
   validate.limit(query("limit").optional(), 1, 50),
 ];
@@ -50,18 +68,25 @@ export async function getActivitiesOfaUser(
       maxLimit: 50,
     });
 
+    const type: ActivityTypeEnum | undefined = req.query.type
+      ? (req.query.type as ActivityTypeEnum)
+      : undefined;
+    const types: ActivityTypeEnum[] | undefined = req.query.types
+      ? (req.query.types as ActivityTypeEnum[])
+      : undefined;
+
     //PRIVACY
-    const userObject = await User.findById(userId).orFail(
+    const user = await User.findById(userId).orFail(
       createError(
         dynamicMessage(dStrings.notFound, "User"),
         StatusCodes.NOT_FOUND
       )
     );
 
-    if (userObject.isPrivate) {
+    if (user.isPrivate) {
       await Follow.exists({
         user: authUser._id,
-        target: userObject._id,
+        target: user._id,
       }).orFail(
         createError(
           "You are not allowed to view this user's activities.",
@@ -74,8 +99,10 @@ export async function getActivitiesOfaUser(
       userId,
     };
 
-    if (req.query.type) {
-      query.activityType = req.query.type as string;
+    if (type) {
+      query.activityType = type;
+    } else if (types) {
+      query.activityType = { $in: types };
     }
 
     const [total, userActivities] = await Promise.all([

@@ -4,9 +4,12 @@ import { StatusCodes } from "http-status-codes";
 import mongoose from "mongoose";
 
 import Follow, { FollowStatusEnum } from "../../models/Follow";
-import FollowRequest from "../../models/FollowRequest";
-import Notification, { ResourceTypeEnum } from "../../models/Notification";
-import User from "../../models/User";
+import FollowRequest, { type IFollowRequest } from "../../models/FollowRequest";
+import Notification, {
+  NotificationTypeEnum,
+  ResourceTypeEnum,
+} from "../../models/Notification";
+import User, { type IUser } from "../../models/User";
 import UserActivity, {
   ActivityResourceTypeEnum,
   ActivityTypeEnum,
@@ -71,8 +74,8 @@ export async function createUserConnection(
       user: authUser._id,
       target: id,
     });
+
     if (existingFollow) {
-      logger.debug("You already followed this person");
       throw createError(
         dynamicMessage(dStrings.alreadyExists, "Follow"),
         StatusCodes.CONFLICT
@@ -147,23 +150,34 @@ export async function getFollowRequests(
       maxLimit: 100,
     });
 
-    const [userFollowRequests, followRequests] = await Promise.all([
+    const [userFollowRequests, totalCount] = await Promise.all([
       FollowRequest.find({
         target: authUser._id,
       })
         .sort({ _id: -1 })
         .skip(skip)
         .limit(limit)
+        .select<Pick<IFollowRequest, "_id" | "user" | "createdAt">>({
+          user: 1,
+          createdAt: 1,
+        })
         .populate<{
           user: UserProjectionEssentials & {
             connectionStatus: ConnectionStatus | null;
           };
         }>("user", UserProjection.essentials)
         .lean(),
-      FollowRequest.find({
-        user: authUser._id,
-      }).lean(),
+      FollowRequest.countDocuments({
+        target: authUser._id,
+      }),
     ]);
+
+    const followRequests = await FollowRequest.find({
+      user: authUser._id,
+      target: {
+        $in: userFollowRequests.map((f) => f.user._id),
+      },
+    }).lean();
 
     // Get follow status for each user
     const usersObject: Record<string, ConnectionStatus> = {};
@@ -233,16 +247,22 @@ export async function getFollowRequests(
       f.user.connectionStatus = usersObject[f.user._id.toString()];
     });
 
-    res
-      .status(StatusCodes.OK)
-      .json({ success: true, data: userFollowRequests });
+    res.status(StatusCodes.OK).json({
+      success: true,
+      data: userFollowRequests,
+      pagination: {
+        totalCount,
+        page: 1,
+        limit,
+      },
+    });
   } catch (error) {
     next(error);
   }
 }
 
 export const acceptFollowRequestValidation: ValidationChain[] = [
-  body("id").isMongoId(),
+  param("requestId").isMongoId(),
 ];
 
 export async function acceptFollowRequest(
@@ -255,17 +275,26 @@ export async function acceptFollowRequest(
 
     const authUser = req.user!;
 
-    const id = new mongoose.Types.ObjectId(req.body.id as string);
+    const id = new mongoose.Types.ObjectId(req.params.requestId);
 
     const followRequest = await FollowRequest.findOne({
       _id: id,
       target: authUser._id,
-    }).orFail(
-      createError(
-        dynamicMessage(dStrings.notFound, "Follow Request"),
-        StatusCodes.NOT_FOUND
+    })
+      .orFail(
+        createError(
+          dynamicMessage(dStrings.notFound, "Follow Request"),
+          StatusCodes.NOT_FOUND
+        )
       )
-    );
+      .populate<{
+        user: Pick<IUser, "_id" | "isPrivate">;
+      }>({
+        path: "user",
+        select: ["_id", "isPrivate"],
+      });
+
+    console.log("Here");
 
     const follow = await Follow.create({
       user: followRequest.user,
@@ -273,11 +302,26 @@ export async function acceptFollowRequest(
     });
 
     await Promise.all([
-      UserActivityManager.createFollowActivity(authUser, followRequest.target),
+      UserActivityManager.createFollowActivity(
+        followRequest.user,
+        followRequest.target
+      ),
       followRequest.deleteOne(),
     ]);
 
-    //TODO: Send notification to follow.user that your follow request got accepted
+    await Notification.create({
+      user: followRequest.user._id,
+      type: NotificationTypeEnum.FOLLOW_REQUEST_ACCEPTED,
+      resources: [
+        {
+          _id: follow._id,
+          type: ResourceTypeEnum.FOLLOW,
+          date: follow.createdAt,
+        },
+      ],
+      importance: 2,
+    });
+
     res.status(StatusCodes.CREATED).json({ success: true, data: follow });
   } catch (error) {
     next(error);
@@ -285,7 +329,7 @@ export async function acceptFollowRequest(
 }
 
 export const rejectFollowRequestValidation: ValidationChain[] = [
-  body("id").isMongoId(),
+  param("requestId").isMongoId(),
 ];
 
 export async function rejectFollowRequest(
@@ -298,7 +342,7 @@ export async function rejectFollowRequest(
 
     const authUser = req.user!;
 
-    const id = new mongoose.Types.ObjectId(req.body.id as string);
+    const id = new mongoose.Types.ObjectId(req.params.requestId as string);
 
     const followRequest = await FollowRequest.findOne({
       _id: id,
@@ -333,40 +377,141 @@ export async function deleteUserConnection(
 
     const id = new mongoose.Types.ObjectId(req.params.id);
 
-    const deletedDoc = await Follow.findOneAndDelete(
-      {
-        user: authUser._id,
-        target: id,
-      },
-      {
-        includeResultMetadata: false,
-      }
-    );
+    const followDoc = await Follow.findOne({
+      user: authUser._id,
+      target: id,
+    });
 
-    try {
-      await UserActivity.deleteOne({
-        userId: authUser._id,
-        resourceId: id,
-        activityType: ActivityTypeEnum.FOLLOWING,
-        resourceType: ActivityResourceTypeEnum.USER,
-      });
-    } catch (e) {
-      logger.error("Error while deleting user connection", { error: e });
-    }
+    if (followDoc) {
+      const [deleteFollow, deleteUserActivity, deleteNotification] =
+        await Promise.all([
+          followDoc.deleteOne(),
+          UserActivity.deleteOne({
+            userId: authUser._id,
+            resourceId: id,
+            activityType: ActivityTypeEnum.FOLLOWING,
+            resourceType: ActivityResourceTypeEnum.USER,
+          }),
+          Notification.deleteOne({
+            resources: {
+              $elemMatch: { _id: followDoc._id, type: ResourceTypeEnum.FOLLOW },
+            },
+          }),
+        ]);
 
-    if (deletedDoc) {
-      try {
-        await Notification.deleteOne({
-          resources: {
-            $elemMatch: { _id: deletedDoc._id, type: ResourceTypeEnum.FOLLOW },
-          },
+      if (!deleteFollow.deletedCount) {
+        logger.error("Error while deleting user connection", {
+          error: "Follow not found",
         });
-      } catch (e) {
+      }
+
+      if (!deleteUserActivity.deletedCount) {
+        logger.error("Error while deleting user connection", {
+          error: "UserActivity not found",
+        });
+      }
+
+      if (!deleteNotification.deletedCount) {
         logger.error(
           "Error while deleting notification after deleting user connection",
-          { error: e }
+          { error: "Notification not found" }
         );
       }
+    } else {
+      const requestDoc = await FollowRequest.findOne({
+        user: authUser._id,
+        target: id,
+      }).orFail(
+        createError(
+          dynamicMessage(dStrings.notFound, "Entity"),
+          StatusCodes.NOT_FOUND
+        )
+      );
+
+      const [deleteRequest, deleteNotification] = await Promise.all([
+        requestDoc.deleteOne(),
+        Notification.deleteOne({
+          resources: {
+            $elemMatch: {
+              _id: requestDoc._id,
+              type: ResourceTypeEnum.FOLLOW_REQUEST,
+            },
+          },
+        }),
+      ]);
+
+      if (!deleteRequest.deletedCount) {
+        logger.error("Error while deleting user connection", {
+          error: "FollowRequest not found",
+        });
+      }
+
+      if (!deleteNotification.deletedCount) {
+        logger.error(
+          "Error while deleting notification after deleting user connection",
+          { error: "Notification not found" }
+        );
+      }
+    }
+
+    res.sendStatus(StatusCodes.NO_CONTENT);
+  } catch (err) {
+    next(err);
+  }
+}
+
+export const removeFollowerValidation: ValidationChain[] = [
+  param("userId").isMongoId(),
+];
+export async function removeFollower(
+  req: Request,
+  res: Response,
+  next: NextFunction
+) {
+  try {
+    handleInputErrors(req);
+
+    const authUser = req.user!;
+
+    const userId = new mongoose.Types.ObjectId(req.params.userId);
+
+    const followDoc = await Follow.findOne({
+      user: userId,
+      target: authUser._id,
+    }).orFail(
+      createError(
+        dynamicMessage(dStrings.notFound, "Connection"),
+        StatusCodes.NOT_FOUND
+      )
+    );
+
+    await followDoc.deleteOne();
+
+    const [deleteUserActivity, deleteNotification] = await Promise.all([
+      UserActivity.deleteOne({
+        userId: userId,
+        resourceId: authUser._id,
+        activityType: ActivityTypeEnum.FOLLOWING,
+        resourceType: ActivityResourceTypeEnum.USER,
+      }),
+      Notification.deleteOne({
+        resources: {
+          $elemMatch: { _id: followDoc._id, type: ResourceTypeEnum.FOLLOW },
+        },
+      }),
+    ]);
+
+    if (!deleteUserActivity.deletedCount) {
+      logger.error("Error while deleting user connection", {
+        error: "UserActivity not found",
+      });
+    }
+
+    if (!deleteNotification.deletedCount) {
+      logger.error(
+        "Error while deleting notification after deleting user connection",
+        { error: "Notification not found" }
+      );
     }
 
     res.sendStatus(StatusCodes.NO_CONTENT);
@@ -401,13 +546,12 @@ export async function getUserConnections(
 
     const theUserId = id ? new mongoose.Types.ObjectId(id) : authUser._id;
 
-    const userExists = await User.findById(theUserId).lean();
-    if (!userExists) {
-      throw createError(
+    await User.exists(theUserId).orFail(
+      createError(
         dynamicMessage(dStrings.notFound, "User"),
         StatusCodes.NOT_FOUND
-      );
-    }
+      )
+    );
 
     const data = await Follow.aggregate([
       {
@@ -462,14 +606,13 @@ export async function getUserConnections(
           connections: 1,
         },
       },
-    ]);
+    ]).then((result) => result[0]);
 
     res.status(StatusCodes.OK).json({
       success: true,
-      data: data[0]?.connections || [],
-      total: data[0]?.total || 0,
+      data: data?.connections || [],
       pagination: {
-        totalCount: data[0]?.total || 0,
+        totalCount: data?.total || 0,
         page: page,
         limit: limit,
       },

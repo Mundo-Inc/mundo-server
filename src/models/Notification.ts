@@ -4,6 +4,8 @@ export enum NotificationTypeEnum {
   REACTION = "REACTION",
   COMMENT = "COMMENT",
   FOLLOW = "FOLLOW",
+  FOLLOW_REQUEST = "FOLLOW_REQUEST",
+  FOLLOW_REQUEST_ACCEPTED = "FOLLOW_REQUEST_ACCEPTED",
   COMMENT_MENTION = "COMMENT_MENTION",
   REVIEW_MENTION = "REVIEW_MENTION",
   XP = "XP",
@@ -23,6 +25,7 @@ export enum ResourceTypeEnum {
   Homemade = "Homemade",
   CHECKIN = "CheckIn",
   FOLLOW = "Follow",
+  FOLLOW_REQUEST = "FollowRequest",
 }
 
 interface Resources {

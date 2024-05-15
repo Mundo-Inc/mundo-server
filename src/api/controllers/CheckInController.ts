@@ -108,6 +108,7 @@ export async function getCheckIns(
         },
       },
     ];
+
     if (user) {
       //PRIVACY
       const userObject = await User.findById(user).orFail(
@@ -117,7 +118,7 @@ export async function getCheckIns(
         )
       );
 
-      if (userObject.isPrivate) {
+      if (!user.equals(authUser._id) && userObject.isPrivate) {
         await Follow.exists({
           user: authUser._id,
           target: userObject._id,

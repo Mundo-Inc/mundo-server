@@ -457,7 +457,6 @@ export const getUserFeed = async (
           $nin: blocked.map((b) => b.user),
         },
         hasMedia: true,
-        // Either should be public or it should be followed by the viewer or be the viewer's itself, or private and im looking for my feed
         resourcePrivacy: { $ne: ResourcePrivacyEnum.PRIVATE },
         $or: [
           {

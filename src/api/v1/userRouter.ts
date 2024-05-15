@@ -20,6 +20,8 @@ import {
   getUserConnectionsValidation,
   rejectFollowRequest,
   rejectFollowRequestValidation,
+  removeFollower,
+  removeFollowerValidation,
 } from "../controllers/ConnectionController";
 import {
   getUserLists,
@@ -90,9 +92,16 @@ router.get(
 );
 
 router
-  .route("/followRequests/:id")
+  .route("/followRequests/:requestId")
   .post(authMiddleware, acceptFollowRequestValidation, acceptFollowRequest)
   .delete(authMiddleware, rejectFollowRequestValidation, rejectFollowRequest);
+
+router.delete(
+  "/followers/:userId",
+  authMiddleware,
+  removeFollowerValidation,
+  removeFollower
+);
 
 router.get(
   "/latestReferrals",
@@ -132,13 +141,11 @@ router
   .post(authMiddleware, createUserConnectionValidation, createUserConnection)
   .delete(authMiddleware, deleteUserConnectionValidation, deleteUserConnection);
 
-router
-  .route("/:id/connections/followStatus")
-  .get(
-    authMiddleware,
-    connectionFollowStatusValidation,
-    connectionFollowStatus
-  );
+router.get(
+  "/:id/connections/followStatus",
+  connectionFollowStatusValidation,
+  connectionFollowStatus
+);
 
 router.get(
   "/:id/connections/:type",

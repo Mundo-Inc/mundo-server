@@ -6,6 +6,7 @@ import { type PipelineStage } from "mongoose";
 import CheckIn from "../../models/CheckIn";
 import Comment from "../../models/Comment";
 import Follow from "../../models/Follow";
+import FollowRequest from "../../models/FollowRequest";
 import Notification, {
   NotificationTypeEnum,
   type INotification,
@@ -204,6 +205,38 @@ async function getNotificationContent(notification: INotification) {
         notification.additionalData?.amount || 250
       } Phantom Coins for successfully referring your frined ${friendName} to our app. Thanks for sharing!`;
       break;
+    case NotificationTypeEnum.FOLLOW_REQUEST:
+      await FollowRequest.findById(notification.resources![0]._id)
+        .populate<{
+          user: UserProjectionEssentials;
+        }>({
+          path: "user",
+          select: UserProjection.essentials,
+        })
+        .then((followRequest) => {
+          if (!followRequest) {
+            handleResourceNotFound(notification);
+          } else {
+            user = followRequest.user;
+            title = "Sent you a follow request";
+          }
+        });
+    case NotificationTypeEnum.FOLLOW_REQUEST_ACCEPTED:
+      await Follow.findById(notification.resources![0]._id)
+        .populate<{
+          user: UserProjectionEssentials;
+        }>({
+          path: "user",
+          select: UserProjection.essentials,
+        })
+        .then((follow) => {
+          if (!follow) {
+            handleResourceNotFound(notification);
+          } else {
+            user = follow.target;
+            title = "Accepted your follow request";
+          }
+        });
     default:
       break;
   }

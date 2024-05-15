@@ -37,9 +37,13 @@ FollowRequestSchema.post("save", async function (doc, next) {
   // create notification
   await Notification.create({
     user: doc.target,
-    type: NotificationTypeEnum.FOLLOW,
+    type: NotificationTypeEnum.FOLLOW_REQUEST,
     resources: [
-      { _id: doc._id, type: ResourceTypeEnum.FOLLOW, date: doc.createdAt },
+      {
+        _id: doc._id,
+        type: ResourceTypeEnum.FOLLOW_REQUEST,
+        date: doc.createdAt,
+      },
     ],
     importance: 2,
   });
