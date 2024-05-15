@@ -8,6 +8,7 @@ import { Types } from "mongoose";
 
 import Block from "../../models/Block";
 import CheckIn from "../../models/CheckIn";
+import UserActivity from "../../models/UserActivity";
 import CoinReward, { CoinRewardTypeEnum } from "../../models/CoinReward";
 import Follow, { FollowStatusEnum } from "../../models/Follow";
 import FollowRequest from "../../models/FollowRequest";
@@ -798,6 +799,12 @@ export async function putUserPrivacy(
 
     user.isPrivate = isPrivate;
     await user.save();
+
+    // Change all UserActivity isAccountPrivate to isPrivate
+    await UserActivity.updateMany(
+      { userId: user._id },
+      { isAccountPrivate: isPrivate }
+    );
 
     res.sendStatus(StatusCodes.NO_CONTENT);
   } catch (err) {
