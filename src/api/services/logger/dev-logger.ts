@@ -3,10 +3,10 @@ const { timestamp, colorize, printf, errors } = format;
 
 const customFormat = format.combine(
   colorize(),
-  timestamp({ format: "MM/DD HH:mm:ss" }),
+  timestamp({ format: "HH:mm:ss" }),
   errors({ stack: true }), // Attach stack trace to errors
   printf(({ level, message, timestamp, stack }) => {
-    let logMessage = `${timestamp} [${level}] ${message}`;
+    let logMessage = `${timestamp} [${level}]\t ${message}`;
     if (stack) {
       logMessage += `\nStack Trace: ${stack}`; // Append stack trace if available
     }

@@ -57,7 +57,7 @@ export interface IUser {
     address: string;
     verified: boolean;
   };
-  role: "admin" | "user";
+  role: UserRoleEnum;
   isActive?: boolean;
   name: string;
   phone?: string;

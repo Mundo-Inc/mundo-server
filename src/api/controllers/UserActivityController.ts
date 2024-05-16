@@ -9,6 +9,7 @@ import Reaction from "../../models/Reaction";
 import User from "../../models/User";
 import UserActivity, {
   ActivityTypeEnum,
+  ResourcePrivacyEnum,
   type IUserActivity,
 } from "../../models/UserActivity";
 import { dStrings, dynamicMessage } from "../../strings";
@@ -83,7 +84,11 @@ export async function getActivitiesOfaUser(
       )
     );
 
-    if (user.isPrivate) {
+    const query: FilterQuery<IUserActivity> = {
+      userId,
+    };
+
+    if (!authUser._id.equals(user._id) && user.isPrivate) {
       await Follow.exists({
         user: authUser._id,
         target: user._id,
@@ -93,11 +98,9 @@ export async function getActivitiesOfaUser(
           StatusCodes.FORBIDDEN
         )
       );
-    }
 
-    let query: FilterQuery<IUserActivity> = {
-      userId,
-    };
+      query.resourcePrivacy = { $ne: ResourcePrivacyEnum.PRIVATE };
+    }
 
     if (type) {
       query.activityType = type;
