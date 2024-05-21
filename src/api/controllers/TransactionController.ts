@@ -6,8 +6,11 @@ import Stripe from "stripe";
 
 import Transaction from "../../models/Transaction";
 import User, { type IUser } from "../../models/User";
+import Withdrawal from "../../models/Withdrawal";
 import { dStrings, dynamicMessage } from "../../strings";
 import { createError, handleInputErrors } from "../../utilities/errorHandlers";
+import { roundUpToTwoDecimals } from "../../utilities/numbers";
+import { ensureNonEmptyString } from "../../utilities/requireValue";
 import TransactionProjection, {
   type TransactionProjectionPublic,
 } from "../dto/transaction";
@@ -16,12 +19,16 @@ import { sendAttributtedMessage } from "./ConversationController";
 
 const SERVICE_FEE_RATIO = 0.05;
 
-let stripe: Stripe;
-if (process.env.NODE_ENV === "production") {
-  stripe = new Stripe(process.env.STRIPE_SECRET_PROD!);
-} else {
-  stripe = new Stripe(process.env.STRIPE_SECRET_TEST!);
+const stripeSecret =
+  process.env.NODE_ENV === "production"
+    ? process.env.STRIPE_SECRET_PROD
+    : process.env.STRIPE_SECRET_TEST;
+
+if (!stripeSecret) {
+  throw new Error("Stripe secret is not defined");
 }
+
+const stripe = new Stripe(stripeSecret);
 
 async function createStripeCustomer(user: IUser) {
   return stripe.customers.create({
@@ -92,7 +99,7 @@ export async function addOrUpdatePaymentMethod(
       )
     );
 
-    if (!user.stripe.paymentMethod) {
+    if (!user.stripe.defaultPaymentMethodId) {
       // Assuming you have a Stripe Customer ID stored or you create a new Customer
       const customerId =
         user.stripe.customerId || (await createStripeCustomer(user)).id;
@@ -104,7 +111,7 @@ export async function addOrUpdatePaymentMethod(
     }
 
     // Update the user's payment method
-    user.stripe.paymentMethod = paymentMethodId;
+    user.stripe.defaultPaymentMethodId = paymentMethodId;
     await user.save();
 
     res
@@ -132,13 +139,13 @@ export async function getPaymentMethod(
       )
     );
 
-    if (!user.stripe.paymentMethod) {
+    if (!user.stripe.defaultPaymentMethodId) {
       throw createError("No payment method found", StatusCodes.NOT_FOUND);
     }
 
     // Retrieve the payment method details from Stripe
     const paymentMethod = await stripe.paymentMethods.retrieve(
-      user.stripe.paymentMethod
+      user.stripe.defaultPaymentMethodId
     );
 
     // Extract relevant details to return
@@ -273,8 +280,9 @@ export async function onboarding(
 }
 
 export const sendGiftValidation: ValidationChain[] = [
-  body("amount").isNumeric(),
-  body("receiverId").isMongoId(),
+  body("amount").isNumeric().toFloat(),
+  body("recipient").optional().isMongoId(), // TODO: remove optional
+  body("receiverId").optional().isMongoId(), // TODO: remove this
   body("paymentMethodId").isString(),
   body("message").optional().isString(),
 ];
@@ -288,49 +296,65 @@ export async function sendGift(
     handleInputErrors(req);
 
     const authUser = req.user!;
-    const { amount, receiverId, paymentMethodId, message } = req.body;
 
-    const [sender, receiver] = await Promise.all([
+    const amount: number = Math.round(req.body.amount * 100) / 100; // Ensure amount is rounded to 2 decimal places
+    const paymentMethodId: string = req.body.paymentMethodId;
+    console.log(paymentMethodId);
+    const message: string = req.body.message || "";
+
+    const recipientId = req.body.recipient
+      ? new Types.ObjectId(req.body.recipient as string)
+      : req.body.receiverId
+      ? new Types.ObjectId(req.body.receiverId as string)
+      : null;
+
+    if (!recipientId) {
+      throw createError("Recipient ID is required", StatusCodes.BAD_REQUEST);
+    }
+
+    const [sender, recipient] = await Promise.all([
       User.findById(authUser._id).orFail(
         createError(
           dynamicMessage(dStrings.notFound, "User (sender)"),
           StatusCodes.NOT_FOUND
         )
       ),
-      User.findById(receiverId).orFail(
+      User.findById(recipientId).orFail(
         createError(
-          dynamicMessage(dStrings.notFound, "User (receiver)"),
+          dynamicMessage(dStrings.notFound, "User (recipient)"),
           StatusCodes.NOT_FOUND
         )
       ),
     ]);
 
-    if (!sender.stripe.customerId) {
-      throw createError(
+    const customerId = ensureNonEmptyString(
+      sender.stripe.customerId,
+      createError(
         "No customerID found. Please contact support.",
         StatusCodes.BAD_REQUEST
-      );
-    }
+      )
+    );
 
-    if (!receiver.stripe.connectAccountId) {
-      throw createError(
-        "No connectAccountId found. Please contact support.",
+    const recipientAccountId = ensureNonEmptyString(
+      recipient.stripe.connectAccountId,
+      createError(
+        "Recipient does not have a Stripe Connect account",
         StatusCodes.BAD_REQUEST
-      );
-    }
+      )
+    );
 
-    const serviceFee = amount * SERVICE_FEE_RATIO; // Assuming a 5% service fee
-    const totalAmount = amount + serviceFee;
+    const serviceFee = roundUpToTwoDecimals(amount * SERVICE_FEE_RATIO); // Round up the service fee
+    const totalAmount = (amount * 100 + serviceFee * 100) / 100;
 
     const paymentIntent = await stripe.paymentIntents.create({
-      amount: Math.round(totalAmount * 100), // convert amount to cents
+      amount: totalAmount * 100, // Amount in cents
       currency: "usd",
       payment_method: paymentMethodId,
-      customer: sender.stripe.customerId, // Include the customer ID here
+      customer: customerId, // Include the customer ID here
       confirm: true, // Automatically confirm the payment
-      description: `Gift transaction from ${sender._id} to ${receiver._id}`,
+      description: `Gift transaction from ${sender._id} to ${recipient._id}`,
       transfer_data: {
-        destination: receiver.stripe.connectAccountId,
+        destination: recipientAccountId,
       },
       automatic_payment_methods: {
         enabled: true,
@@ -338,22 +362,22 @@ export async function sendGift(
       },
     });
 
-    // Update receiver's balance
-    receiver.stripe.balance += amount; // Ensure this is persisted in your database model
-    await receiver.save();
+    // Update recipient's balance
+    recipient.stripe.balance += amount;
+    await recipient.save();
 
-    // Log transaction in your database
     const transaction = await Transaction.create({
       amount,
       serviceFee,
       totalAmount,
       sender: sender._id,
-      receiver: receiver._id,
+      recipient: recipient._id,
       paymentIntentId: paymentIntent.id,
+      message: message,
     });
 
-    // Send message to receiver
-    sendAttributtedMessage(authUser._id, receiverId, message || "", {
+    // Send message to recipient
+    sendAttributtedMessage(authUser._id, recipientId, message, {
       action: "gift",
       transactionId: transaction._id.toString(),
     });
@@ -368,7 +392,7 @@ export async function sendGift(
 }
 
 export const withdrawValidation: ValidationChain[] = [
-  body("amount").isNumeric(),
+  body("amount").isNumeric().toFloat(),
 ];
 
 export async function withdraw(
@@ -381,7 +405,7 @@ export async function withdraw(
 
     const authUser = req.user!;
 
-    const { amount } = req.body;
+    const amount: number = Math.round(req.body.amount * 100) / 100; // Ensure amount is rounded to 2 decimal places
 
     const user = await User.findById(authUser._id).orFail(
       createError(
@@ -396,18 +420,17 @@ export async function withdraw(
     }
 
     // Check if the user has a Stripe Connect account with a bank account attached
-    if (!user.stripe.connectAccountId) {
-      throw createError(
+    const connectAccountId = ensureNonEmptyString(
+      user.stripe.connectAccountId,
+      createError(
         "Stripe Connect account not configured",
         StatusCodes.BAD_REQUEST
-      );
-    }
+      )
+    );
 
     // Retrieve the Stripe Connect account to confirm that it has an external account set up
     try {
-      const account: Stripe.Account | null = await stripe.accounts.retrieve(
-        user.stripe.connectAccountId
-      );
+      const account = await stripe.accounts.retrieve(connectAccountId);
 
       if (
         account.requirements &&
@@ -423,9 +446,9 @@ export async function withdraw(
       }
       // Transfer funds to the Connect account, assuming the platform has enough balance
       await stripe.transfers.create({
-        amount: Math.round(amount * 100), // Amount in cents
+        amount: amount * 100, // Amount in cents
         currency: "usd",
-        destination: user.stripe.connectAccountId,
+        destination: connectAccountId,
       });
     } catch (error) {
       throw createError(
@@ -437,11 +460,11 @@ export async function withdraw(
     // Create a payout to the default external account
     const payout = await stripe.payouts.create(
       {
-        amount: Math.round(amount * 100), // Convert to cents
+        amount: amount * 100, // Convert to cents
         currency: "usd",
       },
       {
-        stripeAccount: user.stripe.connectAccountId, // Specify the connected Stripe account to payout from
+        stripeAccount: connectAccountId, // Specify the connected Stripe account to payout from
       }
     );
 
@@ -449,14 +472,10 @@ export async function withdraw(
     user.stripe.balance -= amount;
     await user.save();
 
-    // Log the transaction in your database
-    await Transaction.create({
+    await Withdrawal.create({
+      user: authUser._id,
       amount: amount,
-      serviceFee: 0, // Assuming no service fee for withdrawal; adjust if needed
-      totalAmount: amount,
-      sender: authUser._id, // Assuming the withdrawal deducts from the user's own balance
-      receiver: user._id, // There is no receiver in a withdrawal
-      paymentIntentId: payout.id, // Use the payout ID for the transaction record
+      payoutId: payout.id,
     });
 
     res.status(StatusCodes.OK).json({
@@ -496,13 +515,13 @@ export async function getTransaction(
         sender: UserProjectionEssentials;
       }>("sender", UserProjection.essentials)
       .populate<{
-        receiver: UserProjectionEssentials;
-      }>("receiver", UserProjection.essentials)
+        recipient: UserProjectionEssentials;
+      }>("recipient", UserProjection.essentials)
       .lean();
 
     if (
       !authUser._id.equals(transaction.sender._id) &&
-      !authUser._id.equals(transaction.receiver._id)
+      !authUser._id.equals(transaction.recipient._id)
     ) {
       throw createError(
         "You are not authorized to view this transaction",

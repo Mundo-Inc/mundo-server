@@ -96,10 +96,25 @@ export interface IUser {
   conversations: string[];
   referredBy?: mongoose.Types.ObjectId;
   stripe: {
+    /**
+     * Stripe Connect Account ID
+     */
     connectAccountId?: string;
+    /**
+     * Stripe Customer ID
+     */
     customerId?: string;
-    paymentMethod?: string;
-    payoutMethod?: string;
+    /**
+     * Default Stripe Payment Method ID
+     */
+    defaultPaymentMethodId?: string;
+    /**
+     * Default Stripe Payout Method ID
+     */
+    defaultPayoutMethodId?: string;
+    /**
+     * User's balance in cents
+     */
     balance: number;
   };
 }
@@ -271,11 +286,11 @@ const UserSchema = new Schema<IUser>(
       ref: "User",
     },
     stripe: {
-      connectAccountId: { type: String, required: false },
-      customerId: { type: String, required: false }, // Stripe customer ID
-      paymentMethod: { type: String, required: false }, // Stripe payment method ID
-      payoutMethod: { type: String, required: false }, // Bank account or card ID for payouts
-      balance: { type: Number, required: true, default: 0 }, // Balance from received gifts
+      connectAccountId: { type: String },
+      customerId: { type: String },
+      defaultPaymentMethodId: { type: String },
+      defaultPayoutMethodId: { type: String },
+      balance: { type: Number, required: true, default: 0 },
     },
   },
 

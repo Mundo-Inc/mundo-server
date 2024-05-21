@@ -3,12 +3,14 @@ import { type ITransaction } from "../../models/Transaction";
 const TransactionProjection = {
   public: {
     _id: true,
+    sender: true,
+    recipient: true,
     amount: true,
     serviceFee: true,
     totalAmount: true,
-    sender: true,
-    receiver: true,
+    message: true,
     createdAt: true,
+    updatedAt: true,
   },
 };
 
