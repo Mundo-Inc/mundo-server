@@ -3,27 +3,30 @@ import { body, param, query, type ValidationChain } from "express-validator";
 import { StatusCodes } from "http-status-codes";
 import { Types } from "mongoose";
 
-import { dailyCoinsCFG } from "../../config/dailyCoins";
-import CoinReward, { CoinRewardTypeEnum } from "../../models/CoinReward";
-import Prize, { type IPrize } from "../../models/Prize";
+import { dailyCoinsCFG } from "../../config/dailyCoins.js";
+import CoinReward, { CoinRewardTypeEnum } from "../../models/CoinReward.js";
+import Prize, { type IPrize } from "../../models/Prize.js";
 import PrizeRedemption, {
   PrizeRedemptionStatusTypeEnum,
-} from "../../models/PrizeRedemption";
-import User, { type IUser } from "../../models/User";
-import { dStrings, dynamicMessage } from "../../strings";
-import { getConnectionStatuses } from "../../utilities/connections";
-import { createError, handleInputErrors } from "../../utilities/errorHandlers";
-import { getPaginationFromQuery } from "../../utilities/pagination";
-import UserProjection, { type UserProjectionEssentials } from "../dto/user";
-import { BrevoService } from "../services/BrevoService";
-import logger from "../services/logger";
+} from "../../models/PrizeRedemption.js";
+import User, { type IUser } from "../../models/User.js";
+import { dStrings, dynamicMessage } from "../../strings.js";
+import { getConnectionStatuses } from "../../utilities/connections.js";
+import {
+  createError,
+  handleInputErrors,
+} from "../../utilities/errorHandlers.js";
+import { getPaginationFromQuery } from "../../utilities/pagination.js";
+import UserProjection, { type UserProjectionEssentials } from "../dto/user.js";
+import { BrevoService } from "../services/BrevoService.js";
+import logger from "../services/logger/index.js";
 import {
   applyDailyStreakResetIfNeeded,
   checkEligibleForDailyReward,
   getDailyRewardAmount,
   updateUserCoinsAndStreak,
-} from "../services/reward/coinReward.service";
-import validate from "./validators";
+} from "../services/reward/coinReward.service.js";
+import validate from "./validators.js";
 
 export async function dailyCoinInformation(
   req: Request,

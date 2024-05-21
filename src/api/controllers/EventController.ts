@@ -3,12 +3,15 @@ import { body, param, query, type ValidationChain } from "express-validator";
 import { StatusCodes } from "http-status-codes";
 import { Types } from "mongoose";
 
-import Event from "../../models/Event";
-import Place from "../../models/Place";
-import { dStrings, dynamicMessage } from "../../strings";
-import { createError, handleInputErrors } from "../../utilities/errorHandlers";
-import { filterObjectByConfig } from "../../utilities/filtering";
-import PlaceProjection, { PlaceProjectionBrief } from "../dto/place";
+import Event from "../../models/Event.js";
+import Place from "../../models/Place.js";
+import { dStrings, dynamicMessage } from "../../strings.js";
+import {
+  createError,
+  handleInputErrors,
+} from "../../utilities/errorHandlers.js";
+import { filterObjectByConfig } from "../../utilities/filtering.js";
+import PlaceProjection, { PlaceProjectionBrief } from "../dto/place.js";
 
 export const getEventValidation: ValidationChain[] = [param("id").isMongoId()];
 export async function getEvent(

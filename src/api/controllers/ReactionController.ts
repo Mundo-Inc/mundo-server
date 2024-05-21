@@ -3,13 +3,16 @@ import { body, param, type ValidationChain } from "express-validator";
 import { StatusCodes } from "http-status-codes";
 import { Types } from "mongoose";
 
-import Notification, { ResourceTypeEnum } from "../../models/Notification";
-import Reaction from "../../models/Reaction";
-import UserActivity from "../../models/UserActivity";
-import strings, { dStrings as ds, dynamicMessage } from "../../strings";
-import { createError, handleInputErrors } from "../../utilities/errorHandlers";
-import logger from "../services/logger";
-import { addReward } from "../services/reward/reward.service";
+import Notification, { ResourceTypeEnum } from "../../models/Notification.js";
+import Reaction from "../../models/Reaction.js";
+import UserActivity from "../../models/UserActivity.js";
+import { dStrings as ds, dynamicMessage } from "../../strings.js";
+import {
+  createError,
+  handleInputErrors,
+} from "../../utilities/errorHandlers.js";
+import logger from "../services/logger/index.js";
+import { addReward } from "../services/reward/reward.service.js";
 
 export const createReactionValidation: ValidationChain[] = [
   body("target").isMongoId(),

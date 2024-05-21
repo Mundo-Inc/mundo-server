@@ -1,13 +1,11 @@
 import axios from "axios";
 import { StatusCodes } from "http-status-codes";
 
-import type { IPlace } from "../../models/Place";
-import type { IYelpPlaceDetails } from "../../types/yelpPlace.interface";
-import { createError } from "../../utilities/errorHandlers";
-import logger from "./logger";
-
-const YELP_FUSION_API_KEY = process.env.YELP_FUSION_API_KEY;
-const FOURSQUARE_API_KEY = process.env.FOURSQUARE_API_KEY;
+import type { IPlace } from "../../models/Place.js";
+import type { IYelpPlaceDetails } from "../../types/yelpPlace.interface.js";
+import { createError } from "../../utilities/errorHandlers.js";
+import logger from "./logger/index.js";
+import { env } from "../../env.js";
 
 export async function findYelpId(place: IPlace) {
   try {
@@ -22,7 +20,7 @@ export async function findYelpId(place: IPlace) {
       method: "get",
       url: url.href,
       headers: {
-        Authorization: `Bearer ${YELP_FUSION_API_KEY}`,
+        Authorization: `Bearer ${env.YELP_FUSION_API_KEY}`,
         Accept: "application/json",
       },
     });
@@ -41,7 +39,7 @@ export async function findYelpId(place: IPlace) {
       method: "get",
       url: url.href,
       headers: {
-        Authorization: `Bearer ${YELP_FUSION_API_KEY}`,
+        Authorization: `Bearer ${env.YELP_FUSION_API_KEY}`,
         Accept: "application/json",
       },
     });
@@ -60,7 +58,7 @@ export async function getYelpData(yelpId: string) {
       method: "get",
       url: `https://api.yelp.com/v3/businesses/${yelpId}`, // fixed extra }
       headers: {
-        Authorization: `Bearer ${YELP_FUSION_API_KEY}`,
+        Authorization: `Bearer ${env.YELP_FUSION_API_KEY}`,
         Accept: "application/json",
       },
     });
@@ -86,7 +84,7 @@ export const getYelpReviews = async (yelpId: string) => {
       method: "get",
       url: `https://api.yelp.com/v3/businesses/${yelpId}/reviews?limit=20&sort_by=yelp_sort`,
       headers: {
-        Authorization: `Bearer ${YELP_FUSION_API_KEY}`,
+        Authorization: `Bearer ${env.YELP_FUSION_API_KEY}`,
         Accept: "application/json",
       },
     });
@@ -112,7 +110,7 @@ export const findFoursquareId = async (place: IPlace) => {
       method: "get",
       url: `https://api.foursquare.com/v3/places/match?name=${place.name}&address=${place.location.address}&city=${place.location.city}&state=${place.location.state}&postalCode=${place.location.zip}&cc=${place.location.country}`,
       headers: {
-        Authorization: `${FOURSQUARE_API_KEY}`,
+        Authorization: `${env.FOURSQUARE_API_KEY}`,
         Accept: "application/json",
       },
     });

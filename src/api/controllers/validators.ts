@@ -1,6 +1,6 @@
 import { type ValidationChain } from "express-validator";
 
-import strings from "../../strings";
+import strings from "../../strings.js";
 
 const validate = {
   email: (start: ValidationChain) =>

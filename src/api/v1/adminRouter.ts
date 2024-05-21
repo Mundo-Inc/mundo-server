@@ -10,8 +10,8 @@ import {
   resolveFlagValidation,
   updateSettings,
   updateSettingsValidation,
-} from "../controllers/AdminController";
-import { adminAuthMiddleware } from "../middlewares/authMiddleWare";
+} from "../controllers/AdminController.js";
+import { adminAuthMiddleware } from "../middlewares/authMiddleWare.js";
 import {
   createBot,
   createBotValidation,
@@ -19,7 +19,7 @@ import {
   createDutyValidation,
   getBot,
   getBotValidation,
-} from "../controllers/BotController";
+} from "../controllers/BotController.js";
 
 // Admin Only
 const router = express.Router();

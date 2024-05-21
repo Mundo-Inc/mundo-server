@@ -6,16 +6,16 @@ import tzlookup from "tz-lookup";
 import Achievement, {
   AchievementTypeEnum,
   type IAchievement,
-} from "../../../../models/Achievement";
-import CheckIn from "../../../../models/CheckIn";
-import { type IPlace } from "../../../../models/Place";
-import Reaction from "../../../../models/Reaction";
-import Review from "../../../../models/Review";
-import User from "../../../../models/User";
-import { dStrings, dynamicMessage } from "../../../../strings";
-import { createError } from "../../../../utilities/errorHandlers";
-import logger from "../../logger";
-import { thresholds } from "../utils/threshold";
+} from "../../../../models/Achievement.js";
+import CheckIn from "../../../../models/CheckIn.js";
+import { type IPlace } from "../../../../models/Place.js";
+import Reaction from "../../../../models/Reaction.js";
+import Review from "../../../../models/Review.js";
+import User from "../../../../models/User.js";
+import { dStrings, dynamicMessage } from "../../../../strings.js";
+import { createError } from "../../../../utilities/errorHandlers.js";
+import logger from "../../logger/index.js";
+import { thresholds } from "../utils/threshold.js";
 
 export const eligibleForAchivement = async (
   userId: Types.ObjectId,

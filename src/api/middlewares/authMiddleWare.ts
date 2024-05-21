@@ -3,11 +3,10 @@ import { getAuth } from "firebase-admin/auth";
 import { StatusCodes } from "http-status-codes";
 import jwt from "jsonwebtoken";
 
-import { config } from "../../config";
-import User from "../../models/User";
-import { createError } from "../../utilities/errorHandlers";
-import UserProjection, { type UserProjectionPrivate } from "../dto/user";
-import { dStrings, dynamicMessage } from "../../strings";
+import { env } from "../../env.js";
+import User from "../../models/User.js";
+import { createError } from "../../utilities/errorHandlers.js";
+import UserProjection, { type UserProjectionPrivate } from "../dto/user.js";
 
 interface DecodedUser {
   userId: string;
@@ -42,10 +41,7 @@ async function verifyAndFetchUser(req: Request) {
         .select<UserProjectionPrivate>(UserProjection.private)
         .lean();
     } else {
-      const oldTokenPayload = jwt.verify(
-        token,
-        config.JWT_SECRET
-      ) as DecodedUser;
+      const oldTokenPayload = jwt.verify(token, env.JWT_SECRET) as DecodedUser;
 
       user = await User.findById(oldTokenPayload.userId)
         .select<UserProjectionPrivate>(UserProjection.private)

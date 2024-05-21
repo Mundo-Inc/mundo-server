@@ -3,13 +3,16 @@ import { body, param, type ValidationChain } from "express-validator";
 import { StatusCodes } from "http-status-codes";
 import mongoose from "mongoose";
 
-import List, { AccessEnum } from "../../models/List";
-import Place from "../../models/Place";
-import User from "../../models/User";
-import strings, { dStrings as ds, dynamicMessage } from "../../strings";
-import { createError, handleInputErrors } from "../../utilities/errorHandlers";
-import PlaceProjection, { type PlaceProjectionBrief } from "../dto/place";
-import UserProjection, { type UserProjectionEssentials } from "../dto/user";
+import List, { AccessEnum } from "../../models/List.js";
+import Place from "../../models/Place.js";
+import User from "../../models/User.js";
+import strings, { dStrings as ds, dynamicMessage } from "../../strings.js";
+import {
+  createError,
+  handleInputErrors,
+} from "../../utilities/errorHandlers.js";
+import PlaceProjection, { type PlaceProjectionBrief } from "../dto/place.js";
+import UserProjection, { type UserProjectionEssentials } from "../dto/user.js";
 
 export const getListValidation: ValidationChain[] = [param("id").isMongoId()];
 

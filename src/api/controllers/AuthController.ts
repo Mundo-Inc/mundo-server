@@ -4,16 +4,17 @@ import { body, type ValidationChain } from "express-validator";
 import { StatusCodes } from "http-status-codes";
 import jwt from "jsonwebtoken";
 
-import { config } from "../../config";
-import User, { SignupMethodEnum, type IUser } from "../../models/User";
-import strings from "../../strings";
-import { createError, handleInputErrors } from "../../utilities/errorHandlers";
-import { handleSignUp } from "../lib/profile-handlers";
-import logger from "../services/logger";
-import { sendSlackMessage } from "./SlackController";
-import validate from "./validators";
-
-// const FIREBASE_WEB_API_KEY = process.env.FIREBASE_WEB_API_KEY;
+import { env } from "../../env.js";
+import User, { SignupMethodEnum, type IUser } from "../../models/User.js";
+import strings from "../../strings.js";
+import {
+  createError,
+  handleInputErrors,
+} from "../../utilities/errorHandlers.js";
+import { handleSignUp } from "../lib/profile-handlers.js";
+import logger from "../services/logger/index.js";
+import { sendSlackMessage } from "./SlackController.js";
+import validate from "./validators.js";
 
 export const signinValidation: ValidationChain[] = [
   body("action").isIn(["signin", "signout"]),
@@ -22,7 +23,7 @@ export const signinValidation: ValidationChain[] = [
 ];
 
 function generateJwtToken(user: IUser) {
-  return jwt.sign({ userId: user._id, role: user.role }, config.JWT_SECRET, {
+  return jwt.sign({ userId: user._id, role: user.role }, env.JWT_SECRET, {
     expiresIn: "30d",
   });
 }
@@ -69,8 +70,8 @@ export async function authPost(
 
       res.cookie("token", token, {
         httpOnly: true,
-        secure: process.env.NODE_ENV !== "development",
-        maxAge: +process.env.JWT_MAX_AGE!,
+        secure: env.NODE_ENV !== "development",
+        maxAge: env.JWT_MAX_AGE,
         sameSite: "strict",
         path: "/",
       });
@@ -108,7 +109,7 @@ export async function firebaseSync(
   try {
     // Add user data to your database
     const authHeader = req.headers.authorization;
-    if (authHeader === process.env.FIREBASE_SYNC_SECRET) {
+    if (authHeader === env.FIREBASE_SYNC_SECRET) {
       // Proceed with handling the request
       const userData = req.body;
 

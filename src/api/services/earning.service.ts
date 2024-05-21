@@ -1,10 +1,10 @@
 import { type Document, type Types } from "mongoose";
 
-import type { ICheckIn } from "../../models/CheckIn";
-import Earning, { EarningTypeEnum } from "../../models/Earning";
-import type { IPlace } from "../../models/Place";
-import type { IReview } from "../../models/Review";
-import User, { type IUser } from "../../models/User";
+import type { ICheckIn } from "../../models/CheckIn.js";
+import Earning, { EarningTypeEnum } from "../../models/Earning.js";
+import type { IPlace } from "../../models/Place.js";
+import type { IReview } from "../../models/Review.js";
+import User, { type IUser } from "../../models/User.js";
 
 export const reviewCoins = { normalValue: 1, expLimit: 5, expMul: 10 };
 export const imageCoins = 2;

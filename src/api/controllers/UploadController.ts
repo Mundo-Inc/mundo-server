@@ -7,10 +7,13 @@ import { readFileSync } from "fs";
 import { StatusCodes } from "http-status-codes";
 import path from "path";
 
-import Upload, { type UploadUsecase } from "../../models/Upload";
-import User from "../../models/User";
-import strings from "../../strings";
-import { createError, handleInputErrors } from "../../utilities/errorHandlers";
+import Upload, { type UploadUsecase } from "../../models/Upload.js";
+import User from "../../models/User.js";
+import strings from "../../strings.js";
+import {
+  createError,
+  handleInputErrors,
+} from "../../utilities/errorHandlers.js";
 import {
   bucketName,
   createThumbnail,
@@ -18,7 +21,7 @@ import {
   region,
   resizeVideo,
   s3,
-} from "../../utilities/storage";
+} from "../../utilities/storage.js";
 
 const imagesDir = "images";
 const videosDir = "videos";

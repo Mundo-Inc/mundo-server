@@ -4,8 +4,8 @@ import {
   createMedia,
   getMedia,
   getMediaValidation,
-} from "../controllers/MediaController";
-import { authMiddleware } from "../middlewares/authMiddleWare";
+} from "../controllers/MediaController.js";
+import { authMiddleware } from "../middlewares/authMiddleWare.js";
 
 const router = express.Router();
 

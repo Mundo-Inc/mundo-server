@@ -1,8 +1,10 @@
 import axios from "axios";
 
+import { env } from "../../env.js";
+
 export const slackChannels = {
-  devAssistant: process.env.SLACK_WEBHOOK_URL_DEV_ASSISTANT!,
-  phantomAssistant: process.env.SLACK_WEBHOOK_URL_PHANTOM_ASSISTANT!,
+  devAssistant: env.SLACK_WEBHOOK_URL_DEV_ASSISTANT,
+  phantomAssistant: env.SLACK_WEBHOOK_URL_PHANTOM_ASSISTANT,
 };
 
 export async function sendSlackMessage(
@@ -12,7 +14,7 @@ export async function sendSlackMessage(
   sendInDevEnvironment: boolean = false
 ) {
   let prefix = "";
-  if (process.env.NODE_ENV !== "production") {
+  if (env.NODE_ENV !== "production") {
     if (!sendInDevEnvironment) {
       return;
     }

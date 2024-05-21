@@ -3,21 +3,21 @@ import { body, query, type ValidationChain } from "express-validator";
 import { StatusCodes } from "http-status-codes";
 import { type PipelineStage } from "mongoose";
 
-import CheckIn from "../../models/CheckIn";
-import Comment from "../../models/Comment";
-import Follow from "../../models/Follow";
-import FollowRequest from "../../models/FollowRequest";
+import CheckIn from "../../models/CheckIn.js";
+import Comment from "../../models/Comment.js";
+import Follow from "../../models/Follow.js";
+import FollowRequest from "../../models/FollowRequest.js";
 import Notification, {
   NotificationTypeEnum,
   type INotification,
-} from "../../models/Notification";
-import { type IPlace } from "../../models/Place";
-import Reaction from "../../models/Reaction";
-import Review from "../../models/Review";
-import { handleInputErrors } from "../../utilities/errorHandlers";
-import { getPaginationFromQuery } from "../../utilities/pagination";
-import UserProjection, { type UserProjectionEssentials } from "../dto/user";
-import validate from "./validators";
+} from "../../models/Notification.js";
+import { type IPlace } from "../../models/Place.js";
+import Reaction from "../../models/Reaction.js";
+import Review from "../../models/Review.js";
+import { handleInputErrors } from "../../utilities/errorHandlers.js";
+import { getPaginationFromQuery } from "../../utilities/pagination.js";
+import UserProjection, { type UserProjectionEssentials } from "../dto/user.js";
+import validate from "./validators.js";
 
 async function handleResourceNotFound(notification: INotification) {
   await Notification.findByIdAndDelete(notification._id);
@@ -221,6 +221,7 @@ async function getNotificationContent(notification: INotification) {
             title = "Sent you a follow request";
           }
         });
+      break;
     case NotificationTypeEnum.FOLLOW_REQUEST_ACCEPTED:
       await Follow.findById(notification.resources![0]._id)
         .populate<{
@@ -237,6 +238,7 @@ async function getNotificationContent(notification: INotification) {
             title = "Accepted your follow request";
           }
         });
+      break;
     default:
       break;
   }

@@ -2,13 +2,13 @@ import type { NextFunction, Request, Response } from "express";
 import { body, type ValidationChain } from "express-validator";
 import { StatusCodes } from "http-status-codes";
 
-import User, { type UserDevice } from "../../models/User";
-import { handleInputErrors } from "../../utilities/errorHandlers";
+import User, { type UserDevice } from "../../models/User.js";
+import { handleInputErrors } from "../../utilities/errorHandlers.js";
 import {
   NotificationsService,
   type NotificationItemByToken,
   type NotificationItemByUser,
-} from "../services/NotificationsService";
+} from "../services/NotificationsService.js";
 
 export const notifyUsersValidation: ValidationChain[] = [
   body("audience").isString().isIn(["all", "referredBy", "list"]),

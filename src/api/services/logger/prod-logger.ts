@@ -1,6 +1,7 @@
 import { createLogger, format, transports, type Logger } from "winston";
 import "winston-mongodb";
-import { config } from "../../../config";
+
+import { env } from "../../../env.js";
 
 const { timestamp, errors } = format;
 
@@ -26,7 +27,7 @@ const mongoDBformat = format.combine(
   format.json()
 );
 
-export default function buildProdLogger(): Logger {
+export default function buildProdLogger() {
   return createLogger({
     level: "warn",
     format: format.combine(
@@ -41,7 +42,7 @@ export default function buildProdLogger(): Logger {
         format: customConsoleFormat,
       }),
       new transports.MongoDB({
-        db: `${config.DB_URI}/${config.DB_NAME}`,
+        db: `${env.DB_URI}/${env.DB_NAME}`,
         collection: "logs",
         format: mongoDBformat,
         options: { useUnifiedTopology: true },

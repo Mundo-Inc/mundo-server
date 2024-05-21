@@ -9,12 +9,15 @@ import { StatusCodes } from "http-status-codes";
 import mongoose from "mongoose";
 import path from "path";
 
-import Event from "../../models/Event";
-import Media, { MediaTypeEnum } from "../../models/Media";
-import Place from "../../models/Place";
-import strings, { dStrings, dynamicMessage } from "../../strings";
-import { createError, handleInputErrors } from "../../utilities/errorHandlers";
-import { getPaginationFromQuery } from "../../utilities/pagination";
+import Event from "../../models/Event.js";
+import Media, { MediaTypeEnum } from "../../models/Media.js";
+import Place from "../../models/Place.js";
+import strings, { dStrings, dynamicMessage } from "../../strings.js";
+import {
+  createError,
+  handleInputErrors,
+} from "../../utilities/errorHandlers.js";
+import { getPaginationFromQuery } from "../../utilities/pagination.js";
 import {
   bucketName,
   createThumbnail,
@@ -22,9 +25,9 @@ import {
   region,
   resizeVideo,
   s3,
-} from "../../utilities/storage";
-import UserProjection from "../dto/user";
-import validate from "./validators";
+} from "../../utilities/storage.js";
+import UserProjection from "../dto/user.js";
+import validate from "./validators.js";
 
 const imagesDirectory = "images";
 const videosDirectory = "videos";

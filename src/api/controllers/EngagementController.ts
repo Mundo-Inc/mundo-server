@@ -2,12 +2,12 @@ import type { NextFunction, Request, Response } from "express";
 import { param, query, type ValidationChain } from "express-validator";
 import mongoose from "mongoose";
 
-import Block from "../../models/Block";
-import Comment from "../../models/Comment";
-import Reaction from "../../models/Reaction";
-import { handleInputErrors } from "../../utilities/errorHandlers";
-import UserProjection from "../dto/user";
-import validate from "./validators";
+import Block from "../../models/Block.js";
+import Comment from "../../models/Comment.js";
+import Reaction from "../../models/Reaction.js";
+import { handleInputErrors } from "../../utilities/errorHandlers.js";
+import UserProjection from "../dto/user.js";
+import validate from "./validators.js";
 
 export const getEngagementsValidation: ValidationChain[] = [
   param("id").isMongoId(),

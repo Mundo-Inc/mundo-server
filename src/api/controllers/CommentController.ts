@@ -3,13 +3,16 @@ import { body, param, type ValidationChain } from "express-validator";
 import { StatusCodes } from "http-status-codes";
 import mongoose from "mongoose";
 
-import Comment from "../../models/Comment";
-import User from "../../models/User";
-import UserActivity from "../../models/UserActivity";
-import strings, { dStrings as ds, dynamicMessage } from "../../strings";
-import { createError, handleInputErrors } from "../../utilities/errorHandlers";
-import UserProjection, { type UserProjectionEssentials } from "../dto/user";
-import { addReward } from "../services/reward/reward.service";
+import Comment from "../../models/Comment.js";
+import User from "../../models/User.js";
+import UserActivity from "../../models/UserActivity.js";
+import strings, { dStrings as ds, dynamicMessage } from "../../strings.js";
+import {
+  createError,
+  handleInputErrors,
+} from "../../utilities/errorHandlers.js";
+import UserProjection, { type UserProjectionEssentials } from "../dto/user.js";
+import { addReward } from "../services/reward/reward.service.js";
 
 export const createCommentValidation: ValidationChain[] = [
   body("content").isString().isLength({ min: 1, max: 250 }),

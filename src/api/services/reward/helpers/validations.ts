@@ -1,11 +1,11 @@
-import type { ICheckIn } from "../../../../models/CheckIn";
-import type { IComment } from "../../../../models/Comment";
-import type { IReaction } from "../../../../models/Reaction";
-import type { IReview } from "../../../../models/Review";
-import Reward from "../../../../models/Reward";
-import type { IUser } from "../../../../models/User";
-import logger from "../../logger";
-import { thresholds } from "../utils/threshold";
+import type { ICheckIn } from "../../../../models/CheckIn.js";
+import type { IComment } from "../../../../models/Comment.js";
+import type { IReaction } from "../../../../models/Reaction.js";
+import type { IReview } from "../../../../models/Review.js";
+import Reward from "../../../../models/Reward.js";
+import type { IUser } from "../../../../models/User.js";
+import logger from "../../logger/index.js";
+import { thresholds } from "../utils/threshold.js";
 
 export const validateReviewReward = async (user: IUser, review: IReview) => {
   try {

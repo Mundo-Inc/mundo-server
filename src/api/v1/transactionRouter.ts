@@ -10,8 +10,8 @@ import {
   sendGiftValidation,
   withdraw,
   withdrawValidation,
-} from "../controllers/TransactionController";
-import { authMiddleware } from "../middlewares/authMiddleWare";
+} from "../controllers/TransactionController.js";
+import { authMiddleware } from "../middlewares/authMiddleWare.js";
 
 const router = express.Router();
 router.use(express.json());

@@ -1,20 +1,23 @@
 import type { NextFunction, Request, Response } from "express";
 import { body, param, query, type ValidationChain } from "express-validator";
 import { StatusCodes } from "http-status-codes";
-import { type PipelineStage, Types } from "mongoose";
+import { Types, type PipelineStage } from "mongoose";
 
-import AppSetting from "../../models/AppSetting";
-import CheckIn from "../../models/CheckIn";
-import Comment from "../../models/Comment";
-import Flag from "../../models/Flag";
-import Homemade from "../../models/Homemade";
-import Review from "../../models/Review";
-import User from "../../models/User";
-import { dStrings as ds, dynamicMessage } from "../../strings";
-import { createError, handleInputErrors } from "../../utilities/errorHandlers";
-import { getPaginationFromQuery } from "../../utilities/pagination";
-import UserProjection from "../dto/user";
-import validate from "./validators";
+import AppSetting from "../../models/AppSetting.js";
+import CheckIn from "../../models/CheckIn.js";
+import Comment from "../../models/Comment.js";
+import Flag from "../../models/Flag.js";
+import Homemade from "../../models/Homemade.js";
+import Review from "../../models/Review.js";
+import User from "../../models/User.js";
+import { dStrings as ds, dynamicMessage } from "../../strings.js";
+import {
+  createError,
+  handleInputErrors,
+} from "../../utilities/errorHandlers.js";
+import { getPaginationFromQuery } from "../../utilities/pagination.js";
+import UserProjection from "../dto/user.js";
+import validate from "./validators.js";
 
 export const getUsersValidation: ValidationChain[] = [
   query("signupMethod").optional(),
@@ -154,12 +157,16 @@ export async function getFlags(
             flag.populate("target.images", "_id src caption type"),
             flag.populate("target.videos", "_id src caption type"),
           ]);
+          break;
         case "Comment":
           await flag.populate("target.author", UserProjection.private);
+          break;
         case "CheckIn":
           await flag.populate("target.user", UserProjection.private);
+          break;
         case "Homemade":
           await flag.populate("target.user", UserProjection.private);
+          break;
         default:
           break;
       }

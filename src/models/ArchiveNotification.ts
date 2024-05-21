@@ -3,7 +3,7 @@ import {
   NotificationTypeEnum,
   ResourceTypeEnum,
   type INotification,
-} from "./Notification";
+} from "./Notification.js";
 
 export interface IArchiveNotification extends INotification {
   archivedAt: Date;

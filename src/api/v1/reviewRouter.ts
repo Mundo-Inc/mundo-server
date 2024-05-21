@@ -9,8 +9,8 @@ import {
   getReviewsValidation,
   removeReview,
   removeReviewValidation,
-} from "../controllers/ReviewController";
-import { authMiddleware } from "../middlewares/authMiddleWare";
+} from "../controllers/ReviewController.js";
+import { authMiddleware } from "../middlewares/authMiddleWare.js";
 
 const router = express.Router();
 router.use(express.json());

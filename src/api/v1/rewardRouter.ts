@@ -13,7 +13,7 @@ import {
   getMissions,
   getMissionsValidation,
   getPrizes,
-} from "../controllers/MissionController";
+} from "../controllers/MissionController.js";
 import {
   claimDailyCoins,
   dailyCoinInformation,
@@ -25,11 +25,11 @@ import {
   redeemPrizeValidation,
   reviewRedemption,
   reviewRedemptionValidation,
-} from "../controllers/RewardController";
+} from "../controllers/RewardController.js";
 import {
   adminAuthMiddleware,
   authMiddleware,
-} from "../middlewares/authMiddleWare";
+} from "../middlewares/authMiddleWare.js";
 
 const router = express.Router();
 router.use(express.json());

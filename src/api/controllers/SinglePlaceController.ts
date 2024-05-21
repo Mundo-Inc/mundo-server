@@ -11,24 +11,27 @@ import {
   type GooglePlaceDetailsPreferred,
   type GooglePlaceReview,
   type OpeningHours,
-} from "../../DataManagers/GoogleDataManager";
-import List from "../../models/List";
-import Media from "../../models/Media";
-import Place, { type IPlace } from "../../models/Place";
-import Review from "../../models/Review";
-import { dStrings, dynamicMessage } from "../../strings";
-import type { IYelpPlaceDetails } from "../../types/yelpPlace.interface";
-import { createError, handleInputErrors } from "../../utilities/errorHandlers";
-import { filterObjectByConfig } from "../../utilities/filtering";
-import { getPaginationFromQuery } from "../../utilities/pagination";
-import UserProjection from "../dto/user";
-import logger from "../services/logger";
+} from "../../DataManagers/GoogleDataManager.js";
+import List from "../../models/List.js";
+import Media from "../../models/Media.js";
+import Place, { type IPlace } from "../../models/Place.js";
+import Review from "../../models/Review.js";
+import { dStrings, dynamicMessage } from "../../strings.js";
+import type { IYelpPlaceDetails } from "../../types/yelpPlace.interface.js";
+import {
+  createError,
+  handleInputErrors,
+} from "../../utilities/errorHandlers.js";
+import { filterObjectByConfig } from "../../utilities/filtering.js";
+import { getPaginationFromQuery } from "../../utilities/pagination.js";
+import UserProjection from "../dto/user.js";
+import logger from "../services/logger/index.js";
 import {
   findYelpId,
   getYelpData,
   getYelpReviews,
-} from "../services/provider.service";
-import validate from "./validators";
+} from "../services/provider.service.js";
+import validate from "./validators.js";
 
 export const getPlaceValidation: ValidationChain[] = [
   param("id").isMongoId().withMessage("Invalid place id"),

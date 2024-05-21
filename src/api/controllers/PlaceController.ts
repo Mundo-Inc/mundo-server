@@ -6,15 +6,19 @@ import { readFileSync, unlinkSync } from "fs";
 import { StatusCodes } from "http-status-codes";
 import mongoose, { type PipelineStage } from "mongoose";
 
-import Place, { type IPlace } from "../../models/Place";
-import { dStrings, dynamicMessage } from "../../strings";
-import { createError, handleInputErrors } from "../../utilities/errorHandlers";
-import { getPaginationFromQuery } from "../../utilities/pagination";
-import { bucketName, parseForm, region, s3 } from "../../utilities/storage";
-import { areStrictlySimilar } from "../../utilities/stringHelper";
-import UserProjection from "../dto/user";
-import { getDetailedPlace } from "./SinglePlaceController";
-import validate from "./validators";
+import { env } from "../../env.js";
+import Place, { type IPlace } from "../../models/Place.js";
+import { dStrings, dynamicMessage } from "../../strings.js";
+import {
+  createError,
+  handleInputErrors,
+} from "../../utilities/errorHandlers.js";
+import { getPaginationFromQuery } from "../../utilities/pagination.js";
+import { bucketName, parseForm, region, s3 } from "../../utilities/storage.js";
+import { areStrictlySimilar } from "../../utilities/stringHelper.js";
+import UserProjection from "../dto/user.js";
+import { getDetailedPlace } from "./SinglePlaceController.js";
+import validate from "./validators.js";
 
 export const createPlaceValidation: ValidationChain[] = [
   // validate.name(body("name")),
@@ -86,9 +90,9 @@ export async function createPlace(
     if (files.image && files.image.length > 0) {
       const { filepath } = files.image[0] as File;
       let fileBuffer = readFileSync(filepath);
-      const key = `${
-        process.env.NODE_ENV === "production" ? "places" : "devplaces"
-      }/${place._id}/thumbnail.jpg`;
+      const key = `${env.NODE_ENV === "production" ? "places" : "devplaces"}/${
+        place._id
+      }/thumbnail.jpg`;
       await s3.send(
         new PutObjectCommand({
           Bucket: bucketName,

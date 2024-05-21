@@ -6,33 +6,38 @@ import { getAuth } from "firebase-admin/auth";
 import { StatusCodes } from "http-status-codes";
 import { Types } from "mongoose";
 
-import Block from "../../models/Block";
-import CheckIn from "../../models/CheckIn";
-import UserActivity from "../../models/UserActivity";
-import CoinReward, { CoinRewardTypeEnum } from "../../models/CoinReward";
-import Follow, { FollowStatusEnum } from "../../models/Follow";
-import FollowRequest from "../../models/FollowRequest";
-import Notification, { NotificationTypeEnum } from "../../models/Notification";
-import Place from "../../models/Place";
-import Review from "../../models/Review";
-import User, { SignupMethodEnum, type IUser } from "../../models/User";
-import strings, { dStrings as ds, dynamicMessage } from "../../strings";
+import Block from "../../models/Block.js";
+import CheckIn from "../../models/CheckIn.js";
+import CoinReward, { CoinRewardTypeEnum } from "../../models/CoinReward.js";
+import Follow, { FollowStatusEnum } from "../../models/Follow.js";
+import FollowRequest from "../../models/FollowRequest.js";
+import Notification, {
+  NotificationTypeEnum,
+} from "../../models/Notification.js";
+import Place from "../../models/Place.js";
+import Review from "../../models/Review.js";
+import User, { SignupMethodEnum, type IUser } from "../../models/User.js";
+import UserActivity from "../../models/UserActivity.js";
+import strings, { dStrings as ds, dynamicMessage } from "../../strings.js";
 import {
   getConnectionStatus,
   getConnectionStatuses,
   type ConnectionStatus,
-} from "../../utilities/connections";
-import { createError, handleInputErrors } from "../../utilities/errorHandlers";
-import { getPaginationFromQuery } from "../../utilities/pagination";
-import { bucketName, s3 } from "../../utilities/storage";
-import UserProjection from "../dto/user";
-import { handleSignUp } from "../lib/profile-handlers";
-import { BrevoService } from "../services/BrevoService";
-import logger from "../services/logger";
-import { calcRemainingXP } from "../services/reward/helpers/levelCalculations";
-import { getLevelThresholds } from "../services/reward/utils/levelupThresholds";
-import { sendSlackMessage } from "./SlackController";
-import validate from "./validators";
+} from "../../utilities/connections.js";
+import {
+  createError,
+  handleInputErrors,
+} from "../../utilities/errorHandlers.js";
+import { getPaginationFromQuery } from "../../utilities/pagination.js";
+import { bucketName, s3 } from "../../utilities/storage.js";
+import UserProjection from "../dto/user.js";
+import { handleSignUp } from "../lib/profile-handlers.js";
+import { BrevoService } from "../services/BrevoService.js";
+import logger from "../services/logger/index.js";
+import { calcRemainingXP } from "../services/reward/helpers/levelCalculations.js";
+import { getLevelThresholds } from "../services/reward/utils/levelupThresholds.js";
+import { sendSlackMessage } from "./SlackController.js";
+import validate from "./validators.js";
 
 export const getUsersValidation: ValidationChain[] = [
   validate.q(query("q").optional()),
@@ -275,17 +280,6 @@ export async function createUser(
     } catch (error) {
       logger.error("Error sending slack message", { error });
     }
-
-    // Sign in to get the Firebase ID token
-    // const signInResponse = await axios.post(
-    //   `https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${FIREBASE_WEB_API_KEY}`,
-    //   {
-    //     email: email.toLowerCase(),
-    //     password: password,
-    //     returnSecureToken: true,
-    //   }
-    // );
-    // const fbasetoken = signInResponse.data.idToken;
 
     // TODO: Response data is unused, can be removed on later app versions (0.43.0+)
     res.status(StatusCodes.CREATED).send({ userId: newUser._id, token: "" });

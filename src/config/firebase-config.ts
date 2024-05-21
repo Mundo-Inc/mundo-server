@@ -1,15 +1,18 @@
 import admin from "firebase-admin";
+import { initializeApp } from "firebase-admin/app";
 import path from "path";
-import logger from "../api/services/logger";
+
+import logger from "../api/services/logger/index.js";
+import { env } from "../env.js";
 
 const pwd = process.cwd();
 
 const keyPath = path.resolve(
   pwd,
-  `keys/${process.env.FIREBASE_SERVICE_ACCOUNT_KEY_FILE_NAME}`
+  `keys/${env.FIREBASE_SERVICE_ACCOUNT_KEY_FILE_NAME}`
 );
 
-admin.initializeApp({
+initializeApp({
   credential: admin.credential.cert(keyPath),
 });
 

@@ -1,8 +1,8 @@
 import mongoose, { Schema, type Model } from "mongoose";
 
-import { OtherScoresSchema, type IOtherSources } from "./Place/OtherSources";
-import { ScoresSchema, type IScores } from "./Place/Scores";
-import Review from "./Review";
+import { OtherScoresSchema, type IOtherSources } from "./Place/OtherSources.js";
+import { ScoresSchema, type IScores } from "./Place/Scores.js";
+import Review from "./Review.js";
 
 const GOOGLE_PLACES_PERCENTAGE = 0.3;
 

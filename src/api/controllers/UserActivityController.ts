@@ -3,22 +3,25 @@ import { param, query, type ValidationChain } from "express-validator";
 import { StatusCodes } from "http-status-codes";
 import mongoose, { Types, type FilterQuery } from "mongoose";
 
-import Comment from "../../models/Comment";
-import Follow from "../../models/Follow";
-import Reaction from "../../models/Reaction";
-import User from "../../models/User";
+import Comment from "../../models/Comment.js";
+import Follow from "../../models/Follow.js";
+import Reaction from "../../models/Reaction.js";
+import User from "../../models/User.js";
 import UserActivity, {
   ActivityTypeEnum,
   ResourcePrivacyEnum,
   type IUserActivity,
-} from "../../models/UserActivity";
-import { dStrings, dynamicMessage } from "../../strings";
-import { getConnectionStatuses } from "../../utilities/connections";
-import { createError, handleInputErrors } from "../../utilities/errorHandlers";
-import { getPaginationFromQuery } from "../../utilities/pagination";
-import UserProjection from "../dto/user";
-import { getResourceInfo } from "../services/feed.service";
-import validate from "./validators";
+} from "../../models/UserActivity.js";
+import { dStrings, dynamicMessage } from "../../strings.js";
+import { getConnectionStatuses } from "../../utilities/connections.js";
+import {
+  createError,
+  handleInputErrors,
+} from "../../utilities/errorHandlers.js";
+import { getPaginationFromQuery } from "../../utilities/pagination.js";
+import UserProjection from "../dto/user.js";
+import { getResourceInfo } from "../services/feed.service.js";
+import validate from "./validators.js";
 
 export const getActivitiesOfaUserValidation: ValidationChain[] = [
   param("id").isMongoId(),

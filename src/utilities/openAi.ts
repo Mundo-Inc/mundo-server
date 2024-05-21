@@ -1,10 +1,11 @@
 import { StatusCodes } from "http-status-codes";
 import OpenAI from "openai";
 
-import { createError } from "./errorHandlers";
+import { env } from "../env.js";
+import { createError } from "./errorHandlers.js";
 
 const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
+  apiKey: env.OPENAI_API_KEY,
 });
 
 export async function openAiAnalyzeReview(

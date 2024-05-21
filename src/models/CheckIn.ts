@@ -5,10 +5,10 @@ import mongoose, {
   type Types,
 } from "mongoose";
 
-import logger from "../api/services/logger";
-import Media from "./Media";
-import Place from "./Place";
-import UserActivity, { ResourcePrivacyEnum } from "./UserActivity";
+import logger from "../api/services/logger/index.js";
+import Media from "./Media.js";
+import Place from "./Place.js";
+import UserActivity, { ResourcePrivacyEnum } from "./UserActivity.js";
 
 export interface ICheckIn {
   _id: Types.ObjectId;

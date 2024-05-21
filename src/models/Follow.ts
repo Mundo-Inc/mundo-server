@@ -3,7 +3,7 @@ import mongoose, { Schema, type Model } from "mongoose";
 import Notification, {
   NotificationTypeEnum,
   ResourceTypeEnum,
-} from "./Notification";
+} from "./Notification.js";
 
 export enum FollowStatusEnum {
   FOLLOWING = "following",

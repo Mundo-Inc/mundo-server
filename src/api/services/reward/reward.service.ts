@@ -1,27 +1,27 @@
 import { StatusCodes } from "http-status-codes";
 import mongoose, { type Document } from "mongoose";
 
-import CheckIn from "../../../models/CheckIn";
-import Comment from "../../../models/Comment";
-import Homemade from "../../../models/Homemade";
-import Reaction from "../../../models/Reaction";
-import Review from "../../../models/Review";
-import Reward from "../../../models/Reward";
-import User, { type IUser } from "../../../models/User";
-import { createError } from "../../../utilities/errorHandlers";
-import { UserActivityManager } from "../UserActivityManager";
-import logger from "../logger";
-import { eligibleForAchivement } from "./helpers/achivementEligibility";
-import { checkNewLevelupAchivements } from "./helpers/achivements";
-import { calcLevel, calcReviewReward } from "./helpers/levelCalculations";
+import CheckIn from "../../../models/CheckIn.js";
+import Comment from "../../../models/Comment.js";
+import Homemade from "../../../models/Homemade.js";
+import Reaction from "../../../models/Reaction.js";
+import Review from "../../../models/Review.js";
+import Reward from "../../../models/Reward.js";
+import User, { type IUser } from "../../../models/User.js";
+import { createError } from "../../../utilities/errorHandlers.js";
+import { UserActivityManager } from "../UserActivityManager.js";
+import logger from "../logger/index.js";
+import { eligibleForAchivement } from "./helpers/achivementEligibility.js";
+import { checkNewLevelupAchivements } from "./helpers/achivements.js";
+import { calcLevel, calcReviewReward } from "./helpers/levelCalculations.js";
 import {
   validateCheckInReward,
   validateCommentReward,
   validateHomemadeReward,
   validateReactionReward,
   validateReviewReward,
-} from "./helpers/validations";
-import { rewards_amounts } from "./utils/rewardsAmounts";
+} from "./helpers/validations.js";
+import { rewards_amounts } from "./utils/rewardsAmounts.js";
 
 const getValidatedEntity = async (
   refType: string,

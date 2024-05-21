@@ -4,7 +4,7 @@ import {
   authPost,
   firebaseSync,
   signinValidation,
-} from "../controllers/AuthController";
+} from "../controllers/AuthController.js";
 
 const router = express.Router();
 router.use(express.json());

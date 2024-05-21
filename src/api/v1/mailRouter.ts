@@ -1,18 +1,14 @@
 import express from "express";
 
 import {
-  resetPassword,
-  resetPasswordValidation,
   sendEmailVerification,
   verifyEmail,
   verifyEmailValidation,
-} from "../controllers/MailController";
-import { authMiddleware } from "../middlewares/authMiddleWare";
+} from "../controllers/MailController.js";
+import { authMiddleware } from "../middlewares/authMiddleWare.js";
 
 const router = express.Router();
 router.use(express.json());
-
-router.post("/reset-password", resetPasswordValidation, resetPassword);
 
 router
   .route("/verify")

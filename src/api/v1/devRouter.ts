@@ -3,8 +3,8 @@ import express from "express";
 import {
   notifyUsers,
   notifyUsersValidation,
-} from "../controllers/DevController";
-import { adminAuthMiddleware } from "../middlewares/authMiddleWare";
+} from "../controllers/DevController.js";
+import { adminAuthMiddleware } from "../middlewares/authMiddleWare.js";
 
 // Admin Only
 const router = express.Router();

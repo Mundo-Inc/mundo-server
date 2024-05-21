@@ -1,11 +1,11 @@
 import mongoose from "mongoose";
 
-import { config } from ".";
-import logger from "../api/services/logger";
+import logger from "../api/services/logger/index.js";
+import { env } from "../env.js";
 
 export async function connectDatabase() {
   try {
-    await mongoose.connect(`${config.DB_URI}/${config.DB_NAME}`);
+    await mongoose.connect(`${env.DB_URI}/${env.DB_NAME}`);
     logger.info("Connected to database");
   } catch (error) {
     logger.error("Failed to connect to database", error);

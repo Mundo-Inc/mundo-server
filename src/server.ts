@@ -6,18 +6,20 @@ import express from "express";
 import rateLimit from "express-rate-limit";
 import helmet from "helmet";
 
-import logger from "./api/services/logger";
-import { config } from "./config";
-import { connectDatabase } from "./config/database";
-import { errorHandler } from "./utilities/errorHandlers";
+import { env } from "./env.js";
+import logger from "./api/services/logger/index.js";
+import { connectDatabase } from "./config/database.js";
+import { errorHandler } from "./utilities/errorHandlers.js";
 
-import "./config/firebase-config";
+import "./config/firebase-config.js";
 
-import router from "./router";
+import router from "./router.js";
+import { NotificationsService } from "./api/services/NotificationsService.js";
 
 const app = express();
 
-app.set("trust proxy", 1); // If there's one proxy in front of your app
+// Trust the first proxy in the chain
+app.set("trust proxy", 1);
 
 const limiter = rateLimit({
   windowMs: 60 * 1000, // 1 minute
@@ -32,26 +34,30 @@ app.use(cookieParser());
 app.use(express.urlencoded({ extended: true }));
 
 async function main() {
-  await connectDatabase();
+  try {
+    await connectDatabase();
 
-  app.use("/api/v1", router);
+    app.use("/api/v1", router);
 
-  app.use(errorHandler);
+    app.use(errorHandler);
 
-  app.listen(config.APP_PORT, () => {
-    logger.info(`Server listening on port ${config.APP_PORT}`);
-  });
+    app.listen(env.APP_PORT, () => {
+      logger.info(`Server listening on port ${env.APP_PORT}`);
+    });
 
-  await import("./cronjobs/updateTrendScores");
-  await import("./cronjobs/bots");
+    await import("./cronjobs/updateTrendScores.js");
+    await import("./cronjobs/bots.js");
 
-  if (process.env.NODE_ENV === "production") {
-    await import("./cronjobs/notification");
-    await import("./cronjobs/backup");
-  } else {
-    logger.warn(
-      "Not starting notification and backup cronjobs in development."
-    );
+    if (env.NODE_ENV === "production") {
+      await import("./cronjobs/notification.js");
+      await import("./cronjobs/backup.js");
+    } else {
+      logger.warn(
+        "Not starting notification and backup cronjobs in development."
+      );
+    }
+  } catch (error) {
+    logger.error("Error starting server", error);
   }
 }
 

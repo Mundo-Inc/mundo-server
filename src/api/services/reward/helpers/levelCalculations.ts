@@ -1,9 +1,9 @@
 import { StatusCodes } from "http-status-codes";
 
-import type { IReview } from "../../../../models/Review";
-import { createError } from "../../../../utilities/errorHandlers";
-import { getLevelThresholds } from "../utils/levelupThresholds";
-import { rewards_amounts } from "../utils/rewardsAmounts";
+import type { IReview } from "../../../../models/Review.js";
+import { createError } from "../../../../utilities/errorHandlers.js";
+import { getLevelThresholds } from "../utils/levelupThresholds.js";
+import { rewards_amounts } from "../utils/rewardsAmounts.js";
 
 export const calcLevel = (xp: number) => {
   const thresholds = getLevelThresholds();

@@ -1,162 +1,20 @@
-import bcrypt from "bcryptjs";
 import crypto from "crypto";
 import type { NextFunction, Request, Response } from "express";
-import { body, query, type ValidationChain } from "express-validator";
+import { query, type ValidationChain } from "express-validator";
 import { StatusCodes } from "http-status-codes";
 
-import User, { SignupMethodEnum } from "../../models/User";
+import { env } from "../../env.js";
+import User from "../../models/User.js";
 import strings, {
   dStrings,
   dStrings as ds,
   dynamicMessage,
-} from "../../strings";
-import { createError, handleInputErrors } from "../../utilities/errorHandlers";
-import { BrevoService } from "../services/BrevoService";
-import validate from "./validators";
-
-export const resetPasswordValidation: ValidationChain[] = [
-  validate.email(body("email")),
-  body("action")
-    .isIn(["generate", "update"])
-    .withMessage(strings.server.invalidAction),
-];
-export async function resetPassword(
-  req: Request,
-  res: Response,
-  next: NextFunction
-) {
-  try {
-    handleInputErrors(req);
-
-    const { email } = req.body;
-    const action: "generate" | "update" = req.body.action;
-
-    if (action === "generate") {
-      const user = await User.findOne({
-        "email.address": {
-          $regex: new RegExp(email, "i"),
-        },
-      });
-
-      if (!user) {
-        return res.status(StatusCodes.OK).json({
-          success: true,
-          message: strings.mail.resetPassEmailSent,
-        });
-      }
-
-      if (user.signupMethod === SignupMethodEnum.social) {
-        throw createError(
-          strings.mail.resetPassNotProvidedForSocialMethods,
-          StatusCodes.BAD_REQUEST
-        );
-      }
-
-      // Generate a password reset token
-      const resetPasswordToken = crypto.randomBytes(20).toString("hex");
-
-      // Set token and expiry date on the user document
-      const tokenExpiryDate = Date.now() + 3600000; // 1 hour from now
-      if (
-        user.token?.resetPasswordTokenExpiry &&
-        user.token.resetPasswordTokenExpiry.getTime() - 3540000 > Date.now()
-      ) {
-        // if 1 minute has not passed since the last email
-        throw createError(
-          strings.mail.resetPasswordWaiting,
-          StatusCodes.TOO_MANY_REQUESTS
-        );
-      }
-
-      await User.updateOne(
-        { _id: user._id },
-        {
-          $set: {
-            "token.resetPasswordToken": resetPasswordToken,
-            "token.resetPasswordTokenExpiry": tokenExpiryDate,
-          },
-        }
-      );
-
-      const receivers = [{ email: user.email.address }];
-      const sender = { email: "admin@phantomphood.com", name: "Phantom Phood" };
-      const subject = "PhantomPhood - Reset Password";
-      const url = `${process.env.URL}/reset-password/newPassword/${user.email.address}/${resetPasswordToken}`;
-      const brevoService = new BrevoService();
-      await brevoService.sendTemplateEmail(
-        receivers,
-        subject,
-        sender,
-        "reset-password-email.handlebars",
-        {
-          url,
-        }
-      );
-
-      res
-        .status(StatusCodes.OK)
-        .json({ success: true, data: strings.mail.resetPassEmailSent });
-    } else if (action === "update") {
-      // to update the password
-      const { newPassword, resetPasswordToken, email } = req.body;
-      const user = await User.findOne({
-        "email.address": {
-          $regex: new RegExp(email, "i"),
-        },
-      });
-
-      if (!user || !user.token?.resetPasswordToken) {
-        throw createError(
-          strings.mail.userNotRequestedResetPassword,
-          StatusCodes.BAD_REQUEST
-        );
-      }
-
-      if (user.signupMethod === SignupMethodEnum.social) {
-        throw createError(
-          strings.mail.resetPassNotProvidedForSocialMethods,
-          StatusCodes.BAD_REQUEST
-        );
-      }
-
-      if (
-        !user.token.resetPasswordTokenExpiry ||
-        Date.now() > user.token.resetPasswordTokenExpiry.getTime()
-      ) {
-        throw createError(
-          strings.mail.resetPassLinkInvalid,
-          StatusCodes.BAD_REQUEST
-        );
-      }
-
-      if (resetPasswordToken !== user.token.resetPasswordToken) {
-        throw createError(strings.mail.tokenIsInvalid, StatusCodes.BAD_REQUEST);
-      }
-
-      const isPasswordTheSame = await bcrypt.compare(
-        newPassword,
-        user.password
-      );
-      const hashedPassword = await bcrypt.hash(newPassword, 10);
-
-      if (isPasswordTheSame) {
-        throw createError(
-          strings.mail.sameAsPreviousPassword,
-          StatusCodes.BAD_REQUEST
-        );
-      }
-
-      user.password = hashedPassword;
-      user.token.resetPasswordToken = undefined;
-      user.token.resetPasswordTokenExpiry = undefined;
-      await user.save();
-
-      res.json({ success: true, message: strings.mail.passwordReset });
-    }
-  } catch (err) {
-    next(err);
-  }
-}
+} from "../../strings.js";
+import {
+  createError,
+  handleInputErrors,
+} from "../../utilities/errorHandlers.js";
+import { BrevoService } from "../services/BrevoService.js";
 
 export async function sendEmailVerification(
   req: Request,
@@ -205,7 +63,7 @@ export async function sendEmailVerification(
     const receivers = [{ email: user.email.address }];
     const sender = { email: "admin@phantomphood.com", name: "Phantom Phood" };
     const subject = "PhantomPhood - Email Verification";
-    const verifyLink = `${process.env.NEXT_PUBLIC_APP_ENDPOINT}/verify?token=${verificationToken}`;
+    const verifyLink = `${env.WEB_URL}/verify?token=${verificationToken}`;
     const brevoService = new BrevoService();
     await brevoService.sendTemplateEmail(
       receivers,

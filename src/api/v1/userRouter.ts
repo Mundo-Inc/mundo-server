@@ -4,7 +4,7 @@ import {
   block,
   blockValidation,
   unblock,
-} from "../controllers/BlockController";
+} from "../controllers/BlockController.js";
 import {
   acceptFollowRequest,
   acceptFollowRequestValidation,
@@ -22,19 +22,19 @@ import {
   rejectFollowRequestValidation,
   removeFollower,
   removeFollowerValidation,
-} from "../controllers/ConnectionController";
+} from "../controllers/ConnectionController.js";
 import {
   getUserLists,
   getUserListsValidation,
-} from "../controllers/ListController";
+} from "../controllers/ListController.js";
 import {
   getLatestReferredUsers,
   paginationValidation,
-} from "../controllers/RewardController";
+} from "../controllers/RewardController.js";
 import {
   getActivitiesOfaUser,
   getActivitiesOfaUserValidation,
-} from "../controllers/UserActivityController";
+} from "../controllers/UserActivityController.js";
 import {
   createUser,
   createUserValidation,
@@ -56,11 +56,11 @@ import {
   userSettingsValidation,
   usernameAvailability,
   usernameAvailabilityValidation,
-} from "../controllers/UserController";
+} from "../controllers/UserController.js";
 import {
   authMiddleware,
   optionalAuthMiddleware,
-} from "../middlewares/authMiddleWare";
+} from "../middlewares/authMiddleWare.js";
 
 const router = express.Router();
 router.use(express.json());

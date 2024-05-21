@@ -3,15 +3,18 @@ import { query, type ValidationChain } from "express-validator";
 import { StatusCodes } from "http-status-codes";
 import mongoose, { type FilterQuery } from "mongoose";
 
-import Follow from "../../models/Follow";
+import Follow from "../../models/Follow.js";
 import UserActivity, {
-  type IUserActivity,
   ResourcePrivacyEnum,
-} from "../../models/UserActivity";
-import { createError, handleInputErrors } from "../../utilities/errorHandlers";
-import PlaceProjection from "../dto/place";
-import UserProjection from "../dto/user";
-import validate from "./validators";
+  type IUserActivity,
+} from "../../models/UserActivity.js";
+import {
+  createError,
+  handleInputErrors,
+} from "../../utilities/errorHandlers.js";
+import PlaceProjection from "../dto/place.js";
+import UserProjection from "../dto/user.js";
+import validate from "./validators.js";
 
 export const getMapActivitiesValidation: ValidationChain[] = [
   validate.lat(query("northEastLat")),

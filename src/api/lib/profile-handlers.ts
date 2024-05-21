@@ -1,8 +1,8 @@
 import crypto from "crypto";
-
 import { StatusCodes } from "http-status-codes";
-import User, { SignupMethodEnum, UserRoleEnum } from "../../models/User";
-import { createError } from "../../utilities/errorHandlers";
+
+import User, { SignupMethodEnum, UserRoleEnum } from "../../models/User.js";
+import { createError } from "../../utilities/errorHandlers.js";
 
 export const handleSignUp = async (
   email: string,

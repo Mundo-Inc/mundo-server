@@ -10,7 +10,8 @@ import * as fs from "fs";
 import * as hbs from "handlebars";
 import path from "path";
 
-import logger from "./logger";
+import { env } from "../../env.js";
+import logger from "./logger/index.js";
 
 export interface EmailSender {
   email: string;
@@ -25,13 +26,13 @@ export class BrevoService {
     this.accountInstance = new AccountApi();
     this.accountInstance.setApiKey(
       AccountApiApiKeys.apiKey,
-      process.env.BREVO_API_KEY as string
+      env.BREVO_API_KEY as string
     );
 
     this.apiInstance = new TransactionalEmailsApi();
     this.apiInstance.setApiKey(
       TransactionalEmailsApiApiKeys.apiKey,
-      process.env.BREVO_API_KEY as string
+      env.BREVO_API_KEY as string
     );
 
     this.accountInstance

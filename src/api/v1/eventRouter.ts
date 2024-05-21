@@ -7,8 +7,8 @@ import {
   getEventValidation,
   getEvents,
   getEventsValidation,
-} from "../controllers/EventController";
-import { authMiddleware } from "../middlewares/authMiddleWare";
+} from "../controllers/EventController.js";
+import { authMiddleware } from "../middlewares/authMiddleWare.js";
 
 const router = express.Router();
 router.use(express.json());

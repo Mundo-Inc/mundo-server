@@ -8,13 +8,16 @@ import {
   ProfileFrame,
   type IProfileCover,
   type IProfileFrame,
-} from "../../models/ProfileDecoration";
+} from "../../models/ProfileDecoration.js";
 import ProfileDecorationRedemption, {
   ProfileDecorationEnum,
-} from "../../models/ProfileDecorationRedemption";
-import User from "../../models/User";
-import { dStrings, dynamicMessage } from "../../strings";
-import { createError, handleInputErrors } from "../../utilities/errorHandlers";
+} from "../../models/ProfileDecorationRedemption.js";
+import User from "../../models/User.js";
+import { dStrings, dynamicMessage } from "../../strings.js";
+import {
+  createError,
+  handleInputErrors,
+} from "../../utilities/errorHandlers.js";
 
 export async function getDecorations(
   req: Request,

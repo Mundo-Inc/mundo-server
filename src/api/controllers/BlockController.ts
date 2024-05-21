@@ -3,10 +3,13 @@ import { ValidationChain, param } from "express-validator";
 import { StatusCodes } from "http-status-codes";
 import { Types } from "mongoose";
 
-import Block from "../../models/Block";
-import User from "../../models/User";
-import { dStrings, dynamicMessage } from "../../strings";
-import { createError, handleInputErrors } from "../../utilities/errorHandlers";
+import Block from "../../models/Block.js";
+import User from "../../models/User.js";
+import { dStrings, dynamicMessage } from "../../strings.js";
+import {
+  createError,
+  handleInputErrors,
+} from "../../utilities/errorHandlers.js";
 
 export const blockValidation: ValidationChain[] = [param("id").isMongoId()];
 

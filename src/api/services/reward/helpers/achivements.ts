@@ -1,8 +1,10 @@
 import { type Document } from "mongoose";
 
-import Achievement, { type IAchievement } from "../../../../models/Achievement";
-import type { IUser } from "../../../../models/User";
-import logger from "../../logger";
+import Achievement, {
+  type IAchievement,
+} from "../../../../models/Achievement.js";
+import type { IUser } from "../../../../models/User.js";
+import logger from "../../logger/index.js";
 
 type LevelupAcivement = {
   [key: number]: string;

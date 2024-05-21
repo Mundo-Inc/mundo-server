@@ -2,22 +2,24 @@ import type { NextFunction, Request, Response } from "express";
 import { body, param, type ValidationChain } from "express-validator";
 import { StatusCodes } from "http-status-codes";
 import mongoose from "mongoose";
-import twilio, { Twilio } from "twilio";
+import twilio from "twilio";
 
-import Conversation, { type IConversation } from "../../models/Conversation";
-import User from "../../models/User";
-import { dStrings, dynamicMessage } from "../../strings";
-import { createError, handleInputErrors } from "../../utilities/errorHandlers";
-import UserProjection from "../dto/user";
-import logger from "../services/logger";
+import { env } from "../../env.js";
+import Conversation from "../../models/Conversation.js";
+import User from "../../models/User.js";
+import { dStrings, dynamicMessage } from "../../strings.js";
+import {
+  createError,
+  handleInputErrors,
+} from "../../utilities/errorHandlers.js";
+import UserProjection from "../dto/user.js";
+import logger from "../services/logger/index.js";
 
 const AccessToken = twilio.jwt.AccessToken;
 const ChatGrant = AccessToken.ChatGrant;
 
 // Twilio setup
-const accountSid = process.env.TWILIO_ACCOUNT_SID; // Replace with your Account SID
-const authToken = process.env.TWILIO_AUTH_TOKEN; // Replace with your Auth Token
-const client = new Twilio(accountSid, authToken);
+const client = new twilio.Twilio(env.TWILIO_ACCOUNT_SID, env.TWILIO_AUTH_TOKEN);
 
 export async function getToken(
   req: Request,
@@ -30,14 +32,14 @@ export async function getToken(
     const authUser = req.user!;
 
     const chatGrant = new ChatGrant({
-      serviceSid: process.env.TWILIO_SERVICE_SID,
+      serviceSid: env.TWILIO_SERVICE_SID,
     });
 
     // Creating token
     const token = new AccessToken(
-      process.env.TWILIO_ACCOUNT_SID!,
-      process.env.TWILIO_API_KEY!,
-      process.env.TWILIO_API_SECRET!,
+      env.TWILIO_ACCOUNT_SID!,
+      env.TWILIO_API_KEY!,
+      env.TWILIO_API_SECRET!,
       {
         identity: authUser._id.toString(),
       }

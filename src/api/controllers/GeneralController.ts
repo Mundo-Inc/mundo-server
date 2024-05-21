@@ -2,8 +2,11 @@ import type { NextFunction, Request, Response } from "express";
 import { param, type ValidationChain } from "express-validator";
 import { StatusCodes } from "http-status-codes";
 
-import AppSetting from "../../models/AppSetting";
-import { createError, handleInputErrors } from "../../utilities/errorHandlers";
+import AppSetting from "../../models/AppSetting.js";
+import {
+  createError,
+  handleInputErrors,
+} from "../../utilities/errorHandlers.js";
 
 export const getVersionInfoValidation: ValidationChain[] = [
   param("version").isString().notEmpty(),

@@ -3,7 +3,7 @@ import mongoose, { Schema, type Model, type Types } from "mongoose";
 import Notification, {
   NotificationTypeEnum,
   ResourceTypeEnum,
-} from "./Notification";
+} from "./Notification.js";
 
 export interface IFollowRequest {
   _id: Types.ObjectId;

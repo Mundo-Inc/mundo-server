@@ -3,24 +3,27 @@ import { body, param, query, type ValidationChain } from "express-validator";
 import { StatusCodes } from "http-status-codes";
 import mongoose, { type PipelineStage } from "mongoose";
 
-import Follow from "../../models/Follow";
-import Homemade from "../../models/Homemade";
-import Media, { MediaTypeEnum } from "../../models/Media";
+import Follow from "../../models/Follow.js";
+import Homemade from "../../models/Homemade.js";
+import Media, { MediaTypeEnum } from "../../models/Media.js";
 import Notification, {
   NotificationTypeEnum,
   ResourceTypeEnum,
-} from "../../models/Notification";
-import Upload from "../../models/Upload";
-import User from "../../models/User";
-import { ResourcePrivacyEnum } from "../../models/UserActivity";
-import strings, { dStrings as ds, dynamicMessage } from "../../strings";
-import { createError, handleInputErrors } from "../../utilities/errorHandlers";
-import { getPaginationFromQuery } from "../../utilities/pagination";
-import UserProjection from "../dto/user";
-import { UserActivityManager } from "../services/UserActivityManager";
-import logger from "../services/logger";
-import { addReward } from "../services/reward/reward.service";
-import validate from "./validators";
+} from "../../models/Notification.js";
+import Upload from "../../models/Upload.js";
+import User from "../../models/User.js";
+import { ResourcePrivacyEnum } from "../../models/UserActivity.js";
+import strings, { dStrings as ds, dynamicMessage } from "../../strings.js";
+import {
+  createError,
+  handleInputErrors,
+} from "../../utilities/errorHandlers.js";
+import { getPaginationFromQuery } from "../../utilities/pagination.js";
+import UserProjection from "../dto/user.js";
+import { UserActivityManager } from "../services/UserActivityManager.js";
+import logger from "../services/logger/index.js";
+import { addReward } from "../services/reward/reward.service.js";
+import validate from "./validators.js";
 
 export const getHomemadePostsValidation: ValidationChain[] = [
   query("user").optional().isMongoId(),

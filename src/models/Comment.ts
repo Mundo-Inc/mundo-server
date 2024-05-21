@@ -1,11 +1,11 @@
 import mongoose, { Schema, type CallbackError, type Model } from "mongoose";
 
-import logger from "../api/services/logger";
+import logger from "../api/services/logger/index.js";
 import Notification, {
   NotificationTypeEnum,
   ResourceTypeEnum,
-} from "./Notification";
-import UserActivity, { type IUserActivity } from "./UserActivity";
+} from "./Notification.js";
+import UserActivity, { type IUserActivity } from "./UserActivity.js";
 
 export interface IComment {
   _id: mongoose.Types.ObjectId;

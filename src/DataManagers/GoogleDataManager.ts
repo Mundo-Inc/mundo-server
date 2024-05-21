@@ -1,9 +1,10 @@
 import axios from "axios";
-import logger from "../api/services/logger";
+import logger from "../api/services/logger/index.js";
+import { env } from "../env.js";
 
 export class GoogleDataManager {
   private static BASE = "https://places.googleapis.com/v1";
-  private static API_KEY = process.env.GOOGLE_PLACES_API_KEY!;
+  private static API_KEY = env.GOOGLE_PLACES_API_KEY;
 
   private static FieldsIDsOnly = ["id", "photos"];
   private static FieldsLocationOnly = [

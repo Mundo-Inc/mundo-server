@@ -3,23 +3,26 @@ import { param, query, type ValidationChain } from "express-validator";
 import { StatusCodes } from "http-status-codes";
 import mongoose from "mongoose";
 
-import Block from "../../models/Block";
-import Comment from "../../models/Comment";
-import UserActivity from "../../models/UserActivity";
-import { dStrings, dynamicMessage } from "../../strings";
+import Block from "../../models/Block.js";
+import Comment from "../../models/Comment.js";
+import UserActivity from "../../models/UserActivity.js";
+import { dStrings, dynamicMessage } from "../../strings.js";
 import {
   getConnectionStatus,
   getConnectionStatuses,
-} from "../../utilities/connections";
-import { createError, handleInputErrors } from "../../utilities/errorHandlers";
-import { getPaginationFromQuery } from "../../utilities/pagination";
-import UserProjection from "../dto/user";
-import { getResourceInfo, getUserFeed } from "../services/feed.service";
+} from "../../utilities/connections.js";
+import {
+  createError,
+  handleInputErrors,
+} from "../../utilities/errorHandlers.js";
+import { getPaginationFromQuery } from "../../utilities/pagination.js";
+import UserProjection from "../dto/user.js";
+import { getResourceInfo, getUserFeed } from "../services/feed.service.js";
 import {
   getCommentsOfActivity,
   getReactionsOfActivity,
-} from "./UserActivityController";
-import validate from "./validators";
+} from "./UserActivityController.js";
+import validate from "./validators.js";
 
 export const getFeedValidation: ValidationChain[] = [
   validate.page(query("page").optional()),

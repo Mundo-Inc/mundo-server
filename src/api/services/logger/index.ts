@@ -1,9 +1,8 @@
-import type { Logger } from "winston";
+import { env } from "../../../env.js";
+import buildDevLogger from "./dev-logger.js";
+import buildProdLogger from "./prod-logger.js";
 
-import buildDevLogger from "./dev-logger";
-import buildProdLogger from "./prod-logger";
-
-const logger: Logger =
-  process.env.NODE_ENV === "development" ? buildDevLogger() : buildProdLogger();
+const logger =
+  env.NODE_ENV === "development" ? buildDevLogger() : buildProdLogger();
 
 export default logger;

@@ -1,6 +1,6 @@
 import express from "express";
 
-import { authMiddleware } from "../middlewares/authMiddleWare";
+import { authMiddleware } from "../middlewares/authMiddleWare.js";
 import {
   createHomemadePost,
   createHomemadeValidationPost,
@@ -10,7 +10,7 @@ import {
   getHomemadePostsValidation,
   removeHomemadePost,
   removeHomemadePostValidation,
-} from "../controllers/HomemadeController";
+} from "../controllers/HomemadeController.js";
 
 const router = express.Router();
 router.use(express.json());

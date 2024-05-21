@@ -1,12 +1,16 @@
-import { messaging } from "firebase-admin";
-import type { BaseMessage } from "firebase-admin/lib/messaging/messaging-api";
-import mongoose, { Types } from "mongoose";
+import {
+  getMessaging,
+  type BaseMessage,
+  type BatchResponse,
+  type TokenMessage,
+} from "firebase-admin/messaging";
+import { Types } from "mongoose";
 
-import User, { type UserDevice } from "../../models/User";
-import logger from "./logger";
+import User, { type IUser, type UserDevice } from "../../models/User.js";
+import logger from "./logger/index.js";
 
 export interface NotificationItemByToken {
-  tokenMessage: messaging.TokenMessage;
+  tokenMessage: TokenMessage;
   user: string | Types.ObjectId;
 }
 
@@ -18,11 +22,7 @@ export interface NotificationItemByUser {
 export class NotificationsService {
   private static instance = new NotificationsService();
 
-  private messaging: messaging.Messaging;
-
-  private constructor() {
-    this.messaging = messaging();
-  }
+  private constructor() {}
 
   public static getInstance(): NotificationsService {
     if (!NotificationsService.instance) {
@@ -32,68 +32,45 @@ export class NotificationsService {
   }
 
   public async sendNotificationsByToken(items: NotificationItemByToken[]) {
-    if (items.length > 500) {
-      // send in batches of 500 (max allowed by FCM)
-      let responses: messaging.BatchResponse | undefined = undefined;
+    let responses: BatchResponse | undefined = undefined;
 
-      for (let i = 0; i < items.length; i += 500) {
-        try {
-          const batchResponse = await this.messaging.sendEach(
-            items.slice(i, i + 500).map((i) => i.tokenMessage)
-          );
-
-          if (batchResponse.failureCount > 0) {
-            await this.handleTokenDeletion(
-              items.slice(i, i + 500),
-              batchResponse
-            );
-          }
-
-          if (!responses) {
-            responses = batchResponse;
-          } else {
-            responses.responses = responses.responses.concat(
-              batchResponse.responses
-            );
-            responses.successCount += batchResponse.successCount;
-            responses.failureCount += batchResponse.failureCount;
-          }
-        } catch (error) {
-          logger.verbose("Error sending notification", { error });
-        }
-      }
-
-      if (!responses) {
-        return false;
-      } else {
-        return responses;
-      }
-    } else {
+    for (let i = 0; i < items.length; i += 500) {
       try {
-        const batchResponse = await this.messaging.sendEach(
-          items.map((i) => i.tokenMessage)
+        const batchItems = items.slice(i, i + 500);
+        const batchResponse = await getMessaging().sendEach(
+          batchItems.map((i) => i.tokenMessage)
         );
 
         if (batchResponse.failureCount > 0) {
-          await this.handleTokenDeletion(items, batchResponse);
+          await this.handleTokenDeletion(batchItems, batchResponse);
         }
 
-        return batchResponse;
+        if (!responses) {
+          responses = batchResponse;
+        } else {
+          responses.responses = responses.responses.concat(
+            batchResponse.responses
+          );
+          responses.successCount += batchResponse.successCount;
+          responses.failureCount += batchResponse.failureCount;
+        }
       } catch (error) {
-        logger.verbose("Error sending notification", { error });
-        return false;
+        logger.error("Error sending notification", { error });
       }
     }
+
+    return responses || false;
   }
 
   public async sendNotificationsByUser(items: NotificationItemByUser[]) {
     const tokenMessages: NotificationItemByToken[] = [];
 
     for (const item of items) {
-      const user: {
-        _id: Types.ObjectId;
-        devices: UserDevice[];
-      } | null = await User.findById(item.user, "devices").lean();
+      const user = await User.findById(item.user)
+        .select<{
+          devices: IUser["devices"];
+        }>("devices")
+        .lean();
 
       if (!user) {
         logger.warn(`User ${item.user} not found. Skipping notification.`);
@@ -118,10 +95,10 @@ export class NotificationsService {
 
   private async handleTokenDeletion(
     items: {
-      tokenMessage: messaging.TokenMessage;
+      tokenMessage: TokenMessage;
       user: string | Types.ObjectId;
     }[],
-    batchResponse: messaging.BatchResponse
+    batchResponse: BatchResponse
   ) {
     const toDelete: { [userId: string]: string[] } = {};
 
@@ -136,11 +113,13 @@ export class NotificationsService {
       }
     }
 
-    for (const [userId, tokens] of Object.entries(toDelete)) {
-      await User.findOneAndUpdate(
-        { _id: new mongoose.Types.ObjectId(userId) },
+    const deletionPromises = Object.entries(toDelete).map(([userId, tokens]) =>
+      User.findOneAndUpdate(
+        { _id: new Types.ObjectId(userId) },
         { $pull: { devices: { fcmToken: { $in: tokens } } } }
-      );
-    }
+      )
+    );
+
+    await Promise.all(deletionPromises);
   }
 }

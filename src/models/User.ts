@@ -1,15 +1,15 @@
 import mongoose, { Schema, type CallbackError, type Model } from "mongoose";
 
-import Achievement from "./Achievement";
-import ActivitySeen from "./ActivitySeen";
-import CheckIn from "./CheckIn";
-import Comment from "./Comment";
-import Flag from "./Flag";
-import Follow from "./Follow";
-import List from "./List";
-import Media from "./Media";
-import Reaction from "./Reaction";
-import Review from "./Review";
+import Achievement from "./Achievement.js";
+import ActivitySeen from "./ActivitySeen.js";
+import CheckIn from "./CheckIn.js";
+import Comment from "./Comment.js";
+import Flag from "./Flag.js";
+import Follow from "./Follow.js";
+import List from "./List.js";
+import Media from "./Media.js";
+import Reaction from "./Reaction.js";
+import Review from "./Review.js";
 
 export enum UserRoleEnum {
   admin = "admin",

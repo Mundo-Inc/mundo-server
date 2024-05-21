@@ -1,7 +1,7 @@
 import mongoose, { Schema, type Model } from "mongoose";
 
-import { weights } from "../config/trendFactors";
-import ScoreWeight, { type IScoreWeight } from "./ScoreWeight";
+import { weights } from "../config/trendFactors.js";
+import ScoreWeight, { type IScoreWeight } from "./ScoreWeight.js";
 
 export enum ActivityTypeEnum {
   NEW_CHECKIN = "NEW_CHECKIN",

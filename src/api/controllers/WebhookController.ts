@@ -2,15 +2,16 @@ import type { NextFunction, Request, Response } from "express";
 import { StatusCodes } from "http-status-codes";
 import twilio from "twilio";
 
-import Conversation from "../../models/Conversation";
-import User, { type IUser } from "../../models/User";
-import { dStrings, dynamicMessage } from "../../strings";
-import { createError, handleInputErrors } from "../../utilities/errorHandlers";
-import logger from "../services/logger";
-import { NotificationsService } from "../services/NotificationsService";
-
-const twilioAuthToken = process.env.TWILIO_AUTH_TOKEN!;
-const twilioWebhookURL = process.env.TWILIO_WEBHOOK_URL!;
+import { env } from "../../env.js";
+import Conversation from "../../models/Conversation.js";
+import User, { type IUser } from "../../models/User.js";
+import { dStrings, dynamicMessage } from "../../strings.js";
+import {
+  createError,
+  handleInputErrors,
+} from "../../utilities/errorHandlers.js";
+import { NotificationsService } from "../services/NotificationsService.js";
+import logger from "../services/logger/index.js";
 
 export async function conversationsWebhook(
   req: Request,
@@ -31,9 +32,9 @@ export async function conversationsWebhook(
 
     if (
       !twilio.validateRequest(
-        twilioAuthToken,
+        env.TWILIO_AUTH_TOKEN,
         twilioSignature,
-        twilioWebhookURL,
+        env.TWILIO_WEBHOOK_URL,
         req.body
       )
     ) {

@@ -3,28 +3,31 @@ import { body, param, query, type ValidationChain } from "express-validator";
 import { StatusCodes } from "http-status-codes";
 import mongoose, { type PipelineStage } from "mongoose";
 
-import CheckIn, { type ICheckIn } from "../../models/CheckIn";
-import Event from "../../models/Event";
-import Follow from "../../models/Follow";
-import Media, { MediaTypeEnum } from "../../models/Media";
+import CheckIn, { type ICheckIn } from "../../models/CheckIn.js";
+import Event from "../../models/Event.js";
+import Follow from "../../models/Follow.js";
+import Media, { MediaTypeEnum } from "../../models/Media.js";
 import Notification, {
   NotificationTypeEnum,
   ResourceTypeEnum,
-} from "../../models/Notification";
-import Place from "../../models/Place";
-import Upload from "../../models/Upload";
-import User from "../../models/User";
-import { ResourcePrivacyEnum } from "../../models/UserActivity";
-import strings, { dStrings, dynamicMessage } from "../../strings";
-import { createError, handleInputErrors } from "../../utilities/errorHandlers";
-import { getPaginationFromQuery } from "../../utilities/pagination";
-import PlaceProjection from "../dto/place";
-import UserProjection from "../dto/user";
-import { UserActivityManager } from "../services/UserActivityManager";
-import { checkinEarning } from "../services/earning.service";
-import logger from "../services/logger";
-import { addReward } from "../services/reward/reward.service";
-import validate from "./validators";
+} from "../../models/Notification.js";
+import Place from "../../models/Place.js";
+import Upload from "../../models/Upload.js";
+import User from "../../models/User.js";
+import { ResourcePrivacyEnum } from "../../models/UserActivity.js";
+import strings, { dStrings, dynamicMessage } from "../../strings.js";
+import {
+  createError,
+  handleInputErrors,
+} from "../../utilities/errorHandlers.js";
+import { getPaginationFromQuery } from "../../utilities/pagination.js";
+import PlaceProjection from "../dto/place.js";
+import UserProjection from "../dto/user.js";
+import { UserActivityManager } from "../services/UserActivityManager.js";
+import { checkinEarning } from "../services/earning.service.js";
+import logger from "../services/logger/index.js";
+import { addReward } from "../services/reward/reward.service.js";
+import validate from "./validators.js";
 
 const checkInWaitTime = 1; // minutes
 

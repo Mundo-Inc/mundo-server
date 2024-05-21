@@ -1,10 +1,10 @@
 import mongoose, { Schema, type CallbackError, type Model } from "mongoose";
 
-import logger from "../api/services/logger";
-import Comment from "./Comment";
-import Media from "./Media";
-import Reaction from "./Reaction";
-import UserActivity, { ResourcePrivacyEnum } from "./UserActivity";
+import logger from "../api/services/logger/index.js";
+import Comment from "./Comment.js";
+import Media from "./Media.js";
+import Reaction from "./Reaction.js";
+import UserActivity, { ResourcePrivacyEnum } from "./UserActivity.js";
 
 export interface IHomemade {
   _id: mongoose.Types.ObjectId;

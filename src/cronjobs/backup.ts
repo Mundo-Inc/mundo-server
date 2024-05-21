@@ -4,8 +4,9 @@ import fs from "fs";
 import cron from "node-cron";
 import path from "path";
 
-import logger from "../api/services/logger";
-import { getFormattedDateTime } from "../utilities/stringHelper";
+import logger from "../api/services/logger/index.js";
+import { env } from "../env.js";
+import { getFormattedDateTime } from "../utilities/stringHelper.js";
 
 const DB_NAME: string = "genz";
 const ARCHIVE_PATH: string = path.join(
@@ -15,10 +16,10 @@ const ARCHIVE_PATH: string = path.join(
 );
 
 const s3Client: S3Client = new S3Client({
-  region: process.env.AWS_REGION_BACKUP as string,
+  region: env.AWS_REGION_BACKUP,
   credentials: {
-    accessKeyId: process.env.AWS_ACCESS_KEY_ID_BACKUP as string,
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY_BACKUP as string,
+    accessKeyId: env.AWS_ACCESS_KEY_ID_BACKUP,
+    secretAccessKey: env.AWS_SECRET_ACCESS_KEY_BACKUP,
   },
 });
 
@@ -65,7 +66,7 @@ async function uploadBackupToS3(): Promise<void> {
   }-${now.getDate()}_${now.getHours()}-${now.getMinutes()}-${now.getSeconds()}.gzip`;
 
   const params = {
-    Bucket: process.env.AWS_BUCKET_NAME_BACKUP,
+    Bucket: env.AWS_BUCKET_NAME_BACKUP,
     Key: fileName, // File name you want to save as in S3
     Body: fileContent,
   };

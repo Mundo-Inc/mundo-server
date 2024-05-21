@@ -1,14 +1,17 @@
 import type { NextFunction, Request, Response } from "express";
 import { body, param, type ValidationChain } from "express-validator";
-
 import { StatusCodes } from "http-status-codes";
-import { createCron } from "../../cronjobs/bots";
-import Bot, { IBotTargetEnum, IBotTypeEnum } from "../../models/Bot";
-import User, { SignupMethodEnum, UserRoleEnum } from "../../models/User";
-import { dStrings, dynamicMessage } from "../../strings";
-import { createError, handleInputErrors } from "../../utilities/errorHandlers";
-import validate from "./validators";
 import { Types } from "mongoose";
+
+import { createCron } from "../../cronjobs/bots.js";
+import Bot, { IBotTargetEnum, IBotTypeEnum } from "../../models/Bot.js";
+import User, { SignupMethodEnum, UserRoleEnum } from "../../models/User.js";
+import { dStrings, dynamicMessage } from "../../strings.js";
+import {
+  createError,
+  handleInputErrors,
+} from "../../utilities/errorHandlers.js";
+import validate from "./validators.js";
 
 export const createBotValidation: ValidationChain[] = [
   validate.email(body("email")),

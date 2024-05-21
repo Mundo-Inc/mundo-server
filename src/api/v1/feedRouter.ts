@@ -3,7 +3,7 @@ import express from "express";
 import {
   getEngagements,
   getEngagementsValidation,
-} from "../controllers/EngagementController";
+} from "../controllers/EngagementController.js";
 import {
   getActivity,
   getActivityValidation,
@@ -11,8 +11,8 @@ import {
   getCommentsValidation,
   getFeed,
   getFeedValidation,
-} from "../controllers/FeedController";
-import { authMiddleware } from "../middlewares/authMiddleWare";
+} from "../controllers/FeedController.js";
+import { authMiddleware } from "../middlewares/authMiddleWare.js";
 
 const router = express.Router();
 router.use(express.json());

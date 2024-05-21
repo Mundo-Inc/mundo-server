@@ -1,10 +1,11 @@
 import { type Types } from "mongoose";
-import { type IUser } from "../../models/User";
+
+import { type IUser } from "../../models/User.js";
 import UserActivity, {
   ActivityResourceTypeEnum,
   ActivityTypeEnum,
   ResourcePrivacyEnum,
-} from "../../models/UserActivity";
+} from "../../models/UserActivity.js";
 
 export class UserActivityManager {
   public static async createFollowActivity(

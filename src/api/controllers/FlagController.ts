@@ -3,16 +3,19 @@ import { body, type ValidationChain } from "express-validator";
 import { StatusCodes } from "http-status-codes";
 import mongoose from "mongoose";
 
-import CheckIn from "../../models/CheckIn";
-import Comment from "../../models/Comment";
-import Flag, { FlagTypeEnum } from "../../models/Flag";
-import Homemade from "../../models/Homemade";
-import Review from "../../models/Review";
-import UserActivity from "../../models/UserActivity";
-import { dStrings, dynamicMessage } from "../../strings";
-import { createError, handleInputErrors } from "../../utilities/errorHandlers";
-import logger from "../services/logger";
-import { sendSlackMessage } from "./SlackController";
+import CheckIn from "../../models/CheckIn.js";
+import Comment from "../../models/Comment.js";
+import Flag, { FlagTypeEnum } from "../../models/Flag.js";
+import Homemade from "../../models/Homemade.js";
+import Review from "../../models/Review.js";
+import UserActivity from "../../models/UserActivity.js";
+import { dStrings, dynamicMessage } from "../../strings.js";
+import {
+  createError,
+  handleInputErrors,
+} from "../../utilities/errorHandlers.js";
+import logger from "../services/logger/index.js";
+import { sendSlackMessage } from "./SlackController.js";
 
 export const createFlagValidation: ValidationChain[] = [
   body("activity").optional().isMongoId(),

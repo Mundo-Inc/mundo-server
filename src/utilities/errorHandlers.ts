@@ -2,7 +2,7 @@ import type { NextFunction, Request, Response } from "express";
 import { validationResult, type ValidationError } from "express-validator";
 import { StatusCodes } from "http-status-codes";
 
-import logger from "../api/services/logger";
+import logger from "../api/services/logger/index.js";
 
 interface ErrorOptions {
   statusCode?: number;

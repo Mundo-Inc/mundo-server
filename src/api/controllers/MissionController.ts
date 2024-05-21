@@ -3,15 +3,18 @@ import { body, param, query, type ValidationChain } from "express-validator";
 import { StatusCodes } from "http-status-codes";
 import mongoose from "mongoose";
 
-import CoinReward, { CoinRewardTypeEnum } from "../../models/CoinReward";
-import Mission, { TaskTypeEnum } from "../../models/Mission";
-import Prize from "../../models/Prize";
-import User from "../../models/User";
-import { dStrings, dynamicMessage } from "../../strings";
-import { createError, handleInputErrors } from "../../utilities/errorHandlers";
-import { getPaginationFromQuery } from "../../utilities/pagination";
-import { populateMissionProgress } from "../services/reward/coinReward.service";
-import validate from "./validators";
+import CoinReward, { CoinRewardTypeEnum } from "../../models/CoinReward.js";
+import Mission, { TaskTypeEnum } from "../../models/Mission.js";
+import Prize from "../../models/Prize.js";
+import User from "../../models/User.js";
+import { dStrings, dynamicMessage } from "../../strings.js";
+import {
+  createError,
+  handleInputErrors,
+} from "../../utilities/errorHandlers.js";
+import { getPaginationFromQuery } from "../../utilities/pagination.js";
+import { populateMissionProgress } from "../services/reward/coinReward.service.js";
+import validate from "./validators.js";
 
 export const createMissionValidation: ValidationChain[] = [
   body("title").isString(),

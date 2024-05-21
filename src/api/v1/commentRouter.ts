@@ -7,8 +7,8 @@ import {
   deleteCommentLikeValidation,
   likeComment,
   likeCommentValidation,
-} from "../controllers/CommentController";
-import { authMiddleware } from "../middlewares/authMiddleWare";
+} from "../controllers/CommentController.js";
+import { authMiddleware } from "../middlewares/authMiddleWare.js";
 
 const router = express.Router();
 router.use(express.json());

@@ -1,9 +1,9 @@
 import { Schema } from "mongoose";
 
-import { AppleMapsSchema, type IAppleMaps } from "./AppleMaps";
-import { GooglePlacesSchema, type IGooglePlaces } from "./GooglePlaces";
-import { OSMSchema, type IOSM } from "./OSM";
-import { YelpSchema, type IYelp } from "./Yelp";
+import { AppleMapsSchema, type IAppleMaps } from "./AppleMaps.js";
+import { GooglePlacesSchema, type IGooglePlaces } from "./GooglePlaces.js";
+import { OSMSchema, type IOSM } from "./OSM.js";
+import { YelpSchema, type IYelp } from "./Yelp.js";
 
 export interface IOtherSources {
   OSM?: IOSM;

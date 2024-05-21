@@ -11,8 +11,8 @@ import {
   getToken,
   removeUserFromGroupConversation,
   removeUserFromGroupConversationValidation,
-} from "../controllers/ConversationController";
-import { authMiddleware } from "../middlewares/authMiddleWare";
+} from "../controllers/ConversationController.js";
+import { authMiddleware } from "../middlewares/authMiddleWare.js";
 
 const router = express.Router();
 router.use(express.json());

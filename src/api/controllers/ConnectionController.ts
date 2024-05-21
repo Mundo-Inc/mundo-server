@@ -1,30 +1,35 @@
 import type { NextFunction, Request, Response } from "express";
-import { body, param, query, type ValidationChain } from "express-validator";
+import { param, query, type ValidationChain } from "express-validator";
 import { StatusCodes } from "http-status-codes";
 import mongoose from "mongoose";
 
-import Follow, { FollowStatusEnum } from "../../models/Follow";
-import FollowRequest, { type IFollowRequest } from "../../models/FollowRequest";
+import Follow, { FollowStatusEnum } from "../../models/Follow.js";
+import FollowRequest, {
+  type IFollowRequest,
+} from "../../models/FollowRequest.js";
 import Notification, {
   NotificationTypeEnum,
   ResourceTypeEnum,
-} from "../../models/Notification";
-import User, { type IUser } from "../../models/User";
+} from "../../models/Notification.js";
+import User, { type IUser } from "../../models/User.js";
 import UserActivity, {
   ActivityResourceTypeEnum,
   ActivityTypeEnum,
-} from "../../models/UserActivity";
-import { dStrings, dynamicMessage } from "../../strings";
+} from "../../models/UserActivity.js";
+import { dStrings, dynamicMessage } from "../../strings.js";
 import {
   getConnectionStatus,
   type ConnectionStatus,
-} from "../../utilities/connections";
-import { createError, handleInputErrors } from "../../utilities/errorHandlers";
-import { getPaginationFromQuery } from "../../utilities/pagination";
-import UserProjection, { type UserProjectionEssentials } from "../dto/user";
-import { UserActivityManager } from "../services/UserActivityManager";
-import logger from "../services/logger";
-import validate from "./validators";
+} from "../../utilities/connections.js";
+import {
+  createError,
+  handleInputErrors,
+} from "../../utilities/errorHandlers.js";
+import { getPaginationFromQuery } from "../../utilities/pagination.js";
+import UserProjection, { type UserProjectionEssentials } from "../dto/user.js";
+import { UserActivityManager } from "../services/UserActivityManager.js";
+import logger from "../services/logger/index.js";
+import validate from "./validators.js";
 
 export const connectionFollowStatusValidation: ValidationChain[] = [
   param("id").isMongoId(),
@@ -293,8 +298,6 @@ export async function acceptFollowRequest(
         path: "user",
         select: ["_id", "isPrivate"],
       });
-
-    console.log("Here");
 
     const follow = await Follow.create({
       user: followRequest.user,

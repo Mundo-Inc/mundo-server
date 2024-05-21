@@ -1,8 +1,8 @@
 import { DeleteObjectCommand } from "@aws-sdk/client-s3";
 import cron from "node-cron";
 
-import Upload from "../models/Upload";
-import { bucketName, s3 } from "../utilities/storage";
+import Upload from "../models/Upload.js";
+import { bucketName, s3 } from "../utilities/storage.js";
 
 cron.schedule("*/15 * * * *", async () => {
   const uploads = await Upload.find({

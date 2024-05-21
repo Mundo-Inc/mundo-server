@@ -1,14 +1,14 @@
 import mongoose, { type Document } from "mongoose";
 
-import { dailyCoinsCFG } from "../../../config/dailyCoins";
-import CheckIn from "../../../models/CheckIn";
-import CoinReward from "../../../models/CoinReward";
-import { TaskTypeEnum, type IMission } from "../../../models/Mission";
-import Reaction from "../../../models/Reaction";
-import type { IDailyReward, IUser } from "../../../models/User";
+import { dailyCoinsCFG } from "../../../config/dailyCoins.js";
+import CheckIn from "../../../models/CheckIn.js";
+import CoinReward from "../../../models/CoinReward.js";
+import { TaskTypeEnum, type IMission } from "../../../models/Mission.js";
+import Reaction from "../../../models/Reaction.js";
+import type { IDailyReward, IUser } from "../../../models/User.js";
 import UserActivity, {
   ActivityResourceTypeEnum,
-} from "../../../models/UserActivity";
+} from "../../../models/UserActivity.js";
 
 const DAY_HOURS = 24;
 

@@ -1,11 +1,11 @@
 import mongoose, { Schema, type CallbackError, type Model } from "mongoose";
 
-import logger from "../api/services/logger";
-import Comment from "./Comment";
-import Media from "./Media";
-import Place from "./Place";
-import Reaction from "./Reaction";
-import UserActivity, { ResourcePrivacyEnum } from "./UserActivity";
+import logger from "../api/services/logger/index.js";
+import Comment from "./Comment.js";
+import Media from "./Media.js";
+import Place from "./Place.js";
+import Reaction from "./Reaction.js";
+import UserActivity, { ResourcePrivacyEnum } from "./UserActivity.js";
 
 export interface IReview {
   _id: mongoose.Types.ObjectId;

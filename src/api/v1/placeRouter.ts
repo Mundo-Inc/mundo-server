@@ -9,7 +9,7 @@ import {
   getPlacesValidation,
   getPlacesWithinBoundaries,
   getPlacesWithinBoundariesValidation,
-} from "../controllers/PlaceController";
+} from "../controllers/PlaceController.js";
 import {
   getExistInLists,
   getExistInListsValidation,
@@ -21,8 +21,8 @@ import {
   getPlaceReviews,
   getPlaceReviewsValidation,
   getPlaceValidation,
-} from "../controllers/SinglePlaceController";
-import { authMiddleware } from "../middlewares/authMiddleWare";
+} from "../controllers/SinglePlaceController.js";
+import { authMiddleware } from "../middlewares/authMiddleWare.js";
 
 const router = express.Router();
 

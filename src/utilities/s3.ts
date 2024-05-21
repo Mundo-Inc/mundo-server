@@ -2,14 +2,15 @@ import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import { StatusCodes } from "http-status-codes";
 import { v4 as uuidv4 } from "uuid";
 
-import { createError } from "./errorHandlers";
+import { env } from "../env.js";
+import { createError } from "./errorHandlers.js";
 
 const s3Client = new S3Client({
   credentials: {
-    accessKeyId: process.env.AWS_S3_ACCESS_KEY_ID as string,
-    secretAccessKey: process.env.AWS_S3_SECRET_ACCESS_KEY as string,
+    accessKeyId: env.AWS_S3_ACCESS_KEY_ID,
+    secretAccessKey: env.AWS_S3_SECRET_ACCESS_KEY,
   },
-  region: process.env.AWS_S3_REGION,
+  region: env.AWS_S3_REGION,
 });
 
 const uploadToS3 = async (
@@ -48,7 +49,7 @@ const uploadToS3 = async (
   // Upload the file to S3
   const key = `${path}/${uuidv4()}.${fileExtension}`;
   const command = new PutObjectCommand({
-    Bucket: process.env.AWS_S3_BUCKET_NAME,
+    Bucket: env.AWS_S3_BUCKET_NAME,
     Key: key,
     Body: file,
     ContentType: file.type,
@@ -56,7 +57,7 @@ const uploadToS3 = async (
   });
 
   await s3Client.send(command);
-  return `https://${process.env.AWS_S3_BUCKET_NAME}.s3.amazonaws.com/${key}`;
+  return `https://${env.AWS_S3_BUCKET_NAME}.s3.amazonaws.com/${key}`;
 };
 
 const getVideoDuration = (file: File): Promise<number> => {

@@ -4,31 +4,26 @@ import { StatusCodes } from "http-status-codes";
 import { Types } from "mongoose";
 import Stripe from "stripe";
 
-import Transaction from "../../models/Transaction";
-import User, { type IUser } from "../../models/User";
-import Withdrawal from "../../models/Withdrawal";
-import { dStrings, dynamicMessage } from "../../strings";
-import { createError, handleInputErrors } from "../../utilities/errorHandlers";
-import { roundUpToTwoDecimals } from "../../utilities/numbers";
-import { ensureNonEmptyString } from "../../utilities/requireValue";
+import { env } from "../../env.js";
+import Transaction from "../../models/Transaction.js";
+import User, { type IUser } from "../../models/User.js";
+import Withdrawal from "../../models/Withdrawal.js";
+import { dStrings, dynamicMessage } from "../../strings.js";
+import {
+  createError,
+  handleInputErrors,
+} from "../../utilities/errorHandlers.js";
+import { roundUpToTwoDecimals } from "../../utilities/numbers.js";
+import { ensureNonEmptyString } from "../../utilities/requireValue.js";
 import TransactionProjection, {
   type TransactionProjectionPublic,
-} from "../dto/transaction";
-import UserProjection, { type UserProjectionEssentials } from "../dto/user";
-import { sendAttributtedMessage } from "./ConversationController";
+} from "../dto/transaction.js";
+import UserProjection, { type UserProjectionEssentials } from "../dto/user.js";
+import { sendAttributtedMessage } from "./ConversationController.js";
 
 const SERVICE_FEE_RATIO = 0.05;
 
-const stripeSecret =
-  process.env.NODE_ENV === "production"
-    ? process.env.STRIPE_SECRET_PROD
-    : process.env.STRIPE_SECRET_TEST;
-
-if (!stripeSecret) {
-  throw new Error("Stripe secret is not defined");
-}
-
-const stripe = new Stripe(stripeSecret);
+const stripe = new Stripe(env.STRIPE_SECRET_KEY);
 
 async function createStripeCustomer(user: IUser) {
   return stripe.customers.create({
@@ -61,7 +56,7 @@ export async function getSecret(
 
     const ephemeralKey = await stripe.ephemeralKeys.create(
       { customer: customerId },
-      { apiVersion: process.env.STRIPE_API_VERSION! }
+      { apiVersion: env.STRIPE_API_VERSION }
     );
 
     res.status(StatusCodes.OK).json({
@@ -299,7 +294,7 @@ export async function sendGift(
 
     const amount: number = Math.round(req.body.amount * 100) / 100; // Ensure amount is rounded to 2 decimal places
     const paymentMethodId: string = req.body.paymentMethodId;
-    console.log(paymentMethodId);
+
     const message: string = req.body.message || "";
 
     const recipientId = req.body.recipient

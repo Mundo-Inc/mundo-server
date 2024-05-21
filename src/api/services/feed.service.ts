@@ -1,26 +1,26 @@
 import mongoose, { type FilterQuery, type SortOrder } from "mongoose";
 
-import Achievement from "../../models/Achievement";
-import Block from "../../models/Block";
-import CheckIn from "../../models/CheckIn";
-import Comment from "../../models/Comment";
-import Follow from "../../models/Follow";
-import Homemade from "../../models/Homemade";
-import Place from "../../models/Place";
-import Review from "../../models/Review";
-import User from "../../models/User";
+import Achievement from "../../models/Achievement.js";
+import Block from "../../models/Block.js";
+import CheckIn from "../../models/CheckIn.js";
+import Comment from "../../models/Comment.js";
+import Follow from "../../models/Follow.js";
+import Homemade from "../../models/Homemade.js";
+import Place from "../../models/Place.js";
+import Review from "../../models/Review.js";
+import User from "../../models/User.js";
 import UserActivity, {
   ActivityResourceTypeEnum,
   ResourcePrivacyEnum,
   type IUserActivity,
-} from "../../models/UserActivity";
+} from "../../models/UserActivity.js";
 import {
   getCommentsOfActivity,
   getReactionsOfActivity,
-} from "../controllers/UserActivityController";
-import PlaceProjection, { type PlaceProjectionDetail } from "../dto/place";
-import UserProjection, { type UserProjectionEssentials } from "../dto/user";
-import logger from "./logger";
+} from "../controllers/UserActivityController.js";
+import PlaceProjection, { type PlaceProjectionDetail } from "../dto/place.js";
+import UserProjection, { type UserProjectionEssentials } from "../dto/user.js";
+import logger from "./logger/index.js";
 
 export const getResourceInfo = async (activity: IUserActivity) => {
   let resourceInfo: any;

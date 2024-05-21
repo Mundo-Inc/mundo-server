@@ -1,4 +1,4 @@
-import { type IUser } from "../../models/User";
+import { type IUser } from "../../models/User.js";
 
 const UserProjection = {
   public: {

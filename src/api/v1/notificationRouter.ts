@@ -5,8 +5,8 @@ import {
   getNotificationsValidation,
   readNotifications,
   readNotificationsValidation,
-} from "../controllers/NotificationController";
-import { authMiddleware } from "../middlewares/authMiddleWare";
+} from "../controllers/NotificationController.js";
+import { authMiddleware } from "../middlewares/authMiddleWare.js";
 
 const router = express.Router();
 router.use(express.json());

@@ -3,8 +3,8 @@ import express from "express";
 import {
   getMapActivities,
   getMapActivitiesValidation,
-} from "../controllers/MapController";
-import { authMiddleware } from "../middlewares/authMiddleWare";
+} from "../controllers/MapController.js";
+import { authMiddleware } from "../middlewares/authMiddleWare.js";
 
 const router = express.Router();
 router.use(express.json());
