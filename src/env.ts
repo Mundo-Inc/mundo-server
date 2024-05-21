@@ -14,7 +14,7 @@ export const env = createEnv({
     DB_URI: z.string().url(),
     DB_NAME: z.string(),
 
-    WEB_URL: z.string().url(),
+    URL: z.string().url(),
 
     // Firebase
     FIREBASE_SERVICE_ACCOUNT_KEY_FILE_NAME: z.string(),

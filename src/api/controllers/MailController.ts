@@ -63,7 +63,7 @@ export async function sendEmailVerification(
     const receivers = [{ email: user.email.address }];
     const sender = { email: "admin@phantomphood.com", name: "Phantom Phood" };
     const subject = "PhantomPhood - Email Verification";
-    const verifyLink = `${env.WEB_URL}/verify?token=${verificationToken}`;
+    const verifyLink = `${env.URL}/verify?token=${verificationToken}`;
     const brevoService = new BrevoService();
     await brevoService.sendTemplateEmail(
       receivers,
