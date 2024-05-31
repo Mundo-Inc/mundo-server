@@ -43,8 +43,8 @@ const WithdrawalSchema = new Schema<IWithdrawal>(
 WithdrawalSchema.index({ user: 1 });
 WithdrawalSchema.index({ payoutId: 1 });
 
-const model =
+const Withdrawal =
   (mongoose.models.Withdrawal as Model<IWithdrawal>) ||
   mongoose.model<IWithdrawal>("Withdrawal", WithdrawalSchema);
 
-export default model;
+export default Withdrawal;

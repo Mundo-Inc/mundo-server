@@ -33,8 +33,8 @@ const CoinRewardSchema = new Schema<ICoinReward>({
 
 CoinRewardSchema.index({ userId: 1 });
 
-const model =
+const CoinReward =
   (mongoose.models.CoinReward as Model<ICoinReward>) ||
   mongoose.model<ICoinReward>("CoinReward", CoinRewardSchema);
 
-export default model;
+export default CoinReward;

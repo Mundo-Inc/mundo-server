@@ -1,20 +1,19 @@
 import mongoose, { Schema, type Model } from "mongoose";
 
+export enum ProfileDecorationEnum {
+  PROFILE_FRAME = "ProfileFrame",
+  PROFILE_COVER = "ProfileCover",
+}
 export interface IProfileDecorationRedemption {
   _id: mongoose.Types.ObjectId;
   userId: mongoose.Types.ObjectId;
-  decorationType: string;
+  decorationType: ProfileDecorationEnum;
   decorationId: mongoose.Types.ObjectId;
   createdAt: Date;
   updatedAt: Date;
 }
 
-export enum ProfileDecorationEnum {
-  PROFILE_FRAME = "ProfileFrame",
-  PROFILE_COVER = "ProfileCover",
-}
-
-const ProfileDecorationRedemption: Schema =
+const ProfileDecorationRedemptionSchema =
   new Schema<IProfileDecorationRedemption>(
     {
       userId: { type: Schema.Types.ObjectId, ref: "User" },
@@ -27,12 +26,12 @@ const ProfileDecorationRedemption: Schema =
     { timestamps: true }
   );
 
-const model =
+const ProfileDecorationRedemption =
   (mongoose.models
     .ProfileDecorationRedemption as Model<IProfileDecorationRedemption>) ||
   mongoose.model<IProfileDecorationRedemption>(
     "ProfileDecorationRedemption",
-    ProfileDecorationRedemption
+    ProfileDecorationRedemptionSchema
   );
 
-export default model;
+export default ProfileDecorationRedemption;

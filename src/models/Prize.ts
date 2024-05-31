@@ -17,8 +17,8 @@ const PrizeSchema = new Schema<IPrize>({
   createdAt: { type: Date, default: Date.now },
 });
 
-const model =
+const Prize =
   (mongoose.models.Prize as Model<IPrize>) ||
   mongoose.model<IPrize>("Prize", PrizeSchema);
 
-export default model;
+export default Prize;

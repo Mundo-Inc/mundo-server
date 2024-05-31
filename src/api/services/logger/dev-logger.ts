@@ -6,7 +6,7 @@ const customFormat = format.combine(
   timestamp({ format: "HH:mm:ss" }),
   errors({ stack: true }), // Attach stack trace to errors
   printf(({ level, message, timestamp, stack }) => {
-    let logMessage = `${timestamp} [${level}]\t ${message}`;
+    let logMessage = `${timestamp} [${level}] ${message}`;
     if (stack) {
       logMessage += `\nStack Trace: ${stack}`; // Append stack trace if available
     }

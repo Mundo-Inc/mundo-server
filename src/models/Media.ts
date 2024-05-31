@@ -48,8 +48,8 @@ const MediaSchema = new Schema<IMedia>({
 
 MediaSchema.index({ place: 1 }, { sparse: true });
 
-const model =
+const Media =
   (mongoose.models.Media as Model<IMedia>) ||
   mongoose.model<IMedia>("Media", MediaSchema);
 
-export default model;
+export default Media;

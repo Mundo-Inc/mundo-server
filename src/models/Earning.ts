@@ -32,8 +32,8 @@ const EarningSchema = new Schema({
   createdAt: { type: Date, default: Date.now },
 });
 
-const model =
+const Earning =
   (mongoose.models.Earning as Model<IEarning>) ||
   mongoose.model<IEarning>("Earning", EarningSchema);
 
-export default model;
+export default Earning;

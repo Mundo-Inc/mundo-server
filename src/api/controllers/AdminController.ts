@@ -18,6 +18,7 @@ import {
 import { getPaginationFromQuery } from "../../utilities/pagination.js";
 import UserProjection from "../dto/user.js";
 import validate from "./validators.js";
+import DeletionService from "../services/DeletionService.js";
 
 export const getUsersValidation: ValidationChain[] = [
   query("signupMethod").optional(),
@@ -218,8 +219,7 @@ export async function resolveFlag(
 
     if (action === "DELETE") {
       if (flag.targetType === "Comment") {
-        const comment = await Comment.findById(flag.target);
-        if (comment) await comment.deleteOne();
+        await DeletionService.deleteComment(flag.target);
       } else if (flag.targetType === "Review") {
         const review = await Review.findById(flag.target);
         if (review) await review.deleteOne();

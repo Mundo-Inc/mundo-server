@@ -28,8 +28,8 @@ const BlockSchema = new Schema<IBlock>(
 
 BlockSchema.index({ user: 1, target: 1 });
 
-const model =
+const Block =
   (mongoose.models.Block as Model<IBlock>) ||
   mongoose.model<IBlock>("Block", BlockSchema);
 
-export default model;
+export default Block;

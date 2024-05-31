@@ -38,8 +38,8 @@ const MissionSchema = new Schema<IMission>({
   createdAt: { type: Date, default: Date.now },
 });
 
-const model =
+const Mission =
   (mongoose.models.Mission as Model<IMission>) ||
   mongoose.model<IMission>("Mission", MissionSchema);
 
-export default model;
+export default Mission;

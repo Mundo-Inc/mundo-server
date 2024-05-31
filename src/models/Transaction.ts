@@ -64,8 +64,8 @@ TransactionSchema.index({ sender: 1 });
 TransactionSchema.index({ recipient: 1 });
 TransactionSchema.index({ paymentIntentId: 1 });
 
-const model =
+const Transaction =
   (mongoose.models.Transaction as Model<ITransaction>) ||
   mongoose.model<ITransaction>("Transaction", TransactionSchema);
 
-export default model;
+export default Transaction;

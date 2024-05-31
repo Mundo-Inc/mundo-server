@@ -53,8 +53,8 @@ FollowSchema.post("save", async function (doc, next) {
   next();
 });
 
-const model =
+const Follow =
   (mongoose.models.Follow as Model<IFollow>) ||
   mongoose.model<IFollow>("Follow", FollowSchema);
 
-export default model;
+export default Follow;

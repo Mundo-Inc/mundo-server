@@ -97,8 +97,8 @@ CheckInSchema.pre("deleteOne", async function (next) {
   }
 });
 
-const model =
+const CheckIn =
   (mongoose.models.CheckIn as Model<ICheckIn>) ||
   mongoose.model<ICheckIn>("CheckIn", CheckInSchema);
 
-export default model;
+export default CheckIn;

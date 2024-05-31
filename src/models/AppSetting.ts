@@ -25,8 +25,8 @@ const AppSettingSchema = new Schema<IAppSetting>(
   }
 );
 
-const model =
+const AppSetting =
   (mongoose.models.AppSetting as Model<IAppSetting>) ||
   mongoose.model<IAppSetting>("AppSetting", AppSettingSchema);
 
-export default model;
+export default AppSetting;

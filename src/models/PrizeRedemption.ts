@@ -36,8 +36,8 @@ const PrizeRedemptionSchema = new Schema<IPrizeRedemption>(
   }
 );
 
-const model =
+const PrizeRedemption =
   (mongoose.models.PrizeRedemption as Model<IPrizeRedemption>) ||
   mongoose.model<IPrizeRedemption>("PrizeRedemption", PrizeRedemptionSchema);
 
-export default model;
+export default PrizeRedemption;

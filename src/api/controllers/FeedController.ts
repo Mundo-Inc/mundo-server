@@ -226,6 +226,7 @@ export async function getComments(
         $match: {
           userActivity: userActivityId,
           author: { $nin: blockedUsers },
+          rootComment: null,
         },
       },
       {
@@ -256,12 +257,71 @@ export async function getComments(
               },
             },
             {
+              // count children comments
+              $addFields: {
+                repliesCount: { $size: "$children" },
+              },
+            },
+            {
+              $lookup: {
+                from: "comments",
+                localField: "children",
+                foreignField: "_id",
+                as: "replies",
+                pipeline: [
+                  {
+                    $limit: 2,
+                  },
+                  {
+                    $lookup: {
+                      from: "users",
+                      localField: "author",
+                      foreignField: "_id",
+                      as: "author",
+                      pipeline: [
+                        {
+                          $project: UserProjection.essentials,
+                        },
+                      ],
+                    },
+                  },
+                  {
+                    $addFields: {
+                      repliesCount: { $size: "$children" },
+                    },
+                  },
+                  {
+                    $project: {
+                      _id: 1,
+                      createdAt: 1,
+                      updatedAt: 1,
+                      content: 1,
+                      mentions: 1,
+                      rootComment: 1,
+                      parent: 1,
+                      repliesCount: 1,
+                      replies: [],
+                      author: { $arrayElemAt: ["$author", 0] },
+                      likes: { $size: "$likes" },
+                      liked: {
+                        $in: [authUser._id, "$likes"],
+                      },
+                    },
+                  },
+                ],
+              },
+            },
+            {
               $project: {
                 _id: 1,
                 createdAt: 1,
                 updatedAt: 1,
                 content: 1,
                 mentions: 1,
+                rootComment: 1,
+                parent: 1,
+                repliesCount: 1,
+                replies: 1,
                 author: { $arrayElemAt: ["$author", 0] },
                 likes: { $size: "$likes" },
                 liked: {

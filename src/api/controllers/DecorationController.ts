@@ -137,8 +137,6 @@ export async function redeemDecoration(
         decorationType: type,
       });
 
-    await profileDecorationRedemption.save();
-
     //TODO: notify them that they redemption is in verification progress
 
     res.status(StatusCodes.OK).json({

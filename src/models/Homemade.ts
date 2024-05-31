@@ -5,6 +5,7 @@ import Comment from "./Comment.js";
 import Media from "./Media.js";
 import Reaction from "./Reaction.js";
 import UserActivity, { ResourcePrivacyEnum } from "./UserActivity.js";
+import DeletionService from "../api/services/DeletionService.js";
 
 export interface IHomemade {
   _id: mongoose.Types.ObjectId;
@@ -48,7 +49,9 @@ async function removeHomemadeDependencies(homemade: IHomemade) {
   const comments = await Comment.find({
     userActivity: homemade.userActivityId,
   });
-  await Promise.all(comments.map((comment) => comment.deleteOne()));
+  await Promise.all(
+    comments.map((comment) => DeletionService.deleteComment(comment._id))
+  );
 
   // remove the userActivity related to the homemade
   const userActivity = await UserActivity.findById(homemade.userActivityId);
@@ -101,8 +104,8 @@ HomemadeSchema.pre(
   }
 );
 
-const model =
+const Homemade =
   (mongoose.models.Homemade as Model<IHomemade>) ||
   mongoose.model<IHomemade>("Homemade", HomemadeSchema);
 
-export default model;
+export default Homemade;

@@ -37,8 +37,8 @@ const RewardSchema = new Schema<IReward>({
   createdAt: { type: Date, default: Date.now },
 });
 
-const model =
+const Reward =
   (mongoose.models.Reward as Model<IReward>) ||
   mongoose.model<IReward>("Reward", RewardSchema);
 
-export default model;
+export default Reward;

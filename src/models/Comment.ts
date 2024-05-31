@@ -1,11 +1,15 @@
-import mongoose, { Schema, type CallbackError, type Model } from "mongoose";
+import mongoose, { Schema, type Model } from "mongoose";
 
-import logger from "../api/services/logger/index.js";
 import Notification, {
   NotificationTypeEnum,
   ResourceTypeEnum,
 } from "./Notification.js";
-import UserActivity, { type IUserActivity } from "./UserActivity.js";
+import UserActivity from "./UserActivity.js";
+
+export interface IMention {
+  user: mongoose.Types.ObjectId;
+  username: string;
+}
 
 export interface IComment {
   _id: mongoose.Types.ObjectId;
@@ -13,14 +17,28 @@ export interface IComment {
   userActivity: mongoose.Types.ObjectId;
   content: string;
   likes: mongoose.Types.ObjectId[];
-  mentions?: {
-    user: mongoose.Types.ObjectId;
-    username: string;
-  }[];
-  status?: "active" | "deleted";
+  mentions?: IMention[];
+  rootComment?: mongoose.Types.ObjectId;
+  parent?: mongoose.Types.ObjectId;
+  children: mongoose.Types.ObjectId[];
   createdAt: Date;
   updatedAt: Date;
 }
+
+const MentionSchema = new Schema<IMention>(
+  {
+    user: {
+      type: Schema.Types.ObjectId,
+      ref: "User",
+    },
+    username: {
+      type: String,
+    },
+  },
+  {
+    _id: false,
+  }
+);
 
 const CommentSchema = new Schema<IComment>(
   {
@@ -28,7 +46,6 @@ const CommentSchema = new Schema<IComment>(
       type: Schema.Types.ObjectId,
       ref: "User",
       required: [true, "Author is required"],
-      index: true,
     },
     userActivity: {
       type: Schema.Types.ObjectId,
@@ -39,7 +56,7 @@ const CommentSchema = new Schema<IComment>(
       type: String,
       required: [true, "Content is required"],
       minlength: [1, "Content must be at least 1 character"],
-      maxlength: [250, "Content must be at most 250 characters"],
+      maxlength: [500, "Content must be at most 500 characters"],
     },
     likes: {
       type: [
@@ -50,21 +67,28 @@ const CommentSchema = new Schema<IComment>(
       ],
       default: [],
     },
-    mentions: [
-      {
-        user: {
+    mentions: {
+      type: [MentionSchema],
+      validate: [arrayLimit, "{PATH} exceeds the limit of 10"],
+    },
+    rootComment: {
+      type: Schema.Types.ObjectId,
+      ref: "Comment",
+      default: null,
+    },
+    parent: {
+      type: Schema.Types.ObjectId,
+      ref: "Comment",
+      default: null,
+    },
+    children: {
+      type: [
+        {
           type: Schema.Types.ObjectId,
-          ref: "User",
+          ref: "Comment",
         },
-        username: {
-          type: String,
-        },
-      },
-    ],
-    status: {
-      type: String,
-      enum: ["active", "deleted"],
-      default: "active",
+      ],
+      default: [],
     },
   },
   {
@@ -72,7 +96,16 @@ const CommentSchema = new Schema<IComment>(
   }
 );
 
+CommentSchema.index({ author: 1 });
+CommentSchema.index({ userActivity: 1 });
+CommentSchema.index({ rootComment: 1 });
+CommentSchema.index({ parent: 1 });
+CommentSchema.index({ createdAt: 1 });
 CommentSchema.index({ "mentions.user": 1 });
+
+function arrayLimit(val: any) {
+  return val.length <= 10;
+}
 
 CommentSchema.post("save", async function (doc, next) {
   // create notification
@@ -89,7 +122,7 @@ CommentSchema.post("save", async function (doc, next) {
         importance: 2,
       });
     }
-    if (doc.mentions) {
+    if (doc.mentions && doc.mentions.length > 0) {
       for (const mention of doc.mentions) {
         await Notification.create({
           user: mention.user,
@@ -110,50 +143,8 @@ CommentSchema.post("save", async function (doc, next) {
   next();
 });
 
-async function removeCommentDependencies(comment: IComment) {
-  const notifications = await Notification.find({
-    resources: {
-      $elemMatch: {
-        _id: comment._id,
-        type: ResourceTypeEnum.COMMENT,
-      },
-    },
-  });
-  // Delete each notification one by one to trigger any associated middleware
-  await Promise.all(
-    notifications.map((notification) => notification.deleteOne())
-  );
-}
-
-CommentSchema.pre(
-  "deleteOne",
-  { document: true, query: false },
-  async function (next) {
-    logger.debug("deleteOne comment");
-    try {
-      const comment = this;
-      // Find all notifications related to the comment
-      await removeCommentDependencies(comment);
-      next();
-    } catch (error) {
-      next(error as CallbackError);
-    }
-  }
-);
-
-CommentSchema.pre("deleteOne", async function (next) {
-  try {
-    logger.debug("deleteOne comment");
-    const comment = await this.model.findOne(this.getQuery());
-    await removeCommentDependencies(comment);
-    next();
-  } catch (error) {
-    next(error as CallbackError);
-  }
-});
-
-const model =
+const Comment =
   (mongoose.models.Comment as Model<IComment>) ||
   mongoose.model<IComment>("Comment", CommentSchema);
 
-export default model;
+export default Comment;

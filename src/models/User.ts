@@ -10,6 +10,7 @@ import List from "./List.js";
 import Media from "./Media.js";
 import Reaction from "./Reaction.js";
 import Review from "./Review.js";
+import DeletionService from "../api/services/DeletionService.js";
 
 export enum UserRoleEnum {
   admin = "admin",
@@ -327,7 +328,9 @@ async function removeDependencies(user: IUser) {
 
   //remove all comments of that user
   const comments = await Comment.find({ author: user._id });
-  await Promise.all(comments.map((comment) => comment.deleteOne()));
+  await Promise.all(
+    comments.map((comment) => DeletionService.deleteComment(comment._id))
+  );
 
   // remove all followings and followers of that user
   const follows = await Follow.find({
@@ -387,8 +390,8 @@ UserSchema.pre("deleteOne", async function (next) {
   }
 });
 
-const model =
+const User =
   (mongoose.models.User as Model<IUser>) ||
   mongoose.model<IUser>("User", UserSchema);
 
-export default model;
+export default User;

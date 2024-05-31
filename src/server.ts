@@ -6,15 +6,14 @@ import express from "express";
 import rateLimit from "express-rate-limit";
 import helmet from "helmet";
 
-import { env } from "./env.js";
 import logger from "./api/services/logger/index.js";
 import { connectDatabase } from "./config/database.js";
+import { env } from "./env.js";
 import { errorHandler } from "./utilities/errorHandlers.js";
 
 import "./config/firebase-config.js";
 
 import router from "./router.js";
-import { NotificationsService } from "./api/services/NotificationsService.js";
 
 const app = express();
 

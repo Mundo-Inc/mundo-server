@@ -51,8 +51,8 @@ const BotSchema = new Schema<IBot>(
   { timestamps: true }
 );
 
-const model =
+const Bot =
   (mongoose.models.Bot as Model<IBot>) ||
   mongoose.model<IBot>("Bot", BotSchema);
 
-export default model;
+export default Bot;

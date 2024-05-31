@@ -101,8 +101,8 @@ const FlagSchema = new Schema<IFlag>(
 
 FlagSchema.index({ user: 1, target: 1 });
 
-const model =
+const Flag =
   (mongoose.models.Flag as Model<IFlag>) ||
   mongoose.model<IFlag>("Flag", FlagSchema);
 
-export default model;
+export default Flag;

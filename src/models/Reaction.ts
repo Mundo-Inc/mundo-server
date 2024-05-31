@@ -108,8 +108,8 @@ ReactionSchema.post("save", async function (doc, next) {
   next();
 });
 
-const model =
+const Reaction =
   (mongoose.models.Reaction as Model<IReaction>) ||
   mongoose.model<IReaction>("Reaction", ReactionSchema);
 
-export default model;
+export default Reaction;

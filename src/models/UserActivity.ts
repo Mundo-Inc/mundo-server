@@ -211,11 +211,11 @@ UserActivitySchema.pre("save", async function (next) {
 
 UserActivitySchema.index({ geoLocation: "2dsphere" });
 
-const model =
+const UserActivity =
   (mongoose.models.UserActivity as UserActivityModel) ||
   mongoose.model<IUserActivity, UserActivityModel>(
     "UserActivity",
     UserActivitySchema
   );
 
-export default model;
+export default UserActivity;

@@ -154,8 +154,8 @@ const NotificationSchema = new Schema<INotification>(
 
 NotificationSchema.index({ updatedAt: 1 });
 
-const model =
+const Notification =
   (mongoose.models.Notification as Model<INotification>) ||
   mongoose.model<INotification>("Notification", NotificationSchema);
 
-export default model;
+export default Notification;

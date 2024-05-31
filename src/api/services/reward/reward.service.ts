@@ -1,12 +1,12 @@
 import { StatusCodes } from "http-status-codes";
-import mongoose, { type Document } from "mongoose";
+import mongoose, { type FilterQuery, type Document } from "mongoose";
 
 import CheckIn from "../../../models/CheckIn.js";
 import Comment from "../../../models/Comment.js";
 import Homemade from "../../../models/Homemade.js";
 import Reaction from "../../../models/Reaction.js";
 import Review from "../../../models/Review.js";
-import Reward from "../../../models/Reward.js";
+import Reward, { type IReward } from "../../../models/Reward.js";
 import User, { type IUser } from "../../../models/User.js";
 import { createError } from "../../../utilities/errorHandlers.js";
 import { UserActivityManager } from "../UserActivityManager.js";
@@ -22,6 +22,7 @@ import {
   validateReviewReward,
 } from "./helpers/validations.js";
 import { rewards_amounts } from "./utils/rewardsAmounts.js";
+import { dStrings, dynamicMessage } from "../../../strings.js";
 
 const getValidatedEntity = async (
   refType: string,

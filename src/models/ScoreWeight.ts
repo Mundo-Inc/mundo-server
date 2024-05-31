@@ -19,8 +19,8 @@ const ScoreWeightSchema = new Schema<IScoreWeight>({
   },
 });
 
-const model =
+const ScoreWeight =
   (mongoose.models.ScoreWeight as Model<IScoreWeight>) ||
   mongoose.model<IScoreWeight>("ScoreWeight", ScoreWeightSchema);
 
-export default model;
+export default ScoreWeight;

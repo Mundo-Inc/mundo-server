@@ -6,6 +6,7 @@ import Media from "./Media.js";
 import Place from "./Place.js";
 import Reaction from "./Reaction.js";
 import UserActivity, { ResourcePrivacyEnum } from "./UserActivity.js";
+import DeletionService from "../api/services/DeletionService.js";
 
 export interface IReview {
   _id: mongoose.Types.ObjectId;
@@ -89,7 +90,9 @@ async function removeReviewDependencies(review: IReview) {
   const comments = await Comment.find({
     userActivity: review.userActivityId,
   });
-  await Promise.all(comments.map((comment) => comment.deleteOne()));
+  await Promise.all(
+    comments.map((comment) => DeletionService.deleteComment(comment._id))
+  );
 
   // remove the userActivity related to the review
   const userActivity = await UserActivity.findById(review.userActivityId);
@@ -165,8 +168,8 @@ ReviewSchema.pre(
   }
 );
 
-const model =
+const Review =
   (mongoose.models.Review as Model<IReview>) ||
   mongoose.model<IReview>("Review", ReviewSchema);
 
-export default model;
+export default Review;

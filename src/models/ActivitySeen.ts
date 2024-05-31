@@ -32,8 +32,8 @@ ActivitySeenSchema.index({
   count: 1,
 });
 
-const model =
+const ActivitySeen =
   (mongoose.models.ActivitySeen as Model<IActivitySeen>) ||
   mongoose.model<IActivitySeen>("ActivitySeen", ActivitySeenSchema);
 
-export default model;
+export default ActivitySeen;

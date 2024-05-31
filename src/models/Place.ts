@@ -283,8 +283,8 @@ PlaceSchema.index({ "scores.phantom": -1 });
 PlaceSchema.index({ "otherSources.appleMaps._id": 1 });
 PlaceSchema.index({ "otherSources.googlePlaces._id": 1 });
 
-const model =
+const Place =
   (mongoose.models.Place as PlaceModel) ||
   mongoose.model<IPlace, PlaceModel>("Place", PlaceSchema);
 
-export default model;
+export default Place;

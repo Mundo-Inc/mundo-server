@@ -93,11 +93,11 @@ const ArchiveNotificationSchema = new Schema<IArchiveNotification>({
 
 ArchiveNotificationSchema.index({ updatedAt: 1 });
 
-const model =
+const ArchiveNotification =
   (mongoose.models.ArchiveNotification as Model<IArchiveNotification>) ||
   mongoose.model<IArchiveNotification>(
     "ArchiveNotification",
     ArchiveNotificationSchema
   );
 
-export default model;
+export default ArchiveNotification;

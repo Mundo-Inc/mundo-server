@@ -94,8 +94,8 @@ ListSchema.pre("save", function (next) {
   next();
 });
 
-const model =
+const List =
   (mongoose.models.List as Model<IList>) ||
   mongoose.model<IList>("List", ListSchema);
 
-export default model;
+export default List;
