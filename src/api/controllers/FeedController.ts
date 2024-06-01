@@ -16,8 +16,8 @@ import {
   handleInputErrors,
 } from "../../utilities/errorHandlers.js";
 import { getPaginationFromQuery } from "../../utilities/pagination.js";
-import UserProjection from "../dto/user.js";
 import { getResourceInfo, getUserFeed } from "../services/feed.service.js";
+import { getCommentsFromDB } from "./CommentController.js";
 import {
   getCommentsOfActivity,
   getReactionsOfActivity,
@@ -221,129 +221,44 @@ export async function getComments(
       await Block.find({ target: authUser._id }, "user")
     ).map((block) => block.user);
 
-    const result = await Comment.aggregate([
+    const result = await getCommentsFromDB(
       {
-        $match: {
-          userActivity: userActivityId,
-          author: { $nin: blockedUsers },
-          rootComment: null,
-        },
+        userActivity: userActivityId,
+        author: { $nin: blockedUsers },
+        rootComment: null,
       },
       {
-        $facet: {
-          comments: [
-            {
-              $sort: {
-                createdAt: -1,
-              },
-            },
-            {
-              $skip: skip,
-            },
-            {
-              $limit: limit,
-            },
-            {
-              $lookup: {
-                from: "users",
-                localField: "author",
-                foreignField: "_id",
-                as: "author",
-                pipeline: [
-                  {
-                    $project: UserProjection.essentials,
-                  },
-                ],
-              },
-            },
-            {
-              // count children comments
-              $addFields: {
-                repliesCount: { $size: "$children" },
-              },
-            },
-            {
-              $lookup: {
-                from: "comments",
-                localField: "children",
-                foreignField: "_id",
-                as: "replies",
-                pipeline: [
-                  {
-                    $limit: 2,
-                  },
-                  {
-                    $lookup: {
-                      from: "users",
-                      localField: "author",
-                      foreignField: "_id",
-                      as: "author",
-                      pipeline: [
-                        {
-                          $project: UserProjection.essentials,
-                        },
-                      ],
-                    },
-                  },
-                  {
-                    $addFields: {
-                      repliesCount: { $size: "$children" },
-                    },
-                  },
-                  {
-                    $project: {
-                      _id: 1,
-                      createdAt: 1,
-                      updatedAt: 1,
-                      content: 1,
-                      mentions: 1,
-                      rootComment: 1,
-                      parent: 1,
-                      repliesCount: 1,
-                      replies: [],
-                      author: { $arrayElemAt: ["$author", 0] },
-                      likes: { $size: "$likes" },
-                      liked: {
-                        $in: [authUser._id, "$likes"],
-                      },
-                    },
-                  },
-                ],
-              },
-            },
-            {
-              $project: {
-                _id: 1,
-                createdAt: 1,
-                updatedAt: 1,
-                content: 1,
-                mentions: 1,
-                rootComment: 1,
-                parent: 1,
-                repliesCount: 1,
-                replies: 1,
-                author: { $arrayElemAt: ["$author", 0] },
-                likes: { $size: "$likes" },
-                liked: {
-                  $in: [authUser._id, "$likes"],
-                },
-              },
-            },
-          ],
-          count: [
-            {
-              $count: "count",
-            },
-          ],
-        },
+        createdAt: -1,
       },
-    ]).then((result) => result[0]);
+      authUser._id,
+      true,
+      skip,
+      limit
+    );
+
+    const replyIds: mongoose.Types.ObjectId[] = [];
+
+    for (const comment of result.comments) {
+      replyIds.push(...comment.replies);
+    }
+
+    const replies = await getCommentsFromDB(
+      {
+        _id: { $in: replyIds },
+      },
+      undefined,
+      authUser._id,
+      false
+    );
 
     res.status(StatusCodes.OK).json({
       success: true,
-      data: result.comments,
+      data: {
+        comments: result.comments,
+        replies: replies.comments,
+      },
       pagination: {
-        totalCount: result.count[0]?.count || 0,
+        totalCount: result.count || 0,
         page: page,
         limit: limit,
       },
