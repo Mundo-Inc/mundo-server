@@ -1,10 +1,10 @@
 import type { NextFunction, Request, Response } from "express";
 import { body, param, query, type ValidationChain } from "express-validator";
 import { StatusCodes } from "http-status-codes";
-import mongoose, { type PipelineStage } from "mongoose";
+import mongoose, { type AnyKeys, type PipelineStage } from "mongoose";
 
 import Block from "../../models/Block.js";
-import Comment, { type IMention } from "../../models/Comment.js";
+import Comment, { IComment, type IMention } from "../../models/Comment.js";
 import User from "../../models/User.js";
 import UserActivity from "../../models/UserActivity.js";
 import strings, { dStrings as ds, dynamicMessage } from "../../strings.js";
@@ -54,8 +54,7 @@ export async function createComment(
       )
     );
 
-    // IComment
-    const body: Record<string, any> = {
+    const body: IComment | AnyKeys<IComment> = {
       author: authUser._id,
       userActivity: activityId,
       content,
@@ -134,9 +133,10 @@ export async function createComment(
       data: {
         ...comment.toObject(),
         author: user,
+        repliesCount: 0,
+        replies: [],
         likes: 0,
         liked: false,
-        status: undefined,
       },
       reward: reward,
     });

@@ -1,5 +1,6 @@
+import { createDecipheriv, createHash } from "crypto";
 import type { NextFunction, Request, Response } from "express";
-import { param, type ValidationChain } from "express-validator";
+import { body, param, type ValidationChain } from "express-validator";
 import { StatusCodes } from "http-status-codes";
 
 import AppSetting from "../../models/AppSetting.js";
@@ -7,6 +8,102 @@ import {
   createError,
   handleInputErrors,
 } from "../../utilities/errorHandlers.js";
+import { sendSlackMessage } from "./SlackController.js";
+
+export const reportBugValidation: ValidationChain[] = [
+  body("body").optional().isString().notEmpty(),
+  body("function").optional().isString(),
+  body("file").optional().isString(),
+  body("line").optional().isNumeric(),
+  body("message").optional().isString(),
+];
+
+export async function reportBug(
+  req: Request,
+  res: Response,
+  next: NextFunction
+) {
+  try {
+    handleInputErrors(req);
+
+    const authUser = req.user;
+
+    const {
+      body,
+      functionName,
+      file,
+      line,
+      message,
+    }: {
+      body: string | undefined;
+      functionName: string | undefined;
+      file: string | undefined;
+      line: number | undefined;
+      message: string | undefined;
+    } = req.body;
+
+    if (body && authUser) {
+      type CrashReport = {
+        function: string;
+        file: string;
+        line: number;
+        message: string;
+      };
+
+      function decrypt(
+        encryptedData: string,
+        userId: string
+      ): CrashReport | null {
+        try {
+          const dataBuffer = Buffer.from(encryptedData, "base64"); // Decode the Base64 string to a buffer
+          const keyData = Buffer.from(userId); // Convert userId to buffer
+          const key = createHash("sha256").update(keyData).digest(); // Generate SHA-256 hash of the keyData
+          const iv = dataBuffer.subarray(0, 12); // The IV is typically the first 12 bytes for AES-GCM
+          const encrypted = dataBuffer.subarray(12, dataBuffer.length - 16); // The encrypted data, excluding IV and authentication tag
+          const tag = dataBuffer.subarray(dataBuffer.length - 16); // The authentication tag is the last 16 bytes
+
+          const decipher = createDecipheriv("aes-256-gcm", key, iv);
+          decipher.setAuthTag(tag);
+          const decrypted = Buffer.concat([
+            decipher.update(encrypted),
+            decipher.final(),
+          ]); // Combine decrypted chunks
+
+          return JSON.parse(decrypted.toString());
+        } catch (error) {
+          console.error("Decryption error:", error);
+          return null;
+        }
+      }
+
+      const crashReport = decrypt(body, authUser._id.toString());
+
+      if (crashReport) {
+        sendSlackMessage(
+          "devAssistant",
+          `Bug report\nfunction:\n\`${crashReport.function}\`\nfile:\n\`${crashReport.file}\` line \`${crashReport.line}\`\nmessage:\n\`\`\`${crashReport.message}\`\`\`\nuser: ${authUser.name} (${authUser.email.address})`,
+          undefined,
+          true
+        );
+      }
+    } else if (functionName && file && line && message) {
+      sendSlackMessage(
+        "devAssistant",
+        `Bug report\nfunction:\n\`${functionName}\`\nfile:\n\`${file}\` line \`${line}\`\nmessage:\n\`\`\`${message}\`\`\`\nuser: ${
+          authUser ? `${authUser.name} (${authUser.email.address})` : "Unknown"
+        }`,
+        undefined,
+        true
+      );
+    } else {
+      throw createError("Bad request", StatusCodes.BAD_REQUEST);
+    }
+
+    res.sendStatus(StatusCodes.OK);
+  } catch (err) {
+    next(err);
+  }
+}
 
 export const getVersionInfoValidation: ValidationChain[] = [
   param("version").isString().notEmpty(),
