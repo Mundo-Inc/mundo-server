@@ -1,19 +1,22 @@
+import { type Types } from "mongoose";
 import OpenAI from "openai";
+import tz_lookup from "tz-lookup";
 
 import { env } from "../../env.js";
-import { type IComment } from "../../models/Comment.js";
-import User from "../../models/User.js";
-import Review, { type IReview } from "../../models/Review.js";
+import CheckIn, { type ICheckIn } from "../../models/CheckIn.js";
+import Comment, { type IComment } from "../../models/Comment.js";
 import Place, { type IPlace } from "../../models/Place.js";
-import CheckIn from "../../models/CheckIn.js";
-import { ICheckIn } from "../../models/CheckIn.js";
-import { ensureNonEmptyString } from "../../utilities/requireValue.js";
-import { createError } from "../../utilities/errorHandlers.js";
-import { StatusCodes } from "http-status-codes";
-import { ResourcePrivacyEnum } from "../../models/UserActivity.js";
+import Review, { type IReview } from "../../models/Review.js";
+import User, { type IUser } from "../../models/User.js";
+import UserActivity, {
+  ResourcePrivacyEnum,
+} from "../../models/UserActivity.js";
 
 export class OpenAIService {
   private static instance: OpenAIService;
+  private static base = `You are a cool ghost named Mundo with GenZ characteristics, the character of our app. You're given the new activity of the user along with their 3 recent activities. Leave a short, funny comment as a response. Feel free to tease or roast them humorously. The app is for GenZ users, and they won't be mad. Just return the comment or "-", nothing more.`;
+  private static replyBase = `You are a cool ghost named Mundo with GenZ characteristics, the character of our app. You're given the new activity of the user along with their recent activity and their reply to your previous comment. Leave a short, funny comment in response to their reply. Feel free to tease or roast them humorously. The app is for GenZ users, and they won't be mad. Just return the comment or "-", nothing more.`;
+
   private openai: OpenAI;
 
   private constructor() {
@@ -29,236 +32,266 @@ export class OpenAIService {
     return OpenAIService.instance;
   }
 
+  public async makeACommentOnReview(review: IReview) {
+    const [user, place, activityHistory] = await Promise.all([
+      User.findById(review.writer).orFail(new Error("User not found")).lean(),
+      Place.findById(review.place).orFail(new Error("Place not found")).lean(),
+      this.getActivityHistory(review.writer, review.createdAt, 3),
+    ]);
+
+    const prompt = `Name: "${user.name}"\nCurrent activity:\n${getReviewText(
+      review,
+      place
+    )}\n${activityHistory}`;
+
+    const response = await this.openai.chat.completions.create({
+      messages: [
+        {
+          role: "system",
+          content: OpenAIService.base,
+        },
+        {
+          role: "system",
+          content: `If you can't think of anything to say, respond with something like: 'Noice'.`,
+        },
+        {
+          role: "user",
+          content: prompt,
+        },
+      ],
+      model: "gpt-4o",
+    });
+
+    return response.choices[0].message.content;
+  }
+
   public async makeACommentOnCheckIn(checkIn: ICheckIn) {
     if (checkIn.privacyType === ResourcePrivacyEnum.PRIVATE) {
-      throw Error("Private resource");
+      throw new Error("Private resource");
     }
 
-    const [user, place, mentions, checkInHistory, reviewHistory] =
+    const [user, place, mentions, activityHistory] = await Promise.all([
+      User.findById(checkIn.user).orFail(new Error("User not found")).lean(),
+      Place.findById(checkIn.place).orFail(new Error("Place not found")).lean(),
+      checkIn.tags.length > 0
+        ? User.find({ _id: { $in: checkIn.tags } })
+            .select<Pick<IUser, "name">>("name")
+            .lean()
+        : [],
+      this.getActivityHistory(checkIn.user, checkIn.createdAt),
+    ]);
+
+    const prompt = `Name: "${user.name}"\nCurrent activity:\n${getCheckInText(
+      checkIn,
+      mentions,
+      place
+    )}\n${activityHistory}`;
+
+    const response = await this.openai.chat.completions.create({
+      messages: [
+        {
+          role: "system",
+          content: OpenAIService.base,
+        },
+        {
+          role: "system",
+          content: `If you can't think of anything to say, respond with something like: 'Noice'.`,
+        },
+        {
+          role: "user",
+          content: prompt,
+        },
+      ],
+      model: "gpt-4o",
+    });
+
+    return response.choices[0].message.content;
+  }
+
+  public async replyToComment(comment: IComment) {
+    const [parentComment, author, userActivity, activityHistory] =
       await Promise.all([
-        User.findById(checkIn.user).orFail(Error("User not found")).lean(),
-        Place.findById(checkIn.place).orFail(Error("Place not found")).lean(),
-        checkIn.tags.length > 0
-          ? User.find({ _id: { $in: checkIn.tags } })
-              .select("name")
-              .lean()
-          : [],
-        CheckIn.find({
-          user: checkIn.user,
-          createdAt: { $lt: checkIn.createdAt },
-        })
-          .sort({ createdAt: -1 })
-          .limit(5)
+        Comment.findById(comment.parent)
+          .orFail(new Error("Parent comment not found"))
+          .lean(),
+        User.findById(comment.author)
+          .orFail(new Error("User not found"))
+          .lean(),
+        UserActivity.findById(comment.userActivity)
+          .orFail(new Error("User activity not found"))
           .populate<{
-            place: Pick<IPlace, "_id" | "name">;
+            placeId: Pick<IPlace, "_id" | "name" | "location">;
           }>({
-            path: "place",
-            select: "name",
-          })
-          .populate<{
-            tags: Pick<IPlace, "_id" | "name">[];
-          }>({
-            path: "tags",
-            select: "name",
+            path: "placeId",
+            select: "name location",
           })
           .lean(),
-        Review.find({
-          writer: checkIn.user,
-          createdAt: { $lt: checkIn.createdAt },
-        })
-          .sort({ createdAt: -1 })
-          .limit(5)
-          .populate<{
-            place: Pick<IPlace, "_id" | "name">;
-          }>({
-            path: "place",
-            select: "name",
-          })
-          .populate<{
-            tags: Pick<IPlace, "_id" | "name">[];
-          }>({
-            path: "tags",
-            select: "name",
-          })
-          .lean(),
+        this.getActivityHistory(comment.author, undefined, 1),
       ]);
 
-    const base = `You are a cool ghost with GenZ characteristics, the character of our app. You're given the new activity of the user along with their 5 recent activities. Leave a short, funny comment as a response. Feel free to tease or roast them humorously. The app is for GenZ users, and they won't be mad. Just return the comment, nothing more.`;
+    const prompt = `Name: "${author.name}"\n${getDateTime(
+      comment.createdAt,
+      userActivity.placeId.location.geoLocation.coordinates[1],
+      userActivity.placeId.location.geoLocation.coordinates[0]
+    )} Responded to your reply with: ${comment.content}.\n${getDateTime(
+      parentComment.createdAt,
+      userActivity.placeId.location.geoLocation.coordinates[1],
+      userActivity.placeId.location.geoLocation.coordinates[0]
+    )} Your previous comment: ${parentComment.content}\n${activityHistory}`;
 
-    const mentionsText =
-      mentions.length > 0
-        ? ` with ${mentions.map((mention) => mention.name).join(", ")}`
-        : "";
-    const captionText = checkIn.caption
-      ? ` and captioned it "${checkIn.caption}"`
-      : "";
+    const response = await this.openai.chat.completions.create({
+      messages: [
+        {
+          role: "system",
+          content: OpenAIService.replyBase,
+        },
+        {
+          role: "system",
+          content: `Don't push the conversation if they respond with a short reply or if you think this should be the end of conversation just respond with "-"`,
+        },
+        {
+          role: "user",
+          content: prompt,
+        },
+      ],
+      model: "gpt-4o",
+    });
+
+    return response.choices[0].message.content;
+  }
+
+  private async getActivityHistory(
+    user: Types.ObjectId,
+    createdAt?: Date,
+    limit: number = 3
+  ) {
+    const [checkInHistory, reviewHistory] = await Promise.all([
+      CheckIn.find({
+        user,
+        ...(createdAt && { createdAt: { $lt: createdAt } }),
+      })
+        .sort({ createdAt: -1 })
+        .limit(limit)
+        .select<Pick<ICheckIn, "createdAt" | "caption" | "tags" | "place">>(
+          "createdAt caption tags place"
+        )
+        .populate<{
+          place: Pick<IPlace, "_id" | "name" | "location">;
+        }>({
+          path: "place",
+          select: "name location",
+        })
+        .populate<{
+          tags: Pick<IPlace, "_id" | "name">[];
+        }>({
+          path: "tags",
+          select: "name",
+        })
+        .lean(),
+      Review.find({
+        writer: user,
+        ...(createdAt && { createdAt: { $lt: createdAt } }),
+      })
+        .sort({ createdAt: -1 })
+        .limit(limit)
+        .select<Pick<IReview, "createdAt" | "content" | "place">>(
+          "createdAt content place"
+        )
+        .populate<{
+          place: Pick<IPlace, "_id" | "name" | "location">;
+        }>({
+          path: "place",
+          select: "name location",
+        })
+        .lean(),
+    ]);
 
     const activities = [
       ...checkInHistory.map((checkIn) => ({
         type: "check-in",
-        title: "checked in to",
-        content: checkIn.caption || "",
-        mentions: checkIn.tags.map((tag) => tag.name).join(", "),
-        place: checkIn.place.name,
+        text: getCheckInText(checkIn, checkIn.tags, checkIn.place),
         date: checkIn.createdAt,
       })),
       ...reviewHistory.map((review) => ({
         type: "review",
-        title: "left a review at",
-        content: review.content || "",
-        mentions: null,
-        place: review.place.name,
+        text: getReviewText(review, review.place),
         date: review.createdAt,
       })),
     ]
       .sort((a, b) => b.date.getTime() - a.date.getTime())
-      .slice(0, 5);
+      .slice(0, limit);
 
-    const activityHistory =
-      activities.length > 0
-        ? "\nActivity history:\n" +
-          activities
-            .map((activity) => {
-              if (activity.type === "check-in") {
-                return `${formatDate(activity.date)}: Checked in to ${
-                  activity.place
-                }${activity.mentions ? ` with ${activity.mentions}` : ""}${
-                  activity.content
-                    ? ` and captioned it "${activity.content.trim()}"`
-                    : ""
-                }`;
-              } else {
-                return `${formatDate(activity.date)}: Left a review at ${
-                  activity.place
-                }${
-                  activity.content ? ` saying "${activity.content.trim()}"` : ""
-                }`;
-              }
-            })
-            .join("\n")
-        : "";
-
-    const prompt = `User name: "${user.name}"\nCurrent activity:\n${formatDate(
-      checkIn.createdAt
-    )}: ${user.name} checked in to ${
-      place.name
-    }${mentionsText}${captionText}.${activityHistory}`;
-
-    console.log(prompt);
-
-    // const response = await this.openai.chat.completions.create({
-    //   messages: [
-    //     {
-    //       role: "system",
-    //       content: base,
-    //     },
-    //     {
-    //       role: "assistant",
-    //       content: `If you can't think of anything to say, respond with something like: 'Noice'.`,
-    //     },
-    //     {
-    //       role: "assistant",
-    //       content: `Your previous comment for ${user.name} was 'Noice' on May 11th.`,
-    //     },
-    //     {
-    //       role: "user",
-    //       content: prompt,
-    //     },
-    //   ],
-    //   model: "gpt-4o",
-    // });
-
-    // return response.choices[0].message.content;
+    return activities.length > 0
+      ? "\nActivity history:\n" +
+          activities.map((activity) => activity.text).join("\n")
+      : "";
   }
 }
 
-export async function checkInTest(id: string) {
-  const checkIn = await CheckIn.findById(id)
-    .orFail(createError("Check-in not found", StatusCodes.NOT_FOUND))
-    .lean();
+function getDateTime(date: Date, lng: number, lat: number) {
+  const tz = tz_lookup(lat, lng);
 
-  const result = await OpenAIService.getInstance().makeACommentOnCheckIn(
-    checkIn
+  return date.toLocaleString("en-US", {
+    timeZone: tz,
+    hour12: true,
+    hour: "2-digit",
+    minute: "numeric",
+    month: "short",
+    day: "2-digit",
+  });
+}
+
+function getCheckInText(
+  checkIn: Pick<ICheckIn, "createdAt" | "caption">,
+  tags: {
+    name: string;
+  }[],
+  place: Pick<IPlace, "_id" | "name" | "location">
+) {
+  const mentionsText =
+    tags.length > 0
+      ? ` with ${tags.map((mention) => mention.name).join(", ")}`
+      : "";
+  const captionText = checkIn.caption
+    ? ` and captioned it "${checkIn.caption}"`
+    : "";
+
+  const tz = tz_lookup(
+    place.location.geoLocation.coordinates[1],
+    place.location.geoLocation.coordinates[0]
   );
 
-  console.log(result);
+  const dateTimeString = checkIn.createdAt.toLocaleString("en-US", {
+    timeZone: tz,
+    hour12: true,
+    hour: "2-digit",
+    minute: "numeric",
+    month: "short",
+    day: "2-digit",
+  });
+
+  return `${dateTimeString}: Checked in at ${place.name}${mentionsText}${captionText}`;
 }
 
-function formatDate(date: Date): string {
-  const months = [
-    "January",
-    "February",
-    "March",
-    "April",
-    "May",
-    "June",
-    "July",
-    "August",
-    "September",
-    "October",
-    "November",
-    "December",
-  ];
+function getReviewText(
+  review: Pick<IReview, "createdAt" | "content">,
+  place: Pick<IPlace, "_id" | "name" | "location">
+) {
+  const tz = tz_lookup(
+    place.location.geoLocation.coordinates[1],
+    place.location.geoLocation.coordinates[0]
+  );
 
-  const month = months[date.getMonth()];
-  const day = date.getDate();
-  const daySuffix = getOrdinalSuffix(day);
-  const formattedDay = `${day}${daySuffix}`;
+  const dateTimeString = review.createdAt.toLocaleString("en-US", {
+    timeZone: tz,
+    hour12: true,
+    hour: "2-digit",
+    minute: "numeric",
+    month: "short",
+    day: "2-digit",
+  });
 
-  const hours = date.getHours();
-  const minutes = date.getMinutes().toString().padStart(2, "0");
-  const period = hours >= 12 ? "PM" : "AM";
-  const formattedHours = hours % 12 || 12;
-
-  return `${month} ${formattedDay}, ${formattedHours}:${minutes} ${period}`;
+  return `${dateTimeString}: Reviewed ${place.name}${
+    review.content ? ` saying "${review.content.trim()}"` : ""
+  }`;
 }
-
-function getOrdinalSuffix(day: number): string {
-  const j = day % 10,
-    k = day % 100;
-  if (j == 1 && k != 11) return "st";
-  if (j == 2 && k != 12) return "nd";
-  if (j == 3 && k != 13) return "rd";
-  return "th";
-}
-
-// User name: "Nabeel 👻"
-// Current activity:
-// May 19th, 8:46 PM: Nabeel 👻 checked in to Voyager Craft Coffee.
-// Activity history:
-// May 17th, 9:49 PM: Nabeel 👻 checked in to Steady Eddy's with Joe Na and captioned it "Sketchy eddie at steady eddies 👀"
-// May 17th, 9:37 PM: Nabeel 👻 checked in to Putah Creek Cafe with Joe Na, Zach and captioned it "Today’s the day! Congrats Max ! 🎉"
-// May 17th, 6:38 AM: Nabeel 👻 checked in to Preserve Public House
-// May 16th, 11:26 PM: Nabeel 👻 checked in to Green River Brewing  with Joe Na and captioned it "Da burrrrrrr 🍻"
-// May 16th, 8:20 PM: Nabeel 👻 checked in to Dutch Bros Coffee
-
-// {
-//   messages: [
-//     {
-//       role: "system",
-//       content:
-//         "You are a cool ghost with GenZ characteristics which is the character of our app. You're going to be given the new activity of the users alongside their 5 recent activities and you should try to leave them a comment as a response. Make the comment short and fun, also don't be afraid to tease or roast them if needed. The app is for GenZ people and they won't be mad. Just return the comment, nothing more.",
-//     },
-//     {
-//       role: "assistant",
-//       content: `If you can't think of anything to say, Just respond with somethink like: "Noice"`,
-//     },
-//     {
-//       role: "assistant",
-//       content: 'Your previous comment for this user was "Noice" on May 11th',
-//     },
-//     {
-//       role: "user",
-//       content:
-//         'User name: "Nabeel 👻"\n' +
-//         "Current activity:\n" +
-//         "May 19th, 8:46 PM: Nabeel 👻 checked in to Voyager Craft Coffee.\n" +
-//         "Activity history:\n" +
-//         `May 17th, 9:49 PM: Nabeel 👻 checked in to Steady Eddy's with Joe Na and captioned it "Sketchy eddie at steady eddies 👀"\n` +
-//         'May 17th, 9:37 PM: Nabeel 👻 checked in to Putah Creek Cafe with Joe Na, Zach and captioned it "Today’s the day! Congrats Max ! 🎉"\n' +
-//         "May 17th, 6:38 AM: Nabeel 👻 checked in to Preserve Public House\n" +
-//         'May 16th, 11:26 PM: Nabeel 👻 checked in to Green River Brewing  with Joe Na and captioned it "Da burrrrrrr 🍻"\n' +
-//         "May 16th, 8:20 PM: Nabeel 👻 checked in to Dutch Bros Coffee",
-//     },
-//   ];
-// }

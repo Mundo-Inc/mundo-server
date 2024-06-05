@@ -20,14 +20,15 @@ const app = express();
 // Trust the first proxy in the chain
 app.set("trust proxy", 1);
 
-const limiter = rateLimit({
+const rateLimiter = rateLimit({
   windowMs: 60 * 1000, // 1 minute
-  max: 80,
+  max: 100,
   standardHeaders: true,
+  legacyHeaders: false,
 });
 
 app.use(cors());
-app.use(limiter);
+app.use(rateLimiter);
 app.use(helmet());
 app.use(cookieParser());
 app.use(express.urlencoded({ extended: true }));
@@ -57,6 +58,7 @@ async function main() {
     }
   } catch (error) {
     logger.error("Error starting server", error);
+    process.exit(1);
   }
 }
 

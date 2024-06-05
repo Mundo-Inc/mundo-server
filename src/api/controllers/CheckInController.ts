@@ -1,12 +1,12 @@
 import type { NextFunction, Request, Response } from "express";
 import { body, param, query, type ValidationChain } from "express-validator";
 import { StatusCodes } from "http-status-codes";
-import mongoose, { type PipelineStage } from "mongoose";
+import mongoose, { type AnyKeys, type PipelineStage } from "mongoose";
 
 import CheckIn, { type ICheckIn } from "../../models/CheckIn.js";
 import Event from "../../models/Event.js";
 import Follow from "../../models/Follow.js";
-import Media, { MediaTypeEnum } from "../../models/Media.js";
+import Media, { MediaTypeEnum, type IMedia } from "../../models/Media.js";
 import Notification, {
   NotificationTypeEnum,
   ResourceTypeEnum,
@@ -14,7 +14,9 @@ import Notification, {
 import Place from "../../models/Place.js";
 import Upload from "../../models/Upload.js";
 import User from "../../models/User.js";
-import { ResourcePrivacyEnum } from "../../models/UserActivity.js";
+import UserActivity, {
+  ResourcePrivacyEnum,
+} from "../../models/UserActivity.js";
 import strings, { dStrings, dynamicMessage } from "../../strings.js";
 import {
   createError,
@@ -28,6 +30,9 @@ import { checkinEarning } from "../services/earning.service.js";
 import logger from "../services/logger/index.js";
 import { addReward } from "../services/reward/reward.service.js";
 import validate from "./validators.js";
+import { OpenAIService } from "../services/OpenAIService.js";
+import Comment, { type IComment } from "../../models/Comment.js";
+import { env } from "../../env.js";
 
 const checkInWaitTime = 1; // minutes
 
@@ -460,7 +465,7 @@ export async function createCheckIn(
         throw createError(strings.upload.invalidType, StatusCodes.BAD_REQUEST);
       }
 
-      const mediaBody: any = {
+      const mediaBody: IMedia | AnyKeys<IMedia> = {
         type: MediaTypeEnum.image,
         user: authUser._id,
         place: placeId,
@@ -475,7 +480,7 @@ export async function createCheckIn(
       media = await Media.create(mediaBody);
     }
 
-    const checkinBody: any = {
+    const checkinBody: ICheckIn | AnyKeys<ICheckIn> = {
       user: authUser._id,
       place: placeId,
       caption: caption,
@@ -486,37 +491,57 @@ export async function createCheckIn(
     if (media) checkinBody.image = media._id;
     if (event) checkinBody.event = event;
 
-    const checkin = await CheckIn.create(checkinBody);
-
-    const reward = await addCheckInReward(authUser._id, checkin);
-
-    await checkinEarning(authUser._id, checkin);
-
-    const hasMedia = Boolean(checkin.image);
+    const checkIn = await CheckIn.create(checkinBody);
 
     const activity = await UserActivityManager.createCheckInActivity(
       authUser,
       placeId,
-      hasMedia,
-      checkin._id,
+      Boolean(checkIn.image),
+      checkIn._id,
       privacyType
     );
 
-    checkin.userActivityId = activity._id;
-    await checkin.save();
+    checkIn.userActivityId = activity._id;
 
-    await Place.updateOne(
-      { _id: placeId },
-      { $inc: { "activities.checkinCount": 1 } }
-    );
+    await checkIn.save();
 
-    await User.updateOne({ _id: authUser._id }, { latestPlace: placeId });
-
-    await sendNotificiationToFollowers(authUser._id, checkin);
+    const reward = await addCheckInReward(authUser._id, checkIn);
 
     res
       .status(StatusCodes.CREATED)
-      .json({ success: true, data: checkin, reward: reward });
+      .json({ success: true, data: checkIn, reward: reward });
+
+    await Promise.all([
+      checkinEarning(authUser._id, checkIn._id),
+      Place.updateOne(
+        { _id: placeId },
+        { $inc: { "activities.checkinCount": 1 } }
+      ),
+      User.updateOne({ _id: authUser._id }, { latestPlace: placeId }),
+      sendNotificiationToFollowers(authUser._id, checkIn),
+    ]);
+
+    // AI Comment
+    if (checkIn.privacyType === ResourcePrivacyEnum.PUBLIC) {
+      const cmBody = await OpenAIService.getInstance().makeACommentOnCheckIn(
+        checkIn
+      );
+
+      if (cmBody && cmBody !== "-") {
+        // Create comment
+        await Comment.create({
+          author: env.MUNDO_USER_ID,
+          userActivity: checkIn.userActivityId,
+          content: cmBody,
+        });
+
+        // update comments count in user activity
+        await UserActivity.updateOne(
+          { _id: checkIn.userActivityId },
+          { $inc: { "engagements.comments": 1 } }
+        );
+      }
+    }
   } catch (err) {
     next(err);
   }

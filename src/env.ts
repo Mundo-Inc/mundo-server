@@ -16,6 +16,8 @@ export const env = createEnv({
 
     URL: z.string().url(),
 
+    MUNDO_USER_ID: z.string(),
+
     // Firebase
     FIREBASE_SERVICE_ACCOUNT_KEY_FILE_NAME: z.string(),
     FIREBASE_WEB_API_KEY: z.string(),

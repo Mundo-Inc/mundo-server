@@ -48,7 +48,7 @@ export const reviewEarning = async (
 };
 export const checkinEarning = async (
   userId: Types.ObjectId,
-  checkin: ICheckIn
+  checkInId: Types.ObjectId
 ) => {
   const user = await User.findById(userId);
 
@@ -69,7 +69,7 @@ export const checkinEarning = async (
   await Earning.create({
     userId: user._id,
     earningType: EarningTypeEnum.CheckIn,
-    earning: checkin._id,
+    earning: checkInId,
     coins: totalCoins,
   });
 };

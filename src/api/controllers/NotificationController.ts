@@ -289,13 +289,13 @@ export async function getNotifications(
     const result = await Notification.aggregate([
       ...matchPipeline,
       {
-        $sort: {
-          createdAt: -1,
-        },
-      },
-      {
         $facet: {
           notifications: [
+            {
+              $sort: {
+                createdAt: -1,
+              },
+            },
             {
               $skip: skip,
             },

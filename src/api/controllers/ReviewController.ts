@@ -3,6 +3,8 @@ import { body, param, query, type ValidationChain } from "express-validator";
 import { StatusCodes } from "http-status-codes";
 import mongoose, { type PipelineStage } from "mongoose";
 
+import { env } from "../../env.js";
+import Comment from "../../models/Comment.js";
 import Follow from "../../models/Follow.js";
 import Media, { MediaTypeEnum } from "../../models/Media.js";
 import Notification, {
@@ -13,7 +15,9 @@ import Place from "../../models/Place.js";
 import Review from "../../models/Review.js";
 import Upload from "../../models/Upload.js";
 import User from "../../models/User.js";
-import { ResourcePrivacyEnum } from "../../models/UserActivity.js";
+import UserActivity, {
+  ResourcePrivacyEnum,
+} from "../../models/UserActivity.js";
 import strings, { dStrings as ds, dynamicMessage } from "../../strings.js";
 import {
   createError,
@@ -22,6 +26,7 @@ import {
 import { openAiAnalyzeReview } from "../../utilities/openAi.js";
 import { getPaginationFromQuery } from "../../utilities/pagination.js";
 import UserProjection from "../dto/user.js";
+import { OpenAIService } from "../services/OpenAIService.js";
 import { UserActivityManager } from "../services/UserActivityManager.js";
 import { reviewEarning } from "../services/earning.service.js";
 import logger from "../services/logger/index.js";
@@ -526,6 +531,26 @@ export async function createReview(
       });
     } else {
       populatedPlace.processReviews();
+    }
+
+    // AI Comment
+    const cmBody = await OpenAIService.getInstance().makeACommentOnReview(
+      review
+    );
+
+    if (cmBody && cmBody !== "-") {
+      // Create comment
+      await Comment.create({
+        author: env.MUNDO_USER_ID,
+        userActivity: review.userActivityId,
+        content: cmBody,
+      });
+
+      // update comments count in user activity
+      await UserActivity.updateOne(
+        { _id: review.userActivityId },
+        { $inc: { "engagements.comments": 1 } }
+      );
     }
   } catch (err) {
     next(err);

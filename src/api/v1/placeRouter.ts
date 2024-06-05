@@ -1,4 +1,5 @@
 import express from "express";
+import rateLimit from "express-rate-limit";
 
 import {
   createPlace,
@@ -25,6 +26,15 @@ import {
 import { authMiddleware } from "../middlewares/authMiddleWare.js";
 
 const router = express.Router();
+
+const getPlaceRateLimiter = rateLimit({
+  windowMs: 60 * 1000, // 1 minute
+  max: 15,
+  message:
+    "Too many requests to get place details from this IP, please try again later.",
+  standardHeaders: true,
+  legacyHeaders: false,
+});
 
 router
   .route("/")
@@ -78,6 +88,12 @@ router
 // Detailed place info
 router
   .route("/:id")
-  .get(express.json(), authMiddleware, getPlaceValidation, getPlace);
+  .get(
+    getPlaceRateLimiter,
+    express.json(),
+    authMiddleware,
+    getPlaceValidation,
+    getPlace
+  );
 
 export default router;

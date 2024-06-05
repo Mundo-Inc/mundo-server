@@ -17,6 +17,8 @@ import UserProjection, { type UserProjectionEssentials } from "../dto/user.js";
 import DeletionService from "../services/DeletionService.js";
 import { addReward } from "../services/reward/reward.service.js";
 import validate from "./validators.js";
+import { OpenAIService } from "../services/OpenAIService.js";
+import { env } from "../../env.js";
 
 export const createCommentValidation: ValidationChain[] = [
   body("activity").isMongoId().withMessage("Invalid activity id"),
@@ -140,6 +142,31 @@ export async function createComment(
       },
       reward: reward,
     });
+
+    // AI reply
+    if (parentComment && parentComment.author.equals(env.MUNDO_USER_ID)) {
+      const reply = await OpenAIService.getInstance().replyToComment(comment);
+
+      if (reply && reply !== "-") {
+        // Create comment
+        const newCm = await Comment.create({
+          author: env.MUNDO_USER_ID,
+          rootComment: comment.rootComment || comment._id,
+          parent: comment._id,
+          userActivity: activityId,
+          content: reply,
+        });
+
+        comment.children.push(newCm._id);
+        await comment.save();
+
+        // update comments count in user activity
+        await UserActivity.updateOne(
+          { _id: activityId },
+          { $inc: { "engagements.comments": 1 } }
+        );
+      }
+    }
   } catch (err) {
     next(err);
   }
