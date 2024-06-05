@@ -3,16 +3,18 @@ import { spawn, type ChildProcessWithoutNullStreams } from "child_process";
 import fs from "fs";
 import cron from "node-cron";
 import path from "path";
+import { fileURLToPath } from "url";
 
 import logger from "../api/services/logger/index.js";
 import { env } from "../env.js";
 import { getFormattedDateTime } from "../utilities/stringHelper.js";
 
-const DB_NAME: string = "genz";
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
 const ARCHIVE_PATH: string = path.join(
   __dirname,
   "backup",
-  `${DB_NAME}_${getFormattedDateTime()}.gzip`
+  `${env.DB_NAME}_${getFormattedDateTime()}.gzip`
 );
 
 const s3Client: S3Client = new S3Client({
@@ -36,7 +38,7 @@ function backupMongoDB(): void {
     fs.mkdirSync(backupDir, { recursive: true }); // Create the directory if it doesn't exist
   }
   const child: ChildProcessWithoutNullStreams = spawn("mongodump", [
-    `--db=${DB_NAME}`,
+    `--db=${env.DB_NAME}`,
     `--archive=${ARCHIVE_PATH}`,
     "--gzip",
   ]);
@@ -61,7 +63,7 @@ async function uploadBackupToS3(): Promise<void> {
   const fileContent: Buffer = fs.readFileSync(ARCHIVE_PATH);
   // Setting up S3 upload parameters
   const now: Date = new Date();
-  const fileName: string = `${DB_NAME}_${now.getFullYear()}-${
+  const fileName: string = `${env.DB_NAME}_${now.getFullYear()}-${
     now.getMonth() + 1
   }-${now.getDate()}_${now.getHours()}-${now.getMinutes()}-${now.getSeconds()}.gzip`;
 
