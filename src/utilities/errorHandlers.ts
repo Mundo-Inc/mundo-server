@@ -7,13 +7,13 @@ import logger from "../api/services/logger/index.js";
 interface ErrorOptions {
   statusCode?: number;
   validation?: ValidationError[];
-  data?: any;
+  title?: string;
 }
 
 interface CustomError extends Error {
   statusCode?: number;
   validation?: ValidationError[];
-  data?: any;
+  title?: string;
 }
 
 export function errorHandler(
@@ -22,13 +22,14 @@ export function errorHandler(
   res: Response,
   next: NextFunction
 ) {
-  let statusCode = 500;
+  let statusCode = StatusCodes.INTERNAL_SERVER_ERROR;
   const body: {
     message: string;
+    title?: string;
     validation?: ValidationError[];
-    data?: any;
   } = {
-    message: "Internal Server Error",
+    title: "Internal Server Error",
+    message: "Something went wrong. Please try again later.",
   };
 
   if ("statusCode" in err && err.statusCode) {
@@ -40,11 +41,11 @@ export function errorHandler(
     body.validation = err.validation;
   }
 
-  if ("data" in err && err.data) {
-    body.data = err.data;
+  if ("title" in err && err.title) {
+    body.title = err.title;
   }
 
-  if (statusCode === 500) {
+  if (statusCode === StatusCodes.INTERNAL_SERVER_ERROR) {
     logger.error("Internal Server Error", err);
   }
 

@@ -5,11 +5,12 @@ import cors from "cors";
 import express from "express";
 import rateLimit from "express-rate-limit";
 import helmet from "helmet";
+import { StatusCodes } from "http-status-codes";
 
 import logger from "./api/services/logger/index.js";
 import { connectDatabase } from "./config/database.js";
 import { env } from "./env.js";
-import { errorHandler } from "./utilities/errorHandlers.js";
+import { createError, errorHandler } from "./utilities/errorHandlers.js";
 
 import "./config/firebase-config.js";
 
@@ -25,6 +26,15 @@ const rateLimiter = rateLimit({
   max: 100,
   standardHeaders: true,
   legacyHeaders: false,
+  handler: (req, res) => {
+    throw createError(
+      "Too many requests from this IP, please try again after a minute",
+      {
+        title: "Rate Limit Exceeded",
+        statusCode: StatusCodes.TOO_MANY_REQUESTS,
+      }
+    );
+  },
 });
 
 app.use(cors());

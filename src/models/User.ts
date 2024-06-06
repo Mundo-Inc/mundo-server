@@ -144,7 +144,7 @@ const UserSchema = new Schema<IUser>(
       unique: true,
       trim: true,
       minlength: 3,
-      maxlength: 20,
+      maxlength: 25,
       toLowerCase: true,
     },
     email: {
