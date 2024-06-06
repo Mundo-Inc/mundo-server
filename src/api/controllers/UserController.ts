@@ -161,7 +161,7 @@ async function notifyReferrer(
     // Sending app notification
     await Notification.create({
       user: referredBy._id,
-      type: NotificationTypeEnum.REFERRAL_REWARD,
+      type: NotificationTypeEnum.ReferralReward,
       additionalData: {
         amount,
         newUserName,
@@ -240,7 +240,7 @@ export async function createUser(
       await CoinReward.create({
         userId: referredBy._id,
         amount: amount,
-        coinRewardType: CoinRewardTypeEnum.referral,
+        coinRewardType: CoinRewardTypeEnum.Referral,
       });
 
       await notifyReferrer(referredBy, name, amount);
@@ -251,7 +251,7 @@ export async function createUser(
       email.toLowerCase(),
       name,
       username,
-      SignupMethodEnum.traditional,
+      SignupMethodEnum.Traditional,
       hashedPassword
     );
 
@@ -417,8 +417,8 @@ export async function getUser(req: Request, res: Response, next: NextFunction) {
     let connectionStatus: ConnectionStatus = {
       followedByUser: false,
       followsUser: false,
-      followingStatus: FollowStatusEnum.NOT_FOLLOWING,
-      followedByStatus: FollowStatusEnum.NOT_FOLLOWING,
+      followingStatus: FollowStatusEnum.NotFollowing,
+      followedByStatus: FollowStatusEnum.NotFollowing,
     };
 
     if (authUser && authUser._id.equals(id)) {
@@ -648,7 +648,7 @@ export async function editUser(
       await CoinReward.create({
         userId: referredBy._id,
         amount: 250,
-        coinRewardType: CoinRewardTypeEnum.referral,
+        coinRewardType: CoinRewardTypeEnum.Referral,
       });
 
       user.referredBy = referrer;

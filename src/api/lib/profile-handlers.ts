@@ -26,7 +26,7 @@ export const handleSignUp = async (
       address: email,
       verified: false,
     },
-    role: UserRoleEnum.user,
+    role: UserRoleEnum.User,
     signupMethod,
     password: password || null,
     verificationToken: crypto.randomBytes(20).toString("hex"),

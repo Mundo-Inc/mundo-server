@@ -35,8 +35,8 @@ export async function getConnectionStatus(
   const connectionStatus: ConnectionStatus = {
     followsUser: false,
     followedByUser: false,
-    followingStatus: FollowStatusEnum.NOT_FOLLOWING,
-    followedByStatus: FollowStatusEnum.NOT_FOLLOWING,
+    followingStatus: FollowStatusEnum.NotFollowing,
+    followedByStatus: FollowStatusEnum.NotFollowing,
   };
 
   const userOID =
@@ -65,19 +65,19 @@ export async function getConnectionStatus(
 
   requestDocs.forEach((doc) => {
     if (userOID.equals(doc.user)) {
-      connectionStatus.followingStatus = FollowStatusEnum.REQUESTED;
+      connectionStatus.followingStatus = FollowStatusEnum.Requested;
     } else if (userOID.equals(doc.target)) {
-      connectionStatus.followedByStatus = FollowStatusEnum.REQUESTED;
+      connectionStatus.followedByStatus = FollowStatusEnum.Requested;
     }
   });
 
   followDocs.forEach((doc) => {
     if (userOID.equals(doc.user)) {
       connectionStatus.followedByUser = true;
-      connectionStatus.followingStatus = FollowStatusEnum.FOLLOWING;
+      connectionStatus.followingStatus = FollowStatusEnum.Following;
     } else if (userOID.equals(doc.target)) {
       connectionStatus.followsUser = true;
-      connectionStatus.followedByStatus = FollowStatusEnum.FOLLOWING;
+      connectionStatus.followedByStatus = FollowStatusEnum.Following;
     }
   });
 
@@ -99,8 +99,8 @@ export async function getConnectionStatuses(
       connectionStatuses[stringTargetId] = {
         followsUser: false,
         followedByUser: false,
-        followingStatus: FollowStatusEnum.NOT_FOLLOWING,
-        followedByStatus: FollowStatusEnum.NOT_FOLLOWING,
+        followingStatus: FollowStatusEnum.NotFollowing,
+        followedByStatus: FollowStatusEnum.NotFollowing,
       };
     }
   }
@@ -150,9 +150,9 @@ export async function getConnectionStatuses(
     const userId = doc.user.toString();
     const targetId = doc.target.toString();
     if (authId.equals(userId)) {
-      connectionStatuses[targetId].followingStatus = FollowStatusEnum.REQUESTED;
+      connectionStatuses[targetId].followingStatus = FollowStatusEnum.Requested;
     } else {
-      connectionStatuses[userId].followedByStatus = FollowStatusEnum.REQUESTED;
+      connectionStatuses[userId].followedByStatus = FollowStatusEnum.Requested;
     }
   });
 
@@ -162,11 +162,11 @@ export async function getConnectionStatuses(
     if (authId.equals(userId)) {
       // Current user follows the target
       connectionStatuses[targetId].followedByUser = true;
-      connectionStatuses[targetId].followingStatus = FollowStatusEnum.FOLLOWING;
+      connectionStatuses[targetId].followingStatus = FollowStatusEnum.Following;
     } else {
       // Target follows the current user
       connectionStatuses[userId].followsUser = true;
-      connectionStatuses[userId].followedByStatus = FollowStatusEnum.FOLLOWING;
+      connectionStatuses[userId].followedByStatus = FollowStatusEnum.Following;
     }
   });
 

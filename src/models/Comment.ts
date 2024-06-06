@@ -1,26 +1,24 @@
-import mongoose, { Schema, type Model } from "mongoose";
+import mongoose, { Schema, type Model, type Types } from "mongoose";
 
-import Notification, {
-  NotificationTypeEnum,
-  ResourceTypeEnum,
-} from "./Notification.js";
+import { ResourceTypeEnum } from "./Enum/ResourceTypeEnum.js";
+import Notification, { NotificationTypeEnum } from "./Notification.js";
 import UserActivity from "./UserActivity.js";
 
 export interface IMention {
-  user: mongoose.Types.ObjectId;
+  user: Types.ObjectId;
   username: string;
 }
 
 export interface IComment {
-  _id: mongoose.Types.ObjectId;
-  author: mongoose.Types.ObjectId;
-  userActivity: mongoose.Types.ObjectId;
+  _id: Types.ObjectId;
+  author: Types.ObjectId;
+  userActivity: Types.ObjectId;
   content: string;
-  likes: mongoose.Types.ObjectId[];
+  likes: Types.ObjectId[];
   mentions?: IMention[];
-  rootComment?: mongoose.Types.ObjectId;
-  parent?: mongoose.Types.ObjectId;
-  children: mongoose.Types.ObjectId[];
+  rootComment?: Types.ObjectId;
+  parent?: Types.ObjectId;
+  children: Types.ObjectId[];
   createdAt: Date;
   updatedAt: Date;
 }
@@ -115,9 +113,9 @@ CommentSchema.post("save", async function (doc, next) {
     if (activity) {
       await Notification.create({
         user: activity.userId,
-        type: NotificationTypeEnum.COMMENT,
+        type: NotificationTypeEnum.Comment,
         resources: [
-          { _id: doc._id, type: ResourceTypeEnum.COMMENT, date: doc.createdAt },
+          { _id: doc._id, type: ResourceTypeEnum.Comment, date: doc.createdAt },
         ],
         importance: 2,
       });
@@ -126,11 +124,11 @@ CommentSchema.post("save", async function (doc, next) {
       for (const mention of doc.mentions) {
         await Notification.create({
           user: mention.user,
-          type: NotificationTypeEnum.COMMENT_MENTION,
+          type: NotificationTypeEnum.CommentMention,
           resources: [
             {
               _id: doc._id,
-              type: ResourceTypeEnum.COMMENT,
+              type: ResourceTypeEnum.Comment,
               date: doc.createdAt,
             },
           ],

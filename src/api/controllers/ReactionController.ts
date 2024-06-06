@@ -3,7 +3,8 @@ import { body, param, type ValidationChain } from "express-validator";
 import { StatusCodes } from "http-status-codes";
 import { Types } from "mongoose";
 
-import Notification, { ResourceTypeEnum } from "../../models/Notification.js";
+import { ResourceTypeEnum } from "../../models/Enum/ResourceTypeEnum.js";
+import Notification from "../../models/Notification.js";
 import Reaction from "../../models/Reaction.js";
 import UserActivity from "../../models/UserActivity.js";
 import { dStrings as ds, dynamicMessage } from "../../strings.js";
@@ -121,7 +122,7 @@ async function removeAssociatedNotifications(reactionId: Types.ObjectId) {
   try {
     await Notification.deleteMany({
       resources: {
-        $elemMatch: { type: ResourceTypeEnum.REACTION, _id: reactionId },
+        $elemMatch: { type: ResourceTypeEnum.Reaction, _id: reactionId },
       },
     });
   } catch (e) {

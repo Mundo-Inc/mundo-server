@@ -91,7 +91,7 @@ export async function claimDailyCoins(
     await CoinReward.create({
       userId: user._id,
       amount: rewardAmount,
-      coinRewardType: CoinRewardTypeEnum.daily,
+      coinRewardType: CoinRewardTypeEnum.Daily,
     });
 
     res
@@ -283,7 +283,7 @@ export async function reviewRedemption(
       createError("Prize Redemption Not Found", StatusCodes.NOT_FOUND)
     );
 
-    if (redemption.status !== PrizeRedemptionStatusTypeEnum.PENDING) {
+    if (redemption.status !== PrizeRedemptionStatusTypeEnum.Pending) {
       throw createError(
         "Prize Redemption Is Already Verified as " + redemption.status,
         StatusCodes.BAD_REQUEST
@@ -305,14 +305,14 @@ export async function reviewRedemption(
     );
 
     switch (validation) {
-      case PrizeRedemptionStatusTypeEnum.SUCCESSFUL:
+      case PrizeRedemptionStatusTypeEnum.Successful:
         //TODO: send notification to the user that you have received the reward
         if (note) {
           redemption.note = note;
         }
         break;
 
-      case PrizeRedemptionStatusTypeEnum.DECLINED:
+      case PrizeRedemptionStatusTypeEnum.Declined:
         user.phantomCoins.balance = user.phantomCoins.balance + prize.amount;
         prize.count = prize.count + 1;
         await user.save();

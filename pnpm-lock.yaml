@@ -9,8 +9,8 @@ importers:
   .:
     dependencies:
       '@aws-sdk/client-s3':
-        specifier: ^3.590.0
-        version: 3.590.0
+        specifier: ^3.591.0
+        version: 3.591.0
       '@ffmpeg-installer/ffmpeg':
         specifier: ^1.1.0
         version: 1.1.0
@@ -78,8 +78,8 @@ importers:
         specifier: ^3.0.3
         version: 3.0.3
       openai:
-        specifier: ^4.48.1
-        version: 4.48.1
+        specifier: ^4.48.2
+        version: 4.48.2
       stripe:
         specifier: ^15.9.0
         version: 15.9.0
@@ -139,8 +139,8 @@ importers:
         specifier: ^8.2.2
         version: 8.2.2
       tsx:
-        specifier: ^4.11.2
-        version: 4.11.2
+        specifier: ^4.12.0
+        version: 4.12.0
       typescript:
         specifier: ^5.4.5
         version: 5.4.5
@@ -171,8 +171,8 @@ packages:
   '@aws-crypto/util@3.0.0':
     resolution: {integrity: sha512-2OJlpeJpCR48CC8r+uKVChzs9Iungj9wkZrl8Z041DWEWvyIHILYKCPNzJghKsivj+S3mLo6BVc7mBNzdxA46w==}
 
-  '@aws-sdk/client-s3@3.590.0':
-    resolution: {integrity: sha512-so+pNua0ihsHaSdskw8HCwruoYTAfYSEs3ix4GD1++83C96KaJp3udAutYiCA+84JXg9zitFa7eK7ORJAVZmTw==}
+  '@aws-sdk/client-s3@3.591.0':
+    resolution: {integrity: sha512-YmMQpOdBak+0OZh0LfbK+3u1MA0csAok9yDP5/tD1am7hCg1+zPimHSmpjLBHoKELVpsW5QRuBdCi0dn95uxmg==}
     engines: {node: '>=16.0.0'}
 
   '@aws-sdk/client-sso-oidc@3.590.0':
@@ -2157,8 +2157,8 @@ packages:
   one-time@1.0.0:
     resolution: {integrity: sha512-5DXOiRKwuSEcQ/l0kGCF6Q3jcADFv5tSmRaJck/OqkVFcOzutB134KRSfF0xDrL39MNnqxbHBbUUcjZIhTgb2g==}
 
-  openai@4.48.1:
-    resolution: {integrity: sha512-nlEzUAzDG1GsTlBVAFFtB0WZB8BFY+XU7o4oslzC7YMZ9PlgDixnbM49hXRWzv5OztevSn64hVKqptvzHq5/6Q==}
+  openai@4.48.2:
+    resolution: {integrity: sha512-3z4JEipIzwFtLvDC3KigZEWH4ALWDHPr6XCq/xYi8O1AQ5lAtu6Ib6FO8KeQ8RdjwfIqHWOWk/zopW5g780s/w==}
     hasBin: true
 
   optional-require@1.1.8:
@@ -2504,8 +2504,8 @@ packages:
   tslib@2.6.3:
     resolution: {integrity: sha512-xNvxJEOUiWPGhUuUdQgAJPKOOJfGnIyKySOc09XkKsgdUV/3E2zvwZYdejjmRgPCgcym1juLH3226yA7sEFJKQ==}
 
-  tsx@4.11.2:
-    resolution: {integrity: sha512-V5DL5v1BuItjsQ2FN9+4OjR7n5cr8hSgN+VGmm/fd2/0cgQdBIWHcQ3bFYm/5ZTmyxkTDBUIaRuW2divgfPe0A==}
+  tsx@4.12.0:
+    resolution: {integrity: sha512-642NAWAbDqPZINjmL32Lh/B+pd8vbVj6LHPsWm09IIHqQuWhCrNfcPTjRlHFWvv3FfM4vt9NLReBIjUNj5ZhDg==}
     engines: {node: '>=18.0.0'}
     hasBin: true
 
@@ -2738,7 +2738,7 @@ snapshots:
       '@aws-sdk/util-utf8-browser': 3.259.0
       tslib: 1.14.1
 
-  '@aws-sdk/client-s3@3.590.0':
+  '@aws-sdk/client-s3@3.591.0':
     dependencies:
       '@aws-crypto/sha1-browser': 3.0.0
       '@aws-crypto/sha256-browser': 3.0.0
@@ -5375,7 +5375,7 @@ snapshots:
     dependencies:
       fn.name: 1.1.0
 
-  openai@4.48.1:
+  openai@4.48.2:
     dependencies:
       '@types/node': 18.19.34
       '@types/node-fetch': 2.6.11
@@ -5798,7 +5798,7 @@ snapshots:
 
   tslib@2.6.3: {}
 
-  tsx@4.11.2:
+  tsx@4.12.0:
     dependencies:
       esbuild: 0.20.2
       get-tsconfig: 4.7.5

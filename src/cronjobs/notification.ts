@@ -91,7 +91,7 @@ export async function getNotificationContent(notification: INotification) {
 
   try {
     switch (notification.type) {
-      case NotificationTypeEnum.COMMENT:
+      case NotificationTypeEnum.Comment:
         await Comment.findById(notification.resources![0]._id)
           .orFail()
           .populate<{
@@ -103,7 +103,7 @@ export async function getNotificationContent(notification: INotification) {
             link = `activity/${comment.userActivity}`;
           });
         break;
-      case NotificationTypeEnum.FOLLOW:
+      case NotificationTypeEnum.Follow:
         const follow = await Follow.findById(notification.resources![0]._id)
           .orFail()
           .populate<{
@@ -111,7 +111,7 @@ export async function getNotificationContent(notification: INotification) {
           }>("user", ["name"]);
         content = `${follow.user.name} followed you.`;
         break;
-      case NotificationTypeEnum.COMMENT_MENTION:
+      case NotificationTypeEnum.CommentMention:
         await Comment.findById(notification.resources![0]._id)
           .orFail()
           .populate<{
@@ -123,7 +123,7 @@ export async function getNotificationContent(notification: INotification) {
             link = `activity/${comment.userActivity}`;
           });
         break;
-      case NotificationTypeEnum.REACTION:
+      case NotificationTypeEnum.Reaction:
         await Reaction.findById(notification.resources![0]._id)
           .orFail()
           .populate<{
@@ -139,7 +139,7 @@ export async function getNotificationContent(notification: INotification) {
             link = `activity/${reaction.target}`;
           });
         break;
-      case NotificationTypeEnum.FOLLOWING_REVIEW:
+      case NotificationTypeEnum.FollowingReview:
         await Review.findById(notification.resources![0]._id)
           .orFail()
           .populate<{
@@ -162,7 +162,7 @@ export async function getNotificationContent(notification: INotification) {
               : `place/${review.place._id}`;
           });
         break;
-      case NotificationTypeEnum.FOLLOWING_HOMEMADE:
+      case NotificationTypeEnum.FollowingHomemade:
         await Homemade.findById(notification.resources![0]._id)
           .orFail()
           .populate<{
@@ -177,7 +177,7 @@ export async function getNotificationContent(notification: INotification) {
             link = `activity/${homemade.userActivityId}`;
           });
         break;
-      case NotificationTypeEnum.FOLLOWING_CHECKIN:
+      case NotificationTypeEnum.FollowingCheckIn:
         await CheckIn.findById(notification.resources![0]._id)
           .orFail()
           .populate<{
@@ -195,7 +195,7 @@ export async function getNotificationContent(notification: INotification) {
             link = `place/${checkin.place._id}`;
           });
         break;
-      case NotificationTypeEnum.REFERRAL_REWARD:
+      case NotificationTypeEnum.ReferralReward:
         title = "Referral Reward";
         const friendName =
           "(" + notification.additionalData?.newUserName + ") " || "";

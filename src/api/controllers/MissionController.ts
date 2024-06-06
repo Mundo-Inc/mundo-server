@@ -191,7 +191,7 @@ export async function claimMissionReward(
     const coinReward = await CoinReward.create({
       userId: authUser._id,
       amount: mission.rewardAmount,
-      coinRewardType: CoinRewardTypeEnum.mission,
+      coinRewardType: CoinRewardTypeEnum.Mission,
       missionId: id,
     });
 

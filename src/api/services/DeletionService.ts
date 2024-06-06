@@ -2,7 +2,8 @@ import { StatusCodes } from "http-status-codes";
 import mongoose, { type FilterQuery } from "mongoose";
 
 import Comment, { type IComment } from "../../models/Comment.js";
-import Notification, { ResourceTypeEnum } from "../../models/Notification.js";
+import { ResourceTypeEnum } from "../../models/Enum/ResourceTypeEnum.js";
+import Notification from "../../models/Notification.js";
 import Reward, { type IReward } from "../../models/Reward.js";
 import User from "../../models/User.js";
 import UserActivity from "../../models/UserActivity.js";
@@ -75,7 +76,7 @@ export default class DeletionService {
       }),
 
       // Delete notifications
-      DeletionService.deleteNotifications(id, ResourceTypeEnum.COMMENT),
+      DeletionService.deleteNotifications(id, ResourceTypeEnum.Comment),
     ]);
   }
 

@@ -1,8 +1,8 @@
 import mongoose, { Schema, type Model } from "mongoose";
 
 export enum AccessEnum {
-  view = "view",
-  edit = "edit",
+  View = "view",
+  Edit = "edit",
 }
 
 export interface IList {
@@ -63,7 +63,7 @@ const ListSchema = new Schema<IList>(
           },
           access: {
             type: String,
-            default: AccessEnum.edit,
+            default: AccessEnum.Edit,
             enum: Object.values(AccessEnum),
           },
         },
@@ -87,7 +87,7 @@ ListSchema.pre("save", function (next) {
     if (!ownerAsCollaborator) {
       this.collaborators.push({
         user: this.owner,
-        access: AccessEnum.edit,
+        access: AccessEnum.Edit,
       });
     }
   }

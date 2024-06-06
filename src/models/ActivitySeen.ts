@@ -5,7 +5,7 @@ export interface IActivitySeen {
   observerId: mongoose.Types.ObjectId; // user who seen the activity
   activityId: mongoose.Types.ObjectId; // id of activity
   seenAt: Date;
-  count: Number; // occurrence of an seen by a user
+  count: number; // occurrence of an seen by a user
 }
 
 const ActivitySeenSchema = new Schema<IActivitySeen>({

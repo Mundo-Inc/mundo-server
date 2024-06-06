@@ -13,15 +13,15 @@ import Review from "./Review.js";
 import DeletionService from "../api/services/DeletionService.js";
 
 export enum UserRoleEnum {
-  admin = "admin",
-  user = "user",
+  Admin = "admin",
+  User = "user",
 }
 
 export enum SignupMethodEnum {
-  social = "social",
-  traditional = "traditional",
-  cloud = "cloud",
-  bot = "bot",
+  Social = "social",
+  Traditional = "traditional",
+  Cloud = "cloud",
+  Bot = "bot",
 }
 
 export type UserDevice = {
@@ -161,7 +161,7 @@ const UserSchema = new Schema<IUser>(
     },
     role: {
       type: String,
-      default: UserRoleEnum.user,
+      default: UserRoleEnum.User,
       enum: Object.values(UserRoleEnum),
     },
     isActive: {

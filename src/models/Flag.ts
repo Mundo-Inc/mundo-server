@@ -1,28 +1,35 @@
 import mongoose, { Schema, type Model } from "mongoose"; // Corrected the import statement
+import { ResourceTypeEnum } from "./Enum/ResourceTypeEnum.js";
 
 // Flag reasons
 export enum FlagTypeEnum {
-  INAPPROPRIATE_CONTENT = "INAPPROPRIATE_CONTENT",
-  SPAM = "SPAM",
-  FALSE_INFORMATION = "FALSE_INFORMATION",
-  PERSONAL_INFORMATION = "PERSONAL_INFORMATION",
-  OFF_TOPIC = "OFF_TOPIC",
-  HARASSMENT = "HARASSMENT",
-  SUSPECTED_FAKE_REVIEW = "SUSPECTED_FAKE_REVIEW",
-  COPYRIGHT_VIOLATION = "COPYRIGHT_VIOLATION",
-  OTHER = "OTHER",
+  InappropriateContent = "INAPPROPRIATE_CONTENT",
+  Spam = "SPAM",
+  FalseInformation = "FALSE_INFORMATION",
+  PersonalInformation = "PERSONAL_INFORMATION",
+  OffTopic = "OFF_TOPIC",
+  Harassment = "HARASSMENT",
+  SuspectedFakeReview = "SUSPECTED_FAKE_REVIEW",
+  CopyrightViolation = "COPYRIGHT_VIOLATION",
+  Other = "OTHER",
 }
 
-export enum TargetTypeEnum {
-  REVIEW = "Review",
-  COMMENT = "Comment",
-  CHECKIN = "CheckIn",
-  HOMEMADE = "Homemade",
-}
+export type FlagTargetType =
+  | ResourceTypeEnum.Review
+  | ResourceTypeEnum.Comment
+  | ResourceTypeEnum.CheckIn
+  | ResourceTypeEnum.Homemade;
+
+const FlagTargetTypes: FlagTargetType[] = [
+  ResourceTypeEnum.Review,
+  ResourceTypeEnum.Comment,
+  ResourceTypeEnum.CheckIn,
+  ResourceTypeEnum.Homemade,
+];
 
 export enum AdminActionEnum {
-  IGNORE = "IGNORE",
-  DELETE = "DELETE",
+  Ignore = "IGNORE",
+  Delete = "DELETE",
 }
 
 interface AdminAction {
@@ -36,7 +43,7 @@ export interface IFlag {
   _id: mongoose.Types.ObjectId;
   user: mongoose.Types.ObjectId;
   target: mongoose.Types.ObjectId;
-  targetType: TargetTypeEnum;
+  targetType: FlagTargetType;
   flagType: FlagTypeEnum;
   note: string;
   adminAction: AdminAction;
@@ -60,7 +67,7 @@ const FlagSchema = new Schema<IFlag>(
     },
     targetType: {
       type: String,
-      enum: Object.values(TargetTypeEnum),
+      enum: FlagTargetTypes,
       required: true,
     },
     flagType: {

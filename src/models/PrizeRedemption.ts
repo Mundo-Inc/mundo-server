@@ -1,9 +1,9 @@
 import mongoose, { Schema, type Model } from "mongoose";
 
 export enum PrizeRedemptionStatusTypeEnum {
-  PENDING = "PENDING",
-  DECLINED = "DECLINED",
-  SUCCESSFUL = "SUCCESSFUL",
+  Pending = "PENDING",
+  Declined = "DECLINED",
+  Successful = "SUCCESSFUL",
 }
 
 export interface IPrizeRedemption {
@@ -11,7 +11,7 @@ export interface IPrizeRedemption {
   userId: mongoose.Types.ObjectId;
   prizeId: mongoose.Types.ObjectId;
   status: PrizeRedemptionStatusTypeEnum;
-  note?: String;
+  note?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -23,7 +23,7 @@ const PrizeRedemptionSchema = new Schema<IPrizeRedemption>(
     status: {
       type: String,
       enum: Object.values(PrizeRedemptionStatusTypeEnum),
-      default: PrizeRedemptionStatusTypeEnum.PENDING,
+      default: PrizeRedemptionStatusTypeEnum.Pending,
     },
     note: {
       type: String,

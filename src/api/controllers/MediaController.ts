@@ -71,7 +71,7 @@ export async function createMedia(
         caption: caption ? caption[0] : "",
         place: new mongoose.Types.ObjectId(place![0]),
         user: authUser._id,
-        type: MediaTypeEnum.image,
+        type: MediaTypeEnum.Image,
       });
 
       fs.unlinkSync(filepath);
@@ -92,7 +92,7 @@ export async function createMedia(
         caption: caption ? caption[0] : "",
         place: new mongoose.Types.ObjectId(place![0]),
         user: authUser._id,
-        type: MediaTypeEnum.video,
+        type: MediaTypeEnum.Video,
       });
       res.status(StatusCodes.CREATED).json({ success: true, data: media });
 

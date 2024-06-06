@@ -1,9 +1,9 @@
 import mongoose, { Schema, type Model } from "mongoose";
 
 export enum CoinRewardTypeEnum {
-  daily = "DAILY",
-  mission = "MISSION",
-  referral = "REFERRAL",
+  Daily = "DAILY",
+  Mission = "MISSION",
+  Referral = "REFERRAL",
 }
 
 export interface ICoinReward {

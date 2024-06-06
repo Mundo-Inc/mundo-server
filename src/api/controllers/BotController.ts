@@ -49,8 +49,8 @@ export async function createBot(
         address: email,
         verified: false,
       },
-      role: UserRoleEnum.user,
-      signupMethod: SignupMethodEnum.bot,
+      role: UserRoleEnum.User,
+      signupMethod: SignupMethodEnum.Bot,
       password: null,
     });
 

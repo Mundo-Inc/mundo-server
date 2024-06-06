@@ -9,9 +9,9 @@ export enum EarningTypeEnum {
 export interface IEarning {
   _id: mongoose.Types.ObjectId;
   userId: mongoose.Types.ObjectId;
-  earningType: String;
+  earningType: string;
   earning: mongoose.Types.ObjectId;
-  coins: Number;
+  coins: number;
   createdAt: Date;
 }
 

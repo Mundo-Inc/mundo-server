@@ -5,7 +5,8 @@ import mongoose from "mongoose";
 
 import CheckIn from "../../models/CheckIn.js";
 import Comment from "../../models/Comment.js";
-import Flag, { FlagTypeEnum } from "../../models/Flag.js";
+import { ResourceTypeEnum } from "../../models/Enum/ResourceTypeEnum.js";
+import Flag, { FlagTypeEnum, type FlagTargetType } from "../../models/Flag.js";
 import Homemade from "../../models/Homemade.js";
 import Review from "../../models/Review.js";
 import UserActivity from "../../models/UserActivity.js";
@@ -61,7 +62,7 @@ export async function createFlag(
       ? new mongoose.Types.ObjectId(req.body.review as string)
       : null;
 
-    let target: mongoose.Types.ObjectId, targetType: string;
+    let target: mongoose.Types.ObjectId, targetType: FlagTargetType;
 
     if (activity) {
       const userActivity = await UserActivity.findById(activity)
@@ -80,7 +81,7 @@ export async function createFlag(
         );
       }
       target = userActivity.resourceId;
-      targetType = userActivity.resourceType;
+      targetType = userActivity.resourceType as FlagTargetType;
     } else if (review) {
       await Review.exists({ _id: review }).orFail(
         createError(
@@ -90,7 +91,7 @@ export async function createFlag(
       );
 
       target = review;
-      targetType = "Review";
+      targetType = ResourceTypeEnum.Review;
     } else if (comment) {
       await Comment.exists({ _id: comment }).orFail(
         createError(
@@ -99,7 +100,7 @@ export async function createFlag(
         )
       );
       target = comment;
-      targetType = "Comment";
+      targetType = ResourceTypeEnum.Comment;
     } else if (homemade) {
       await Homemade.exists({ _id: homemade }).orFail(
         createError(
@@ -108,7 +109,7 @@ export async function createFlag(
         )
       );
       target = homemade;
-      targetType = "Homemade";
+      targetType = ResourceTypeEnum.Homemade;
     } else if (checkIn) {
       await CheckIn.exists({ _id: checkIn }).orFail(
         createError(
@@ -117,7 +118,7 @@ export async function createFlag(
         )
       );
       target = checkIn;
-      targetType = "CheckIn";
+      targetType = ResourceTypeEnum.CheckIn;
     } else {
       throw createError("No target provided", StatusCodes.BAD_REQUEST);
     }

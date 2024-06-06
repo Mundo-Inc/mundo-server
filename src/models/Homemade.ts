@@ -1,11 +1,11 @@
 import mongoose, { Schema, type CallbackError, type Model } from "mongoose";
 
+import DeletionService from "../api/services/DeletionService.js";
 import logger from "../api/services/logger/index.js";
 import Comment from "./Comment.js";
 import Media from "./Media.js";
 import Reaction from "./Reaction.js";
 import UserActivity, { ResourcePrivacyEnum } from "./UserActivity.js";
-import DeletionService from "../api/services/DeletionService.js";
 
 export interface IHomemade {
   _id: mongoose.Types.ObjectId;
@@ -32,7 +32,7 @@ const HomemadeSchema = new Schema<IHomemade>(
     privacyType: {
       type: String,
       enum: Object.values(ResourcePrivacyEnum),
-      default: ResourcePrivacyEnum.PUBLIC,
+      default: ResourcePrivacyEnum.Public,
       required: true,
     },
   },

@@ -5,11 +5,11 @@ import mongoose, { type PipelineStage } from "mongoose";
 
 import { env } from "../../env.js";
 import Comment from "../../models/Comment.js";
+import { ResourceTypeEnum } from "../../models/Enum/ResourceTypeEnum.js";
 import Follow from "../../models/Follow.js";
 import Media, { MediaTypeEnum } from "../../models/Media.js";
 import Notification, {
   NotificationTypeEnum,
-  ResourceTypeEnum,
 } from "../../models/Notification.js";
 import Place from "../../models/Place.js";
 import Review from "../../models/Review.js";
@@ -315,7 +315,7 @@ export async function createReview(
     const place = new mongoose.Types.ObjectId(req.body.place as string);
     const privacyType = req.body.privacyType
       ? (req.body.privacyType as ResourcePrivacyEnum)
-      : ResourcePrivacyEnum.PUBLIC;
+      : ResourcePrivacyEnum.Public;
 
     const writer = req.body.writer
       ? new mongoose.Types.ObjectId(req.body.writer as string)
@@ -378,7 +378,7 @@ export async function createReview(
         uploadIds.push(image.uploadId);
 
         const media = await Media.create({
-          type: MediaTypeEnum.image,
+          type: MediaTypeEnum.Image,
           user: authUser._id,
           place,
           caption: image.caption,
@@ -416,7 +416,7 @@ export async function createReview(
         uploadIds.push(video.uploadId);
 
         const media = await Media.create({
-          type: MediaTypeEnum.video,
+          type: MediaTypeEnum.Video,
           user: authUser._id,
           place,
           caption: video.caption,
@@ -468,11 +468,11 @@ export async function createReview(
     for (const follower of followers) {
       await Notification.create({
         user: follower.user,
-        type: NotificationTypeEnum.FOLLOWING_REVIEW,
+        type: NotificationTypeEnum.FollowingReview,
         resources: [
           {
             _id: review._id,
-            type: ResourceTypeEnum.REVIEW,
+            type: ResourceTypeEnum.Review,
             date: review.createdAt,
           },
         ],

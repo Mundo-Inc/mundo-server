@@ -93,12 +93,12 @@ export async function redeemDecoration(
 
     let decoration: IProfileCover | IProfileFrame | null = null;
 
-    if (type === ProfileDecorationEnum.PROFILE_COVER) {
+    if (type === ProfileDecorationEnum.ProfileCover) {
       const cover = await ProfileCover.findById(id).orFail(
         createError("decoration not found", StatusCodes.NOT_FOUND)
       );
       decoration = cover;
-    } else if (type === ProfileDecorationEnum.PROFILE_FRAME) {
+    } else if (type === ProfileDecorationEnum.ProfileFrame) {
       const frame = await ProfileFrame.findById(id).orFail(
         createError("decoration not found", StatusCodes.NOT_FOUND)
       );
@@ -184,7 +184,7 @@ export async function activateDecoration(
       )
     );
 
-    if (type === ProfileDecorationEnum.PROFILE_COVER) {
+    if (type === ProfileDecorationEnum.ProfileCover) {
       const cover = await ProfileCover.findById(id).orFail(
         createError(
           dynamicMessage(dStrings.notFound, "Cover"),
@@ -192,7 +192,7 @@ export async function activateDecoration(
         )
       );
       user.decorations.cover = cover.url;
-    } else if (type === ProfileDecorationEnum.PROFILE_FRAME) {
+    } else if (type === ProfileDecorationEnum.ProfileFrame) {
       const frame = await ProfileFrame.findById(id).orFail(
         createError(
           dynamicMessage(dStrings.notFound, "Frame"),
@@ -249,9 +249,9 @@ export async function deactivateDecoration(
       )
     );
 
-    if (type === ProfileDecorationEnum.PROFILE_COVER) {
+    if (type === ProfileDecorationEnum.ProfileCover) {
       user.decorations.cover = undefined;
-    } else if (type === ProfileDecorationEnum.PROFILE_FRAME) {
+    } else if (type === ProfileDecorationEnum.ProfileFrame) {
       user.decorations.frame = undefined;
     }
 

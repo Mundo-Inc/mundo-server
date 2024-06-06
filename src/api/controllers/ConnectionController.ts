@@ -3,19 +3,16 @@ import { param, query, type ValidationChain } from "express-validator";
 import { StatusCodes } from "http-status-codes";
 import mongoose from "mongoose";
 
+import { ResourceTypeEnum } from "../../models/Enum/ResourceTypeEnum.js";
 import Follow, { FollowStatusEnum } from "../../models/Follow.js";
 import FollowRequest, {
   type IFollowRequest,
 } from "../../models/FollowRequest.js";
 import Notification, {
   NotificationTypeEnum,
-  ResourceTypeEnum,
 } from "../../models/Notification.js";
 import User, { type IUser } from "../../models/User.js";
-import UserActivity, {
-  ActivityResourceTypeEnum,
-  ActivityTypeEnum,
-} from "../../models/UserActivity.js";
+import UserActivity, { ActivityTypeEnum } from "../../models/UserActivity.js";
 import { dStrings, dynamicMessage } from "../../strings.js";
 import {
   getConnectionStatus,
@@ -190,13 +187,13 @@ export async function getFollowRequests(
     userFollowRequests.forEach((f) => {
       const userId: string = f.user._id.toString();
       if (userId in usersObject) {
-        usersObject[userId].followedByStatus = FollowStatusEnum.REQUESTED;
+        usersObject[userId].followedByStatus = FollowStatusEnum.Requested;
       } else {
         usersObject[userId] = {
           followedByUser: false,
           followsUser: false,
-          followingStatus: FollowStatusEnum.NOT_FOLLOWING,
-          followedByStatus: FollowStatusEnum.REQUESTED,
+          followingStatus: FollowStatusEnum.NotFollowing,
+          followedByStatus: FollowStatusEnum.Requested,
         };
       }
     });
@@ -204,13 +201,13 @@ export async function getFollowRequests(
     followRequests.forEach((f) => {
       const targetId: string = f.target.toString();
       if (targetId in usersObject) {
-        usersObject[targetId].followingStatus = FollowStatusEnum.REQUESTED;
+        usersObject[targetId].followingStatus = FollowStatusEnum.Requested;
       } else {
         usersObject[targetId] = {
           followedByUser: false,
           followsUser: false,
-          followingStatus: FollowStatusEnum.REQUESTED,
-          followedByStatus: FollowStatusEnum.NOT_FOLLOWING,
+          followingStatus: FollowStatusEnum.Requested,
+          followedByStatus: FollowStatusEnum.NotFollowing,
         };
       }
     });
@@ -241,10 +238,10 @@ export async function getFollowRequests(
       const targetId = f.target.toString();
       if (authUser._id.equals(userId)) {
         usersObject[targetId].followedByUser = true;
-        usersObject[targetId].followingStatus = FollowStatusEnum.FOLLOWING;
+        usersObject[targetId].followingStatus = FollowStatusEnum.Following;
       } else {
         usersObject[userId].followsUser = true;
-        usersObject[userId].followedByStatus = FollowStatusEnum.FOLLOWING;
+        usersObject[userId].followedByStatus = FollowStatusEnum.Following;
       }
     });
 
@@ -314,11 +311,11 @@ export async function acceptFollowRequest(
 
     await Notification.create({
       user: followRequest.user._id,
-      type: NotificationTypeEnum.FOLLOW_REQUEST_ACCEPTED,
+      type: NotificationTypeEnum.FollowRequestAccepted,
       resources: [
         {
           _id: follow._id,
-          type: ResourceTypeEnum.FOLLOW,
+          type: ResourceTypeEnum.Follow,
           date: follow.createdAt,
         },
       ],
@@ -392,12 +389,12 @@ export async function deleteUserConnection(
           UserActivity.deleteOne({
             userId: authUser._id,
             resourceId: id,
-            activityType: ActivityTypeEnum.FOLLOWING,
-            resourceType: ActivityResourceTypeEnum.USER,
+            activityType: ActivityTypeEnum.Following,
+            resourceType: ResourceTypeEnum.User,
           }),
           Notification.deleteOne({
             resources: {
-              $elemMatch: { _id: followDoc._id, type: ResourceTypeEnum.FOLLOW },
+              $elemMatch: { _id: followDoc._id, type: ResourceTypeEnum.Follow },
             },
           }),
         ]);
@@ -437,7 +434,7 @@ export async function deleteUserConnection(
           resources: {
             $elemMatch: {
               _id: requestDoc._id,
-              type: ResourceTypeEnum.FOLLOW_REQUEST,
+              type: ResourceTypeEnum.FollowRequest,
             },
           },
         }),
@@ -494,12 +491,12 @@ export async function removeFollower(
       UserActivity.deleteOne({
         userId: userId,
         resourceId: authUser._id,
-        activityType: ActivityTypeEnum.FOLLOWING,
-        resourceType: ActivityResourceTypeEnum.USER,
+        activityType: ActivityTypeEnum.Following,
+        resourceType: ResourceTypeEnum.User,
       }),
       Notification.deleteOne({
         resources: {
-          $elemMatch: { _id: followDoc._id, type: ResourceTypeEnum.FOLLOW },
+          $elemMatch: { _id: followDoc._id, type: ResourceTypeEnum.Follow },
         },
       }),
     ]);

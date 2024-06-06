@@ -3,12 +3,12 @@ import { body, param, query, type ValidationChain } from "express-validator";
 import { StatusCodes } from "http-status-codes";
 import mongoose, { type PipelineStage } from "mongoose";
 
+import { ResourceTypeEnum } from "../../models/Enum/ResourceTypeEnum.js";
 import Follow from "../../models/Follow.js";
 import Homemade from "../../models/Homemade.js";
 import Media, { MediaTypeEnum } from "../../models/Media.js";
 import Notification, {
   NotificationTypeEnum,
-  ResourceTypeEnum,
 } from "../../models/Notification.js";
 import Upload from "../../models/Upload.js";
 import User from "../../models/User.js";
@@ -193,7 +193,7 @@ export const createHomemadeValidationPost: ValidationChain[] = [
   body("tags.*").optional().isMongoId(),
   body("privacyType")
     .optional()
-    .isIn([ResourcePrivacyEnum.PRIVATE, ResourcePrivacyEnum.FOLLOWERS]),
+    .isIn([ResourcePrivacyEnum.Private, ResourcePrivacyEnum.Followers]),
 ];
 export async function createHomemadePost(
   req: Request,
@@ -209,9 +209,9 @@ export async function createHomemadePost(
 
     const privacyType = req.body.privacyType
       ? (req.body.privacyType as
-          | ResourcePrivacyEnum.PUBLIC
-          | ResourcePrivacyEnum.FOLLOWERS)
-      : ResourcePrivacyEnum.PUBLIC;
+          | ResourcePrivacyEnum.Public
+          | ResourcePrivacyEnum.Followers)
+      : ResourcePrivacyEnum.Public;
 
     const userId = req.body.user
       ? new mongoose.Types.ObjectId(req.body.user as string)
@@ -241,7 +241,7 @@ export async function createHomemadePost(
 
       await Media.create({
         type:
-          upload.type === "video" ? MediaTypeEnum.video : MediaTypeEnum.image,
+          upload.type === "video" ? MediaTypeEnum.Video : MediaTypeEnum.Image,
         user: authUser._id,
         caption: m.caption,
         src: upload.src,
@@ -288,7 +288,7 @@ export async function createHomemadePost(
     for (const follower of followers) {
       await Notification.create({
         user: follower.user,
-        type: NotificationTypeEnum.FOLLOWING_HOMEMADE,
+        type: NotificationTypeEnum.FollowingHomemade,
         resources: [
           {
             _id: homemade._id,

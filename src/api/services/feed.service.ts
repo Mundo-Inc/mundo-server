@@ -4,13 +4,13 @@ import Achievement from "../../models/Achievement.js";
 import Block from "../../models/Block.js";
 import CheckIn from "../../models/CheckIn.js";
 import Comment from "../../models/Comment.js";
+import { ResourceTypeEnum } from "../../models/Enum/ResourceTypeEnum.js";
 import Follow from "../../models/Follow.js";
 import Homemade from "../../models/Homemade.js";
 import Place from "../../models/Place.js";
 import Review from "../../models/Review.js";
 import User from "../../models/User.js";
 import UserActivity, {
-  ActivityResourceTypeEnum,
   ResourcePrivacyEnum,
   type IUserActivity,
 } from "../../models/UserActivity.js";
@@ -31,14 +31,14 @@ export const getResourceInfo = async (activity: IUserActivity) => {
     .lean();
 
   switch (activity.resourceType) {
-    case ActivityResourceTypeEnum.PLACE:
+    case ResourceTypeEnum.Place:
       resourceInfo = await Place.findById(activity.resourceId)
         .select<PlaceProjectionDetail>(PlaceProjection.detail)
         .lean();
 
       placeInfo = resourceInfo;
       break;
-    case ActivityResourceTypeEnum.REVIEW:
+    case ResourceTypeEnum.Review:
       const reviews = await Review.aggregate([
         {
           $match: {
@@ -186,7 +186,7 @@ export const getResourceInfo = async (activity: IUserActivity) => {
       resourceInfo = reviews[0];
       placeInfo = resourceInfo.place;
       break;
-    case ActivityResourceTypeEnum.HOMEMADE:
+    case ResourceTypeEnum.Homemade:
       const homemade = await Homemade.aggregate([
         {
           $match: {
@@ -293,7 +293,7 @@ export const getResourceInfo = async (activity: IUserActivity) => {
       ]);
       resourceInfo = homemade[0];
       break;
-    case ActivityResourceTypeEnum.CHECKIN:
+    case ResourceTypeEnum.CheckIn:
       const result = await CheckIn.aggregate([
         {
           $match: {
@@ -400,7 +400,7 @@ export const getResourceInfo = async (activity: IUserActivity) => {
       };
       placeInfo = resourceInfo.place;
       break;
-    case ActivityResourceTypeEnum.USER:
+    case ResourceTypeEnum.User:
       resourceInfo = await User.findById(
         activity.resourceId,
         UserProjection.essentials
@@ -411,7 +411,7 @@ export const getResourceInfo = async (activity: IUserActivity) => {
           .lean();
       }
       break;
-    case ActivityResourceTypeEnum.ACHIEVEMET:
+    case ResourceTypeEnum.Achievement:
       resourceInfo = await Achievement.findById(activity.resourceId).lean();
       if (activity.placeId) {
         placeInfo = await Place.findById(activity.placeId)
@@ -457,7 +457,7 @@ export const getUserFeed = async (
           $nin: blocked.map((b) => b.user),
         },
         hasMedia: true,
-        resourcePrivacy: { $ne: ResourcePrivacyEnum.PRIVATE },
+        resourcePrivacy: { $ne: ResourcePrivacyEnum.Private },
         $or: [
           {
             isAccountPrivate: false,
@@ -475,14 +475,14 @@ export const getUserFeed = async (
       query = {
         $or: [
           {
-            resourcePrivacy: { $ne: ResourcePrivacyEnum.PRIVATE },
+            resourcePrivacy: { $ne: ResourcePrivacyEnum.Private },
             userId: {
               $nin: blocked.map((b) => b.user),
               $in: [...followings.map((f) => f.target), userId],
             },
           },
           {
-            resourcePrivacy: ResourcePrivacyEnum.PRIVATE,
+            resourcePrivacy: ResourcePrivacyEnum.Private,
             userId: userId,
           },
         ],

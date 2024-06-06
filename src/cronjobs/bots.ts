@@ -2,10 +2,11 @@ import cron, { type ScheduledTask } from "node-cron";
 
 import logger from "../api/services/logger/index.js";
 import Bot, { IBotTargetEnum, IBotTypeEnum, type IBot } from "../models/Bot.js";
+import { ResourceTypeEnum } from "../models/Enum/ResourceTypeEnum.js";
 import Reaction from "../models/Reaction.js";
 import User, { type IUser } from "../models/User.js";
 import UserActivity, {
-  ActivityResourceTypeEnum,
+  type UserActivityResourceType,
 } from "../models/UserActivity.js";
 
 function getDateHoursAgo(hours: number) {
@@ -29,10 +30,10 @@ let tasks: TaskCollection = {};
 
 export function createCron(id: string, duty: IBot, botUser: IUser) {
   switch (duty.type) {
-    case IBotTypeEnum.REACT:
+    case IBotTypeEnum.React:
       interface Query {
         hasMedia?: boolean;
-        resourceType?: ActivityResourceTypeEnum;
+        resourceType?: UserActivityResourceType;
         createdAt?: {
           $gt: Date;
         };
@@ -41,10 +42,10 @@ export function createCron(id: string, duty: IBot, botUser: IUser) {
         try {
           let query: Query = {};
           if (duty.target === "CHECKINS")
-            query.resourceType = ActivityResourceTypeEnum.CHECKIN;
+            query.resourceType = ResourceTypeEnum.CheckIn;
           if (duty.target === "REVIEWS")
-            query.resourceType = ActivityResourceTypeEnum.REVIEW;
-          if (duty.target === IBotTargetEnum.HAS_MEDIA) query.hasMedia = true;
+            query.resourceType = ResourceTypeEnum.Review;
+          if (duty.target === IBotTargetEnum.HasMedia) query.hasMedia = true;
           if (duty.targetThresholdHours)
             query.createdAt = {
               $gt: getDateHoursAgo(duty.targetThresholdHours),

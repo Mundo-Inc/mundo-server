@@ -3,13 +3,15 @@ import { body, param, query, type ValidationChain } from "express-validator";
 import { StatusCodes } from "http-status-codes";
 import mongoose, { type AnyKeys, type PipelineStage } from "mongoose";
 
+import { env } from "../../env.js";
 import CheckIn, { type ICheckIn } from "../../models/CheckIn.js";
+import Comment from "../../models/Comment.js";
+import { ResourceTypeEnum } from "../../models/Enum/ResourceTypeEnum.js";
 import Event from "../../models/Event.js";
 import Follow from "../../models/Follow.js";
 import Media, { MediaTypeEnum, type IMedia } from "../../models/Media.js";
 import Notification, {
   NotificationTypeEnum,
-  ResourceTypeEnum,
 } from "../../models/Notification.js";
 import Place from "../../models/Place.js";
 import Upload from "../../models/Upload.js";
@@ -25,14 +27,12 @@ import {
 import { getPaginationFromQuery } from "../../utilities/pagination.js";
 import PlaceProjection from "../dto/place.js";
 import UserProjection from "../dto/user.js";
+import { OpenAIService } from "../services/OpenAIService.js";
 import { UserActivityManager } from "../services/UserActivityManager.js";
 import { checkinEarning } from "../services/earning.service.js";
 import logger from "../services/logger/index.js";
 import { addReward } from "../services/reward/reward.service.js";
 import validate from "./validators.js";
-import { OpenAIService } from "../services/OpenAIService.js";
-import Comment, { type IComment } from "../../models/Comment.js";
-import { env } from "../../env.js";
 
 const checkInWaitTime = 1; // minutes
 
@@ -267,7 +267,7 @@ export async function getCheckIns(
       // anonymize user data
       result.checkins = result.checkins.map((checkin: any) => {
         if (
-          checkin.privacyType === ResourcePrivacyEnum.PRIVATE &&
+          checkin.privacyType === ResourcePrivacyEnum.Private &&
           !authUser._id.equals(checkin.user._id)
         ) {
           checkin._id = Math.random()
@@ -347,11 +347,11 @@ async function sendNotificiationToFollowers(
   for (const follower of followers) {
     await Notification.create({
       user: follower.user,
-      type: NotificationTypeEnum.FOLLOWING_CHECKIN,
+      type: NotificationTypeEnum.FollowingCheckIn,
       resources: [
         {
           _id: checkin._id,
-          type: ResourceTypeEnum.CHECKIN,
+          type: ResourceTypeEnum.CheckIn,
           date: checkin.createdAt,
         },
       ],
@@ -397,7 +397,7 @@ export async function createCheckIn(
     const { caption, tags, image } = req.body;
     const privacyType =
       (req.body.privacyType as ResourcePrivacyEnum) ||
-      ResourcePrivacyEnum.PUBLIC;
+      ResourcePrivacyEnum.Public;
     const event = req.body.event
       ? new mongoose.Types.ObjectId(req.body.event as string)
       : null;
@@ -466,7 +466,7 @@ export async function createCheckIn(
       }
 
       const mediaBody: IMedia | AnyKeys<IMedia> = {
-        type: MediaTypeEnum.image,
+        type: MediaTypeEnum.Image,
         user: authUser._id,
         place: placeId,
         caption: caption,
@@ -485,7 +485,7 @@ export async function createCheckIn(
       place: placeId,
       caption: caption,
       tags: tags,
-      privacyType: privacyType || ResourcePrivacyEnum.PUBLIC,
+      privacyType: privacyType || ResourcePrivacyEnum.Public,
     };
 
     if (media) checkinBody.image = media._id;
@@ -522,7 +522,7 @@ export async function createCheckIn(
     ]);
 
     // AI Comment
-    if (checkIn.privacyType === ResourcePrivacyEnum.PUBLIC) {
+    if (checkIn.privacyType === ResourcePrivacyEnum.Public) {
       const cmBody = await OpenAIService.getInstance().makeACommentOnCheckIn(
         checkIn
       );

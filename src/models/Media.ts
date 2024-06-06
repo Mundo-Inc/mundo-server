@@ -1,8 +1,8 @@
 import mongoose, { Schema, type Model } from "mongoose";
 
 export enum MediaTypeEnum {
-  image = "image",
-  video = "video",
+  Image = "image",
+  Video = "video",
 }
 
 export interface IMedia {

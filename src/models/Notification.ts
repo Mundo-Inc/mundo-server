@@ -1,36 +1,44 @@
-import mongoose, { Schema, type Model } from "mongoose";
+import mongoose, { Schema, type Model, type Types } from "mongoose";
+
+import { ResourceTypeEnum } from "./Enum/ResourceTypeEnum.js";
 
 export enum NotificationTypeEnum {
-  REACTION = "REACTION",
-  COMMENT = "COMMENT",
-  FOLLOW = "FOLLOW",
-  FOLLOW_REQUEST = "FOLLOW_REQUEST",
-  FOLLOW_REQUEST_ACCEPTED = "FOLLOW_REQUEST_ACCEPTED",
-  COMMENT_MENTION = "COMMENT_MENTION",
-  REVIEW_MENTION = "REVIEW_MENTION",
-  XP = "XP",
-  LEVEL_UP = "LEVEL_UP",
-  NEW_REVIEW = "NEW_REVIEW",
-  FOLLOWING_CHECKIN = "FOLLOWING_CHECKIN",
-  FOLLOWING_REVIEW = "FOLLOWING_REVIEW",
-  FOLLOWING_HOMEMADE = "FOLLOWING_HOMEMADE",
-  REFERRAL_REWARD = "REFERRAL_REWARD",
+  Reaction = "REACTION",
+  Comment = "COMMENT",
+  Follow = "FOLLOW",
+  CommentMention = "COMMENT_MENTION",
+  FollowingCheckIn = "FOLLOWING_CHECKIN",
+  FollowingReview = "FOLLOWING_REVIEW",
+  FollowingHomemade = "FOLLOWING_HOMEMADE",
+  ReferralReward = "REFERRAL_REWARD",
+  FollowRequest = "FOLLOW_REQUEST",
+  FollowRequestAccepted = "FOLLOW_REQUEST_ACCEPTED",
 }
 
-export enum ResourceTypeEnum {
-  REACTION = "Reaction",
-  COMMENT = "Comment",
-  USER = "User",
-  REVIEW = "Review",
-  Homemade = "Homemade",
-  CHECKIN = "CheckIn",
-  FOLLOW = "Follow",
-  FOLLOW_REQUEST = "FollowRequest",
-}
+export type NotificationResourceType =
+  | ResourceTypeEnum.Reaction
+  | ResourceTypeEnum.Comment
+  | ResourceTypeEnum.User
+  | ResourceTypeEnum.Review
+  | ResourceTypeEnum.Homemade
+  | ResourceTypeEnum.CheckIn
+  | ResourceTypeEnum.Follow
+  | ResourceTypeEnum.FollowRequest;
+
+const NotificationResourceTypes: NotificationResourceType[] = [
+  ResourceTypeEnum.Reaction,
+  ResourceTypeEnum.Comment,
+  ResourceTypeEnum.User,
+  ResourceTypeEnum.Review,
+  ResourceTypeEnum.Homemade,
+  ResourceTypeEnum.CheckIn,
+  ResourceTypeEnum.Follow,
+  ResourceTypeEnum.FollowRequest,
+];
 
 interface Resources {
-  _id: mongoose.Types.ObjectId;
-  type: ResourceTypeEnum;
+  _id: Types.ObjectId;
+  type: NotificationResourceType;
   amount: number;
   date: Date;
 }
@@ -41,8 +49,8 @@ interface Metadata {
 }
 
 export interface INotification {
-  _id: mongoose.Types.ObjectId;
-  user: mongoose.Types.ObjectId;
+  _id: Types.ObjectId;
+  user: Types.ObjectId;
   type: NotificationTypeEnum;
   readAt: Date | null;
   sent: boolean;
@@ -103,7 +111,7 @@ const NotificationSchema = new Schema<INotification>(
           },
           type: {
             type: String,
-            enum: Object.values(ResourceTypeEnum),
+            enum: NotificationResourceTypes,
             required: true,
           },
           date: {

@@ -2,39 +2,49 @@ import mongoose, { Schema, type Model } from "mongoose";
 
 import { weights } from "../config/trendFactors.js";
 import ScoreWeight, { type IScoreWeight } from "./ScoreWeight.js";
+import { ResourceTypeEnum } from "./Enum/ResourceTypeEnum.js";
 
 export enum ActivityTypeEnum {
-  NEW_CHECKIN = "NEW_CHECKIN",
-  NEW_REVIEW = "NEW_REVIEW",
-  NEW_HOMEMADE = "NEW_HOMEMADE",
-  NEW_RECOMMEND = "NEW_RECOMMEND",
-  ADD_PLACE = "ADD_PLACE",
-  LEVEL_UP = "LEVEL_UP",
-  FOLLOWING = "FOLLOWING",
+  NewCheckIn = "NEW_CHECKIN",
+  NewReview = "NEW_REVIEW",
+  NewHomemade = "NEW_HOMEMADE",
+  NewRecommend = "NEW_RECOMMEND",
+  AddPlace = "ADD_PLACE",
+  LevelUp = "LEVEL_UP",
+  Following = "FOLLOWING",
 }
 
 export enum ResourcePrivacyEnum {
-  PUBLIC = "PUBLIC",
-  PRIVATE = "PRIVATE",
-  FOLLOWERS = "FOLLOWERS",
+  Public = "PUBLIC",
+  Private = "PRIVATE",
+  Followers = "FOLLOWERS",
 }
 
-export enum ActivityResourceTypeEnum {
-  PLACE = "Place",
-  REVIEW = "Review",
-  CHECKIN = "CheckIn",
-  USER = "User",
-  REACTION = "Reaction",
-  ACHIEVEMET = "Achievement",
-  HOMEMADE = "Homemade",
-}
+export type UserActivityResourceType =
+  | ResourceTypeEnum.Place
+  | ResourceTypeEnum.Review
+  | ResourceTypeEnum.CheckIn
+  | ResourceTypeEnum.User
+  | ResourceTypeEnum.Reaction
+  | ResourceTypeEnum.Achievement
+  | ResourceTypeEnum.Homemade;
+
+const UserActivityResourceTypes: UserActivityResourceType[] = [
+  ResourceTypeEnum.Place,
+  ResourceTypeEnum.Review,
+  ResourceTypeEnum.CheckIn,
+  ResourceTypeEnum.User,
+  ResourceTypeEnum.Reaction,
+  ResourceTypeEnum.Achievement,
+  ResourceTypeEnum.Homemade,
+];
 
 export interface IUserActivity {
   _id: mongoose.Types.ObjectId;
   userId: mongoose.Types.ObjectId;
   activityType: ActivityTypeEnum;
   resourceId: mongoose.Types.ObjectId;
-  resourceType: ActivityResourceTypeEnum;
+  resourceType: UserActivityResourceType;
   resourcePrivacy: ResourcePrivacyEnum;
   isAccountPrivate: boolean;
   placeId?: mongoose.Types.ObjectId;
@@ -75,7 +85,7 @@ const UserActivitySchema = new Schema<
     },
     resourceType: {
       type: String,
-      enum: Object.values(ActivityResourceTypeEnum),
+      enum: UserActivityResourceTypes,
       required: true,
     },
     resourceId: {

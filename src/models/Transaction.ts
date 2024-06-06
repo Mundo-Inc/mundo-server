@@ -1,16 +1,16 @@
 import mongoose, { Schema, type Model } from "mongoose";
 
 enum TransactionStatusEnum {
-  pending = "pending",
-  completed = "completed",
-  failed = "failed",
+  Pending = "pending",
+  Completed = "completed",
+  Failed = "failed",
 }
 
 export interface ITransaction {
   _id: mongoose.Types.ObjectId;
-  amount: Number;
-  serviceFee: Number;
-  totalAmount: Number;
+  amount: number;
+  serviceFee: number;
+  totalAmount: number;
   sender: mongoose.Types.ObjectId;
   recipient: mongoose.Types.ObjectId;
   paymentIntentId: string;
@@ -52,7 +52,7 @@ const TransactionSchema = new Schema<ITransaction>(
     status: {
       type: String,
       enum: Object.values(TransactionStatusEnum),
-      default: TransactionStatusEnum.pending,
+      default: TransactionStatusEnum.Pending,
     },
   },
   {

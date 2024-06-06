@@ -1,10 +1,10 @@
 import mongoose, { Schema, type Model } from "mongoose";
 
 export enum TaskTypeEnum {
-  REVIEW = "REVIEW",
-  HAS_MEDIA = "HAS_MEDIA",
-  CHECKIN = "CHECKIN",
-  REACT = "REACT",
+  Review = "REVIEW",
+  HasMedia = "HAS_MEDIA",
+  CheckIn = "CHECKIN",
+  React = "REACT",
 }
 
 export interface ITask {

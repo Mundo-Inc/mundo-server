@@ -71,7 +71,7 @@ const ReviewSchema = new Schema<IReview>(
     privacyType: {
       type: String,
       enum: Object.values(ResourcePrivacyEnum),
-      default: ResourcePrivacyEnum.PUBLIC,
+      default: ResourcePrivacyEnum.Public,
       required: true,
     },
   },

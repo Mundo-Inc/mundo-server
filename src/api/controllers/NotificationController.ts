@@ -31,7 +31,7 @@ async function getNotificationContent(notification: INotification) {
   let activity: string | undefined = undefined;
 
   switch (notification.type) {
-    case NotificationTypeEnum.COMMENT:
+    case NotificationTypeEnum.Comment:
       await Comment.findById(notification.resources![0]._id)
         .populate<{
           author: UserProjectionEssentials;
@@ -50,7 +50,7 @@ async function getNotificationContent(notification: INotification) {
           }
         });
       break;
-    case NotificationTypeEnum.FOLLOW:
+    case NotificationTypeEnum.Follow:
       await Follow.findById(notification.resources![0]._id)
         .populate<{
           user: UserProjectionEssentials;
@@ -67,7 +67,7 @@ async function getNotificationContent(notification: INotification) {
           }
         });
       break;
-    case NotificationTypeEnum.COMMENT_MENTION:
+    case NotificationTypeEnum.CommentMention:
       await Comment.findById(notification.resources![0]._id)
         .populate<{
           author: UserProjectionEssentials;
@@ -86,7 +86,7 @@ async function getNotificationContent(notification: INotification) {
           }
         });
       break;
-    case NotificationTypeEnum.REACTION:
+    case NotificationTypeEnum.Reaction:
       await Reaction.findById(notification.resources![0]._id)
         .populate<{
           user: UserProjectionEssentials;
@@ -108,15 +108,7 @@ async function getNotificationContent(notification: INotification) {
           }
         });
       break;
-    case NotificationTypeEnum.XP:
-      title = "XP Gain";
-      content = `+ ${notification.content}`;
-      break;
-    case NotificationTypeEnum.LEVEL_UP:
-      title = "Level Up!";
-      content = `You've reached level ${notification.content}!`;
-      break;
-    case NotificationTypeEnum.FOLLOWING_REVIEW:
+    case NotificationTypeEnum.FollowingReview:
       await Review.findById(notification.resources![0]._id)
         .populate<{
           writer: UserProjectionEssentials;
@@ -155,7 +147,7 @@ async function getNotificationContent(notification: INotification) {
           }
         });
       break;
-    case NotificationTypeEnum.FOLLOWING_HOMEMADE:
+    case NotificationTypeEnum.FollowingHomemade:
       await Review.findById(notification.resources![0]._id)
         .populate<{
           userId: UserProjectionEssentials;
@@ -173,7 +165,7 @@ async function getNotificationContent(notification: INotification) {
           }
         });
       break;
-    case NotificationTypeEnum.FOLLOWING_CHECKIN:
+    case NotificationTypeEnum.FollowingCheckIn:
       await CheckIn.findById(notification.resources![0]._id)
         .populate<{
           user: UserProjectionEssentials;
@@ -197,7 +189,7 @@ async function getNotificationContent(notification: INotification) {
           }
         });
       break;
-    case NotificationTypeEnum.REFERRAL_REWARD:
+    case NotificationTypeEnum.ReferralReward:
       title = "Referral Reward";
       const friendName =
         "(" + notification.additionalData?.newUserName + ") " || "";
@@ -205,7 +197,7 @@ async function getNotificationContent(notification: INotification) {
         notification.additionalData?.amount || 250
       } Phantom Coins for successfully referring your frined ${friendName} to our app. Thanks for sharing!`;
       break;
-    case NotificationTypeEnum.FOLLOW_REQUEST:
+    case NotificationTypeEnum.FollowRequest:
       await FollowRequest.findById(notification.resources![0]._id)
         .populate<{
           user: UserProjectionEssentials;
@@ -222,7 +214,7 @@ async function getNotificationContent(notification: INotification) {
           }
         });
       break;
-    case NotificationTypeEnum.FOLLOW_REQUEST_ACCEPTED:
+    case NotificationTypeEnum.FollowRequestAccepted:
       await Follow.findById(notification.resources![0]._id)
         .populate<{
           user: UserProjectionEssentials;

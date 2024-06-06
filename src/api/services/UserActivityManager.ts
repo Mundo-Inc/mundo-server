@@ -1,8 +1,8 @@
 import { type Types } from "mongoose";
 
+import { ResourceTypeEnum } from "../../models/Enum/ResourceTypeEnum.js";
 import { type IUser } from "../../models/User.js";
 import UserActivity, {
-  ActivityResourceTypeEnum,
   ActivityTypeEnum,
   ResourcePrivacyEnum,
 } from "../../models/UserActivity.js";
@@ -15,10 +15,10 @@ export class UserActivityManager {
     const activity = await UserActivity.create({
       userId: user._id,
       isAccountPrivate: user.isPrivate,
-      activityType: ActivityTypeEnum.FOLLOWING,
+      activityType: ActivityTypeEnum.Following,
       resourceId: targetUserId,
-      resourceType: ActivityResourceTypeEnum.USER,
-      resourcePrivacy: ResourcePrivacyEnum.PUBLIC,
+      resourceType: ResourceTypeEnum.User,
+      resourcePrivacy: ResourcePrivacyEnum.Public,
     });
     return activity;
   }
@@ -30,10 +30,10 @@ export class UserActivityManager {
     const activity = await UserActivity.create({
       userId: user._id,
       isAccountPrivate: user.isPrivate,
-      activityType: ActivityTypeEnum.LEVEL_UP,
+      activityType: ActivityTypeEnum.LevelUp,
       resourceId: user._id,
-      resourceType: ActivityResourceTypeEnum.USER,
-      resourcePrivacy: ResourcePrivacyEnum.PUBLIC,
+      resourceType: ResourceTypeEnum.User,
+      resourcePrivacy: ResourcePrivacyEnum.Public,
       newLevel,
     });
     return activity;
@@ -49,9 +49,9 @@ export class UserActivityManager {
     const activity = await UserActivity.create({
       userId: user._id,
       isAccountPrivate: user.isPrivate,
-      activityType: ActivityTypeEnum.NEW_CHECKIN,
+      activityType: ActivityTypeEnum.NewCheckIn,
       resourceId: checkInId,
-      resourceType: ActivityResourceTypeEnum.CHECKIN,
+      resourceType: ResourceTypeEnum.CheckIn,
       resourcePrivacy,
       placeId,
       hasMedia,
@@ -68,10 +68,10 @@ export class UserActivityManager {
     const activity = await UserActivity.create({
       userId: user._id,
       isAccountPrivate: user.isPrivate,
-      activityType: ActivityTypeEnum.NEW_REVIEW,
+      activityType: ActivityTypeEnum.NewReview,
       resourceId: reviewId,
-      resourceType: ActivityResourceTypeEnum.REVIEW,
-      resourcePrivacy: ResourcePrivacyEnum.PUBLIC,
+      resourceType: ResourceTypeEnum.Review,
+      resourcePrivacy: ResourcePrivacyEnum.Public,
       placeId,
       hasMedia,
     });
@@ -85,10 +85,10 @@ export class UserActivityManager {
     const activity = await UserActivity.create({
       userId: user._id,
       isAccountPrivate: user.isPrivate,
-      activityType: ActivityTypeEnum.NEW_HOMEMADE,
+      activityType: ActivityTypeEnum.NewHomemade,
       resourceId: homemadeId,
-      resourceType: ActivityResourceTypeEnum.HOMEMADE,
-      resourcePrivacy: ResourcePrivacyEnum.PUBLIC,
+      resourceType: ResourceTypeEnum.Homemade,
+      resourcePrivacy: ResourcePrivacyEnum.Public,
       hasMedia: true, // TODO: Make sure it has media
     });
     return activity;
@@ -103,10 +103,10 @@ export class UserActivityManager {
     const activity = await UserActivity.create({
       userId: user._id,
       isAccountPrivate: user.isPrivate,
-      activityType: ActivityTypeEnum.NEW_RECOMMEND,
+      activityType: ActivityTypeEnum.NewRecommend,
       resourceId: reviewId,
-      resourceType: ActivityResourceTypeEnum.REVIEW,
-      resourcePrivacy: ResourcePrivacyEnum.PUBLIC,
+      resourceType: ResourceTypeEnum.Review,
+      resourcePrivacy: ResourcePrivacyEnum.Public,
       placeId,
     });
     return activity;

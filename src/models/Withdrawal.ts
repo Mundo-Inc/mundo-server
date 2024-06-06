@@ -1,15 +1,15 @@
 import mongoose, { Schema, type Model } from "mongoose";
 
 enum WithdrawalStatusEnum {
-  pending = "pending",
-  completed = "completed",
-  failed = "failed",
+  Pending = "pending",
+  Completed = "completed",
+  Failed = "failed",
 }
 
 export interface IWithdrawal {
   _id: mongoose.Types.ObjectId;
   user: mongoose.Types.ObjectId;
-  amount: Number;
+  amount: number;
   payoutId: string;
   status: WithdrawalStatusEnum;
   createdAt: Date;
@@ -32,7 +32,7 @@ const WithdrawalSchema = new Schema<IWithdrawal>(
     status: {
       type: String,
       enum: Object.values(WithdrawalStatusEnum),
-      default: WithdrawalStatusEnum.pending,
+      default: WithdrawalStatusEnum.Pending,
     },
   },
   {

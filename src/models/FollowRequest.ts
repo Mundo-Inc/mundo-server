@@ -1,9 +1,7 @@
 import mongoose, { Schema, type Model, type Types } from "mongoose";
 
-import Notification, {
-  NotificationTypeEnum,
-  ResourceTypeEnum,
-} from "./Notification.js";
+import Notification, { NotificationTypeEnum } from "./Notification.js";
+import { ResourceTypeEnum } from "./Enum/ResourceTypeEnum.js";
 
 export interface IFollowRequest {
   _id: Types.ObjectId;
@@ -37,11 +35,11 @@ FollowRequestSchema.post("save", async function (doc, next) {
   // create notification
   await Notification.create({
     user: doc.target,
-    type: NotificationTypeEnum.FOLLOW_REQUEST,
+    type: NotificationTypeEnum.FollowRequest,
     resources: [
       {
         _id: doc._id,
-        type: ResourceTypeEnum.FOLLOW_REQUEST,
+        type: ResourceTypeEnum.FollowRequest,
         date: doc.createdAt,
       },
     ],

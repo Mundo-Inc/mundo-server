@@ -102,7 +102,7 @@ export async function getActivitiesOfaUser(
         )
       );
 
-      query.resourcePrivacy = { $ne: ResourcePrivacyEnum.PRIVATE };
+      query.resourcePrivacy = { $ne: ResourcePrivacyEnum.Private };
     }
 
     if (type) {

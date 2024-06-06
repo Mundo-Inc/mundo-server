@@ -124,7 +124,7 @@ export async function firebaseSync(
           userData.email,
           userData.displayName || "",
           username,
-          SignupMethodEnum.cloud,
+          SignupMethodEnum.Cloud,
           null,
           userData.uid,
           userData.photoURL

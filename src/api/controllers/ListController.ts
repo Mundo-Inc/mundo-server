@@ -307,7 +307,7 @@ export async function addToList(
     );
 
     const isCollaborator = list.collaborators.some(
-      (c) => c.user.equals(authUser._id) && c.access === AccessEnum.edit
+      (c) => c.user.equals(authUser._id) && c.access === AccessEnum.Edit
     );
 
     if (!isCollaborator) {
@@ -364,7 +364,7 @@ export async function removeFromList(
     );
 
     const isCollaborator = list.collaborators.some(
-      (c) => c.user.equals(authUser._id) && c.access === AccessEnum.edit
+      (c) => c.user.equals(authUser._id) && c.access === AccessEnum.Edit
     );
 
     if (!isCollaborator) {
@@ -412,7 +412,7 @@ export async function addCollaborator(
     const id = new mongoose.Types.ObjectId(req.params.id);
     const userId = new mongoose.Types.ObjectId(req.params.userId);
 
-    const access: AccessEnum = req.body.access || AccessEnum.edit;
+    const access: AccessEnum = req.body.access || AccessEnum.Edit;
 
     const list = await List.findById(id).orFail(
       createError(dynamicMessage(ds.notFound, "List"), StatusCodes.NOT_FOUND)

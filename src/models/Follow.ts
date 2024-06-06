@@ -1,14 +1,12 @@
 import mongoose, { Schema, type Model } from "mongoose";
 
-import Notification, {
-  NotificationTypeEnum,
-  ResourceTypeEnum,
-} from "./Notification.js";
+import { ResourceTypeEnum } from "./Enum/ResourceTypeEnum.js";
+import Notification, { NotificationTypeEnum } from "./Notification.js";
 
 export enum FollowStatusEnum {
-  FOLLOWING = "following",
-  NOT_FOLLOWING = "notFollowing",
-  REQUESTED = "requested",
+  Following = "following",
+  NotFollowing = "notFollowing",
+  Requested = "requested",
 }
 
 export interface IFollow {
@@ -43,9 +41,9 @@ FollowSchema.post("save", async function (doc, next) {
   // create notification
   await Notification.create({
     user: doc.target,
-    type: NotificationTypeEnum.FOLLOW,
+    type: NotificationTypeEnum.Follow,
     resources: [
-      { _id: doc._id, type: ResourceTypeEnum.FOLLOW, date: doc.createdAt },
+      { _id: doc._id, type: ResourceTypeEnum.Follow, date: doc.createdAt },
     ],
     importance: 2,
   });

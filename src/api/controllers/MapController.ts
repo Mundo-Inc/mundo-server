@@ -88,7 +88,7 @@ export async function getMapActivities(
             $box: boundingBox,
           },
         },
-        resourcePrivacy: { $ne: ResourcePrivacyEnum.PRIVATE },
+        resourcePrivacy: { $ne: ResourcePrivacyEnum.Private },
         isAccountPrivate: false,
         createdAt: { $gte: createdAtFrom },
       };
@@ -100,7 +100,7 @@ export async function getMapActivities(
           },
         },
         createdAt: { $gte: createdAtFrom },
-        resourcePrivacy: { $ne: ResourcePrivacyEnum.PRIVATE },
+        resourcePrivacy: { $ne: ResourcePrivacyEnum.Private },
         isAccountPrivate: false,
       };
     } else {
@@ -124,7 +124,7 @@ export async function getMapActivities(
             $box: boundingBox,
           },
         },
-        resourcePrivacy: { $ne: ResourcePrivacyEnum.PRIVATE },
+        resourcePrivacy: { $ne: ResourcePrivacyEnum.Private },
         createdAt: { $gte: createdAtFrom },
       };
     }

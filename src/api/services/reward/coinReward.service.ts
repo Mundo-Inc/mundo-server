@@ -3,12 +3,11 @@ import mongoose, { type Document } from "mongoose";
 import { dailyCoinsCFG } from "../../../config/dailyCoins.js";
 import CheckIn from "../../../models/CheckIn.js";
 import CoinReward from "../../../models/CoinReward.js";
+import { ResourceTypeEnum } from "../../../models/Enum/ResourceTypeEnum.js";
 import { TaskTypeEnum, type IMission } from "../../../models/Mission.js";
 import Reaction from "../../../models/Reaction.js";
 import type { IDailyReward, IUser } from "../../../models/User.js";
-import UserActivity, {
-  ActivityResourceTypeEnum,
-} from "../../../models/UserActivity.js";
+import UserActivity from "../../../models/UserActivity.js";
 
 const DAY_HOURS = 24;
 
@@ -79,7 +78,7 @@ export async function populateMissionProgress(
       total: mission.task.count,
     },
   };
-  if (mission.task.type === TaskTypeEnum.REACT) {
+  if (mission.task.type === TaskTypeEnum.React) {
     const reactionAggregate = await Reaction.aggregate([
       {
         $match: {
@@ -103,7 +102,7 @@ export async function populateMissionProgress(
       reactionAggregate.length > 0 ? reactionAggregate[0].distinctTargets : 0;
     populatedMission.progress.completed = completedCount;
   }
-  if (mission.task.type === TaskTypeEnum.CHECKIN) {
+  if (mission.task.type === TaskTypeEnum.CheckIn) {
     const checkinAggregation = await CheckIn.aggregate([
       {
         $match: {
@@ -127,7 +126,7 @@ export async function populateMissionProgress(
       checkinAggregation.length > 0 ? checkinAggregation[0].distinctPlaces : 0;
     populatedMission.progress.completed = completedCount;
   }
-  if (mission.task.type === TaskTypeEnum.HAS_MEDIA) {
+  if (mission.task.type === TaskTypeEnum.HasMedia) {
     const completedCount = await UserActivity.countDocuments({
       userId: userId,
       hasMedia: true,
@@ -138,10 +137,10 @@ export async function populateMissionProgress(
     });
     populatedMission.progress.completed = completedCount;
   }
-  if (mission.task.type === TaskTypeEnum.REVIEW) {
+  if (mission.task.type === TaskTypeEnum.Review) {
     const completedCount = await UserActivity.countDocuments({
       userId: userId,
-      resourceType: ActivityResourceTypeEnum.REVIEW,
+      resourceType: ResourceTypeEnum.Review,
       createdAt: {
         $gte: mission.startsAt,
         $lte: mission.expiresAt,

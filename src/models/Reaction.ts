@@ -1,10 +1,8 @@
 import mongoose, { Schema, type CallbackError, type Model } from "mongoose";
 
 import logger from "../api/services/logger/index.js";
-import Notification, {
-  NotificationTypeEnum,
-  ResourceTypeEnum,
-} from "./Notification.js";
+import { ResourceTypeEnum } from "./Enum/ResourceTypeEnum.js";
+import Notification, { NotificationTypeEnum } from "./Notification.js";
 import UserActivity from "./UserActivity.js";
 
 export interface IReaction {
@@ -56,7 +54,7 @@ async function removeDependencies(reaction: IReaction) {
     resources: {
       $elemMatch: {
         _id: reaction._id,
-        type: ResourceTypeEnum.REACTION,
+        type: ResourceTypeEnum.Reaction,
       },
     },
   });
@@ -97,9 +95,9 @@ ReactionSchema.post("save", async function (doc, next) {
   if (activity) {
     await Notification.create({
       user: activity.userId,
-      type: NotificationTypeEnum.REACTION,
+      type: NotificationTypeEnum.Reaction,
       resources: [
-        { _id: doc._id, type: ResourceTypeEnum.REACTION, date: doc.createdAt },
+        { _id: doc._id, type: ResourceTypeEnum.Reaction, date: doc.createdAt },
       ],
       importance: 1,
     });

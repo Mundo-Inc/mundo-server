@@ -1,8 +1,8 @@
 import mongoose, { Schema, type Model } from "mongoose";
 
 export enum ProfileDecorationEnum {
-  PROFILE_FRAME = "ProfileFrame",
-  PROFILE_COVER = "ProfileCover",
+  ProfileFrame = "PROFILE_FRAME",
+  ProfileCover = "PROFILE_COVER",
 }
 export interface IProfileDecorationRedemption {
   _id: mongoose.Types.ObjectId;
