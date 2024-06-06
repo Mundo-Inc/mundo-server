@@ -55,6 +55,7 @@ async function main() {
       logger.info(`Server listening on port ${env.APP_PORT}`);
     });
 
+    await import("./cronjobs/scheduledTasks.js");
     await import("./cronjobs/updateTrendScores.js");
     await import("./cronjobs/bots.js");
 

@@ -78,8 +78,8 @@ importers:
         specifier: ^3.0.3
         version: 3.0.3
       openai:
-        specifier: ^4.48.2
-        version: 4.48.2
+        specifier: ^4.48.3
+        version: 4.48.3
       stripe:
         specifier: ^15.9.0
         version: 15.9.0
@@ -2157,8 +2157,8 @@ packages:
   one-time@1.0.0:
     resolution: {integrity: sha512-5DXOiRKwuSEcQ/l0kGCF6Q3jcADFv5tSmRaJck/OqkVFcOzutB134KRSfF0xDrL39MNnqxbHBbUUcjZIhTgb2g==}
 
-  openai@4.48.2:
-    resolution: {integrity: sha512-3z4JEipIzwFtLvDC3KigZEWH4ALWDHPr6XCq/xYi8O1AQ5lAtu6Ib6FO8KeQ8RdjwfIqHWOWk/zopW5g780s/w==}
+  openai@4.48.3:
+    resolution: {integrity: sha512-EmyvU39gEUWlSMVaL5l351DIEq2iMmtyQHpJHOdJnPIULiIbRtFlgyZh8w+svs5Dh/Z2J5m0Svzpk174YWUHpQ==}
     hasBin: true
 
   optional-require@1.1.8:
@@ -5375,7 +5375,7 @@ snapshots:
     dependencies:
       fn.name: 1.1.0
 
-  openai@4.48.2:
+  openai@4.48.3:
     dependencies:
       '@types/node': 18.19.34
       '@types/node-fetch': 2.6.11

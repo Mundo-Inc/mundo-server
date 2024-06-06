@@ -118,6 +118,7 @@ export interface IUser {
      */
     balance: number;
   };
+  mundoInteractionFrequency?: number;
 }
 
 const UserSchema = new Schema<IUser>(
@@ -293,8 +294,12 @@ const UserSchema = new Schema<IUser>(
       defaultPayoutMethodId: { type: String },
       balance: { type: Number, required: true, default: 0 },
     },
+    mundoInteractionFrequency: {
+      type: Number,
+      min: 0,
+      max: 100,
+    },
   },
-
   { timestamps: true }
 );
 

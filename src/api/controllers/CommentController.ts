@@ -19,6 +19,12 @@ import { addReward } from "../services/reward/reward.service.js";
 import validate from "./validators.js";
 import { OpenAIService } from "../services/OpenAIService.js";
 import { env } from "../../env.js";
+import ScheduledTask, {
+  ScheduledTaskStatus,
+  ScheduledTaskType,
+} from "../../models/ScheduledTask.js";
+import { getRandomDateInRange } from "../../utilities/dateTime.js";
+import { shouldBotInteract } from "../../utilities/mundo.js";
 
 export const createCommentValidation: ValidationChain[] = [
   body("activity").isMongoId().withMessage("Invalid activity id"),
@@ -145,26 +151,13 @@ export async function createComment(
 
     // AI reply
     if (parentComment && parentComment.author.equals(env.MUNDO_USER_ID)) {
-      const reply = await OpenAIService.getInstance().replyToComment(comment);
-
-      if (reply && reply !== "-") {
-        // Create comment
-        const newCm = await Comment.create({
-          author: env.MUNDO_USER_ID,
-          rootComment: comment.rootComment || comment._id,
-          parent: comment._id,
-          userActivity: activityId,
-          content: reply,
+      if (await shouldBotInteract(user._id)) {
+        await ScheduledTask.create({
+          status: ScheduledTaskStatus.Pending,
+          type: ScheduledTaskType.ReplyToComment,
+          resourceId: comment._id,
+          scheduledAt: getRandomDateInRange(60 * 60 * 2, 60 * 5),
         });
-
-        comment.children.push(newCm._id);
-        await comment.save();
-
-        // update comments count in user activity
-        await UserActivity.updateOne(
-          { _id: activityId },
-          { $inc: { "engagements.comments": 1 } }
-        );
       }
     }
   } catch (err) {

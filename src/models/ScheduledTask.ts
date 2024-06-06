@@ -1,22 +1,22 @@
-import mongoose, { Schema, type Model } from "mongoose";
+import mongoose, { Schema, type Model, type Types } from "mongoose";
 
-enum ScheduledTaskStatus {
+export enum ScheduledTaskStatus {
   Pending = "PENDING",
   Running = "RUNNING",
   Failed = "FAILED",
 }
 
-enum ScheduledTaskType {
-  ReactToActivity = "REACT_TO_ACTIVITY",
+export enum ScheduledTaskType {
   CommentOnActivity = "COMMENT_ON_ACTIVITY",
   ReplyToComment = "REPLY_TO_COMMENT",
 }
 
 export interface IScheduledTask {
-  _id: mongoose.Types.ObjectId;
+  _id: Types.ObjectId;
+
   status: ScheduledTaskStatus;
   type: ScheduledTaskType;
-  resource: mongoose.Types.ObjectId;
+  resourceId: Types.ObjectId;
   scheduledAt: Date;
 
   createdAt: Date;
@@ -24,9 +24,30 @@ export interface IScheduledTask {
 }
 
 const ScheduledTaskSchema = new Schema<IScheduledTask>(
-  {},
+  {
+    status: {
+      type: String,
+      enum: Object.values(ScheduledTaskStatus),
+      default: ScheduledTaskStatus.Pending,
+    },
+    type: {
+      type: String,
+      enum: Object.values(ScheduledTaskType),
+      required: true,
+    },
+    resourceId: {
+      type: Schema.Types.ObjectId,
+      required: true,
+    },
+    scheduledAt: {
+      type: Date,
+      required: true,
+    },
+  },
   { timestamps: true }
 );
+
+ScheduledTaskSchema.index({ status: 1, scheduledAt: 1 });
 
 const ScheduledTask =
   (mongoose.models.ScheduledTask as Model<IScheduledTask>) ||

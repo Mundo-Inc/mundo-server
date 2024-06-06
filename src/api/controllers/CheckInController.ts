@@ -3,9 +3,7 @@ import { body, param, query, type ValidationChain } from "express-validator";
 import { StatusCodes } from "http-status-codes";
 import mongoose, { type AnyKeys, type PipelineStage } from "mongoose";
 
-import { env } from "../../env.js";
 import CheckIn, { type ICheckIn } from "../../models/CheckIn.js";
-import Comment from "../../models/Comment.js";
 import { ResourceTypeEnum } from "../../models/Enum/ResourceTypeEnum.js";
 import Event from "../../models/Event.js";
 import Follow from "../../models/Follow.js";
@@ -14,20 +12,23 @@ import Notification, {
   NotificationTypeEnum,
 } from "../../models/Notification.js";
 import Place from "../../models/Place.js";
+import ScheduledTask, {
+  ScheduledTaskStatus,
+  ScheduledTaskType,
+} from "../../models/ScheduledTask.js";
 import Upload from "../../models/Upload.js";
 import User from "../../models/User.js";
-import UserActivity, {
-  ResourcePrivacyEnum,
-} from "../../models/UserActivity.js";
+import { ResourcePrivacyEnum } from "../../models/UserActivity.js";
 import strings, { dStrings, dynamicMessage } from "../../strings.js";
+import { getRandomDateInRange } from "../../utilities/dateTime.js";
 import {
   createError,
   handleInputErrors,
 } from "../../utilities/errorHandlers.js";
+import { shouldBotInteract } from "../../utilities/mundo.js";
 import { getPaginationFromQuery } from "../../utilities/pagination.js";
 import PlaceProjection from "../dto/place.js";
 import UserProjection from "../dto/user.js";
-import { OpenAIService } from "../services/OpenAIService.js";
 import { UserActivityManager } from "../services/UserActivityManager.js";
 import { checkinEarning } from "../services/earning.service.js";
 import logger from "../services/logger/index.js";
@@ -523,23 +524,13 @@ export async function createCheckIn(
 
     // AI Comment
     if (checkIn.privacyType === ResourcePrivacyEnum.Public) {
-      const cmBody = await OpenAIService.getInstance().makeACommentOnCheckIn(
-        checkIn
-      );
-
-      if (cmBody && cmBody !== "-") {
-        // Create comment
-        await Comment.create({
-          author: env.MUNDO_USER_ID,
-          userActivity: checkIn.userActivityId,
-          content: cmBody,
+      if (await shouldBotInteract(authUser._id)) {
+        await ScheduledTask.create({
+          status: ScheduledTaskStatus.Pending,
+          type: ScheduledTaskType.CommentOnActivity,
+          resourceId: checkIn.userActivityId,
+          scheduledAt: getRandomDateInRange(60 * 60 * 3, 60 * 5),
         });
-
-        // update comments count in user activity
-        await UserActivity.updateOne(
-          { _id: checkIn.userActivityId },
-          { $inc: { "engagements.comments": 1 } }
-        );
       }
     }
   } catch (err) {
