@@ -19,8 +19,6 @@ import UserActivity, {
 schedule(
   "*/3 * * * *",
   async () => {
-    console.log("Running scheduled tasks");
-
     const tasks = await ScheduledTask.find({
       status: ScheduledTaskStatus.Pending,
       scheduledAt: { $lte: new Date() },
