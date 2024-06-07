@@ -26,3 +26,7 @@ export function getFormattedDateTime(): string {
 
   return `${year}-${monthFormatted}-${dayFormatted}--${hoursFormatted}-${minutesFormatted}`;
 }
+
+export function trimQuotes(str: string) {
+  return str.replace(/^"|"$/g, "");
+}

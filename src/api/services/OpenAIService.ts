@@ -11,6 +11,7 @@ import User, { type IUser } from "../../models/User.js";
 import UserActivity, {
   ResourcePrivacyEnum,
 } from "../../models/UserActivity.js";
+import { trimQuotes } from "../../utilities/stringHelper.js";
 
 export class OpenAIService {
   private static instance: OpenAIService;
@@ -52,7 +53,7 @@ export class OpenAIService {
         },
         {
           role: "system",
-          content: `If you can't think of anything to say, respond with something like: 'Noice'.`,
+          content: `If you think it's better to not say anything, just respond with "-".`,
         },
         {
           role: "user",
@@ -62,7 +63,7 @@ export class OpenAIService {
       model: "gpt-4o",
     });
 
-    return response.choices[0].message.content;
+    return this.trimResponse(response.choices[0].message.content);
   }
 
   public async makeACommentOnCheckIn(checkIn: ICheckIn) {
@@ -95,7 +96,7 @@ export class OpenAIService {
         },
         {
           role: "system",
-          content: `If you can't think of anything to say, respond with something like: 'Noice'.`,
+          content: `If you think it's better to not say anything, just respond with "-".`,
         },
         {
           role: "user",
@@ -105,7 +106,7 @@ export class OpenAIService {
       model: "gpt-4o",
     });
 
-    return response.choices[0].message.content;
+    return this.trimResponse(response.choices[0].message.content);
   }
 
   public async replyToComment(comment: IComment) {
@@ -147,7 +148,7 @@ export class OpenAIService {
         },
         {
           role: "system",
-          content: `Don't push the conversation if they respond with a short reply or if you think this should be the end of conversation just respond with "-"`,
+          content: `Don't push the conversation. So if they respond with a short reply or if you think this should be the end of conversation just respond with "-"`,
         },
         {
           role: "user",
@@ -157,7 +158,7 @@ export class OpenAIService {
       model: "gpt-4o",
     });
 
-    return response.choices[0].message.content;
+    return this.trimResponse(response.choices[0].message.content);
   }
 
   private async getActivityHistory(
@@ -225,6 +226,13 @@ export class OpenAIService {
       ? "\nActivity history:\n" +
           activities.map((activity) => activity.text).join("\n")
       : "";
+  }
+
+  private trimResponse(response: string | null) {
+    if (!response?.length) return null;
+
+    const trimmedResponse = trimQuotes(response);
+    return trimmedResponse === "-" ? null : trimmedResponse;
   }
 }
 

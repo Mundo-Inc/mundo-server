@@ -25,7 +25,7 @@
     "node": ">=18.0.0"
   },
   "dependencies": {
-    "@aws-sdk/client-s3": "^3.591.0",
+    "@aws-sdk/client-s3": "^3.592.0",
     "@ffmpeg-installer/ffmpeg": "^1.1.0",
     "@getbrevo/brevo": "^2.1.1",
     "@t3-oss/env-core": "^0.10.1",
@@ -48,8 +48,8 @@
     "moment-timezone": "^0.5.45",
     "mongoose": "^8.4.1",
     "node-cron": "^3.0.3",
-    "openai": "^4.48.3",
-    "stripe": "^15.9.0",
+    "openai": "^4.49.0",
+    "stripe": "^15.10.0",
     "twilio": "^5.1.1",
     "tz-lookup": "^6.1.25",
     "uuid": "^9.0.1",
@@ -70,7 +70,7 @@
     "@types/tz-lookup": "^6.1.2",
     "@types/uuid": "^9.0.8",
     "concurrently": "^8.2.2",
-    "tsx": "^4.12.0",
+    "tsx": "^4.13.2",
     "typescript": "^5.4.5"
   },
   "packageManager": "pnpm@9.2.0"
