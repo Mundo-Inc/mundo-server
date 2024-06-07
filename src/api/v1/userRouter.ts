@@ -48,6 +48,8 @@ import {
   getUser,
   getUserValidation,
   getUsers,
+  getUsersByIds,
+  getUsersByIdsValidation,
   getUsersValidation,
   leaderBoardValidation,
   putUserPrivacy,
@@ -69,6 +71,8 @@ router
   .route("/")
   .get(optionalAuthMiddleware, getUsersValidation, getUsers)
   .post(createUserValidation, createUser);
+
+router.post("/by-ids", getUsersByIdsValidation, getUsersByIds);
 
 router.get(
   "/leaderboard",
@@ -111,32 +115,6 @@ router.get(
 );
 
 router
-  .route("/:id")
-  .get(optionalAuthMiddleware, getUserValidation, getUser)
-  .put(authMiddleware, editUserValidation, editUser)
-  .delete(authMiddleware, deleteUserValidation, deleteUser);
-
-router.put(
-  "/:id/privacy",
-  authMiddleware,
-  userPrivacyValidation,
-  putUserPrivacy
-);
-
-router.put(
-  "/:id/settings",
-  authMiddleware,
-  userSettingsValidation,
-  putUserSettings
-);
-router.get(
-  "/:id/latestplace",
-  authMiddleware,
-  getLatestPlaceValidation,
-  getLatestPlace
-);
-
-router
   .route("/:id/connections")
   .post(authMiddleware, createUserConnectionValidation, createUserConnection)
   .delete(authMiddleware, deleteUserConnectionValidation, deleteUserConnection);
@@ -154,6 +132,27 @@ router.get(
   getUserConnections
 );
 
+router.put(
+  "/:id/privacy",
+  authMiddleware,
+  userPrivacyValidation,
+  putUserPrivacy
+);
+
+router.put(
+  "/:id/settings",
+  authMiddleware,
+  userSettingsValidation,
+  putUserSettings
+);
+
+router.get(
+  "/:id/latestplace",
+  authMiddleware,
+  getLatestPlaceValidation,
+  getLatestPlace
+);
+
 router.get("/:id/lists", authMiddleware, getUserListsValidation, getUserLists);
 
 router.get(
@@ -167,5 +166,11 @@ router
   .route("/:id/block")
   .post(authMiddleware, blockValidation, block)
   .delete(authMiddleware, blockValidation, unblock);
+
+router
+  .route("/:id")
+  .get(optionalAuthMiddleware, getUserValidation, getUser)
+  .put(authMiddleware, editUserValidation, editUser)
+  .delete(authMiddleware, deleteUserValidation, deleteUser);
 
 export default router;

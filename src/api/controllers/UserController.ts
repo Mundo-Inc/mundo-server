@@ -30,7 +30,7 @@ import {
 } from "../../utilities/errorHandlers.js";
 import { getPaginationFromQuery } from "../../utilities/pagination.js";
 import { bucketName, s3 } from "../../utilities/storage.js";
-import UserProjection from "../dto/user.js";
+import UserProjection, { type UserProjectionEssentials } from "../dto/user.js";
 import { handleSignUp } from "../lib/profile-handlers.js";
 import { BrevoService } from "../services/BrevoService.js";
 import logger from "../services/logger/index.js";
@@ -61,7 +61,7 @@ export async function getUsers(
       maxLimit: 50,
     });
 
-    let users = [];
+    let users: UserProjectionEssentials[] = [];
 
     if (q) {
       users = await User.aggregate([
@@ -83,25 +83,16 @@ export async function getUsers(
           $limit: limit,
         },
         {
-          $lookup: {
-            from: "achievements",
-            localField: "progress.achievements",
-            foreignField: "_id",
-            as: "progress.achievements",
-          },
-        },
-        {
-          $project: UserProjection.public,
+          $project: UserProjection.essentials,
         },
       ]);
     } else if (authUser) {
       const followings = await Follow.find({ user: authUser._id })
-        .populate({
+        .populate<{
+          target: UserProjectionEssentials;
+        }>({
           path: "target",
-          select: UserProjection.public,
-          populate: {
-            path: "progress.achievements",
-          },
+          select: UserProjection.essentials,
         })
         .skip(skip)
         .limit(limit)
@@ -112,12 +103,11 @@ export async function getUsers(
 
     if (users.length === 0 && authUser) {
       const followers = await Follow.find({ target: authUser._id })
-        .populate({
+        .populate<{
+          user: UserProjectionEssentials;
+        }>({
           path: "user",
-          select: UserProjection.public,
-          populate: {
-            path: "progress.achievements",
-          },
+          select: UserProjection.essentials,
         })
         .skip(skip)
         .limit(limit)
@@ -126,25 +116,40 @@ export async function getUsers(
       users = followers.map((follower) => follower.user);
     }
 
-    for (const user of users) {
-      const achievements: any = {};
-      if (user) {
-        for (const achievement of user.progress.achievements) {
-          if (achievement.type in achievements) {
-            achievements[achievement.type].createdAt = achievement.createdAt;
-            achievements[achievement.type].count++;
-          } else {
-            achievements[achievement.type] = {
-              _id: achievement.type,
-              type: achievement.type,
-              createdAt: achievement.createdAt,
-              count: 1,
-            };
-          }
-        }
-      }
-      user.progress.achievements = Object.values(achievements);
-    }
+    res.status(StatusCodes.OK).json({ success: true, data: users });
+  } catch (err) {
+    next(err);
+  }
+}
+
+export const getUsersByIdsValidation: ValidationChain[] = [
+  body("ids").isArray().notEmpty(),
+  body("ids.*").isMongoId(),
+];
+export async function getUsersByIds(
+  req: Request,
+  res: Response,
+  next: NextFunction
+) {
+  try {
+    handleInputErrors(req);
+
+    const ids = (req.body.ids as string[]).map(
+      (id: string) => new Types.ObjectId(id)
+    );
+
+    const users = await User.aggregate<UserProjectionEssentials>([
+      {
+        $match: {
+          _id: {
+            $in: ids,
+          },
+        },
+      },
+      {
+        $project: UserProjection.essentials,
+      },
+    ]);
 
     res.status(StatusCodes.OK).json({ success: true, data: users });
   } catch (err) {
