@@ -48,7 +48,7 @@
     "moment-timezone": "^0.5.45",
     "mongoose": "^8.4.1",
     "node-cron": "^3.0.3",
-    "openai": "^4.49.0",
+    "openai": "^4.49.1",
     "stripe": "^15.10.0",
     "twilio": "^5.1.1",
     "tz-lookup": "^6.1.25",
@@ -70,7 +70,7 @@
     "@types/tz-lookup": "^6.1.2",
     "@types/uuid": "^9.0.8",
     "concurrently": "^8.2.2",
-    "tsx": "^4.13.2",
+    "tsx": "^4.15.1",
     "typescript": "^5.4.5"
   },
   "packageManager": "pnpm@9.2.0"

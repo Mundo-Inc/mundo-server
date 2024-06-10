@@ -16,4 +16,4 @@ initializeApp({
   credential: admin.credential.cert(keyPath),
 });
 
-logger.info("Firebase admin initialized");
+logger.verbose("Firebase admin initialized");

@@ -52,7 +52,7 @@ async function main() {
     app.use(errorHandler);
 
     app.listen(env.APP_PORT, () => {
-      logger.info(`Server listening on port ${env.APP_PORT}`);
+      logger.verbose(`Server listening on port ${env.APP_PORT}`);
     });
 
     await import("./cronjobs/scheduledTasks.js");
@@ -62,10 +62,6 @@ async function main() {
     if (env.NODE_ENV === "production") {
       await import("./cronjobs/notification.js");
       await import("./cronjobs/backup.js");
-    } else {
-      logger.warn(
-        "Not starting notification and backup cronjobs in development."
-      );
     }
   } catch (error) {
     logger.error("Error starting server", error);
