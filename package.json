@@ -52,7 +52,7 @@
     "stripe": "^15.10.0",
     "twilio": "^5.1.1",
     "tz-lookup": "^6.1.25",
-    "uuid": "^9.0.1",
+    "uuid": "^10.0.0",
     "winston": "^3.13.0",
     "winston-mongodb": "^5.1.1",
     "zod": "^3.23.8"
@@ -70,8 +70,8 @@
     "@types/tz-lookup": "^6.1.2",
     "@types/uuid": "^9.0.8",
     "concurrently": "^8.2.2",
-    "tsx": "^4.15.1",
+    "tsx": "^4.15.2",
     "typescript": "^5.4.5"
   },
-  "packageManager": "pnpm@9.2.0"
+  "packageManager": "pnpm@9.3.0"
 }
