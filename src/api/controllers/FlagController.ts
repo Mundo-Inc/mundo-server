@@ -25,7 +25,7 @@ export const createFlagValidation: ValidationChain[] = [
   body("homemade").optional().isMongoId(),
   body("checkIn").optional().isMongoId(),
 
-  body("flagType").isIn(Object.keys(FlagTypeEnum)),
+  body("flagType").toUpperCase().isIn(Object.values(FlagTypeEnum)),
   body("note").optional().isString(),
 ];
 

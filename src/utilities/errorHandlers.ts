@@ -28,7 +28,6 @@ export function errorHandler(
     title?: string;
     validation?: ValidationError[];
   } = {
-    title: "Internal Server Error",
     message: "Something went wrong. Please try again later.",
   };
 

@@ -368,7 +368,7 @@ export async function getLeaderBoard(
 export const getUserValidation: ValidationChain[] = [
   param("id").custom((value, { req }) => {
     const objectIdRegex = /^[0-9a-fA-F]{24}$/;
-    if (objectIdRegex.test(value) || value.includes("@")) {
+    if (objectIdRegex.test(value) || value.includes("@") || value === "me") {
       return true; // Indicate that the validation is successful
     } else {
       if (req.query?.idType !== "uid") {
@@ -386,15 +386,20 @@ export async function getUser(req: Request, res: Response, next: NextFunction) {
     handleInputErrors(req);
 
     const authUser = req.user;
+
     let { id } = req.params;
-    const { idType } = req.query;
-    const view = req.query.view || "contextual";
+    const idType = req.query.idType as "oid" | "uid" | undefined;
+    const view =
+      (req.query.view as "basic" | "contextual" | undefined) || "contextual";
 
     if (idType === "uid") {
       // if id type is uid -> get user by uid
       const user = await User.findOne({ uid: id })
         .orFail(
-          createError(dynamicMessage(ds.notFound, "User"), StatusCodes.CONFLICT)
+          createError(
+            dynamicMessage(ds.notFound, "User"),
+            StatusCodes.NOT_FOUND
+          )
         )
         .lean();
 
@@ -416,6 +421,14 @@ export async function getUser(req: Request, res: Response, next: NextFunction) {
         .lean();
 
       id = user._id.toString();
+    } else if (id === "me") {
+      if (!authUser) {
+        throw createError(
+          strings.authorization.loginRequired,
+          StatusCodes.UNAUTHORIZED
+        );
+      }
+      id = authUser._id.toString();
     }
 
     let user: any;
@@ -549,17 +562,12 @@ export async function getUser(req: Request, res: Response, next: NextFunction) {
       );
     }
 
-    const rank = await User.countDocuments({
-      source: { $ne: "yelp" },
-      "progress.xp": {
-        $gt: user.progress.xp,
-      },
-    }).sort({
-      createdAt: -1,
-    });
-
-    const [followersCount, followingCount, reviewsCount, totalCheckIns] =
+    const [rank, followersCount, followingCount, reviewsCount, totalCheckIns] =
       await Promise.all([
+        User.countDocuments({
+          source: { $exists: false },
+          "progress.xp": { $gt: user.progress.xp },
+        }).sort({ createdAt: -1 }),
         Follow.countDocuments({ target: id }),
         Follow.countDocuments({ user: id }),
         Review.countDocuments({ writer: id }),
