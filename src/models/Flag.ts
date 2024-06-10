@@ -72,7 +72,7 @@ const FlagSchema = new Schema<IFlag>(
     },
     flagType: {
       type: String,
-      enum: Object.keys(FlagTypeEnum),
+      enum: Object.values(FlagTypeEnum),
       required: true,
     },
     note: {
