@@ -236,7 +236,7 @@ export class OpenAIService {
   }
 }
 
-function getDateTime(date: Date, lng: number, lat: number) {
+function getDateTime(date: Date, lat: number, lng: number) {
   const tz = tz_lookup(lat, lng);
 
   return date.toLocaleString("en-US", {
