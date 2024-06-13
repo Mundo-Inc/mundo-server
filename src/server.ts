@@ -1,4 +1,5 @@
 import "dotenv/config";
+import "./config/firebase-config.js";
 
 import cookieParser from "cookie-parser";
 import cors from "cors";
@@ -10,11 +11,8 @@ import { StatusCodes } from "http-status-codes";
 import logger from "./api/services/logger/index.js";
 import { connectDatabase } from "./config/database.js";
 import { env } from "./env.js";
-import { createError, errorHandler } from "./utilities/errorHandlers.js";
-
-import "./config/firebase-config.js";
-
 import router from "./router.js";
+import { createError, errorHandler } from "./utilities/errorHandlers.js";
 
 const app = express();
 

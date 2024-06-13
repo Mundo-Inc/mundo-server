@@ -6,14 +6,14 @@ import {
   TransactionalEmailsApi,
   TransactionalEmailsApiApiKeys,
 } from "@getbrevo/brevo";
-import * as fs from "fs";
-import * as hbs from "handlebars";
+import { readFileSync } from "fs";
+import Handlebars from "handlebars";
 import path from "path";
 
 import { env } from "../../env.js";
 import logger from "./logger/index.js";
 
-export interface EmailSender {
+interface EmailSender {
   email: string;
   name: string;
 }
@@ -24,32 +24,26 @@ export class BrevoService {
 
   constructor() {
     this.accountInstance = new AccountApi();
-    this.accountInstance.setApiKey(
-      AccountApiApiKeys.apiKey,
-      env.BREVO_API_KEY as string
-    );
+    this.accountInstance.setApiKey(AccountApiApiKeys.apiKey, env.BREVO_API_KEY);
 
     this.apiInstance = new TransactionalEmailsApi();
     this.apiInstance.setApiKey(
       TransactionalEmailsApiApiKeys.apiKey,
-      env.BREVO_API_KEY as string
+      env.BREVO_API_KEY
     );
 
     this.accountInstance
       .getAccount()
-      .then((_) => logger.info(`Brevo service is "UP"`))
-      .catch((err) => logger.error(`Brevo service is "DOWN", err: ${err}`));
+      .then((_) => logger.verbose("Brevo Connected"))
+      .catch((err) => logger.error("Brevo Connection Error", err));
   }
 
-  private compileTemplateToHtml(
-    templatePath: string,
-    replacements: object
-  ): string {
-    const html = fs.readFileSync(
+  private compileTemplateToHtml(templatePath: string, replacements: object) {
+    const html = readFileSync(
       path.join(process.cwd(), "src/email-templates", templatePath),
       { encoding: "utf-8" }
     );
-    let template = hbs.compile(html);
+    const template = Handlebars.compile(html);
     const compiledHtml = template(replacements);
     return compiledHtml;
   }
@@ -68,7 +62,7 @@ export class BrevoService {
     sender: EmailSender,
     templatePath: string,
     replacements: object
-  ): Promise<any> {
+  ) {
     const compiledHtml = this.compileTemplateToHtml(templatePath, replacements);
     const res = await this.sendEmail({
       htmlContent: compiledHtml,
