@@ -131,8 +131,8 @@ export async function getActivitiesOfaUser(
         commentsCount,
       ] = await Promise.all([
         getResourceInfo(activity),
-        getReactionsOfActivity(activity._id, userId),
-        getCommentsOfActivity(activity._id, userId),
+        getReactionsOfActivity(activity._id, authUser._id),
+        getCommentsOfActivity(activity._id, authUser._id),
         Comment.countDocuments({
           userActivity: activity._id,
         }),
@@ -181,7 +181,7 @@ export async function getActivitiesOfaUser(
 
 export function getReactionsOfActivity(
   activityId: mongoose.Types.ObjectId,
-  userId: mongoose.Types.ObjectId
+  authId: mongoose.Types.ObjectId
 ) {
   return Reaction.aggregate([
     {
@@ -211,7 +211,7 @@ export function getReactionsOfActivity(
         user: [
           {
             $match: {
-              user: userId,
+              user: authId,
             },
           },
           {
@@ -230,7 +230,7 @@ export function getReactionsOfActivity(
 
 export function getCommentsOfActivity(
   activityId: mongoose.Types.ObjectId,
-  userId: mongoose.Types.ObjectId
+  authId: mongoose.Types.ObjectId
 ) {
   return Comment.aggregate([
     {
@@ -264,7 +264,7 @@ export function getCommentsOfActivity(
         author: { $arrayElemAt: ["$author", 0] },
         likes: { $size: "$likes" },
         liked: {
-          $in: [userId, "$likes"],
+          $in: [authId, "$likes"],
         },
       },
     },
