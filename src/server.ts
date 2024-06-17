@@ -47,6 +47,15 @@ async function main() {
 
     app.use("/api/v1", router);
 
+    app.use((req, res, next) => {
+      next(
+        createError("Route not found", {
+          title: "Not Found",
+          statusCode: StatusCodes.NOT_FOUND,
+        })
+      );
+    });
+
     app.use(errorHandler);
 
     app.listen(env.APP_PORT, () => {

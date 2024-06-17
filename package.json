@@ -70,7 +70,7 @@
     "@types/tz-lookup": "^6.1.2",
     "@types/uuid": "^9.0.8",
     "concurrently": "^8.2.2",
-    "tsx": "^4.15.4",
+    "tsx": "^4.15.6",
     "typescript": "^5.4.5"
   },
   "packageManager": "pnpm@9.3.0"

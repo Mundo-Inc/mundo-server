@@ -248,15 +248,26 @@ export async function getAllPrizeRedemptionHistory(
       maxLimit: 50,
     });
 
-    const redemptions = await PrizeRedemption.find({})
-      .sort({ _id: -1 })
-      .skip(skip)
-      .limit(limit)
-      .populate("userId", UserProjection.private)
-      .populate("prizeId")
-      .lean();
+    const [totalCount, redemptions] = await Promise.all([
+      PrizeRedemption.countDocuments(),
+      PrizeRedemption.find({})
+        .sort({ _id: -1 })
+        .skip(skip)
+        .limit(limit)
+        .populate("userId", UserProjection.private)
+        .populate("prizeId")
+        .lean(),
+    ]);
 
-    res.status(StatusCodes.OK).json({ success: true, data: redemptions });
+    res.status(StatusCodes.OK).json({
+      success: true,
+      data: redemptions,
+      pagination: {
+        totalCount,
+        page: req.query.page,
+        limit: req.query.limit,
+      },
+    });
   } catch (error) {
     next(error);
   }
