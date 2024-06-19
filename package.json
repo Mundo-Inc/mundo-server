@@ -22,12 +22,12 @@
   },
   "homepage": "https://github.com/PhantomPhood-Inc/genz-server#readme",
   "engines": {
-    "node": ">=18.0.0"
+    "node": ">=20.0.0"
   },
   "dependencies": {
-    "@aws-sdk/client-s3": "^3.598.0",
+    "@aws-sdk/client-s3": "^3.600.0",
     "@ffmpeg-installer/ffmpeg": "^1.1.0",
-    "@getbrevo/brevo": "^2.1.1",
+    "@getbrevo/brevo": "^2.2.0",
     "@t3-oss/env-core": "^0.10.1",
     "axios": "^1.7.2",
     "bcryptjs": "^2.4.3",
@@ -46,11 +46,11 @@
     "http-status-codes": "^2.3.0",
     "jsonwebtoken": "^9.0.2",
     "moment-timezone": "^0.5.45",
-    "mongoose": "^8.4.1",
+    "mongoose": "^8.4.3",
     "node-cron": "^3.0.3",
     "openai": "^4.51.0",
     "stripe": "^15.12.0",
-    "twilio": "^5.1.1",
+    "twilio": "^5.2.0",
     "tz-lookup": "^6.1.25",
     "uuid": "^10.0.0",
     "winston": "^3.13.0",
@@ -65,13 +65,12 @@
     "@types/fluent-ffmpeg": "^2.1.24",
     "@types/formidable": "^3.4.5",
     "@types/jsonwebtoken": "^9.0.6",
-    "@types/node": "^20.14.2",
+    "@types/node": "^20.14.5",
     "@types/node-cron": "^3.0.11",
     "@types/tz-lookup": "^6.1.2",
     "@types/uuid": "^9.0.8",
     "concurrently": "^8.2.2",
     "tsx": "^4.15.6",
     "typescript": "^5.4.5"
-  },
-  "packageManager": "pnpm@9.3.0"
+  }
 }

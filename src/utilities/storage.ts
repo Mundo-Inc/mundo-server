@@ -20,6 +20,7 @@ export const s3 = new S3({
 export const bucketName = env.AWS_S3_BUCKET_NAME;
 export const region = env.AWS_S3_REGION;
 
+// Unused
 export const allowedMimeTypes = [
   "image/jpeg",
   "image/png",

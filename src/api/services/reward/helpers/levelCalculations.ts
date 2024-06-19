@@ -2,8 +2,10 @@ import { StatusCodes } from "http-status-codes";
 
 import type { IReview } from "../../../../models/Review.js";
 import { createError } from "../../../../utilities/errorHandlers.js";
+import { type MediaProjectionBrief } from "../../../dto/media.js";
 import { getLevelThresholds } from "../utils/levelupThresholds.js";
 import { rewards_amounts } from "../utils/rewardsAmounts.js";
+import { MediaTypeEnum } from "../../../../models/Media.js";
 
 export const calcLevel = (xp: number) => {
   const thresholds = getLevelThresholds();
@@ -47,15 +49,29 @@ export const calcRemainingXP = (currentXP: number): number => {
   return remainingXP;
 };
 
-export function calcReviewReward(review: IReview) {
+export function calcReviewReward(
+  review: IReview,
+  media: MediaProjectionBrief[]
+) {
   let amt = 0;
-  if (review.scores && review.scores.overall)
+
+  if (review.scores && review.scores.overall) {
     amt += rewards_amounts.REVIEW.HAS_RATING;
-  if (review.recommend) amt += rewards_amounts.REVIEW.HAS_RECOMMENDATION;
-  if (review.content) amt += rewards_amounts.REVIEW.HAS_TEXT;
-  if (review.images && review.images.length > 0)
-    amt += rewards_amounts.REVIEW.HAS_IMAGES;
-  if (review.videos && review.videos.length > 0)
-    amt += rewards_amounts.REVIEW.HAS_VIDEOS;
+  }
+  if (review.recommend) {
+    amt += rewards_amounts.REVIEW.HAS_RECOMMENDATION;
+  }
+  if (review.content) {
+    amt += rewards_amounts.REVIEW.HAS_TEXT;
+  }
+  if (media && media.length > 0) {
+    if (media.some((m) => m.type === MediaTypeEnum.Image)) {
+      amt += rewards_amounts.REVIEW.HAS_IMAGES;
+    }
+    if (media.some((m) => m.type === MediaTypeEnum.Video)) {
+      amt += rewards_amounts.REVIEW.HAS_VIDEOS;
+    }
+  }
+
   return amt;
 }

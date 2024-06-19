@@ -145,7 +145,11 @@ export async function getPlaces(
   try {
     handleInputErrors(req);
 
-    const { lat, lng, q, images, order, radius } = req.query;
+    const { lat, lng, q, radius } = req.query;
+    const order = req.query.order ? (req.query.order as "asc" | "desc") : null;
+    const images = req.query.images
+      ? parseInt(req.query.images as string)
+      : null;
     const sort = req.query.sort
       ? req.query.sort === "distance"
         ? lat && lng
@@ -219,7 +223,7 @@ export async function getPlaces(
         distancePipeline.push({
           $geoNear: body,
         });
-        if (order === "dsc") {
+        if (order === "desc") {
           sortPipeline.push({
             $sort: {
               "dist.calculated": -1,
@@ -236,16 +240,16 @@ export async function getPlaces(
     }
 
     const lookupPipeline: PipelineStage[] = [];
-    if (images && parseInt(images as string) > 0) {
+    if (images) {
       lookupPipeline.push({
         $lookup: {
           from: "media",
           localField: "_id",
           foreignField: "place",
-          as: "images",
+          as: "media",
           pipeline: [
             {
-              $limit: parseInt(images as string),
+              $limit: images,
             },
             {
               $lookup: {
@@ -266,9 +270,7 @@ export async function getPlaces(
                 src: 1,
                 caption: 1,
                 type: 1,
-                user: {
-                  $arrayElemAt: ["$user", 0],
-                },
+                user: { $arrayElemAt: ["$user", 0] },
               },
             },
           ],
@@ -276,7 +278,7 @@ export async function getPlaces(
       });
     }
 
-    const projectPipeline: any = [
+    const projectPipeline: PipelineStage[] = [
       {
         $project: {
           _id: 1,
@@ -304,7 +306,7 @@ export async function getPlaces(
           categories: 1,
           priceRange: 1,
           activities: 1,
-          images: 1,
+          media: 1,
         },
       },
     ];

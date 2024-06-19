@@ -5,8 +5,7 @@ import { Types, type PipelineStage } from "mongoose";
 
 import AppSetting from "../../models/AppSetting.js";
 import CheckIn from "../../models/CheckIn.js";
-import Comment from "../../models/Comment.js";
-import Flag from "../../models/Flag.js";
+import Flag, { type FlagAdminAction } from "../../models/Flag.js";
 import Homemade from "../../models/Homemade.js";
 import Review from "../../models/Review.js";
 import User from "../../models/User.js";
@@ -17,8 +16,8 @@ import {
 } from "../../utilities/errorHandlers.js";
 import { getPaginationFromQuery } from "../../utilities/pagination.js";
 import UserProjection from "../dto/user.js";
-import validate from "./validators.js";
 import DeletionService from "../services/DeletionService.js";
+import validate from "./validators.js";
 
 export const getUsersValidation: ValidationChain[] = [
   query("signupMethod").optional(),
@@ -155,8 +154,7 @@ export async function getFlags(
         case "Review":
           await Promise.all([
             flag.populate("target.writer", UserProjection.private),
-            flag.populate("target.images", "_id src caption type"),
-            flag.populate("target.videos", "_id src caption type"),
+            flag.populate("target.media", "_id src caption type"),
           ]);
           break;
         case "Comment":
@@ -232,7 +230,7 @@ export async function resolveFlag(
       }
     }
 
-    const adminAction = {
+    const adminAction: FlagAdminAction = {
       type: action,
       note: req.body.note,
       admin: authUser._id,

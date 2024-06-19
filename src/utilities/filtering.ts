@@ -1,13 +1,11 @@
 export function filterObjectByConfig<T extends object>(
   obj: T,
-  config: {
-    [key: string]: boolean;
-  }
+  config: Partial<Record<keyof T, boolean>>
 ): Partial<T> {
-  const filteredObject = Object.keys(obj)
+  const filteredObject = (Object.keys(obj) as Array<keyof T>)
     .filter((key) => config[key] === true)
     .reduce((newObj, key) => {
-      newObj[key as keyof T] = obj[key as keyof T];
+      newObj[key] = obj[key];
       return newObj;
     }, {} as Partial<T>);
 

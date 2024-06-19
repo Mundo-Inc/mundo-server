@@ -1,14 +1,16 @@
 import { StatusCodes } from "http-status-codes";
-import mongoose, { type FilterQuery, type Document } from "mongoose";
+import mongoose, { type Document } from "mongoose";
 
 import CheckIn from "../../../models/CheckIn.js";
 import Comment from "../../../models/Comment.js";
 import Homemade from "../../../models/Homemade.js";
+import Media from "../../../models/Media.js";
 import Reaction from "../../../models/Reaction.js";
 import Review from "../../../models/Review.js";
-import Reward, { type IReward } from "../../../models/Reward.js";
+import Reward from "../../../models/Reward.js";
 import User, { type IUser } from "../../../models/User.js";
 import { createError } from "../../../utilities/errorHandlers.js";
+import MediaProjection, { type MediaProjectionBrief } from "../../dto/media.js";
 import { UserActivityManager } from "../UserActivityManager.js";
 import logger from "../logger/index.js";
 import { eligibleForAchivement } from "./helpers/achivementEligibility.js";
@@ -22,7 +24,6 @@ import {
   validateReviewReward,
 } from "./helpers/validations.js";
 import { rewards_amounts } from "./utils/rewardsAmounts.js";
-import { dStrings, dynamicMessage } from "../../../strings.js";
 
 const getValidatedEntity = async (
   refType: string,
@@ -51,9 +52,19 @@ const getValidatedEntity = async (
       return { entity: comment, rewardAmount: rewards_amounts.COMMENT };
 
     case "Review":
-      const review = await Review.findById(refId);
-      if (!review || !(await validateReviewReward(user, review))) return null;
-      return { entity: review, rewardAmount: calcReviewReward(review) };
+      const review = await Review.findById(refId).lean();
+
+      if (!review) return null;
+
+      const media = review.media
+        ? await Media.find({ _id: { $in: review.media } })
+            .select<MediaProjectionBrief>(MediaProjection.brief)
+            .lean()
+        : [];
+
+      if (!(await validateReviewReward(user, review))) return null;
+
+      return { entity: review, rewardAmount: calcReviewReward(review, media) };
 
     case "Reaction":
       const reaction = await Reaction.findById(refId);

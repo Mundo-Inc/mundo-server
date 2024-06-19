@@ -78,13 +78,10 @@ export const eligibleForAchivement = async (
             (a) => a.type === AchievementTypeEnum.PAPARAZZI_PRO
           )
         ) {
-          //check if user has 5 reviews containing photos or videos (media)
+          //check if user has 5 reviews containing media
           const userReviewsCountContainingMedia = await Review.countDocuments({
             writer: userId,
-            $or: [
-              { photos: { $exists: true, $ne: [] } },
-              { videos: { $exists: true, $ne: [] } },
-            ],
+            $or: [{ media: { $exists: true, $ne: [] } }],
           });
           if (userReviewsCountContainingMedia >= 5) {
             const newAchivement = await Achievement.create({

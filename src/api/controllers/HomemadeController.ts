@@ -19,6 +19,7 @@ import {
   handleInputErrors,
 } from "../../utilities/errorHandlers.js";
 import { getPaginationFromQuery } from "../../utilities/pagination.js";
+import MediaProjection from "../dto/media.js";
 import UserProjection from "../dto/user.js";
 import { UserActivityManager } from "../services/UserActivityManager.js";
 import logger from "../services/logger/index.js";
@@ -72,12 +73,7 @@ export async function getHomemadePosts(
           as: "media",
           pipeline: [
             {
-              $project: {
-                _id: 1,
-                src: 1,
-                caption: 1,
-                type: 1,
-              },
+              $project: MediaProjection.brief,
             },
           ],
         },
@@ -169,9 +165,7 @@ export async function getHomemadePosts(
           user: { $arrayElemAt: ["$user", 0] },
           media: 1,
           tags: 1,
-          reactions: {
-            $arrayElemAt: ["$reactions", 0],
-          },
+          reactions: { $arrayElemAt: ["$reactions", 0] },
         },
       }
     );
@@ -373,12 +367,7 @@ export async function getHomemadePost(
           as: "media",
           pipeline: [
             {
-              $project: {
-                _id: 1,
-                src: 1,
-                caption: 1,
-                type: 1,
-              },
+              $project: MediaProjection.brief,
             },
           ],
         },
@@ -457,9 +446,7 @@ export async function getHomemadePost(
           user: { $arrayElemAt: ["$user", 0] },
           media: 1,
           tags: 1,
-          reactions: {
-            $arrayElemAt: ["$reactions", 0],
-          },
+          reactions: { $arrayElemAt: ["$reactions", 0] },
         },
       },
     ]).then((res) => res[0]);

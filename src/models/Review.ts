@@ -22,8 +22,7 @@ export interface IReview {
   };
   originalContent?: string;
   content: string;
-  images?: mongoose.Types.ObjectId[];
-  videos?: mongoose.Types.ObjectId[];
+  media?: mongoose.Types.ObjectId[];
   tags?: string[];
   recommend?: boolean;
   language: string;
@@ -53,8 +52,7 @@ const ReviewSchema = new Schema<IReview>(
     },
     originalContent: { type: String },
     content: { type: String, default: "" },
-    images: [{ type: Schema.Types.ObjectId, ref: "Media" }],
-    videos: [{ type: Schema.Types.ObjectId, ref: "Media" }],
+    media: [{ type: Schema.Types.ObjectId, ref: "Media" }],
     tags: [{ type: String }],
     recommend: { type: Boolean, default: false },
     language: { type: String, default: "en" },
@@ -101,20 +99,9 @@ async function removeReviewDependencies(review: IReview) {
   }
 
   // remove all media related to the review
-  if (review.videos && review.videos.length > 0) {
-    for (const video of review.videos) {
-      const media = await Media.findById(video);
-      if (media) {
-        await media.deleteOne();
-      }
-    }
-  }
-  if (review.images && review.images.length > 0) {
-    for (const image of review.images) {
-      const media = await Media.findById(image);
-      if (media) {
-        await media.deleteOne();
-      }
+  if (review.media && review.media.length > 0) {
+    for (const m of review.media) {
+      await Media.deleteOne({ _id: m });
     }
   }
 }

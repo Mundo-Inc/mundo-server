@@ -5,9 +5,9 @@ import mongoose, { type AnyKeys, type PipelineStage } from "mongoose";
 
 import CheckIn, { type ICheckIn } from "../../models/CheckIn.js";
 import { ResourceTypeEnum } from "../../models/Enum/ResourceTypeEnum.js";
-import Event from "../../models/Event.js";
+import Event, { type IEvent } from "../../models/Event.js";
 import Follow from "../../models/Follow.js";
-import Media, { MediaTypeEnum, type IMedia } from "../../models/Media.js";
+import Media, { type IMedia } from "../../models/Media.js";
 import Notification, {
   NotificationTypeEnum,
 } from "../../models/Notification.js";
@@ -17,7 +17,7 @@ import ScheduledTask, {
   ScheduledTaskType,
 } from "../../models/ScheduledTask.js";
 import Upload from "../../models/Upload.js";
-import User from "../../models/User.js";
+import User, { UserRoleEnum } from "../../models/User.js";
 import { ResourcePrivacyEnum } from "../../models/UserActivity.js";
 import strings, { dStrings, dynamicMessage } from "../../strings.js";
 import { getRandomDateInRange } from "../../utilities/dateTime.js";
@@ -25,8 +25,11 @@ import {
   createError,
   handleInputErrors,
 } from "../../utilities/errorHandlers.js";
+import { filterObjectByConfig } from "../../utilities/filtering.js";
+import { fakeObjectIdString } from "../../utilities/generator.js";
 import { shouldBotInteract } from "../../utilities/mundo.js";
 import { getPaginationFromQuery } from "../../utilities/pagination.js";
+import MediaProjection from "../dto/media.js";
 import PlaceProjection from "../dto/place.js";
 import UserProjection from "../dto/user.js";
 import { UserActivityManager } from "../services/UserActivityManager.js";
@@ -160,12 +163,12 @@ export async function getCheckIns(
       ...privacyPipeline,
       {
         $facet: {
-          total: [
+          count: [
             {
-              $count: "total",
+              $count: "count",
             },
           ],
-          checkins: [
+          checkIns: [
             {
               $sort: { createdAt: -1 },
             },
@@ -207,17 +210,12 @@ export async function getCheckIns(
             {
               $lookup: {
                 from: "media",
-                localField: "image",
+                localField: "media",
                 foreignField: "_id",
-                as: "image",
+                as: "media",
                 pipeline: [
                   {
-                    $project: {
-                      _id: 1,
-                      src: 1,
-                      caption: 1,
-                      type: 1,
-                    },
+                    $project: MediaProjection.brief,
                   },
                 ],
               },
@@ -236,66 +234,61 @@ export async function getCheckIns(
               },
             },
             {
-              $unwind: {
-                path: "$image",
-                preserveNullAndEmptyArrays: true,
-              },
-            },
-            {
-              $unwind: "$user",
-            },
-            {
-              $unwind: "$place",
-            },
-            {
               $project: {
                 _id: 1,
-                createdAt: 1,
-                user: 1,
-                place: 1,
                 caption: 1,
-                image: 1,
-                privacyType: 1,
                 tags: 1,
+                privacyType: 1,
+                createdAt: 1,
+                updatedAt: 1,
+                media: 1,
+                user: { $arrayElemAt: ["$user", 0] },
+                place: { $arrayElemAt: ["$place", 0] },
               },
             },
           ],
         },
       },
+      {
+        $project: {
+          count: { $arrayElemAt: ["$count.count", 0] },
+          checkIns: 1,
+        },
+      },
     ]).then((result) => result[0]);
+
+    // TODO: Remove this temporary migration fix
+    for (const checkIn of result.checkIns) {
+      checkIn.image = checkIn.media?.[0];
+    }
 
     if (!user || !user.equals(authUser._id)) {
       // anonymize user data
-      result.checkins = result.checkins.map((checkin: any) => {
+      for (const checkIn of result.checkIns) {
         if (
-          checkin.privacyType === ResourcePrivacyEnum.Private &&
-          !authUser._id.equals(checkin.user._id)
+          checkIn.privacyType === ResourcePrivacyEnum.Private &&
+          !authUser._id.equals(checkIn.user._id)
         ) {
-          checkin._id = Math.random()
-            .toString(16)
-            .substring(2, 10)
-            .padEnd(24, "0");
-          checkin.user._id = Math.random()
-            .toString(16)
-            .substring(2, 10)
-            .padEnd(24, "0");
-          checkin.user.name = "Anonymous";
-          checkin.user.username = "Anonymous";
-          checkin.user.profileImage = null;
-          checkin.user.progress = {
-            xp: Math.round(checkin.user.progress?.xp / 100) * 100,
-            level: Math.round(checkin.user.progress?.level / 10) * 10,
+          checkIn._id = fakeObjectIdString();
+          checkIn.user._id = fakeObjectIdString();
+          checkIn.user.name = "Anonymous";
+          checkIn.user.username = "Anonymous";
+          checkIn.user.profileImage = null;
+          checkIn.user.progress = {
+            xp: Math.round(Math.random() * checkIn.user.progress?.xp ?? 100),
+            level: Math.round(
+              Math.random() * checkIn.user.progress?.level ?? 10
+            ),
           };
         }
-        return checkin;
-      });
+      }
     }
 
     res.status(StatusCodes.OK).json({
       success: true,
-      data: result.checkins,
+      data: result.checkIns,
       pagination: {
-        totalCount: result.total[0]?.total || 0,
+        totalCount: result.total || 0,
         page: page,
         limit: limit,
       },
@@ -307,9 +300,9 @@ export async function getCheckIns(
 
 async function enforceCheckInInterval(
   authId: mongoose.Types.ObjectId,
-  authRole: string
+  authRole: UserRoleEnum
 ) {
-  if (authRole !== "admin") {
+  if (authRole !== UserRoleEnum.Admin) {
     const lastCheckIn = await CheckIn.findOne({ user: authId }).sort(
       "-createdAt"
     );
@@ -380,8 +373,10 @@ export const createCheckInValidation: ValidationChain[] = [
     .isMongoId()
     .withMessage("Invalid event id"),
   body("privacyType").optional().isIn(Object.values(ResourcePrivacyEnum)),
-  body("caption").optional().isString(),
-  body("image").optional().isMongoId(),
+  body("caption").optional().isString().trim(),
+  body("image").optional().isMongoId().withMessage("Invalid image id"), // @deprecated | TODO: remove
+  body("media").optional().isArray(),
+  body("media.*").optional().isMongoId(),
   body("tags").optional().isArray(),
   body("tags.*").optional().isMongoId(),
 ];
@@ -395,18 +390,28 @@ export async function createCheckIn(
     handleInputErrors(req);
 
     const authUser = req.user!;
-    const { caption, tags, image } = req.body;
+
+    const { caption, image, media } = req.body;
     const privacyType =
       (req.body.privacyType as ResourcePrivacyEnum) ||
       ResourcePrivacyEnum.Public;
-    const event = req.body.event
+    const mediaUploadIds = media
+      ? (media as string[]).map((m) => new mongoose.Types.ObjectId(m))
+      : image
+      ? [new mongoose.Types.ObjectId(image as string)]
+      : null;
+    const eventId = req.body.event
       ? new mongoose.Types.ObjectId(req.body.event as string)
       : null;
-    const place = req.body.place
+    const tags = Array.isArray(req.body.tags)
+      ? Array.from(new Set(req.body.tags as string[])).map(
+          (tag) => new mongoose.Types.ObjectId(tag)
+        )
+      : null;
+    let place = req.body.place
       ? new mongoose.Types.ObjectId(req.body.place as string)
       : null;
 
-    let placeId: mongoose.Types.ObjectId;
     if (place) {
       await Place.exists({ _id: place }).orFail(
         createError(
@@ -414,9 +419,9 @@ export async function createCheckIn(
           StatusCodes.NOT_FOUND
         )
       );
-      placeId = place;
-    } else if (event) {
-      const theEvent = await Event.findById(event)
+    } else if (eventId) {
+      const theEvent = await Event.findById(eventId)
+        .select<{ place: IEvent["place"] }>("place")
         .orFail(
           createError(
             dynamicMessage(dStrings.notFound, "Event"),
@@ -424,8 +429,7 @@ export async function createCheckIn(
           )
         )
         .lean();
-      placeId = theEvent.place;
-      logger.verbose("Check-in to event");
+      place = theEvent.place;
     } else {
       throw createError(
         "Either place or event is required",
@@ -437,67 +441,68 @@ export async function createCheckIn(
 
     if (tags) {
       logger.verbose("validate tags");
-      for (const userId of tags) {
-        await User.exists({ _id: userId }).orFail(
+      await Promise.all(
+        tags.map((userId) =>
+          User.exists({ _id: userId }).orFail(
+            createError(
+              dynamicMessage(dStrings.notFound, "Tagged user"),
+              StatusCodes.NOT_FOUND
+            )
+          )
+        )
+      );
+    }
+
+    let mediaDocs: IMedia[] | null = null;
+    if (mediaUploadIds && mediaUploadIds.length > 0) {
+      logger.verbose("Validating media");
+      mediaDocs = [];
+      for (const mediaUploadId of mediaUploadIds) {
+        const upload = await Upload.findById(mediaUploadId).orFail(
           createError(
-            dynamicMessage(dStrings.notFound, "Tagged user"),
+            dynamicMessage(dStrings.notFound, "Uploaded media"),
             StatusCodes.NOT_FOUND
           )
         );
-      }
-    }
 
-    let media;
-    if (image) {
-      logger.verbose("validate image");
-      const upload = await Upload.findById(image).orFail(
-        createError(
-          dynamicMessage(dStrings.notFound, "Uploaded image"),
-          StatusCodes.NOT_FOUND
-        )
-      );
-      if (!authUser._id.equals(upload.user)) {
-        throw createError(
-          strings.authorization.otherUser,
-          StatusCodes.FORBIDDEN
-        );
-      }
-      if (upload.type !== "image") {
-        throw createError(strings.upload.invalidType, StatusCodes.BAD_REQUEST);
-      }
+        if (!authUser._id.equals(upload.user)) {
+          throw createError(
+            strings.authorization.otherUser,
+            StatusCodes.FORBIDDEN
+          );
+        }
 
-      const mediaBody: IMedia | AnyKeys<IMedia> = {
-        type: MediaTypeEnum.Image,
-        user: authUser._id,
-        place: placeId,
-        caption: caption,
-        src: upload.src,
-      };
+        const media = await Media.create({
+          type: upload.type,
+          user: authUser._id,
+          place,
+          caption,
+          src: upload.src,
+          ...(eventId ? { event: eventId } : {}),
+        });
 
-      if (event) {
-        mediaBody.event = event;
+        mediaDocs.push(media.toObject());
+
+        await upload.deleteOne();
       }
-
-      media = await Media.create(mediaBody);
     }
 
     const checkinBody: ICheckIn | AnyKeys<ICheckIn> = {
       user: authUser._id,
-      place: placeId,
+      place: place,
       caption: caption,
       tags: tags,
       privacyType: privacyType || ResourcePrivacyEnum.Public,
+      ...(mediaDocs ? { media: mediaDocs.map((m) => m._id) } : {}),
+      ...(eventId ? { event: eventId } : {}),
     };
-
-    if (media) checkinBody.image = media._id;
-    if (event) checkinBody.event = event;
 
     const checkIn = await CheckIn.create(checkinBody);
 
     const activity = await UserActivityManager.createCheckInActivity(
       authUser,
-      placeId,
-      Boolean(checkIn.image),
+      place,
+      mediaDocs !== null && mediaDocs.length > 0,
       checkIn._id,
       privacyType
     );
@@ -508,17 +513,32 @@ export async function createCheckIn(
 
     const reward = await addCheckInReward(authUser._id, checkIn);
 
-    res
-      .status(StatusCodes.CREATED)
-      .json({ success: true, data: checkIn, reward: reward });
+    const checkInObject = checkIn.toObject();
+
+    // TODO: Remove this temporary migration fix
+    // @ts-ignore
+    checkInObject.image = mediaDocs?.[0]
+      ? filterObjectByConfig(mediaDocs[0], MediaProjection.brief)
+      : null;
+
+    res.status(StatusCodes.CREATED).json({
+      success: true,
+      data: {
+        ...checkInObject,
+        media: mediaDocs?.map((m) =>
+          filterObjectByConfig(m, MediaProjection.brief)
+        ),
+      },
+      reward: reward,
+    });
 
     await Promise.all([
       checkinEarning(authUser._id, checkIn._id),
       Place.updateOne(
-        { _id: placeId },
+        { _id: place },
         { $inc: { "activities.checkinCount": 1 } }
       ),
-      User.updateOne({ _id: authUser._id }, { latestPlace: placeId }),
+      User.updateOne({ _id: authUser._id }, { latestPlace: place }),
       sendNotificiationToFollowers(authUser._id, checkIn),
     ]);
 

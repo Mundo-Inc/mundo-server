@@ -10,13 +10,13 @@ import { thresholds } from "../utils/threshold.js";
 export const validateReviewReward = async (user: IUser, review: IReview) => {
   try {
     // check if the user has already been rewarded for the comment
-    const existingRewards = await Reward.find({
+    const existingRewards = await Reward.countDocuments({
       userId: user._id,
       "reason.refType": "Review",
       "reason.placeId": review.place,
     });
 
-    if (existingRewards.length >= thresholds.MAX_REVIEW_PER_PLACE) return false;
+    if (existingRewards >= thresholds.MAX_REVIEW_PER_PLACE) return false;
     return true;
   } catch (error) {
     logger.error("Error for validating review reward", { error });

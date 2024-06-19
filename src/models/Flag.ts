@@ -32,7 +32,7 @@ export enum AdminActionEnum {
   Delete = "DELETE",
 }
 
-interface AdminAction {
+export interface FlagAdminAction {
   type: string;
   note: string;
   admin: mongoose.Types.ObjectId;
@@ -46,7 +46,7 @@ export interface IFlag {
   targetType: FlagTargetType;
   flagType: FlagTypeEnum;
   note: string;
-  adminAction: AdminAction;
+  adminAction: FlagAdminAction;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -80,7 +80,7 @@ const FlagSchema = new Schema<IFlag>(
       required: false,
     },
     adminAction: {
-      type: new Schema<AdminAction>({
+      type: new Schema<FlagAdminAction>({
         type: {
           type: String,
           enum: ["DELETE", "IGNORE"],

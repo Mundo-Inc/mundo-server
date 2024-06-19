@@ -12,7 +12,7 @@ export interface IMedia {
   place?: mongoose.Types.ObjectId;
   event?: mongoose.Types.ObjectId;
   user: mongoose.Types.ObjectId;
-  type: string;
+  type: MediaTypeEnum;
 }
 
 const MediaSchema = new Schema<IMedia>({

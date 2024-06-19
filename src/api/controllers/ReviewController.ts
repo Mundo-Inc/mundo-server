@@ -5,7 +5,7 @@ import mongoose, { type PipelineStage } from "mongoose";
 
 import { ResourceTypeEnum } from "../../models/Enum/ResourceTypeEnum.js";
 import Follow from "../../models/Follow.js";
-import Media, { MediaTypeEnum } from "../../models/Media.js";
+import Media, { type IMedia } from "../../models/Media.js";
 import Notification, {
   NotificationTypeEnum,
 } from "../../models/Notification.js";
@@ -27,6 +27,7 @@ import {
 import { shouldBotInteract } from "../../utilities/mundo.js";
 import { openAiAnalyzeReview } from "../../utilities/openAi.js";
 import { getPaginationFromQuery } from "../../utilities/pagination.js";
+import MediaProjection from "../dto/media.js";
 import UserProjection from "../dto/user.js";
 import { UserActivityManager } from "../services/UserActivityManager.js";
 import { reviewEarning } from "../services/earning.service.js";
@@ -75,35 +76,12 @@ export async function getReviews(
       {
         $lookup: {
           from: "media",
-          localField: "images",
+          localField: "media",
           foreignField: "_id",
-          as: "images",
+          as: "media",
           pipeline: [
             {
-              $project: {
-                _id: 1,
-                src: 1,
-                caption: 1,
-                type: 1,
-              },
-            },
-          ],
-        },
-      },
-      {
-        $lookup: {
-          from: "media",
-          localField: "videos",
-          foreignField: "_id",
-          as: "videos",
-          pipeline: [
-            {
-              $project: {
-                _id: 1,
-                src: 1,
-                caption: 1,
-                type: 1,
-              },
+              $project: MediaProjection.brief,
             },
           ],
         },
@@ -230,13 +208,10 @@ export async function getReviews(
           content: 1,
           place: { $arrayElemAt: ["$place", 0] },
           writer: { $arrayElemAt: ["$writer", 0] },
-          images: 1,
-          videos: 1,
+          media: 1,
           scores: 1,
           tags: 1,
-          reactions: {
-            $arrayElemAt: ["$reactions", 0],
-          },
+          reactions: { $arrayElemAt: ["$reactions", 0] },
         },
       }
     );
@@ -291,15 +266,21 @@ export const createReviewValidation: ValidationChain[] = [
       }
     }),
 
-  body("content").optional().isString(),
+  body("content").optional().isString().trim(),
+
+  // @deprecated - Use `media` instead
   body("images").optional().isArray(),
   body("images.*.uploadId").optional().isMongoId(),
   body("images.*.caption").optional().isString(),
   body("videos").optional().isArray(),
   body("videos.*.uploadId").optional().isMongoId(),
   body("videos.*.caption").optional().isString(),
+
+  body("media").optional().isArray(),
+  body("media.*.uploadId").optional().isMongoId(),
+  body("media.*.caption").optional().isString(),
   body("language").optional().isString(),
-  body("recommend").optional().isBoolean(),
+  body("recommend").optional().isBoolean().toBoolean(),
   body("privacyType").optional().isIn(Object.values(ResourcePrivacyEnum)),
 ];
 export async function createReview(
@@ -312,8 +293,32 @@ export async function createReview(
 
     const authUser = req.user!;
 
-    const { scores, content, images, videos, language, recommend } = req.body;
-    const place = new mongoose.Types.ObjectId(req.body.place as string);
+    const { scores, language } = req.body;
+
+    const content = req.body.content ? (req.body.content as string) : "";
+    const recommend = req.body.recommend as boolean | undefined;
+    const media = req.body.media
+      ? (req.body.media as Array<{ uploadId: string; caption: string }>).map(
+          ({ uploadId, caption }) => ({
+            uploadId: new mongoose.Types.ObjectId(uploadId),
+            caption,
+          })
+        )
+      : [
+          ...((req.body.videos as Array<{
+            uploadId: string;
+            caption: string;
+          }>) || []),
+          ...((req.body.images as Array<{
+            uploadId: string;
+            caption: string;
+          }>) || []),
+        ].map(({ uploadId, caption }) => ({
+          uploadId: new mongoose.Types.ObjectId(uploadId),
+          caption,
+        }));
+
+    const placeId = new mongoose.Types.ObjectId(req.body.place as string);
     const privacyType = req.body.privacyType
       ? (req.body.privacyType as ResourcePrivacyEnum)
       : ResourcePrivacyEnum.Public;
@@ -326,21 +331,18 @@ export async function createReview(
       throw createError(strings.authorization.otherUser, StatusCodes.FORBIDDEN);
     }
 
-    const populatedPlace = await Place.findById(place);
-    if (!populatedPlace) {
-      throw createError(
-        dynamicMessage(ds.notFound, "Place"),
-        StatusCodes.NOT_FOUND
-      );
-    }
+    const place = await Place.findById(placeId).orFail(
+      createError(dynamicMessage(ds.notFound, "Place"), StatusCodes.NOT_FOUND)
+    );
 
     if (authUser.role !== "admin") {
-      const lastReview = await Review.findOne({
+      const lastReviewExists = await Review.exists({
         writer,
-        place,
+        place: placeId,
         createdAt: { $gt: new Date(Date.now() - 24 * 60 * 60 * 1000) },
       });
-      if (lastReview) {
+
+      if (lastReviewExists) {
         throw createError(
           "You can't review the same place within 24 hours",
           StatusCodes.CONFLICT
@@ -349,18 +351,17 @@ export async function createReview(
     }
 
     const uploadIds: mongoose.Types.ObjectId[] = [];
-    const imageMediaIds: mongoose.Types.ObjectId[] = [];
-    const videoMediaIds: mongoose.Types.ObjectId[] = [];
-    let hasMedia = false;
-    if (images && images.length > 0) {
-      hasMedia = true;
-      for (const image of images) {
-        const upload = await Upload.findById(image.uploadId).orFail(
-          createError(
-            dynamicMessage(ds.notFound, "Uploaded image"),
-            StatusCodes.NOT_FOUND
+    const mediaDocs: IMedia[] = [];
+    if (media) {
+      for (const m of media) {
+        const upload = await Upload.findById(m.uploadId)
+          .orFail(
+            createError(
+              dynamicMessage(ds.notFound, `Upload ${m.uploadId}`),
+              StatusCodes.NOT_FOUND
+            )
           )
-        );
+          .lean();
 
         if (!authUser._id.equals(upload.user)) {
           throw createError(
@@ -369,144 +370,83 @@ export async function createReview(
           );
         }
 
-        if (upload.type !== "image") {
-          throw createError(
-            strings.upload.invalidType,
-            StatusCodes.BAD_REQUEST
-          );
-        }
-
-        uploadIds.push(image.uploadId);
+        uploadIds.push(m.uploadId);
 
         const media = await Media.create({
-          type: MediaTypeEnum.Image,
+          type: upload.type,
           user: authUser._id,
-          place,
-          caption: image.caption,
+          place: placeId,
+          caption: m.caption,
           src: upload.src,
         });
 
-        imageMediaIds.push(media._id);
-        await Upload.findByIdAndDelete(image.uploadId);
+        mediaDocs.push(media);
+        await Upload.findByIdAndDelete(m.uploadId);
       }
     }
-    if (videos && videos.length > 0) {
-      hasMedia = true;
-      for (const video of videos) {
-        const upload = await Upload.findById(video.uploadId).orFail(
-          createError(
-            dynamicMessage(ds.notFound, "Uploaded video"),
-            StatusCodes.NOT_FOUND
-          )
-        );
-
-        if (!authUser._id.equals(upload.user)) {
-          throw createError(
-            strings.authorization.otherUser,
-            StatusCodes.FORBIDDEN
-          );
-        }
-
-        if (upload.type !== "video") {
-          throw createError(
-            strings.upload.invalidType,
-            StatusCodes.BAD_REQUEST
-          );
-        }
-
-        uploadIds.push(video.uploadId);
-
-        const media = await Media.create({
-          type: MediaTypeEnum.Video,
-          user: authUser._id,
-          place,
-          caption: video.caption,
-          src: upload.src,
-        });
-
-        videoMediaIds.push(media._id);
-        await Upload.findByIdAndDelete(video.uploadId);
-      }
-    }
-
-    await User.updateOne(
-      { _id: authUser._id },
-      {
-        latestPlace: place,
-      }
-    );
 
     const review = await Review.create({
       writer,
-      place,
+      place: placeId,
       scores,
       content: content || "",
-      images: imageMediaIds,
-      videos: videoMediaIds,
       language: language || "en",
-      recommend: recommend
-        ? recommend === "false"
-          ? false
-          : Boolean(recommend)
-        : undefined,
+      recommend: recommend,
       privacyType: privacyType,
+      ...(mediaDocs.length < 0 ? {} : { media: mediaDocs.map((m) => m._id) }),
     });
-
-    logger.verbose("adding review count to the place");
-    populatedPlace.activities.reviewCount += 1;
-    await populatedPlace.save();
 
     const reward = await addReward(authUser._id, {
       refType: "Review",
       refId: review._id,
-      placeId: place,
+      placeId: placeId,
     });
-
-    //Send notifications to followers
-    const followers = await Follow.find({
-      target: writer,
-    }).lean();
-    for (const follower of followers) {
-      await Notification.create({
-        user: follower.user,
-        type: NotificationTypeEnum.FollowingReview,
-        resources: [
-          {
-            _id: review._id,
-            type: ResourceTypeEnum.Review,
-            date: review.createdAt,
-          },
-        ],
-        importance: 2,
-      });
-    }
 
     res
       .status(StatusCodes.CREATED)
       .json({ success: true, data: review, reward });
 
-    try {
-      // delete uploads
-      await Upload.deleteMany({ _id: { $in: uploadIds } });
-    } catch (e) {
-      logger.error("Internal server error on deleting upload(s)", { error: e });
-    }
+    place.activities.reviewCount += 1;
+    await place.save();
+
+    await User.updateOne({ _id: authUser._id }, { latestPlace: placeId });
+
+    //Send notifications to followers
+    const followers = await Follow.find({
+      target: writer,
+    }).lean();
+    await Promise.all(
+      followers.map((follower) =>
+        Notification.create({
+          user: follower.user,
+          type: NotificationTypeEnum.FollowingReview,
+          resources: [
+            {
+              _id: review._id,
+              type: ResourceTypeEnum.Review,
+              date: review.createdAt,
+            },
+          ],
+          importance: 2,
+        })
+      )
+    );
 
     try {
-      await reviewEarning(authUser._id, review);
+      await reviewEarning(authUser._id, review._id, mediaDocs);
       let activity;
-      if (!images && !videos && !content) {
+      if (media.length == 0 && !content) {
         // activity = await addRecommendActivity(authUser._id, review._id, place);
         activity = await UserActivityManager.createRecommendedActivity(
           authUser,
-          place,
+          placeId,
           review._id
         );
       } else {
         activity = await UserActivityManager.createReviewActivity(
           authUser,
-          place,
-          hasMedia,
+          placeId,
+          media.length > 0,
           review._id
         );
       }
@@ -528,10 +468,10 @@ export async function createReview(
         }
         review.tags = tags;
         await review.save();
-        populatedPlace.processReviews();
+        place.processReviews();
       });
     } else {
-      populatedPlace.processReviews();
+      place.processReviews();
     }
 
     // AI Comment
@@ -583,35 +523,12 @@ export async function getReview(
       {
         $lookup: {
           from: "media",
-          localField: "images",
+          localField: "media",
           foreignField: "_id",
-          as: "images",
+          as: "media",
           pipeline: [
             {
-              $project: {
-                _id: 1,
-                src: 1,
-                caption: 1,
-                type: 1,
-              },
-            },
-          ],
-        },
-      },
-      {
-        $lookup: {
-          from: "media",
-          localField: "videos",
-          foreignField: "_id",
-          as: "videos",
-          pipeline: [
-            {
-              $project: {
-                _id: 1,
-                src: 1,
-                caption: 1,
-                type: 1,
-              },
+              $project: MediaProjection.brief,
             },
           ],
         },
@@ -725,25 +642,22 @@ export async function getReview(
           content: 1,
           place: { $arrayElemAt: ["$place", 0] },
           writer: { $arrayElemAt: ["$writer", 0] },
-          images: 1,
-          videos: 1,
+          media: 1,
           scores: 1,
           tags: 1,
-          reactions: {
-            $arrayElemAt: ["$reactions", 0],
-          },
+          reactions: { $arrayElemAt: ["$reactions", 0] },
         },
       },
-    ]);
+    ]).then((review) => review[0]);
 
-    if (reviews.length === 0) {
+    if (!reviews) {
       throw createError(
         dynamicMessage(ds.notFound, "Review"),
         StatusCodes.NOT_FOUND
       );
     }
 
-    res.status(StatusCodes.OK).json({ success: true, data: reviews[0] });
+    res.status(StatusCodes.OK).json({ success: true, data: reviews });
   } catch (err) {
     next(err);
   }

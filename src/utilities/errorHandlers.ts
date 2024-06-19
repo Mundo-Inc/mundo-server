@@ -46,6 +46,8 @@ export function errorHandler(
 
   if (statusCode === StatusCodes.INTERNAL_SERVER_ERROR) {
     logger.error("Internal Server Error", err);
+  } else {
+    logger.verbose("Response Error", err);
   }
 
   return res.status(statusCode).json({ success: false, error: body });

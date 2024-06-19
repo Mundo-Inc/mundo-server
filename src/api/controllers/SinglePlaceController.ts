@@ -13,7 +13,7 @@ import {
   type OpeningHours,
 } from "../../DataManagers/GoogleDataManager.js";
 import List from "../../models/List.js";
-import Media from "../../models/Media.js";
+import Media, { MediaTypeEnum } from "../../models/Media.js";
 import Place, { type IPlace } from "../../models/Place.js";
 import Review from "../../models/Review.js";
 import { dStrings, dynamicMessage } from "../../strings.js";
@@ -24,6 +24,7 @@ import {
 } from "../../utilities/errorHandlers.js";
 import { filterObjectByConfig } from "../../utilities/filtering.js";
 import { getPaginationFromQuery } from "../../utilities/pagination.js";
+import MediaProjection, { type MediaProjectionBrief } from "../dto/media.js";
 import UserProjection from "../dto/user.js";
 import logger from "../services/logger/index.js";
 import {
@@ -95,12 +96,7 @@ export async function getPlaceOverview(
               $limit: 5,
             },
             {
-              $project: {
-                _id: 1,
-                src: 1,
-                caption: 1,
-                type: 1,
-              },
+              $project: MediaProjection.brief,
             },
           ],
         },
@@ -511,35 +507,12 @@ export async function getPlaceReviews(
         {
           $lookup: {
             from: "media",
-            localField: "images",
+            localField: "media",
             foreignField: "_id",
-            as: "images",
+            as: "media",
             pipeline: [
               {
-                $project: {
-                  _id: 1,
-                  src: 1,
-                  caption: 1,
-                  type: 1,
-                },
-              },
-            ],
-          },
-        },
-        {
-          $lookup: {
-            from: "media",
-            localField: "videos",
-            foreignField: "_id",
-            as: "videos",
-            pipeline: [
-              {
-                $project: {
-                  _id: 1,
-                  src: 1,
-                  caption: 1,
-                  type: 1,
-                },
+                $project: MediaProjection.brief,
               },
             ],
           },
@@ -635,8 +608,7 @@ export async function getPlaceReviews(
           $project: {
             scores: 1,
             content: 1,
-            images: 1,
-            videos: 1,
+            media: 1,
             tags: 1,
             language: 1,
             recommend: 1,
@@ -644,13 +616,21 @@ export async function getPlaceReviews(
             updatedAt: 1,
             userActivityId: 1,
             writer: { $arrayElemAt: ["$writer", 0] },
-            reactions: {
-              $arrayElemAt: ["$reactions", 0],
-            },
+            reactions: { $arrayElemAt: ["$reactions", 0] },
             comments: 1,
           },
         },
       ]);
+
+      // TODO: remove this temporary fix
+      for (const review of results) {
+        review.images = review.media?.filter(
+          (media: MediaProjectionBrief) => media.type === MediaTypeEnum.Image
+        );
+        review.videos = review.media?.filter(
+          (media: MediaProjectionBrief) => media.type === MediaTypeEnum.Video
+        );
+      }
 
       res.status(StatusCodes.OK).json({
         success: true,

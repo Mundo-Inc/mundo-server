@@ -130,7 +130,7 @@ export async function getActivitiesOfaUser(
         comments,
         commentsCount,
       ] = await Promise.all([
-        getResourceInfo(activity),
+        getResourceInfo(activity, authUser._id),
         getReactionsOfActivity(activity._id, authUser._id),
         getCommentsOfActivity(activity._id, authUser._id),
         Comment.countDocuments({

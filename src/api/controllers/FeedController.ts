@@ -110,7 +110,10 @@ export async function getActivity(
       )
     );
 
-    const [resourceInfo, placeInfo, userInfo] = await getResourceInfo(activity);
+    const [resourceInfo, placeInfo, userInfo] = await getResourceInfo(
+      activity,
+      authUser._id
+    );
 
     if (!resourceInfo) {
       throw createError(

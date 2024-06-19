@@ -15,33 +15,40 @@ export interface ICheckIn {
   user: Types.ObjectId;
   place: Types.ObjectId;
   event?: Types.ObjectId;
-  image?: Types.ObjectId;
+  media?: Types.ObjectId[];
   tags: Types.ObjectId[];
   caption?: string;
-  createdAt: Date;
   userActivityId?: Types.ObjectId;
   privacyType: ResourcePrivacyEnum;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
-const CheckInSchema = new Schema<ICheckIn>({
-  user: { type: Schema.Types.ObjectId, ref: "User", required: true },
-  place: { type: Schema.Types.ObjectId, ref: "Place", required: true },
-  event: { type: Schema.Types.ObjectId, ref: "Event" },
-  image: { type: Schema.Types.ObjectId, ref: "Media" },
-  caption: { type: String },
-  tags: {
-    type: [{ type: Schema.Types.ObjectId, ref: "User" }],
-    default: [],
+const CheckInSchema = new Schema<ICheckIn>(
+  {
+    user: { type: Schema.Types.ObjectId, ref: "User", required: true },
+    place: { type: Schema.Types.ObjectId, ref: "Place", required: true },
+    event: { type: Schema.Types.ObjectId, ref: "Event" },
+    media: {
+      type: [{ type: Schema.Types.ObjectId, ref: "Media" }],
+    },
+    caption: { type: String },
+    tags: {
+      type: [{ type: Schema.Types.ObjectId, ref: "User" }],
+      default: [],
+    },
+    userActivityId: { type: Schema.Types.ObjectId, ref: "UserActivity" },
+    privacyType: {
+      type: String,
+      enum: Object.values(ResourcePrivacyEnum),
+      default: ResourcePrivacyEnum.Public,
+      required: true,
+    },
   },
-  createdAt: { type: Date, default: Date.now },
-  userActivityId: { type: Schema.Types.ObjectId, ref: "UserActivity" },
-  privacyType: {
-    type: String,
-    enum: Object.values(ResourcePrivacyEnum),
-    default: ResourcePrivacyEnum.Public,
-    required: true,
-  },
-});
+  {
+    timestamps: true,
+  }
+);
 
 async function removeDependencies(checkin: ICheckIn) {
   // remove the userActivity related to the review
@@ -49,11 +56,15 @@ async function removeDependencies(checkin: ICheckIn) {
   if (userActivity) {
     await userActivity.deleteOne();
   }
-  if (checkin.image) {
-    const media = await Media.findById(checkin.image);
-    if (media) {
-      await media.deleteOne();
-    }
+  if (checkin.media) {
+    await Promise.all(
+      checkin.media.map(async (mediaId) => {
+        const media = await Media.findById(mediaId);
+        if (media) {
+          await media.deleteOne();
+        }
+      })
+    );
   }
 }
 

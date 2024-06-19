@@ -1,10 +1,10 @@
 import { type Document, type Types } from "mongoose";
 
-import type { ICheckIn } from "../../models/CheckIn.js";
 import Earning, { EarningTypeEnum } from "../../models/Earning.js";
-import type { IPlace } from "../../models/Place.js";
-import type { IReview } from "../../models/Review.js";
+import { MediaTypeEnum } from "../../models/Media.js";
+import { type IPlace } from "../../models/Place.js";
 import User, { type IUser } from "../../models/User.js";
+import { type MediaProjectionBrief } from "../dto/media.js";
 
 export const reviewCoins = { normalValue: 1, expLimit: 5, expMul: 10 };
 export const imageCoins = 2;
@@ -14,7 +14,8 @@ export const placeCoins = { normalValue: 1, expLimit: 5, expMul: 10 };
 
 export const reviewEarning = async (
   userId: Types.ObjectId,
-  review: IReview
+  reviewId: Types.ObjectId,
+  media?: MediaProjectionBrief[]
 ) => {
   const user = await User.findById(userId);
 
@@ -24,25 +25,27 @@ export const reviewEarning = async (
     userId: user._id,
     earningType: EarningTypeEnum.Review,
   });
-  let totalCoins = 0;
-  totalCoins +=
+
+  let totalCoins =
     reviewCoins.normalValue *
     (reviewEarns && reviewEarns.length >= reviewCoins.expLimit
       ? reviewCoins.expMul
       : 1);
 
-  if (review.images && review.images.length > 0) {
-    totalCoins += imageCoins;
-  }
-  if (review.videos && review.videos.length > 0) {
-    totalCoins += videoCoins;
+  if (media && media.length > 0) {
+    if (media.some((m) => m.type === MediaTypeEnum.Image)) {
+      totalCoins += imageCoins;
+    }
+    if (media.some((m) => m.type === MediaTypeEnum.Video)) {
+      totalCoins += videoCoins;
+    }
   }
   user.coins += totalCoins;
   await user.save();
   await Earning.create({
     userId: user._id,
     earningType: EarningTypeEnum.Review,
-    earning: review._id,
+    earning: reviewId,
     coins: totalCoins,
   });
 };

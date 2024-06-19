@@ -8,7 +8,7 @@ import { ResourceTypeEnum } from "../../models/Enum/ResourceTypeEnum.js";
 import Follow from "../../models/Follow.js";
 import Homemade from "../../models/Homemade.js";
 import Place from "../../models/Place.js";
-import Review from "../../models/Review.js";
+import Review, { type IReview } from "../../models/Review.js";
 import User from "../../models/User.js";
 import UserActivity, {
   ResourcePrivacyEnum,
@@ -18,11 +18,17 @@ import {
   getCommentsOfActivity,
   getReactionsOfActivity,
 } from "../controllers/UserActivityController.js";
+import { type CheckInProjectionBrief } from "../dto/checkIn.js";
+import MediaProjection, { MediaProjectionBrief } from "../dto/media.js";
 import PlaceProjection, { type PlaceProjectionDetail } from "../dto/place.js";
+import { type ReactionProjection } from "../dto/reaction.js";
 import UserProjection, { type UserProjectionEssentials } from "../dto/user.js";
 import logger from "./logger/index.js";
 
-export const getResourceInfo = async (activity: IUserActivity) => {
+export const getResourceInfo = async (
+  activity: IUserActivity,
+  authUserId: mongoose.Types.ObjectId
+) => {
   let resourceInfo: any;
   let placeInfo: any;
 
@@ -39,7 +45,20 @@ export const getResourceInfo = async (activity: IUserActivity) => {
       placeInfo = resourceInfo;
       break;
     case ResourceTypeEnum.Review:
-      const reviews = await Review.aggregate([
+      const review = await Review.aggregate<{
+        _id: mongoose.Types.ObjectId;
+        createdAt: Date;
+        updatedAt: Date;
+        content: string;
+        recommend: boolean;
+        place: PlaceProjectionDetail; // TODO: change location type;
+        writer: UserProjectionEssentials;
+        scores: IReview["scores"];
+        media?: Array<MediaProjectionBrief>;
+        tags?: Array<UserProjectionEssentials>;
+        userActivityId?: mongoose.Types.ObjectId;
+        reactions: ReactionProjection;
+      }>([
         {
           $match: {
             _id: activity.resourceId,
@@ -61,35 +80,12 @@ export const getResourceInfo = async (activity: IUserActivity) => {
         {
           $lookup: {
             from: "media",
-            localField: "images",
+            localField: "media",
             foreignField: "_id",
-            as: "images",
+            as: "media",
             pipeline: [
               {
-                $project: {
-                  _id: 1,
-                  src: 1,
-                  caption: 1,
-                  type: 1,
-                },
-              },
-            ],
-          },
-        },
-        {
-          $lookup: {
-            from: "media",
-            localField: "videos",
-            foreignField: "_id",
-            as: "videos",
-            pipeline: [
-              {
-                $project: {
-                  _id: 1,
-                  src: 1,
-                  caption: 1,
-                  type: 1,
-                },
+                $project: MediaProjection.brief,
               },
             ],
           },
@@ -157,6 +153,21 @@ export const getResourceInfo = async (activity: IUserActivity) => {
                       },
                     },
                   ],
+                  user: [
+                    {
+                      $match: {
+                        user: authUserId,
+                      },
+                    },
+                    {
+                      $project: {
+                        _id: 1,
+                        type: 1,
+                        reaction: 1,
+                        createdAt: 1,
+                      },
+                    },
+                  ],
                 },
               },
             ],
@@ -171,23 +182,36 @@ export const getResourceInfo = async (activity: IUserActivity) => {
             recommend: 1,
             place: { $arrayElemAt: ["$place", 0] },
             writer: { $arrayElemAt: ["$writer", 0] },
-            images: 1,
-            videos: 1,
+            media: 1,
             scores: 1,
             tags: 1,
             userActivityId: 1,
-            reactions: {
-              $arrayElemAt: ["$reactions", 0],
-            },
+            reactions: { $arrayElemAt: ["$reactions", 0] },
           },
         },
-      ]);
+      ]).then((res) => res[0]);
 
-      resourceInfo = reviews[0];
-      placeInfo = resourceInfo.place;
+      // TODO: remove on next update
+      // @ts-ignore
+      review.images = review.media?.filter((m) => m.type === "image");
+      // @ts-ignore
+      review.videos = review.media?.filter((m) => m.type === "video");
+
+      resourceInfo = review;
+      placeInfo = review.place;
       break;
     case ResourceTypeEnum.Homemade:
-      const homemade = await Homemade.aggregate([
+      const homemade = await Homemade.aggregate<{
+        _id: mongoose.Types.ObjectId;
+        createdAt: Date;
+        updatedAt: Date;
+        content: string;
+        user: UserProjectionEssentials;
+        media: Array<MediaProjectionBrief>;
+        tags?: Array<UserProjectionEssentials>;
+        userActivityId?: mongoose.Types.ObjectId;
+        reactions: ReactionProjection;
+      }>([
         {
           $match: {
             _id: new mongoose.Types.ObjectId(activity.resourceId),
@@ -201,12 +225,7 @@ export const getResourceInfo = async (activity: IUserActivity) => {
             as: "media",
             pipeline: [
               {
-                $project: {
-                  _id: 1,
-                  src: 1,
-                  caption: 1,
-                  type: 1,
-                },
+                $project: MediaProjection.brief,
               },
             ],
           },
@@ -269,6 +288,21 @@ export const getResourceInfo = async (activity: IUserActivity) => {
                       },
                     },
                   ],
+                  user: [
+                    {
+                      $match: {
+                        user: authUserId,
+                      },
+                    },
+                    {
+                      $project: {
+                        _id: 1,
+                        type: 1,
+                        reaction: 1,
+                        createdAt: 1,
+                      },
+                    },
+                  ],
                 },
               },
             ],
@@ -282,19 +316,20 @@ export const getResourceInfo = async (activity: IUserActivity) => {
             content: 1,
             user: { $arrayElemAt: ["$user", 0] },
             media: 1,
-            scores: 1,
             tags: 1,
             userActivityId: 1,
-            reactions: {
-              $arrayElemAt: ["$reactions", 0],
-            },
+            reactions: { $arrayElemAt: ["$reactions", 0] },
           },
         },
-      ]);
-      resourceInfo = homemade[0];
+      ]).then((res) => res[0]);
+
+      resourceInfo = homemade;
       break;
     case ResourceTypeEnum.CheckIn:
-      const result = await CheckIn.aggregate([
+      const result = await CheckIn.aggregate<{
+        count: number;
+        checkin: CheckInProjectionBrief;
+      }>([
         {
           $match: {
             user: activity.userId,
@@ -302,9 +337,9 @@ export const getResourceInfo = async (activity: IUserActivity) => {
         },
         {
           $facet: {
-            total: [
+            count: [
               {
-                $count: "total",
+                $count: "count",
               },
             ],
             checkin: [
@@ -319,6 +354,11 @@ export const getResourceInfo = async (activity: IUserActivity) => {
                   localField: "user",
                   foreignField: "_id",
                   as: "user",
+                  pipeline: [
+                    {
+                      $project: UserProjection.essentials,
+                    },
+                  ],
                 },
               },
               {
@@ -340,17 +380,12 @@ export const getResourceInfo = async (activity: IUserActivity) => {
               {
                 $lookup: {
                   from: "media",
-                  localField: "image",
+                  localField: "media",
                   foreignField: "_id",
-                  as: "image",
+                  as: "media",
                   pipeline: [
                     {
-                      $project: {
-                        _id: 1,
-                        src: 1,
-                        caption: 1,
-                        type: 1,
-                      },
+                      $project: MediaProjection.brief,
                     },
                   ],
                 },
@@ -369,23 +404,25 @@ export const getResourceInfo = async (activity: IUserActivity) => {
                 },
               },
               {
-                $unwind: "$user",
-              },
-              {
-                $unwind: "$place",
-              },
-              {
                 $project: {
                   _id: 1,
-                  createdAt: 1,
-                  user: UserProjection.essentials,
-                  place: PlaceProjection.detail,
-                  image: { $arrayElemAt: ["$image", 0] },
                   caption: 1,
                   tags: 1,
+                  privacyType: 1,
+                  createdAt: 1,
+                  updatedAt: 1,
+                  media: 1,
+                  user: { $arrayElemAt: ["$user", 0] },
+                  place: { $arrayElemAt: ["$place", 0] },
                 },
               },
             ],
+          },
+        },
+        {
+          $project: {
+            count: { $arrayElemAt: ["$count.count", 0] },
+            checkin: { $arrayElemAt: ["$checkin", 0] },
           },
         },
       ]).then((res) => res[0]);
@@ -395,21 +432,24 @@ export const getResourceInfo = async (activity: IUserActivity) => {
       }
 
       resourceInfo = {
-        totalCheckins: result.total[0]?.total || 0,
-        ...result.checkin[0],
+        ...result.checkin,
+        image: result.checkin.media?.[0],
+        totalCheckins: result.count || 0,
       };
       placeInfo = resourceInfo.place;
+
       break;
     case ResourceTypeEnum.User:
-      resourceInfo = await User.findById(
-        activity.resourceId,
-        UserProjection.essentials
-      ).lean();
+      resourceInfo = await User.findById(activity.resourceId)
+        .select<UserProjectionEssentials>(UserProjection.essentials)
+        .lean();
+
       if (activity.placeId) {
         placeInfo = await Place.findById(activity.placeId)
           .select<PlaceProjectionDetail>(PlaceProjection.detail)
           .lean();
       }
+
       break;
     case ResourceTypeEnum.Achievement:
       resourceInfo = await Achievement.findById(activity.resourceId).lean();
@@ -435,7 +475,7 @@ export const getResourceInfo = async (activity: IUserActivity) => {
 };
 
 export const getUserFeed = async (
-  userId: mongoose.Types.ObjectId,
+  authUserId: mongoose.Types.ObjectId,
   isForYou: boolean,
   limit: number,
   skip: number
@@ -444,8 +484,8 @@ export const getUserFeed = async (
     const activities = [];
 
     const [followings, blocked] = await Promise.all([
-      Follow.find({ user: userId }, { target: 1 }).lean(),
-      Block.find({ target: userId }).lean(),
+      Follow.find({ user: authUserId }, { target: 1 }).lean(),
+      Block.find({ target: authUserId }).lean(),
     ]);
 
     let query: FilterQuery<IUserActivity> = {};
@@ -465,7 +505,7 @@ export const getUserFeed = async (
           {
             isAccountPrivate: true,
             userId: {
-              $in: [...followings.map((f) => f.target), userId],
+              $in: [...followings.map((f) => f.target), authUserId],
             },
           },
         ],
@@ -478,12 +518,12 @@ export const getUserFeed = async (
             resourcePrivacy: { $ne: ResourcePrivacyEnum.Private },
             userId: {
               $nin: blocked.map((b) => b.user),
-              $in: [...followings.map((f) => f.target), userId],
+              $in: [...followings.map((f) => f.target), authUserId],
             },
           },
           {
             resourcePrivacy: ResourcePrivacyEnum.Private,
-            userId: userId,
+            userId: authUserId,
           },
         ],
       };
@@ -501,7 +541,8 @@ export const getUserFeed = async (
 
     for (const activity of userActivities) {
       const [resourceInfo, placeInfo, userInfo] = await getResourceInfo(
-        activity
+        activity,
+        authUserId
       );
 
       if (!resourceInfo) continue;
@@ -528,8 +569,8 @@ export const getUserFeed = async (
       // const weight = seen ? seen.weight + 1 : 1;
 
       const [reactions, comments, commentsCount] = await Promise.all([
-        getReactionsOfActivity(activity._id, userId),
-        getCommentsOfActivity(activity._id, userId),
+        getReactionsOfActivity(activity._id, authUserId),
+        getCommentsOfActivity(activity._id, authUserId),
         Comment.countDocuments({
           userActivity: activity._id,
         }),

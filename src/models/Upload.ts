@@ -1,5 +1,7 @@
 import mongoose, { Schema, type Model } from "mongoose";
 
+import { MediaTypeEnum } from "./Media.js";
+
 export type UploadUsecase = "profileImage" | "placeReview" | "checkin";
 
 export interface IUpload {
@@ -7,7 +9,7 @@ export interface IUpload {
   user: mongoose.Types.ObjectId;
   key: string;
   src: string;
-  type: string;
+  type: MediaTypeEnum;
   usecase: UploadUsecase;
   createdAt: Date;
 }
@@ -28,6 +30,7 @@ const UploadSchema = new Schema<IUpload>({
   },
   type: {
     type: String,
+    enum: Object.values(MediaTypeEnum),
     required: true,
   },
   usecase: {
