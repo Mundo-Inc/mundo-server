@@ -1,5 +1,6 @@
 import mongoose, { Schema, type CallbackError, type Model } from "mongoose";
 
+import DeletionService from "../api/services/DeletionService.js";
 import Achievement from "./Achievement.js";
 import ActivitySeen from "./ActivitySeen.js";
 import CheckIn from "./CheckIn.js";
@@ -10,7 +11,6 @@ import List from "./List.js";
 import Media from "./Media.js";
 import Reaction from "./Reaction.js";
 import Review from "./Review.js";
-import DeletionService from "../api/services/DeletionService.js";
 
 export enum UserRoleEnum {
   Admin = "admin",
