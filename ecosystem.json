@@ -1,7 +1,7 @@
 {
   "apps": [
     {
-      "name": "genz-server",
+      "name": "mundo-server",
       "script": "./dist/server.js",
       "autorestart": true,
       "watch": false

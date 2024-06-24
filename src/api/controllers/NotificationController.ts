@@ -7,6 +7,7 @@ import CheckIn from "../../models/CheckIn.js";
 import Comment from "../../models/Comment.js";
 import Follow from "../../models/Follow.js";
 import FollowRequest from "../../models/FollowRequest.js";
+import Homemade from "../../models/Homemade.js";
 import Notification, {
   NotificationTypeEnum,
   type INotification,
@@ -148,7 +149,7 @@ async function getNotificationContent(notification: INotification) {
         });
       break;
     case NotificationTypeEnum.FollowingHomemade:
-      await Review.findById(notification.resources![0]._id)
+      await Homemade.findById(notification.resources![0]._id)
         .populate<{
           userId: UserProjectionEssentials;
         }>({

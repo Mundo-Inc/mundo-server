@@ -1,1 +1,1 @@
-# genz-server
+The mighty server powering Mundo!
