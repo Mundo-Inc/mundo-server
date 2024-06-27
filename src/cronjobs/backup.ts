@@ -1,5 +1,5 @@
-import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
-import { spawn, type ChildProcessWithoutNullStreams } from "child_process";
+import { PutObjectCommand } from "@aws-sdk/client-s3";
+import { spawn } from "child_process";
 import fs from "fs";
 import cron from "node-cron";
 import path from "path";
@@ -7,80 +7,70 @@ import { fileURLToPath } from "url";
 
 import logger from "../api/services/logger/index.js";
 import { env } from "../env.js";
-import { getFormattedDateTime } from "../utilities/stringHelper.js";
+import { s3Client } from "../utilities/aws-s3.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-
-const ARCHIVE_PATH: string = path.join(
-  __dirname,
-  "backup",
-  `${env.DB_NAME}_${getFormattedDateTime()}.gzip`
-);
-
-const s3Client: S3Client = new S3Client({
-  region: env.AWS_REGION_BACKUP,
-  credentials: {
-    accessKeyId: env.AWS_ACCESS_KEY_ID_BACKUP,
-    secretAccessKey: env.AWS_SECRET_ACCESS_KEY_BACKUP,
-  },
-});
+const BACKUP_DIR = path.join(__dirname, "backup");
 
 // Backup MongoDB every day at 12:00 AM
-// "*/5 * * * *"
-cron.schedule("0 0 * * *", () => {
-  backupMongoDB();
-});
+cron.schedule("0 0 * * *", backupMongoDB);
 
-function backupMongoDB(): void {
+function backupMongoDB() {
   // Ensure the backup directory exists
-  const backupDir = path.dirname(ARCHIVE_PATH);
-  if (!fs.existsSync(backupDir)) {
-    fs.mkdirSync(backupDir, { recursive: true }); // Create the directory if it doesn't exist
+  if (!fs.existsSync(BACKUP_DIR)) {
+    fs.mkdirSync(BACKUP_DIR, { recursive: true });
   }
-  const child: ChildProcessWithoutNullStreams = spawn("mongodump", [
-    `--db=${env.DB_NAME}`,
-    `--archive=${ARCHIVE_PATH}`,
+
+  const now = new Date();
+  const fileName = `${env.DB_NAME}_${now.toISOString()}.gz`;
+  const filePath = path.join(BACKUP_DIR, fileName);
+
+  const child = spawn("mongodump", [
+    `--db="${env.DB_NAME}"`,
+    `--archive="${filePath}"`,
     "--gzip",
   ]);
-  child.stdout.on("data", (data: Buffer) => {});
-  child.stderr.on("data", (data: Buffer) => {});
-  child.on("error", (err: Error) => {
+
+  child.stdout.on("data", (data: Buffer) => {
+    logger.verbose(`MongoDB backup stdout: ${data.toString()}`);
+  });
+
+  child.stderr.on("data", (data: Buffer) => {
+    logger.verbose(`MongoDB backup stderr: ${data.toString()}`);
+  });
+
+  child.on("error", (err) => {
     logger.error("Error happened creating child process for backup", err);
   });
-  child.on("exit", (code: number | null, signal: NodeJS.Signals | null) => {
-    if (code) logger.verbose(`child process exited with code`, code);
-    else if (signal) logger.verbose(`child process exited with signal`, signal);
-    else {
-      logger.info("Backup success ✔️");
-      uploadBackupToS3().catch((err) =>
-        logger.verbose("Error in backup upload:", err)
+
+  child.on("exit", (code, signal) => {
+    if (code !== 0) {
+      logger.error(`mongodump process exited with code ${code}`);
+    } else if (signal) {
+      logger.error(`mongodump process exited with signal ${signal}`);
+    } else {
+      logger.verbose("Backup success");
+      uploadBackupToS3(fileName, filePath).catch((err) =>
+        logger.error("Error in backup upload:", err)
       );
     }
   });
 }
 
-async function uploadBackupToS3(): Promise<void> {
-  const fileContent: Buffer = fs.readFileSync(ARCHIVE_PATH);
-  // Setting up S3 upload parameters
-  const now: Date = new Date();
-  const fileName: string = `${env.DB_NAME}_${now.getFullYear()}-${
-    now.getMonth() + 1
-  }-${now.getDate()}_${now.getHours()}-${now.getMinutes()}-${now.getSeconds()}.gzip`;
+async function uploadBackupToS3(fileName: string, filePath: string) {
+  const fileStream = fs.createReadStream(filePath);
 
-  const params = {
-    Bucket: env.AWS_BUCKET_NAME_BACKUP,
-    Key: fileName, // File name you want to save as in S3
-    Body: fileContent,
-  };
+  const command = new PutObjectCommand({
+    Bucket: env.AWS_S3_BUCKET_NAME_BACKUP,
+    Key: fileName,
+    Body: fileStream,
+  });
 
-  logger.verbose("Uploading file to S3...", params);
-  // Uploading files to the bucket
-  try {
-    await s3Client.send(new PutObjectCommand(params));
-    logger.verbose("File uploaded successfully. Deleting local file...");
-    fs.unlinkSync(ARCHIVE_PATH); // Delete the file after successful upload
-    logger.verbose("Local file deleted successfully.");
-  } catch (err) {
-    logger.error("Error uploading backup", err);
-  }
+  logger.verbose("Uploading backup file to S3...");
+
+  await s3Client.send(command);
+  logger.verbose("Backup uploaded successfully. Deleting local file...");
+
+  fs.unlinkSync(filePath);
+  logger.verbose("Local backup file deleted successfully.");
 }

@@ -1,37 +1,11 @@
-import { S3 } from "@aws-sdk/client-s3";
 import { path } from "@ffmpeg-installer/ffmpeg";
+import { randomBytes } from "crypto";
 import { type Request } from "express";
 import ffmpeg from "fluent-ffmpeg";
 import formidable, { type Fields, type Files } from "formidable";
 import * as fs from "fs";
 
-import { env } from "../env.js";
-
 ffmpeg.setFfmpegPath(path);
-
-export const s3 = new S3({
-  region: env.AWS_S3_REGION,
-  credentials: {
-    accessKeyId: env.AWS_S3_ACCESS_KEY_ID,
-    secretAccessKey: env.AWS_S3_SECRET_ACCESS_KEY,
-  },
-});
-
-export const bucketName = env.AWS_S3_BUCKET_NAME;
-export const region = env.AWS_S3_REGION;
-
-// Unused
-export const allowedMimeTypes = [
-  "image/jpeg",
-  "image/png",
-  "image/webp",
-  "video/x-matroska",
-  "video/x-msvideo",
-  "video/mp4",
-  "video/x-h265",
-  "video/quicktime",
-  "video/x-quicktime",
-];
 
 export async function parseForm(
   req: Request
@@ -47,7 +21,9 @@ export async function parseForm(
     uploadDir,
     keepExtensions: true,
   });
+
   const [fields, files] = await form.parse(req);
+
   return { fields, files };
 }
 
@@ -96,9 +72,11 @@ export function createThumbnail(inputPath: string) {
   return new Promise((resolve, reject) => {
     ffmpeg(inputPath)
       .on("error", (err: any) => {
-        reject(new Error("Error creating thumbnail: " + err.message));
+        reject(
+          new Error(`Error creating thumbnail for ${inputPath}: ${err.message}`)
+        );
       })
-      .on("end", (e) => {
+      .on("end", () => {
         resolve(true);
       })
       .screenshots({
@@ -108,4 +86,12 @@ export function createThumbnail(inputPath: string) {
         size: "640x?",
       });
   });
+}
+
+export function generateFilename(extension: string): string {
+  const date = new Date();
+  const dateString = date.toISOString().split("T")[0].replace(/-/g, "");
+  const randomString = randomBytes(8).toString("hex");
+
+  return `${dateString}-${randomString}.${extension}`;
 }

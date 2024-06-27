@@ -1,116 +1,18 @@
-import { PutObjectCommand } from "@aws-sdk/client-s3";
 import type { NextFunction, Request, Response } from "express";
 import { query, type ValidationChain } from "express-validator";
-import { type File } from "formidable";
-import { readFileSync, unlinkSync } from "fs";
 import { StatusCodes } from "http-status-codes";
 import mongoose, { type PipelineStage } from "mongoose";
 
-import { env } from "../../env.js";
 import Place, { type IPlace } from "../../models/Place.js";
-import { dStrings, dynamicMessage } from "../../strings.js";
 import {
   createError,
   handleInputErrors,
 } from "../../utilities/errorHandlers.js";
 import { getPaginationFromQuery } from "../../utilities/pagination.js";
-import { bucketName, parseForm, region, s3 } from "../../utilities/storage.js";
 import { areStrictlySimilar } from "../../utilities/stringHelper.js";
 import UserProjection from "../dto/user.js";
 import { getDetailedPlace } from "./SinglePlaceController.js";
 import validate from "./validators.js";
-
-export const createPlaceValidation: ValidationChain[] = [
-  // validate.name(body("name")),
-  // validate.place.description(body("description").optional()),
-  // validate.place.priceRange(body("priceRange").optional()),
-  // validate.place.categories(body("categories").optional()),
-];
-export async function createPlace(
-  req: Request,
-  res: Response,
-  next: NextFunction
-) {
-  // NO PARSER
-  try {
-    handleInputErrors(req);
-
-    const authUser = req.user!;
-
-    const { fields, files } = await parseForm(req);
-
-    const placeInfo = {
-      name: fields.name![0],
-      location: JSON.parse(fields.location![0]),
-      description: fields.description?.[0] || "",
-      priceRange: fields.priceRange?.[0] ? parseInt(fields.priceRange[0]) : 0,
-      categories: fields.categories?.[0] ? fields.categories[0].split(",") : [],
-    };
-
-    let place = await Place.findOne({
-      name: placeInfo.name,
-      "location.geoLocation.coordinates.0": {
-        $gte: placeInfo.location.geoLocation.coordinates[0] - 0.0001,
-        $lte: placeInfo.location.geoLocation.coordinates[0] + 0.0001,
-      },
-      "location.geoLocation.coordinates.1": {
-        $gte: placeInfo.location.geoLocation.coordinates[1] - 0.0001,
-        $lte: placeInfo.location.geoLocation.coordinates[1] + 0.0001,
-      },
-    });
-    if (place) {
-      throw createError(
-        dynamicMessage(dStrings.alreadyExists, "Place"),
-        StatusCodes.CONFLICT
-      );
-    }
-
-    const body: {
-      [key: string]: any;
-    } = {
-      name: placeInfo.name,
-      location: placeInfo.location,
-      scores: {
-        overall: null,
-      },
-      addedBy: authUser._id,
-    };
-    if (placeInfo.description) {
-      body.description = placeInfo.description;
-    }
-    if (placeInfo.priceRange) {
-      body.priceRange = placeInfo.priceRange;
-    }
-    if (placeInfo.categories && placeInfo.categories.length > 0) {
-      body.categories = placeInfo.categories;
-    }
-
-    place = new Place(body);
-
-    if (files.image && files.image.length > 0) {
-      const { filepath } = files.image[0] as File;
-      let fileBuffer = readFileSync(filepath);
-      const key = `${env.NODE_ENV === "production" ? "places" : "devplaces"}/${
-        place._id
-      }/thumbnail.jpg`;
-      await s3.send(
-        new PutObjectCommand({
-          Bucket: bucketName,
-          Key: key,
-          Body: fileBuffer,
-          ContentType: "image/jpeg",
-        })
-      );
-      place.thumbnail = `https://${bucketName}.s3.${region}.amazonaws.com/${key}`;
-
-      unlinkSync(filepath);
-    }
-    await place.save();
-    return res.status(StatusCodes.CREATED).json({ success: true, data: place });
-  } catch (err) {
-    next(err);
-  }
-}
 
 export const getPlacesValidation: ValidationChain[] = [
   validate.lat(query("lat").optional()),

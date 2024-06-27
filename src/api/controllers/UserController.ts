@@ -1,4 +1,3 @@
-import { DeleteObjectCommand } from "@aws-sdk/client-s3";
 import bcrypt from "bcryptjs";
 import type { NextFunction, Request, Response } from "express";
 import { body, param, query, type ValidationChain } from "express-validator";
@@ -19,6 +18,7 @@ import Review from "../../models/Review.js";
 import User, { SignupMethodEnum, type IUser } from "../../models/User.js";
 import UserActivity from "../../models/UserActivity.js";
 import strings, { dStrings as ds, dynamicMessage } from "../../strings.js";
+import S3Manager from "../../utilities/S3Manager/index.js";
 import {
   getConnectionStatus,
   getConnectionStatuses,
@@ -29,7 +29,6 @@ import {
   handleInputErrors,
 } from "../../utilities/errorHandlers.js";
 import { getPaginationFromQuery } from "../../utilities/pagination.js";
-import { bucketName, s3 } from "../../utilities/storage.js";
 import UserProjection, { type UserProjectionEssentials } from "../dto/user.js";
 import { handleSignUp } from "../lib/profile-handlers.js";
 import { BrevoService } from "../services/BrevoService.js";
@@ -682,12 +681,7 @@ export async function editUser(
 
     if (removeProfileImage === true) {
       user.profileImage = "";
-      s3.send(
-        new DeleteObjectCommand({
-          Bucket: bucketName,
-          Key: `${id}/profile.jpg`,
-        })
-      );
+      S3Manager.deleteObject(`${id.toString()}/profile.jpg`);
     }
 
     try {

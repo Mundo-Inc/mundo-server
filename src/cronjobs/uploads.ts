@@ -1,23 +1,16 @@
-import { DeleteObjectCommand } from "@aws-sdk/client-s3";
 import cron from "node-cron";
 
 import Upload from "../models/Upload.js";
-import { bucketName, s3 } from "../utilities/storage.js";
+import S3Manager from "../utilities/S3Manager/index.js";
 
 cron.schedule("*/15 * * * *", async () => {
+  const FIFTEEN_MINUTES_AGO = new Date(Date.now() - 1000 * 60 * 15);
   const uploads = await Upload.find({
-    // created at more than 15 minutes ago
-    createdAt: { $lt: new Date(Date.now() - 1000 * 60 * 15) },
+    createdAt: { $lt: FIFTEEN_MINUTES_AGO },
   });
 
   for (const upload of uploads) {
-    await s3.send(
-      new DeleteObjectCommand({
-        Bucket: bucketName,
-        Key: upload.key,
-      })
-    );
-
-    Upload.findByIdAndDelete(upload._id);
+    await S3Manager.deleteObject(upload.key);
+    await Upload.findByIdAndDelete(upload._id);
   }
 });

@@ -2,8 +2,6 @@ import express from "express";
 import rateLimit from "express-rate-limit";
 
 import {
-  createPlace,
-  createPlaceValidation,
   getPlaces,
   getPlacesByContext,
   getPlacesByContextValidation,
@@ -26,6 +24,7 @@ import {
 import { authMiddleware } from "../middlewares/authMiddleWare.js";
 
 const router = express.Router();
+router.use(express.json());
 
 const getPlaceRateLimiter = rateLimit({
   windowMs: 60 * 1000, // 1 minute
@@ -36,64 +35,47 @@ const getPlaceRateLimiter = rateLimit({
   legacyHeaders: false,
 });
 
-router
-  .route("/")
-  .get(express.json(), getPlacesValidation, getPlaces)
-  .post(authMiddleware, createPlaceValidation, createPlace);
+router.get("/", getPlacesValidation, getPlaces);
 
-router
-  .route("/map")
-  .get(
-    express.json(),
-    getPlacesWithinBoundariesValidation,
-    getPlacesWithinBoundaries
-  );
+router.get(
+  "/map",
+  getPlacesWithinBoundariesValidation,
+  getPlacesWithinBoundaries
+);
 
-router
-  .route("/context")
-  .get(
-    express.json(),
-    authMiddleware,
-    getPlacesByContextValidation,
-    getPlacesByContext
-  );
+router.get(
+  "/context",
+  authMiddleware,
+  getPlacesByContextValidation,
+  getPlacesByContext
+);
 
-router
-  .route("/:id/media")
-  .get(express.json(), getPlaceMediaValidation, getPlaceMedia);
+router.get("/:id/media", getPlaceMediaValidation, getPlaceMedia);
 
-router
-  .route("/:id/reviews")
-  .get(
-    express.json(),
-    authMiddleware,
-    getPlaceReviewsValidation,
-    getPlaceReviews
-  );
+router.get(
+  "/:id/reviews",
+  authMiddleware,
+  getPlaceReviewsValidation,
+  getPlaceReviews
+);
 
-router
-  .route("/:id/lists")
-  .get(
-    express.json(),
-    authMiddleware,
-    getExistInListsValidation,
-    getExistInLists
-  );
+router.get(
+  "/:id/lists",
+  authMiddleware,
+  getExistInListsValidation,
+  getExistInLists
+);
 
 // Place overview
-router
-  .route("/:id/overview")
-  .get(express.json(), getPlaceOverviewValidation, getPlaceOverview);
+router.get("/:id/overview", getPlaceOverviewValidation, getPlaceOverview);
 
 // Detailed place info
-router
-  .route("/:id")
-  .get(
-    getPlaceRateLimiter,
-    express.json(),
-    authMiddleware,
-    getPlaceValidation,
-    getPlace
-  );
+router.get(
+  "/:id",
+  getPlaceRateLimiter,
+  authMiddleware,
+  getPlaceValidation,
+  getPlace
+);
 
 export default router;

@@ -36,16 +36,13 @@ export const env = createEnv({
     GOOGLE_PLACES_API_KEY: z.string(),
 
     // AWS S3
-    AWS_S3_ACCESS_KEY_ID: z.string(),
-    AWS_S3_SECRET_ACCESS_KEY: z.string(),
-    AWS_S3_REGION: z.string(),
     AWS_S3_BUCKET_NAME: z.string(),
-
+    AWS_S3_REGION: z.string(),
     // AWS S3 for backups
-    AWS_BUCKET_NAME_BACKUP: z.string(),
-    AWS_REGION_BACKUP: z.string(),
-    AWS_ACCESS_KEY_ID_BACKUP: z.string(),
-    AWS_SECRET_ACCESS_KEY_BACKUP: z.string(),
+    AWS_S3_BUCKET_NAME_BACKUP: z.string(),
+    // AWS Dev - Only used in development
+    AWS_DEVELOPER_ACCESS_KEY: z.string().optional(),
+    AWS_DEVELOPER_SECRET_ACCESS_KEY: z.string().optional(),
 
     // Slack
     SLACK_WEBHOOK_URL_DEV_ASSISTANT: z.string(),
