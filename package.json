@@ -13,14 +13,14 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/PhantomPhood-Inc/genz-server.git"
+    "url": "git+https://github.com/Mundo-Inc/mundo-server.git"
   },
   "author": "",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/PhantomPhood-Inc/genz-server/issues"
+    "url": "https://github.com/Mundo-Inc/mundo-server/issues"
   },
-  "homepage": "https://github.com/PhantomPhood-Inc/genz-server#readme",
+  "homepage": "https://github.com/Mundo-Inc/mundo-server#readme",
   "engines": {
     "node": ">=20.0.0"
   },
