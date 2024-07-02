@@ -57,11 +57,11 @@ const UserProjection = {
 };
 
 // public key union
-export type UserPublicKeys = keyof typeof UserProjection.public;
+type UserPublicKeys = keyof typeof UserProjection.public;
 export type UserProjectionPublic = Pick<IUser, UserPublicKeys>;
 
 // essential key union
-export type UserEssentialsKeys = keyof typeof UserProjection.essentials;
+type UserEssentialsKeys = keyof typeof UserProjection.essentials;
 export type UserProjectionEssentials = {
   [K in UserEssentialsKeys]: K extends "progress"
     ? Omit<IUser["progress"], "achievements">
@@ -69,7 +69,7 @@ export type UserProjectionEssentials = {
 };
 
 // private key union
-export type UserPrivateKeys = keyof typeof UserProjection.private;
+type UserPrivateKeys = keyof typeof UserProjection.private;
 export type UserProjectionPrivate = Pick<IUser, UserPrivateKeys>;
 
 export default UserProjection;

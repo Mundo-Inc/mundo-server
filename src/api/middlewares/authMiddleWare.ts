@@ -1,7 +1,6 @@
 import type { NextFunction, Request, Response } from "express";
 import { getAuth } from "firebase-admin/auth";
 import { StatusCodes } from "http-status-codes";
-import jwt from "jsonwebtoken";
 
 import User from "../../models/User.js";
 import { createError } from "../../utilities/errorHandlers.js";
@@ -14,52 +13,19 @@ async function verifyAndFetchUser(req: Request) {
     throw createError("Token is required", StatusCodes.BAD_REQUEST);
   }
 
-  let user: UserProjectionPrivate | null = null;
-
   try {
-    const decoded = jwt.decode(token, { complete: true });
+    const firebaseUser = await getAuth().verifyIdToken(token);
 
-    if (!decoded || typeof decoded.payload != "object") {
-      throw createError("Invalid token", StatusCodes.UNAUTHORIZED);
-    }
-
-    let uid: string;
-    if (decoded.payload.aud === "the-mundo") {
-      const firebaseUser = await getAuth()
-        .verifyIdToken(token)
-        .catch((err) => {
-          if (err.code !== "auth/argument-error") {
-            throw err;
-          }
-
-          const uid = decoded.payload.sub as string | undefined;
-
-          if (!uid) {
-            throw createError("Invalid token", StatusCodes.UNAUTHORIZED);
-          }
-
-          return {
-            uid: uid,
-          };
-        });
-      uid = firebaseUser.uid;
-    } else {
-      const firebaseUser = await getAuth().verifyIdToken(token);
-      uid = firebaseUser.uid;
-    }
-
-    user = await User.findOne({
-      uid: uid,
+    const user = await User.findOne({
+      uid: firebaseUser.uid,
     })
       .select<UserProjectionPrivate>(UserProjection.private)
       .lean();
-    // }
+
+    return user;
   } catch (err) {
-    console.log(err);
     throw createError("Invalid or expired token", StatusCodes.UNAUTHORIZED);
   }
-
-  return user;
 }
 
 export async function authMiddleware(

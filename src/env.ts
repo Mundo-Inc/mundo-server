@@ -23,10 +23,6 @@ export const env = createEnv({
     FIREBASE_WEB_API_KEY: z.string(),
     FIREBASE_SYNC_SECRET: z.string(),
 
-    // JWT
-    JWT_SECRET: z.string(),
-    JWT_MAX_AGE: z.string().transform(Number),
-
     // Third-party services
 
     // OpenAI

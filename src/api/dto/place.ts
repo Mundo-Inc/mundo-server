@@ -43,11 +43,11 @@ const PlaceProjection = {
 };
 
 // detail key union
-export type PlacePublicKeys = keyof typeof PlaceProjection.detail;
+type PlacePublicKeys = keyof typeof PlaceProjection.detail;
 export type PlaceProjectionDetail = Pick<IPlace, PlacePublicKeys>;
 
 // brief key union
-export type PlaceBriefKeys = keyof typeof PlaceProjection.brief;
+type PlaceBriefKeys = keyof typeof PlaceProjection.brief;
 export type PlaceProjectionBrief = Pick<IPlace, PlaceBriefKeys>;
 
 export default PlaceProjection;

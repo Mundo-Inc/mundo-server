@@ -15,8 +15,4 @@ router.use(adminAuthMiddleware);
 
 router.post("/notify", notifyUsersValidation, notifyUsers);
 
-router.get("/hello", (req, res) => {
-  res.send("Hello, Admin!");
-});
-
 export default router;

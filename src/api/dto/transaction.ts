@@ -15,7 +15,7 @@ const TransactionProjection = {
 };
 
 // public key union
-export type TransactionPublicKeys = keyof typeof TransactionProjection.public;
+type TransactionPublicKeys = keyof typeof TransactionProjection.public;
 export type TransactionProjectionPublic = Pick<
   ITransaction,
   TransactionPublicKeys

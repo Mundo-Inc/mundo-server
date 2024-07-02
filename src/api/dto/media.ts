@@ -20,11 +20,11 @@ const MediaProjection = {
 };
 
 // brief key union
-export type MediaBriefKeys = keyof typeof MediaProjection.brief;
+type MediaBriefKeys = keyof typeof MediaProjection.brief;
 export type MediaProjectionBrief = Pick<IMedia, MediaBriefKeys>;
 
 // detail key union
-export type MediaDetailKeys = keyof typeof MediaProjection.detail;
+type MediaDetailKeys = keyof typeof MediaProjection.detail;
 export type MediaProjectionDetail = Pick<IMedia, MediaDetailKeys>;
 
 export default MediaProjection;
