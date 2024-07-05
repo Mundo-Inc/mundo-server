@@ -12,8 +12,23 @@ const keyPath = path.resolve(
   `keys/${env.FIREBASE_SERVICE_ACCOUNT_KEY_FILE_NAME}`
 );
 
-initializeApp({
-  credential: admin.credential.cert(keyPath),
-});
+const alternativeKeyPath = path.resolve(
+  pwd,
+  `keys/${env.FIREBASE_ALTERNATE_SERVICE_ACCOUNT_KEY_FILE_NAME}`
+);
+
+export const MundoApp = initializeApp(
+  {
+    credential: admin.credential.cert(keyPath),
+  },
+  "the-mundo"
+);
+
+export const PhPhApp = initializeApp(
+  {
+    credential: admin.credential.cert(alternativeKeyPath),
+  },
+  "phantom-phood"
+);
 
 logger.verbose("Firebase admin initialized");

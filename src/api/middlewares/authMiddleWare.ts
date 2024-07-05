@@ -1,7 +1,9 @@
 import type { NextFunction, Request, Response } from "express";
 import { getAuth } from "firebase-admin/auth";
 import { StatusCodes } from "http-status-codes";
+import jwt from "jsonwebtoken";
 
+import { MundoApp, PhPhApp } from "../../config/firebase-config.js";
 import User from "../../models/User.js";
 import { createError } from "../../utilities/errorHandlers.js";
 import UserProjection, { type UserProjectionPrivate } from "../dto/user.js";
@@ -10,11 +12,19 @@ async function verifyAndFetchUser(req: Request) {
   const token = req.headers.authorization || req.cookies.token;
 
   if (!token) {
-    throw createError("Token is required", StatusCodes.BAD_REQUEST);
+    throw createError("Authorization required", StatusCodes.UNAUTHORIZED);
+  }
+
+  const payload = jwt.decode(token);
+
+  if (!payload || typeof payload !== "object") {
+    throw createError("Invalid token", StatusCodes.UNAUTHORIZED);
   }
 
   try {
-    const firebaseUser = await getAuth().verifyIdToken(token);
+    const firebaseUser = await getAuth(
+      payload.aud === "the-mundo" ? MundoApp : PhPhApp
+    ).verifyIdToken(token);
 
     const user = await User.findOne({
       uid: firebaseUser.uid,

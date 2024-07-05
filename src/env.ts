@@ -20,6 +20,7 @@ export const env = createEnv({
 
     // Firebase
     FIREBASE_SERVICE_ACCOUNT_KEY_FILE_NAME: z.string(),
+    FIREBASE_ALTERNATE_SERVICE_ACCOUNT_KEY_FILE_NAME: z.string(),
     FIREBASE_WEB_API_KEY: z.string(),
     FIREBASE_SYNC_SECRET: z.string(),
 
