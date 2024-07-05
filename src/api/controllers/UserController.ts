@@ -5,6 +5,7 @@ import { getAuth } from "firebase-admin/auth";
 import { StatusCodes } from "http-status-codes";
 import { Types } from "mongoose";
 
+import { MundoApp } from "../../config/firebase-config.js";
 import Block from "../../models/Block.js";
 import CheckIn from "../../models/CheckIn.js";
 import CoinReward, { CoinRewardTypeEnum } from "../../models/CoinReward.js";
@@ -266,7 +267,7 @@ export async function createUser(
     newUser.accepted_eula = new Date();
     await newUser.save();
 
-    await getAuth().createUser({
+    await getAuth(MundoApp).createUser({
       uid: newUser._id.toString(),
       email: email.toLowerCase(),
       emailVerified: false,
