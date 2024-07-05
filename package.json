@@ -46,7 +46,7 @@
     "http-status-codes": "^2.3.0",
     "jsonwebtoken": "^9.0.2",
     "moment-timezone": "^0.5.45",
-    "mongoose": "^8.4.4",
+    "mongoose": "^8.4.5",
     "node-cron": "^3.0.3",
     "openai": "^4.52.3",
     "stripe": "^15.12.0",

@@ -25,9 +25,6 @@ export async function firebaseSync(
   next: NextFunction
 ) {
   try {
-    console.log(111);
-    console.log(req.body);
-
     // Add user data to your database
     const authHeader = req.headers.authorization;
     if (authHeader === env.FIREBASE_SYNC_SECRET) {
