@@ -57,8 +57,8 @@ export const env = createEnv({
     // Twilio
     TWILIO_ACCOUNT_SID: z.string(),
     TWILIO_AUTH_TOKEN: z.string(),
-    TWILIO_API_KEY: z.string(),
-    TWILIO_API_SECRET: z.string(),
+    TWILIO_API_KEY_SID: z.string(),
+    TWILIO_API_KEY_SECRET: z.string(),
     TWILIO_SERVICE_SID: z.string(),
     TWILIO_WEBHOOK_URL: z.string(),
 

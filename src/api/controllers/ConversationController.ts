@@ -16,7 +16,6 @@ import UserProjection from "../dto/user.js";
 import logger from "../services/logger/index.js";
 
 const AccessToken = twilio.jwt.AccessToken;
-const ChatGrant = AccessToken.ChatGrant;
 
 // Twilio setup
 const client = new twilio.Twilio(env.TWILIO_ACCOUNT_SID, env.TWILIO_AUTH_TOKEN);
@@ -31,19 +30,20 @@ export async function getToken(
 
     const authUser = req.user!;
 
-    const chatGrant = new ChatGrant({
-      serviceSid: env.TWILIO_SERVICE_SID,
-    });
-
     // Creating token
     const token = new AccessToken(
-      env.TWILIO_ACCOUNT_SID!,
-      env.TWILIO_API_KEY!,
-      env.TWILIO_API_SECRET!,
+      env.TWILIO_ACCOUNT_SID,
+      env.TWILIO_API_KEY_SID,
+      env.TWILIO_API_KEY_SECRET,
       {
         identity: authUser._id.toString(),
       }
     );
+
+    const chatGrant = new AccessToken.ChatGrant({
+      serviceSid: env.TWILIO_SERVICE_SID,
+    });
+
     token.addGrant(chatGrant);
 
     res
