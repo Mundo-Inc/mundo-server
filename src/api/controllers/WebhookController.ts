@@ -6,10 +6,7 @@ import { env } from "../../env.js";
 import Conversation from "../../models/Conversation.js";
 import User, { type IUser } from "../../models/User.js";
 import { dStrings, dynamicMessage } from "../../strings.js";
-import {
-  createError,
-  handleInputErrors,
-} from "../../utilities/errorHandlers.js";
+import { createError } from "../../utilities/errorHandlers.js";
 import { NotificationsService } from "../services/NotificationsService.js";
 import logger from "../services/logger/index.js";
 
@@ -19,8 +16,6 @@ export async function conversationsWebhook(
   next: NextFunction
 ) {
   try {
-    handleInputErrors(req);
-
     const twilioSignature = req.headers["x-twilio-signature"] as string;
 
     if (!twilioSignature) {

@@ -67,7 +67,6 @@ export async function firebaseSync(
       res.status(StatusCodes.FORBIDDEN).send("Unauthorized");
     }
   } catch (error) {
-    console.log(error);
     next(error);
   }
 }

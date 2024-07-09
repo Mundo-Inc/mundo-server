@@ -1,8 +1,9 @@
 import mongoose, { Schema, type Model } from "mongoose";
 
+import logger from "../api/services/logger/index.js";
 import { weights } from "../config/trendFactors.js";
-import ScoreWeight, { type IScoreWeight } from "./ScoreWeight.js";
 import { ResourceTypeEnum } from "./Enum/ResourceTypeEnum.js";
+import ScoreWeight from "./ScoreWeight.js";
 
 export enum ActivityTypeEnum {
   NewCheckIn = "NEW_CHECKIN",
@@ -212,7 +213,7 @@ UserActivitySchema.pre("save", async function (next) {
         };
       }
     } catch (error: any) {
-      console.error("Error fetching Place for geoLocation copy:", error);
+      logger.error("Error fetching Place for geoLocation copy:", error);
       return next(error);
     }
   }

@@ -70,7 +70,7 @@ export async function getYelpData(yelpId: string) {
       throw createError("Unexpected response. Status", yelpResult.status);
     }
   } catch (error) {
-    console.error("Error fetching Yelp rating:", error);
+    logger.error("Error fetching Yelp rating:", error);
     throw createError(
       "Something went wrong",
       StatusCodes.INTERNAL_SERVER_ERROR
@@ -96,7 +96,7 @@ export const getYelpReviews = async (yelpId: string) => {
       throw createError("Unexpected response.", yelpResult.status);
     }
   } catch (error: any) {
-    console.error("Error fetching Yelp reviews:", error);
+    logger.error("Error fetching Yelp reviews:", error);
     throw createError(
       "Something went wrong",
       StatusCodes.INTERNAL_SERVER_ERROR
@@ -124,7 +124,7 @@ export const findFoursquareId = async (place: IPlace) => {
       );
     }
   } catch (error) {
-    console.error("Error:", error);
+    logger.error("Error:", error);
     throw createError(
       "Something went wrong",
       StatusCodes.INTERNAL_SERVER_ERROR

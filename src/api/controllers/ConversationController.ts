@@ -124,6 +124,7 @@ export async function createConversation(
     const twilioConversation =
       await client.conversations.v1.conversations.create({
         friendlyName: friendlyName,
+        xTwilioWebhookEnabled: "true",
       });
 
     // Add participants to the Twilio conversation
@@ -313,46 +314,49 @@ export async function removeUserFromGroupConversation(
       (participant) => participant.identity === user.toString()
     );
 
-    if (participantToRemove && participants.length === 1) {
-      // Remove the conversation if the user is the only participant
-      await Promise.all([
-        Conversation.deleteOne({ _id: id }),
-        client.conversations.v1.conversations(id).remove(),
-        User.updateOne({ _id: user }, { $pull: { conversations: id } }),
-      ]);
-    }
-
-    if (participantToRemove) {
-      // Remove the found participant
-      await client.conversations.v1
-        .conversations(id)
-        .participants(participantToRemove.sid)
-        .remove();
-    } else {
+    if (!participantToRemove) {
       throw createError(
         "Participant not found in this conversation.",
         StatusCodes.NOT_FOUND
       );
     }
 
-    // Update the database to reflect participant removal
-    const conversation = await Conversation.findById(id).orFail(
-      createError(
-        dynamicMessage(dStrings.notFound, "Conversation"),
-        StatusCodes.NOT_FOUND
-      )
-    );
+    if (participants.length === 1) {
+      // Remove the conversation if the user is the only participant
+      await Promise.all([
+        Conversation.deleteOne({ _id: id }),
+        client.conversations.v1.conversations(id).remove({
+          xTwilioWebhookEnabled: "true",
+        }),
+        User.updateOne({ _id: user }, { $pull: { conversations: id } }),
+      ]);
 
-    conversation.participants = conversation.participants.filter(
-      (p) => !p.user.equals(user)
-    );
+      res.sendStatus(StatusCodes.NO_CONTENT);
+    } else {
+      await Promise.all([
+        await client.conversations.v1
+          .conversations(id)
+          .participants(participantToRemove.sid)
+          .remove(),
+        User.updateOne({ _id: user }, { $pull: { conversations: id } }),
+      ]);
 
-    await Promise.all([
-      conversation.save(),
-      User.updateOne({ _id: user }, { $pull: { conversations: id } }),
-    ]);
+      // Update the database to reflect participant removal
+      const conversation = await Conversation.findById(id).orFail(
+        createError(
+          dynamicMessage(dStrings.notFound, "Conversation"),
+          StatusCodes.NOT_FOUND
+        )
+      );
 
-    res.status(StatusCodes.OK).json({ success: true, data: conversation });
+      conversation.participants = conversation.participants.filter(
+        (p) => !p.user.equals(user)
+      );
+
+      await conversation.save();
+
+      res.status(StatusCodes.OK).json({ success: true, data: conversation });
+    }
   } catch (err) {
     next(err);
   }

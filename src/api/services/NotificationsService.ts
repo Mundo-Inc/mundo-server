@@ -6,7 +6,8 @@ import {
 } from "firebase-admin/messaging";
 import { Types } from "mongoose";
 
-import User, { type IUser, type UserDevice } from "../../models/User.js";
+import { MundoApp } from "../../config/firebase-config.js";
+import User, { type IUser } from "../../models/User.js";
 import logger from "./logger/index.js";
 
 export interface NotificationItemByToken {
@@ -37,7 +38,7 @@ export class NotificationsService {
     for (let i = 0; i < items.length; i += 500) {
       try {
         const batchItems = items.slice(i, i + 500);
-        const batchResponse = await getMessaging().sendEach(
+        const batchResponse = await getMessaging(MundoApp).sendEach(
           batchItems.map((i) => i.tokenMessage)
         );
 

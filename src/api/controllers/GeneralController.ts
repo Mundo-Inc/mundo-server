@@ -8,6 +8,7 @@ import {
   createError,
   handleInputErrors,
 } from "../../utilities/errorHandlers.js";
+import logger from "../services/logger/index.js";
 import { sendSlackMessage } from "./SlackController.js";
 
 export const reportBugValidation: ValidationChain[] = [
@@ -71,7 +72,7 @@ export async function reportBug(
 
           return JSON.parse(decrypted.toString());
         } catch (error) {
-          console.error("Decryption error:", error);
+          logger.error("Decryption error:", error);
           return null;
         }
       }
