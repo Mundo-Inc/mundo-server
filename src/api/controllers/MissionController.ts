@@ -6,6 +6,7 @@ import mongoose from "mongoose";
 import CoinReward, { CoinRewardTypeEnum } from "../../models/CoinReward.js";
 import Mission, { TaskTypeEnum } from "../../models/Mission.js";
 import Prize from "../../models/Prize.js";
+import Upload from "../../models/Upload.js";
 import User from "../../models/User.js";
 import { dStrings, dynamicMessage } from "../../strings.js";
 import {
@@ -318,7 +319,7 @@ export async function deleteMission(
 
 export const createPrizeValidation: ValidationChain[] = [
   body("title").isString(),
-  body("thumbnail").isURL(),
+  body("thumbnail").isMongoId(),
   body("amount").isNumeric(),
   body("count").optional().isNumeric(),
 ];
@@ -334,14 +335,23 @@ export async function createPrize(
 
     const { title, thumbnail, amount, count } = req.body;
 
+    const upload = await Upload.findById(thumbnail).orFail(
+      createError(
+        dynamicMessage(dStrings.notFound, "Uploaded media"),
+        StatusCodes.NOT_FOUND
+      )
+    );
+
     const prize = await Prize.create({
       title,
-      thumbnail,
+      thumbnail: upload.src,
       amount,
       count,
     });
 
-    res.status(StatusCodes.OK).json({
+    await upload.deleteOne();
+
+    res.status(StatusCodes.CREATED).json({
       succss: true,
       data: prize,
     });
