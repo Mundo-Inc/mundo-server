@@ -243,7 +243,11 @@ export async function getPrizes(
         },
       },
       {
+        $sort: { createdAt: -1 },
+      },
+      {
         $project: {
+          _id: 1,
           title: 1,
           thumbnail: 1,
           amount: 1,

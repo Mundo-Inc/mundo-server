@@ -740,8 +740,8 @@ packages:
     resolution: {integrity: sha512-122Ui67bhnf8MkRnxQAC5lf7wPGkPP5hL3+J5s9HHDw2J9RpaMmnV8iahn+RUn9BH70W6uRe6nMZLXiRaJM/3g==}
     engines: {node: '>=14'}
 
-  '@grpc/grpc-js@1.10.11':
-    resolution: {integrity: sha512-3RaoxOqkHHN2c05bwtBNVJmOf/UwMam0rZYtdl7dsRpsvDwcNpv6LkGgzltQ7xVf822LzBoKEPRvf4D7+xeIDw==}
+  '@grpc/grpc-js@1.11.0':
+    resolution: {integrity: sha512-LzmEBQ+cTwC6h8jiWUlCOfR89/LVYw1H7eeQ8YQPUdGEBsmyQoyZOT1BNTY+26WRWF3IONIo3Nk4Oi4Tu2HqbQ==}
     engines: {node: '>=12.10.0'}
 
   '@grpc/grpc-js@1.9.15':
@@ -3617,7 +3617,7 @@ snapshots:
       - supports-color
     optional: true
 
-  '@grpc/grpc-js@1.10.11':
+  '@grpc/grpc-js@1.11.0':
     dependencies:
       '@grpc/proto-loader': 0.7.13
       '@js-sdsl/ordered-map': 4.4.2
@@ -4841,7 +4841,7 @@ snapshots:
 
   google-gax@4.3.8:
     dependencies:
-      '@grpc/grpc-js': 1.10.11
+      '@grpc/grpc-js': 1.11.0
       '@grpc/proto-loader': 0.7.13
       '@types/long': 4.0.2
       abort-controller: 3.0.0
