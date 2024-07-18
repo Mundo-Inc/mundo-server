@@ -3,11 +3,12 @@ import express from "express";
 import {
   createEvent,
   createEventValidation,
-  getEvent,
-  getEventValidation,
+} from "../controllers/event/createEvent.js";
+import { getEvent, getEventValidation } from "../controllers/event/getEvent.js";
+import {
   getEvents,
   getEventsValidation,
-} from "../controllers/EventController.js";
+} from "../controllers/event/getEvents.js";
 import { authMiddleware } from "../middlewares/authMiddleWare.js";
 
 const router = express.Router();

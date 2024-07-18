@@ -3,7 +3,7 @@ import express from "express";
 import {
   getMapActivities,
   getMapActivitiesValidation,
-} from "../controllers/MapController.js";
+} from "../controllers/map/getMapActivities.js";
 import { authMiddleware } from "../middlewares/authMiddleWare.js";
 
 const router = express.Router();

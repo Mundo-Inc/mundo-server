@@ -3,23 +3,26 @@ import express from "express";
 import {
   createCheckIn,
   createCheckInValidation,
+} from "../controllers/checkIn/createCheckIn.js";
+import {
   deleteCheckIn,
   deleteCheckInValidation,
+} from "../controllers/checkIn/deleteCheckIn.js";
+import {
   getCheckIns,
   getCheckInsValidation,
-} from "../controllers/CheckInController.js";
+} from "../controllers/checkIn/getCheckIns.js";
 import { authMiddleware } from "../middlewares/authMiddleWare.js";
 
 const router = express.Router();
 router.use(express.json());
+router.use(authMiddleware);
 
 router
   .route("/")
-  .get(authMiddleware, getCheckInsValidation, getCheckIns)
-  .post(authMiddleware, createCheckInValidation, createCheckIn);
+  .get(getCheckInsValidation, getCheckIns)
+  .post(createCheckInValidation, createCheckIn);
 
-router
-  .route("/:id")
-  .delete(authMiddleware, deleteCheckInValidation, deleteCheckIn);
+router.route("/:id").delete(deleteCheckInValidation, deleteCheckIn);
 
 export default router;

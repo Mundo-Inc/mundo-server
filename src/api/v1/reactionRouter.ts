@@ -3,20 +3,19 @@ import express from "express";
 import {
   createReaction,
   createReactionValidation,
+} from "../controllers/reaction/createReaction.js";
+import {
   deleteReaction,
   deleteReactionValidation,
-} from "../controllers/ReactionController.js";
+} from "../controllers/reaction/deleteReaction.js";
 import { authMiddleware } from "../middlewares/authMiddleWare.js";
 
 const router = express.Router();
 router.use(express.json());
+router.use(authMiddleware);
 
-router
-  .route("/")
-  .post(authMiddleware, createReactionValidation, createReaction);
+router.post("/", createReactionValidation, createReaction);
 
-router
-  .route("/:id")
-  .delete(authMiddleware, deleteReactionValidation, deleteReaction);
+router.delete("/:id", deleteReactionValidation, deleteReaction);
 
 export default router;

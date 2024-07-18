@@ -23,8 +23,6 @@ export enum ResourceTypeEnum {
   Place = "Place",
   Prize = "Prize",
   PrizeRedemption = "PrizeRedemption",
-  ProfileDecoration = "ProfileDecoration",
-  ProfileDecorationRedemption = "ProfileDecorationRedemption",
   Reaction = "Reaction",
   Review = "Review",
   Reward = "Reward",

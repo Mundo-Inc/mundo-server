@@ -1,79 +1,47 @@
 import express from "express";
 
+import { claimDailyCoins } from "../controllers/reward/claimDailyCoins.js";
 import {
   claimMissionReward,
   claimMissionRewardValidation,
-  createMission,
-  createMissionValidation,
-  createPrize,
-  createPrizeValidation,
-  deleteMission,
-  deleteMissionValidation,
-  getAllMissions,
+} from "../controllers/reward/claimMissionReward.js";
+import { dailyCoinInformation } from "../controllers/reward/dailyCoinInformation.js";
+import {
   getMissions,
   getMissionsValidation,
-  getPrizes,
-} from "../controllers/MissionController.js";
+} from "../controllers/reward/getMissions.js";
 import {
-  claimDailyCoins,
-  dailyCoinInformation,
-  getAllPrizeRedemptionHistory,
-  getAllPrizeRedemptionHistoryValidation,
   getPrizeRedemptionHistory,
   getPrizeRedemptionHistoryValidation,
+} from "../controllers/reward/getPrizeRedemptionHistory.js";
+import { getPrizes } from "../controllers/reward/getPrizes.js";
+import {
   redeemPrize,
   redeemPrizeValidation,
-  reviewRedemption,
-  reviewRedemptionValidation,
-} from "../controllers/RewardController.js";
-import {
-  adminAuthMiddleware,
-  authMiddleware,
-} from "../middlewares/authMiddleWare.js";
+} from "../controllers/reward/redeemPrize.js";
+import { authMiddleware } from "../middlewares/authMiddleWare.js";
 
 const router = express.Router();
 router.use(express.json());
 router.use(authMiddleware);
 
-router.route("/daily").get(dailyCoinInformation);
-router.route("/daily/claim").post(claimDailyCoins);
+router.get("/daily", dailyCoinInformation);
+router.post("/daily/claim", claimDailyCoins);
 
-router
-  .route("/missions")
-  .get(getMissionsValidation, getMissions)
-  .post(adminAuthMiddleware, createMissionValidation, createMission);
+router.get("/missions", getMissionsValidation, getMissions);
 
-router
-  .route("/missions/all")
-  .get(adminAuthMiddleware, getMissionsValidation, getAllMissions);
+router.post(
+  "/missions/:id/claim",
+  claimMissionRewardValidation,
+  claimMissionReward
+);
 
-router
-  .route("/missions/:id")
-  .delete(adminAuthMiddleware, deleteMissionValidation, deleteMission);
+router.get("/prizes", getPrizes);
 
-router
-  .route("/missions/:id/claim")
-  .post(claimMissionRewardValidation, claimMissionReward);
-
-router
-  .route("/prizes")
-  .get(getPrizes)
-  .post(adminAuthMiddleware, createPrizeValidation, createPrize);
-
-router.route("/prizes/:id/redeem").post(redeemPrizeValidation, redeemPrize);
+router.post("/prizes/:id/redeem", redeemPrizeValidation, redeemPrize);
 
 router
   .route("/redemptions")
   .get(getPrizeRedemptionHistoryValidation, getPrizeRedemptionHistory);
-router
-  .route("/redemptions/all")
-  .get(
-    adminAuthMiddleware,
-    getAllPrizeRedemptionHistoryValidation,
-    getAllPrizeRedemptionHistory
-  );
-router
-  .route("/redemptions/:id/review")
-  .post(adminAuthMiddleware, reviewRedemptionValidation, reviewRedemption);
 
 export default router;

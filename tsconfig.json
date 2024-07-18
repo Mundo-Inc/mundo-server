@@ -22,6 +22,9 @@
     /* Bundled projects */
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
-    "incremental": true
+    "incremental": true,
+    "paths": {
+      "@/*": ["./src/*"]
+    }
   }
 }

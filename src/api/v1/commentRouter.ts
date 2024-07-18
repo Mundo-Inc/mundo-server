@@ -3,15 +3,23 @@ import express from "express";
 import {
   createComment,
   createCommentValidation,
+} from "../controllers/comment/createComment.js";
+import {
   deleteComment,
+  deleteCommentValidation,
+} from "../controllers/comment/deleteComment.js";
+import {
   deleteCommentLike,
   deleteCommentLikeValidation,
-  deleteCommentValidation,
+} from "../controllers/comment/deleteCommentLike.js";
+import {
   getCommentReplies,
   getCommentRepliesValidation,
+} from "../controllers/comment/getCommentReplies.js";
+import {
   likeComment,
   likeCommentValidation,
-} from "../controllers/CommentController.js";
+} from "../controllers/comment/likeComment.js";
 import { authMiddleware } from "../middlewares/authMiddleWare.js";
 
 const router = express.Router();

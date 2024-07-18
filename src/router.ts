@@ -12,7 +12,6 @@ import feedRouter from "./api/v1/feedRouter.js";
 import generalRouter from "./api/v1/generalRouter.js";
 import homemadeRouter from "./api/v1/homemadeRouter.js";
 import listRouter from "./api/v1/listRouter.js";
-import mailRouter from "./api/v1/mailRouter.js";
 import mapRouter from "./api/v1/mapRouter.js";
 import mediaRouter from "./api/v1/mediaRouter.js";
 import notificationRouter from "./api/v1/notificationRouter.js";
@@ -20,10 +19,10 @@ import placeRouter from "./api/v1/placeRouter.js";
 import reactionRouter from "./api/v1/reactionRouter.js";
 import reviewRouter from "./api/v1/reviewRouter.js";
 import rewardRouter from "./api/v1/rewardRouter.js";
+import transactionRouter from "./api/v1/transactionRouter.js";
 import uploadRouter from "./api/v1/uploadRouter.js";
 import userRouter from "./api/v1/userRouter.js";
 import webhookRouter from "./api/v1/webhookRouter.js";
-import transactionRouter from "./api/v1/transactionRouter.js";
 
 const router = express.Router();
 
@@ -38,7 +37,6 @@ router.use("/reviews", reviewRouter);
 router.use("/homemades", homemadeRouter);
 router.use("/reactions", reactionRouter);
 router.use("/general", generalRouter);
-router.use("/mail", mailRouter);
 router.use("/checkins", checkinRouter);
 router.use("/comments", commentRouter);
 router.use("/map", mapRouter);

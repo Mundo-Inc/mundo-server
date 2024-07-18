@@ -61,7 +61,6 @@ const strings = {
   review: {
     invalidScore: "Invalid score provided",
     invalidScoreKey: "Invalid score key provided",
-    invalidScoreValue: "Invalid score value",
   },
 };
 export default strings;

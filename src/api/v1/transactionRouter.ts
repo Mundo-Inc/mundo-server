@@ -1,16 +1,20 @@
 import express from "express";
 
+import { addOrUpdatePayoutMethod } from "../controllers/transaction/addOrUpdatePayoutMethod.js";
+import { getStripeSecret } from "../controllers/transaction/getStripeSecret.js";
 import {
-  addOrUpdatePayoutMethod,
-  getSecret,
   getTransaction,
   getTransactionValidation,
-  onboarding,
+} from "../controllers/transaction/getTransaction.js";
+import {
   sendGift,
   sendGiftValidation,
+} from "../controllers/transaction/sendGift.js";
+import { stripeOnboarding } from "../controllers/transaction/stripeOnboarding.js";
+import {
   withdraw,
   withdrawValidation,
-} from "../controllers/TransactionController.js";
+} from "../controllers/transaction/withdraw.js";
 import { authMiddleware } from "../middlewares/authMiddleWare.js";
 
 const router = express.Router();
@@ -22,14 +26,17 @@ router.use(authMiddleware);
 //   .get(getPaymentMethod)
 //   .post(addOrUpdatePaymentMethodValidation, addOrUpdatePaymentMethod);
 
-router.route("/payout-method").post(onboarding).get(addOrUpdatePayoutMethod);
+router
+  .route("/payout-method")
+  .post(stripeOnboarding)
+  .get(addOrUpdatePayoutMethod);
 
-router.route("/withdraw").post(withdrawValidation, withdraw);
+router.post("/withdraw", withdrawValidation, withdraw);
 
-router.route("/gift").post(sendGiftValidation, sendGift);
+router.post("/gift", sendGiftValidation, sendGift);
 
-router.route("/customer").get(getSecret);
+router.get("/customer", getStripeSecret);
 
-router.route("/:id").get(getTransactionValidation, getTransaction);
+router.get("/:transactionId", getTransactionValidation, getTransaction);
 
 export default router;

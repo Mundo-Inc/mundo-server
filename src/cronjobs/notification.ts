@@ -1,25 +1,21 @@
 import cron from "node-cron";
 
-import UserProjection, {
-  type UserProjectionEssentials,
-} from "../api/dto/user.js";
-import {
-  NotificationsService,
-  type NotificationItemByToken,
-} from "../api/services/NotificationsService.js";
+import type { NotificationItemByToken } from "@/api/services/NotificationsService.js";
+import NotificationsService from "@/api/services/NotificationsService.js";
+import type { UserProjectionEssentials } from "../api/dto/user.js";
+import UserProjection from "../api/dto/user.js";
 import logger from "../api/services/logger/index.js";
 import CheckIn from "../models/CheckIn.js";
 import Comment from "../models/Comment.js";
 import Follow from "../models/Follow.js";
 import Homemade from "../models/Homemade.js";
-import Notification, {
-  NotificationTypeEnum,
-  type INotification,
-} from "../models/Notification.js";
-import { type IPlace } from "../models/Place.js";
+import type { INotification } from "../models/Notification.js";
+import Notification, { NotificationTypeEnum } from "../models/Notification.js";
+import type { IPlace } from "../models/Place.js";
 import Reaction from "../models/Reaction.js";
 import Review from "../models/Review.js";
-import User, { type IUser, type UserDevice } from "../models/User.js";
+import type { IUser, UserDevice } from "../models/User.js";
+import User from "../models/User.js";
 
 cron.schedule("*/30 * * * * *", async () => {
   const notifications = await Notification.find({

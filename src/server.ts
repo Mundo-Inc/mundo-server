@@ -28,7 +28,7 @@ const rateLimiter = rateLimit({
     throw createError(
       "Too many requests from this IP, please try again after a minute",
       {
-        title: "Rate Limit Exceeded",
+        type: "Rate Limit Exceeded",
         statusCode: StatusCodes.TOO_MANY_REQUESTS,
       }
     );
@@ -50,7 +50,7 @@ async function main() {
     app.use((req, res, next) => {
       next(
         createError("Route not found", {
-          title: "Not Found",
+          type: "Route Not Found",
           statusCode: StatusCodes.NOT_FOUND,
         })
       );

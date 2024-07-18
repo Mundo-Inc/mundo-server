@@ -34,7 +34,7 @@ export enum AdminActionEnum {
 
 export interface FlagAdminAction {
   type: string;
-  note: string;
+  note?: string;
   admin: mongoose.Types.ObjectId;
   createdAt: Date;
 }

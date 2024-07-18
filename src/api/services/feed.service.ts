@@ -17,7 +17,7 @@ import UserActivity, {
 import {
   getCommentsOfActivity,
   getReactionsOfActivity,
-} from "../controllers/UserActivityController.js";
+} from "../controllers/activity/helpers.js";
 import { type CheckInProjectionBrief } from "../dto/checkIn.js";
 import MediaProjection, { MediaProjectionBrief } from "../dto/media.js";
 import PlaceProjection, { type PlaceProjectionDetail } from "../dto/place.js";

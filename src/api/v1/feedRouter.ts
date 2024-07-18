@@ -1,17 +1,18 @@
 import express from "express";
 
 import {
-  getEngagements,
-  getEngagementsValidation,
-} from "../controllers/EngagementController.js";
-import {
   getActivity,
   getActivityValidation,
-  getComments,
-  getCommentsValidation,
-  getFeed,
-  getFeedValidation,
-} from "../controllers/FeedController.js";
+} from "../controllers/activity/getActivity.js";
+import {
+  getActivityComments,
+  getActivityCommentsValidation,
+} from "../controllers/activity/getActivityComments.js";
+import {
+  getEngagements,
+  getEngagementsValidation,
+} from "../controllers/activity/getEngagements.js";
+import { getFeed, getFeedValidation } from "../controllers/activity/getFeed.js";
 import { authMiddleware } from "../middlewares/authMiddleWare.js";
 
 const router = express.Router();
@@ -22,7 +23,12 @@ router.get("/", authMiddleware, getFeedValidation, getFeed);
 router.route("/:id").get(authMiddleware, getActivityValidation, getActivity);
 // .post(authMiddleware, activitySeenValidation, activitySeen); // TODO: This endpoint needs to be fixed
 
-router.get("/:id/comments", authMiddleware, getCommentsValidation, getComments);
+router.get(
+  "/:activityId/comments",
+  authMiddleware,
+  getActivityCommentsValidation,
+  getActivityComments
+);
 
 router.get(
   "/:id/engagements",

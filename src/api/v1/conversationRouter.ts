@@ -3,15 +3,21 @@ import express from "express";
 import {
   createConversation,
   createConversationValidation,
+} from "../controllers/conversation/createConversation.js";
+import {
   createGroupConversation,
   createGroupConversationValidation,
+} from "../controllers/conversation/createGroupConversation.js";
+import {
   getConversation,
-  getConversations,
   getConversationValidation,
-  getToken,
+} from "../controllers/conversation/getConversation.js";
+import { getConversations } from "../controllers/conversation/getConversations.js";
+import { getConversationToken } from "../controllers/conversation/getConversationToken.js";
+import {
   removeUserFromGroupConversation,
   removeUserFromGroupConversationValidation,
-} from "../controllers/ConversationController.js";
+} from "../controllers/conversation/removeUserFromGroupConversation.js";
 import { authMiddleware } from "../middlewares/authMiddleWare.js";
 
 const router = express.Router();
@@ -29,7 +35,7 @@ router.post(
   createGroupConversation
 );
 
-router.get("/token", getToken);
+router.get("/token", getConversationToken);
 
 router.get("/:id", getConversationValidation, getConversation);
 

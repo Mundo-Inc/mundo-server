@@ -2,25 +2,26 @@ import express from "express";
 import rateLimit from "express-rate-limit";
 
 import {
-  getPlaces,
-  getPlacesByContext,
-  getPlacesByContextValidation,
-  getPlacesValidation,
-  getPlacesWithinBoundaries,
-  getPlacesWithinBoundariesValidation,
-} from "../controllers/PlaceController.js";
-import {
   getExistInLists,
   getExistInListsValidation,
-  getPlace,
+} from "../controllers/place/getExistInLists.js";
+import { getPlace, getPlaceValidation } from "../controllers/place/getPlace.js";
+import {
   getPlaceMedia,
   getPlaceMediaValidation,
+} from "../controllers/place/getPlaceMedia.js";
+import {
   getPlaceOverview,
   getPlaceOverviewValidation,
+} from "../controllers/place/getPlaceOverview.js";
+import {
   getPlaceReviews,
   getPlaceReviewsValidation,
-  getPlaceValidation,
-} from "../controllers/SinglePlaceController.js";
+} from "../controllers/place/getPlaceReviews.js";
+import {
+  getPlacesByContext,
+  getPlacesByContextValidation,
+} from "../controllers/place/getPlacesByContext.js";
 import { authMiddleware } from "../middlewares/authMiddleWare.js";
 
 const router = express.Router();
@@ -35,14 +36,6 @@ const getPlaceRateLimiter = rateLimit({
   legacyHeaders: false,
 });
 
-router.get("/", getPlacesValidation, getPlaces);
-
-router.get(
-  "/map",
-  getPlacesWithinBoundariesValidation,
-  getPlacesWithinBoundaries
-);
-
 router.get(
   "/context",
   authMiddleware,
@@ -50,28 +43,28 @@ router.get(
   getPlacesByContext
 );
 
-router.get("/:id/media", getPlaceMediaValidation, getPlaceMedia);
+router.get("/:placeId/media", getPlaceMediaValidation, getPlaceMedia);
 
 router.get(
-  "/:id/reviews",
+  "/:placeId/reviews",
   authMiddleware,
   getPlaceReviewsValidation,
   getPlaceReviews
 );
 
 router.get(
-  "/:id/lists",
+  "/:placeId/lists",
   authMiddleware,
   getExistInListsValidation,
   getExistInLists
 );
 
 // Place overview
-router.get("/:id/overview", getPlaceOverviewValidation, getPlaceOverview);
+router.get("/:placeId/overview", getPlaceOverviewValidation, getPlaceOverview);
 
 // Detailed place info
 router.get(
-  "/:id",
+  "/:placeId",
   getPlaceRateLimiter,
   authMiddleware,
   getPlaceValidation,

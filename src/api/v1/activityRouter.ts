@@ -3,7 +3,7 @@ import express from "express";
 import {
   createFlag,
   createFlagValidation,
-} from "../controllers/FlagController.js";
+} from "../controllers/activity/createFlag.js";
 import { authMiddleware } from "../middlewares/authMiddleWare.js";
 
 const router = express.Router();

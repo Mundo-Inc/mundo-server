@@ -1,64 +1,92 @@
 import express from "express";
 
 import {
-  block,
-  blockValidation,
-  unblock,
-} from "../controllers/BlockController.js";
-import {
   acceptFollowRequest,
   acceptFollowRequestValidation,
+} from "../controllers/connection/acceptFollowRequest.js";
+import {
   connectionFollowStatus,
   connectionFollowStatusValidation,
+} from "../controllers/connection/connectionFollowStatus.js";
+import {
   createUserConnection,
   createUserConnectionValidation,
+} from "../controllers/connection/createUserConnection.js";
+import {
   deleteUserConnection,
   deleteUserConnectionValidation,
+} from "../controllers/connection/deleteUserConnection.js";
+import {
   getFollowRequests,
   getFollowRequestsValidation,
+} from "../controllers/connection/getFollowRequests.js";
+import {
   getUserConnections,
   getUserConnectionsValidation,
+} from "../controllers/connection/getUserConnections.js";
+import {
   rejectFollowRequest,
   rejectFollowRequestValidation,
+} from "../controllers/connection/rejectFollowRequest.js";
+import {
   removeFollower,
   removeFollowerValidation,
-} from "../controllers/ConnectionController.js";
+} from "../controllers/connection/removeFollower.js";
 import {
-  getUserLists,
-  getUserListsValidation,
-} from "../controllers/ListController.js";
-import {
-  getLatestReferredUsers,
-  paginationValidation,
-} from "../controllers/RewardController.js";
-import {
-  getActivitiesOfaUser,
-  getActivitiesOfaUserValidation,
-} from "../controllers/UserActivityController.js";
+  blockUser,
+  blockUserValidation,
+} from "../controllers/user/blockUser.js";
 import {
   createUser,
   createUserValidation,
+} from "../controllers/user/createUser.js";
+import {
   deleteUser,
   deleteUserValidation,
-  editUser,
-  editUserValidation,
+} from "../controllers/user/deleteUser.js";
+import { editUser, editUserValidation } from "../controllers/user/editUser.js";
+import {
+  editUserPrivacy,
+  editUserPrivacyValidation,
+} from "../controllers/user/editUserPrivacy.js";
+import {
+  editUserSettings,
+  editUserSettingsValidation,
+} from "../controllers/user/editUserSettings.js";
+import {
+  getActivitiesOfaUser,
+  getActivitiesOfaUserValidation,
+} from "../controllers/user/getActivitiesOfaUser.js";
+import {
   getLatestPlace,
   getLatestPlaceValidation,
-  getLeaderBoard,
-  getUser,
-  getUserValidation,
-  getUsers,
+} from "../controllers/user/getLatestPlace.js";
+import {
+  getLatestReferredUsers,
+  getLatestReferredUsersValidation,
+} from "../controllers/user/getLatestReferredUsers.js";
+import {
+  getLeaderboard,
+  getLeaderboardValidation,
+} from "../controllers/user/getLeaderboard.js";
+import { getUser, getUserValidation } from "../controllers/user/getUser.js";
+import {
+  getUserLists,
+  getUserListsValidation,
+} from "../controllers/user/getUserLists.js";
+import { getUsers, getUsersValidation } from "../controllers/user/getUsers.js";
+import {
   getUsersByIds,
   getUsersByIdsValidation,
-  getUsersValidation,
-  leaderBoardValidation,
-  putUserPrivacy,
-  putUserSettings,
-  userPrivacyValidation,
-  userSettingsValidation,
+} from "../controllers/user/getUsersByIds.js";
+import {
+  unblockUser,
+  unblockUserValidation,
+} from "../controllers/user/unblockUser.js";
+import {
   usernameAvailability,
   usernameAvailabilityValidation,
-} from "../controllers/UserController.js";
+} from "../controllers/user/usernameAvailability.js";
 import {
   authMiddleware,
   optionalAuthMiddleware,
@@ -77,8 +105,8 @@ router.post("/by-ids", getUsersByIdsValidation, getUsersByIds);
 router.get(
   "/leaderboard",
   authMiddleware,
-  leaderBoardValidation,
-  getLeaderBoard
+  getLeaderboardValidation,
+  getLeaderboard
 );
 
 router.get(
@@ -110,7 +138,7 @@ router.delete(
 router.get(
   "/latestReferrals",
   authMiddleware,
-  paginationValidation,
+  getLatestReferredUsersValidation,
   getLatestReferredUsers
 );
 
@@ -135,15 +163,15 @@ router.get(
 router.put(
   "/:id/privacy",
   authMiddleware,
-  userPrivacyValidation,
-  putUserPrivacy
+  editUserPrivacyValidation,
+  editUserPrivacy
 );
 
 router.put(
   "/:id/settings",
   authMiddleware,
-  userSettingsValidation,
-  putUserSettings
+  editUserSettingsValidation,
+  editUserSettings
 );
 
 router.get(
@@ -156,7 +184,7 @@ router.get(
 router.get("/:id/lists", authMiddleware, getUserListsValidation, getUserLists);
 
 router.get(
-  "/:id/userActivities",
+  "/:userId/userActivities",
   authMiddleware,
   getActivitiesOfaUserValidation,
   getActivitiesOfaUser
@@ -164,8 +192,8 @@ router.get(
 
 router
   .route("/:id/block")
-  .post(authMiddleware, blockValidation, block)
-  .delete(authMiddleware, blockValidation, unblock);
+  .post(authMiddleware, blockUserValidation, blockUser)
+  .delete(authMiddleware, unblockUserValidation, unblockUser);
 
 router
   .route("/:id")

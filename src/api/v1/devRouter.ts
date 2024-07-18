@@ -3,7 +3,7 @@ import express from "express";
 import {
   notifyUsers,
   notifyUsersValidation,
-} from "../controllers/DevController.js";
+} from "../controllers/dev/notifyUsers.js";
 import { adminAuthMiddleware } from "../middlewares/authMiddleWare.js";
 
 // Admin Only

@@ -1,6 +1,6 @@
 import express from "express";
 
-import { conversationsWebhook } from "../controllers/WebhookController.js";
+import { conversationsWebhook } from "../controllers/webhook/conversations.js";
 
 const router = express.Router();
 router.use(express.json());

@@ -20,7 +20,7 @@ export interface NotificationItemByUser {
   user: string | Types.ObjectId;
 }
 
-export class NotificationsService {
+export default class NotificationsService {
   private static instance = new NotificationsService();
 
   private constructor() {}

@@ -1,16 +1,22 @@
 import express from "express";
 
-import { authMiddleware } from "../middlewares/authMiddleWare.js";
 import {
   createHomemadePost,
-  createHomemadeValidationPost,
+  createHomemadePostValidation,
+} from "../controllers/homemade/createHomemadePost.js";
+import {
   getHomemadePost,
   getHomemadePostValidation,
+} from "../controllers/homemade/getHomemadePost.js";
+import {
   getHomemadePosts,
   getHomemadePostsValidation,
+} from "../controllers/homemade/getHomemadePosts.js";
+import {
   removeHomemadePost,
   removeHomemadePostValidation,
-} from "../controllers/HomemadeController.js";
+} from "../controllers/homemade/removeHomemadePost.js";
+import { authMiddleware } from "../middlewares/authMiddleWare.js";
 
 const router = express.Router();
 router.use(express.json());
@@ -18,16 +24,11 @@ router.use(express.json());
 router
   .route("/")
   .get(authMiddleware, getHomemadePostsValidation, getHomemadePosts)
-  .post(authMiddleware, createHomemadeValidationPost, createHomemadePost);
+  .post(authMiddleware, createHomemadePostValidation, createHomemadePost);
 
 router
   .route("/:id")
   .get(authMiddleware, getHomemadePostValidation, getHomemadePost)
   .delete(authMiddleware, removeHomemadePostValidation, removeHomemadePost);
-
-//FIXME: WE MIGHT WANT TO MOVE FLAGS TO USERACTIVITIES INSETEAD OF REVIEWS . CUZ CHECKINS + HOMEMADES CAN HAVE HARMFULL CONTENT
-// router
-//   .route("/:id/flag")
-//   .post(authMiddleware, createFlagReviewValidation, createFlagReview);
 
 export default router;
