@@ -10,7 +10,7 @@ import { getPaginationFromQuery } from "@/utilities/pagination.js";
 import { validateData } from "@/utilities/validation.js";
 
 const getUsersQuery = z.object({
-  q: z.string().trim().min(1).max(50),
+  q: z.string().trim().max(100).optional(),
   page: z.string().optional(),
   limit: z.string().optional(),
 });

@@ -19,7 +19,6 @@ const query = z.object({
     .transform((value) => value === "true")
     .optional()
     .default("false"),
-  v: zStringInt.optional().default("1"),
 });
 
 type Query = z.infer<typeof query>;
@@ -36,7 +35,7 @@ export async function getNotifications(
   try {
     const authUser = req.user!;
 
-    const { unread, v } = req.query as unknown as Query;
+    const { unread } = req.query as unknown as Query;
 
     const { page, limit, skip } = getPaginationFromQuery(req, {
       defaultLimit: 20,
@@ -116,11 +115,6 @@ export async function getNotifications(
         if (activity) {
           notification.activity = activity;
         }
-
-        // TODO: Remove after the client is updated
-        if (v !== 2 && !notification.content && notification.title) {
-          notification.content = notification.title;
-        }
       }
 
       result.notifications = result.notifications.filter(
@@ -131,15 +125,7 @@ export async function getNotifications(
 
     res.status(StatusCodes.OK).json({
       success: true,
-      // TODO: Remove extra checks after the client is updated
-      data:
-        v === 2
-          ? result?.notifications || []
-          : result
-          ? result
-          : { notifications: [], total: 0 },
-      // TODO: Remove hasMore after the client is updated
-      hasMore: result && result.total > page * limit,
+      data: result?.notifications || [],
       pagination: {
         totalCount: result ? result.total : 0,
         page: page,

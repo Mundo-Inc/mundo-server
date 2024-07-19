@@ -45,9 +45,11 @@ export function createResponse<T>(
     return { status, data: payload as T };
   } else {
     const errorPayload = payload as ErrorDetails & {
+      success?: boolean;
       validation?: any;
       title?: string;
     };
+    errorPayload.success = false;
     errorPayload.validation = errorPayload.details;
     errorPayload.title = errorPayload.type;
     return { status, error: payload as ErrorDetails };

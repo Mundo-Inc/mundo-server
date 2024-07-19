@@ -16,13 +16,16 @@ export function validateData(schema: Schema) {
   return (req: Request, res: Response, next: NextFunction) => {
     try {
       if (schema.body) {
-        schema.body.parse(req.body);
+        const parsed = schema.body.parse(req.body);
+        req.body = parsed;
       }
       if (schema.query) {
-        schema.query.parse(req.query);
+        const parsed = schema.query.parse(req.query);
+        req.query = parsed;
       }
       if (schema.params) {
-        schema.params.parse(req.params);
+        const parsed = schema.params.parse(req.params);
+        req.params = parsed;
       }
 
       next();
