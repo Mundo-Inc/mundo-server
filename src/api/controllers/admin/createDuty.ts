@@ -2,12 +2,12 @@ import type { NextFunction, Request, Response } from "express";
 import { StatusCodes } from "http-status-codes";
 import { z } from "zod";
 
-import { createCron } from "@/cronjobs/bots.js";
-import Bot, { IBotTargetEnum, IBotTypeEnum } from "@/models/Bot.js";
-import User from "@/models/User.js";
-import { dStrings as ds, dynamicMessage } from "@/strings.js";
-import { createError } from "@/utilities/errorHandlers.js";
-import { validateData, zObjectId } from "@/utilities/validation.js";
+import { createCron } from "../../../cronjobs/bots.js";
+import Bot, { IBotTargetEnum, IBotTypeEnum } from "../../../models/Bot.js";
+import User from "../../../models/User.js";
+import { dStrings as ds, dynamicMessage } from "../../../strings.js";
+import { createError } from "../../../utilities/errorHandlers.js";
+import { validateData, zObjectId } from "../../../utilities/validation.js";
 
 const params = z.object({
   id: zObjectId,
@@ -33,7 +33,7 @@ export const createDutyValidation = validateData({
 export async function createDuty(
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) {
   try {
     req.body as Body;
@@ -58,7 +58,7 @@ export async function createDuty(
     });
 
     const botUser = await User.findById(id).orFail(
-      createError(dynamicMessage(ds.notFound, "User"), StatusCodes.NOT_FOUND)
+      createError(dynamicMessage(ds.notFound, "User"), StatusCodes.NOT_FOUND),
     );
 
     createCron(duty._id.toString(), duty, botUser)?.start();

@@ -1,15 +1,17 @@
-import type { UserProjectionEssentials } from "@/api/dto/user.js";
-import UserProjection from "@/api/dto/user.js";
-import CheckIn from "@/models/CheckIn.js";
-import Comment from "@/models/Comment.js";
-import Follow from "@/models/Follow.js";
-import FollowRequest from "@/models/FollowRequest.js";
-import Homemade from "@/models/Homemade.js";
-import type { INotification } from "@/models/Notification.js";
-import Notification, { NotificationTypeEnum } from "@/models/Notification.js";
-import type { IPlace } from "@/models/Place.js";
-import Reaction from "@/models/Reaction.js";
-import Review from "@/models/Review.js";
+import type { UserProjectionEssentials } from "../../../api/dto/user.js";
+import UserProjection from "../../../api/dto/user.js";
+import CheckIn from "../../../models/CheckIn.js";
+import Comment from "../../../models/Comment.js";
+import Follow from "../../../models/Follow.js";
+import FollowRequest from "../../../models/FollowRequest.js";
+import Homemade from "../../../models/Homemade.js";
+import type { INotification } from "../../../models/Notification.js";
+import Notification, {
+  NotificationTypeEnum,
+} from "../../../models/Notification.js";
+import type { IPlace } from "../../../models/Place.js";
+import Reaction from "../../../models/Reaction.js";
+import Review from "../../../models/Review.js";
 
 async function handleResourceNotFound(notification: INotification) {
   await Notification.findByIdAndDelete(notification._id);

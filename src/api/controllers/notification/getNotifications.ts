@@ -3,13 +3,12 @@ import { StatusCodes } from "http-status-codes";
 import type { PipelineStage } from "mongoose";
 import { z } from "zod";
 
-import Notification from "@/models/Notification.js";
-import { getPaginationFromQuery } from "@/utilities/pagination.js";
+import Notification from "../../../models/Notification.js";
+import { getPaginationFromQuery } from "../../../utilities/pagination.js";
 import {
   validateData,
   zPaginationSpread,
-  zStringInt,
-} from "@/utilities/validation.js";
+} from "../../../utilities/validation.js";
 import { getNotificationContent } from "./helpers.js";
 
 const query = z.object({
@@ -30,7 +29,7 @@ export const getNotificationsValidation = validateData({
 export async function getNotifications(
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) {
   try {
     const authUser = req.user!;
@@ -119,7 +118,8 @@ export async function getNotifications(
 
       result.notifications = result.notifications.filter(
         (n: { content?: string; title?: string }) =>
-          (n.content && n.content.length > 0) || (n.title && n.title.length > 0)
+          (n.content && n.content.length > 0) ||
+          (n.title && n.title.length > 0),
       );
     }
 

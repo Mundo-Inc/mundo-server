@@ -1,28 +1,31 @@
 import type { Document, Types } from "mongoose";
 
-import logger from "@/api/services/logger/index.js";
-import { findYelpId, getYelpData } from "@/api/services/provider.service.js";
+import { StatusCodes } from "http-status-codes";
+import logger from "../../../api/services/logger/index.js";
+import {
+  findYelpId,
+  getYelpData,
+} from "../../../api/services/provider.service.js";
 import type {
   GooglePlaceDetailsAdvanced,
   GooglePlaceDetailsLocationOnly,
   OpeningHours,
-} from "@/DataManagers/GoogleDataManager.js";
+} from "../../../DataManagers/GoogleDataManager.js";
 import {
   GoogleDataManager,
   GooglePlaceFields,
-} from "@/DataManagers/GoogleDataManager.js";
-import Media from "@/models/Media.js";
-import type { IPlace } from "@/models/Place.js";
-import Place from "@/models/Place.js";
-import { dStrings as ds, dynamicMessage } from "@/strings.js";
-import type { IYelpPlaceDetails } from "@/types/yelpPlace.interface.js";
-import { createError } from "@/utilities/errorHandlers.js";
-import { filterObjectByConfig } from "@/utilities/filtering.js";
-import { StatusCodes } from "http-status-codes";
+} from "../../../DataManagers/GoogleDataManager.js";
+import Media from "../../../models/Media.js";
+import type { IPlace } from "../../../models/Place.js";
+import Place from "../../../models/Place.js";
+import { dStrings as ds, dynamicMessage } from "../../../strings.js";
+import type { IYelpPlaceDetails } from "../../../types/yelpPlace.interface.js";
+import { createError } from "../../../utilities/errorHandlers.js";
+import { filterObjectByConfig } from "../../../utilities/filtering.js";
 
 export async function getDetailedPlace(id: Types.ObjectId) {
   const place = await Place.findById(id).orFail(
-    createError(dynamicMessage(ds.notFound, "Place"), StatusCodes.NOT_FOUND)
+    createError(dynamicMessage(ds.notFound, "Place"), StatusCodes.NOT_FOUND),
   );
 
   const [googleResults, yelpResults] = await Promise.all([
@@ -185,7 +188,7 @@ async function fetchGoogle(place: IPlace & Document<any, any, IPlace>) {
       googlePlacesData =
         await GoogleDataManager.getPlaceDetails<GooglePlaceDetailsAdvanced>(
           googlePlacesId,
-          [GooglePlaceFields.ADVANCED]
+          [GooglePlaceFields.ADVANCED],
         );
 
       if (googlePlacesData.regularOpeningHours) {
@@ -216,7 +219,7 @@ async function fetchGoogle(place: IPlace & Document<any, any, IPlace>) {
 
       const { state, city, country, postalCode, address } =
         GoogleDataManager.getAddressesFromComponents(
-          googlePlacesData.addressComponents
+          googlePlacesData.addressComponents,
         );
 
       if (address) {

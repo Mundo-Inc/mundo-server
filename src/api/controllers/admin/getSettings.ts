@@ -1,12 +1,12 @@
 import type { NextFunction, Request, Response } from "express";
 import { StatusCodes } from "http-status-codes";
 
-import AppSetting from "@/models/AppSetting.js";
+import AppSetting from "../../../models/AppSetting.js";
 
 export async function getSettings(
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) {
   try {
     const settings = await AppSetting.find({}).lean();

@@ -2,17 +2,17 @@ import type { NextFunction, Request, Response } from "express";
 import { StatusCodes } from "http-status-codes";
 import { z } from "zod";
 
-import PlaceProjection from "@/api/dto/place.js";
-import Event from "@/models/Event.js";
-import Place from "@/models/Place.js";
-import { dStrings as ds, dynamicMessage } from "@/strings.js";
-import { createError } from "@/utilities/errorHandlers.js";
-import { filterObjectByConfig } from "@/utilities/filtering.js";
+import PlaceProjection from "../../../api/dto/place.js";
+import Event from "../../../models/Event.js";
+import Place from "../../../models/Place.js";
+import { dStrings as ds, dynamicMessage } from "../../../strings.js";
+import { createError } from "../../../utilities/errorHandlers.js";
+import { filterObjectByConfig } from "../../../utilities/filtering.js";
 import {
   validateData,
   zGeoValidation,
   zObjectId,
-} from "@/utilities/validation.js";
+} from "../../../utilities/validation.js";
 
 const body = z.object({
   name: z.string().min(1),
@@ -40,7 +40,7 @@ export const createEventValidation = validateData({
 export async function createEvent(
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) {
   try {
     const authUser = req.user!;
@@ -50,7 +50,7 @@ export async function createEvent(
     let eventPlace;
     if (place.id) {
       eventPlace = await Place.findById(place.id).orFail(
-        createError(dynamicMessage(ds.notFound, "Place"))
+        createError(dynamicMessage(ds.notFound, "Place")),
       );
     } else {
       const {

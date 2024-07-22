@@ -1,18 +1,18 @@
 import { StatusCodes } from "http-status-codes";
 import type { Types } from "mongoose";
 
-import logger from "@/api/services/logger/index.js";
-import Conversation from "@/models/Conversation.js";
-import User from "@/models/User.js";
-import { dStrings as ds, dynamicMessage } from "@/strings.js";
-import { createError } from "@/utilities/errorHandlers.js";
+import logger from "../../../api/services/logger/index.js";
+import Conversation from "../../../models/Conversation.js";
+import User from "../../../models/User.js";
+import { dStrings as ds, dynamicMessage } from "../../../strings.js";
+import { createError } from "../../../utilities/errorHandlers.js";
 import client from "./client.js";
 
 export async function sendAttributtedMessage(
   by: Types.ObjectId,
   to: Types.ObjectId,
   message: string,
-  attributes: object
+  attributes: object,
 ) {
   const [byUser, toUser] = await Promise.all([
     User.findById(by).select<{ name: string }>("name").lean(),
@@ -22,7 +22,7 @@ export async function sendAttributtedMessage(
   if (!byUser || !toUser) {
     throw createError(
       dynamicMessage(ds.notFound, "User"),
-      StatusCodes.NOT_FOUND
+      StatusCodes.NOT_FOUND,
     );
   }
 
@@ -62,7 +62,7 @@ export async function sendAttributtedMessage(
     if (participants.length !== 2) {
       throw createError(
         "Participants count is not equal to 2",
-        StatusCodes.BAD_REQUEST
+        StatusCodes.BAD_REQUEST,
       );
     }
 
@@ -72,7 +72,7 @@ export async function sendAttributtedMessage(
     ) {
       sent = false;
       logger.error(
-        `Participant ${by} or ${to} found in the conversation ${alreadyExists._id} but data did not match`
+        `Participant ${by} or ${to} found in the conversation ${alreadyExists._id} but data did not match`,
       );
     } else {
       await client.conversations.v1
@@ -136,11 +136,11 @@ export async function sendAttributtedMessage(
     await Promise.all([
       User.updateOne(
         { _id: byUser._id },
-        { $push: { conversations: conversation._id } }
+        { $push: { conversations: conversation._id } },
       ),
       User.updateOne(
         { _id: toUser._id },
-        { $push: { conversations: conversation._id } }
+        { $push: { conversations: conversation._id } },
       ),
     ]);
 
@@ -156,7 +156,7 @@ export async function sendAttributtedMessage(
 
   if (!sent) {
     logger.error(
-      `Failed to send message from ${by.toString()} to ${to.toString()} with message ${message}`
+      `Failed to send message from ${by.toString()} to ${to.toString()} with message ${message}`,
     );
   }
 }

@@ -2,16 +2,16 @@ import type { NextFunction, Request, Response } from "express";
 import { StatusCodes } from "http-status-codes";
 import { z } from "zod";
 
-import UserProjection from "@/api/dto/user.js";
-import Flag from "@/models/Flag.js";
-import Review from "@/models/Review.js";
-import { createError } from "@/utilities/errorHandlers.js";
-import { getPaginationFromQuery } from "@/utilities/pagination.js";
+import UserProjection from "../../../api/dto/user.js";
+import Flag from "../../../models/Flag.js";
+import Review from "../../../models/Review.js";
+import { createError } from "../../../utilities/errorHandlers.js";
+import { getPaginationFromQuery } from "../../../utilities/pagination.js";
 import {
   validateData,
   zObjectId,
   zPaginationSpread,
-} from "@/utilities/validation.js";
+} from "../../../utilities/validation.js";
 
 const query = z.object({
   ...zPaginationSpread,
@@ -27,7 +27,7 @@ export const getFlagsValidation = validateData({
 export async function getFlags(
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) {
   try {
     const { review } = req.query as Query;

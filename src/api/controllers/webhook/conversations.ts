@@ -2,19 +2,19 @@ import type { NextFunction, Request, Response } from "express";
 import { StatusCodes } from "http-status-codes";
 import twilio from "twilio";
 
-import logger from "@/api/services/logger/index.js";
-import NotificationsService from "@/api/services/NotificationsService.js";
-import { env } from "@/env.js";
-import Conversation from "@/models/Conversation.js";
-import type { IUser } from "@/models/User.js";
-import User from "@/models/User.js";
-import { dStrings as ds, dynamicMessage } from "@/strings.js";
-import { createError } from "@/utilities/errorHandlers.js";
+import logger from "../../../api/services/logger/index.js";
+import NotificationsService from "../../../api/services/NotificationsService.js";
+import { env } from "../../../env.js";
+import Conversation from "../../../models/Conversation.js";
+import type { IUser } from "../../../models/User.js";
+import User from "../../../models/User.js";
+import { dStrings as ds, dynamicMessage } from "../../../strings.js";
+import { createError } from "../../../utilities/errorHandlers.js";
 
 export async function conversationsWebhook(
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) {
   try {
     const twilioSignature = req.headers["x-twilio-signature"] as string;
@@ -22,7 +22,7 @@ export async function conversationsWebhook(
     if (!twilioSignature) {
       throw createError(
         "Access denied. Missing Twilio signature.",
-        StatusCodes.UNAUTHORIZED
+        StatusCodes.UNAUTHORIZED,
       );
     }
 
@@ -31,12 +31,12 @@ export async function conversationsWebhook(
         env.TWILIO_AUTH_TOKEN,
         twilioSignature,
         env.TWILIO_WEBHOOK_URL,
-        req.body
+        req.body,
       )
     ) {
       throw createError(
         "Access denied. Invalid Twilio signature.",
-        StatusCodes.UNAUTHORIZED
+        StatusCodes.UNAUTHORIZED,
       );
     }
 
@@ -51,8 +51,8 @@ export async function conversationsWebhook(
           .orFail(
             createError(
               dynamicMessage(ds.notFound, "Conversation"),
-              StatusCodes.NOT_FOUND
-            )
+              StatusCodes.NOT_FOUND,
+            ),
           )
           .lean();
 
@@ -60,14 +60,14 @@ export async function conversationsWebhook(
           .orFail(
             createError(
               dynamicMessage(ds.notFound, "Author"),
-              StatusCodes.NOT_FOUND
-            )
+              StatusCodes.NOT_FOUND,
+            ),
           )
           .select<Pick<IUser, "name">>("name")
           .lean();
 
         const usersToNotify = conversation.participants.filter(
-          (c) => c.chat !== ParticipantSid && c.user.toString() !== Author
+          (c) => c.chat !== ParticipantSid && c.user.toString() !== Author,
         );
 
         logger.verbose(`Notifying ${usersToNotify.length} users.`);
@@ -93,7 +93,7 @@ export async function conversationsWebhook(
               },
             },
             user: u.user,
-          }))
+          })),
         );
 
         break;

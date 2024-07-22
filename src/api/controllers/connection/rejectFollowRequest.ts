@@ -2,10 +2,10 @@ import type { NextFunction, Request, Response } from "express";
 import { StatusCodes } from "http-status-codes";
 import { z } from "zod";
 
-import FollowRequest from "@/models/FollowRequest.js";
-import { dStrings as ds, dynamicMessage } from "@/strings.js";
-import { createError } from "@/utilities/errorHandlers.js";
-import { validateData, zObjectId } from "@/utilities/validation.js";
+import FollowRequest from "../../../models/FollowRequest.js";
+import { dStrings as ds, dynamicMessage } from "../../../strings.js";
+import { createError } from "../../../utilities/errorHandlers.js";
+import { validateData, zObjectId } from "../../../utilities/validation.js";
 
 const params = z.object({
   requestId: zObjectId,
@@ -20,7 +20,7 @@ export const rejectFollowRequestValidation = validateData({
 export async function rejectFollowRequest(
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) {
   try {
     const authUser = req.user!;
@@ -33,8 +33,8 @@ export async function rejectFollowRequest(
     }).orFail(
       createError(
         dynamicMessage(ds.notFound, "Follow Request"),
-        StatusCodes.NOT_FOUND
-      )
+        StatusCodes.NOT_FOUND,
+      ),
     );
 
     await followRequest.deleteOne();

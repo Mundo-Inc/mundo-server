@@ -2,10 +2,10 @@ import type { NextFunction, Request, Response } from "express";
 import { StatusCodes } from "http-status-codes";
 import { z } from "zod";
 
-import List, { AccessEnum } from "@/models/List.js";
-import { dStrings as ds, dynamicMessage } from "@/strings.js";
-import { createError } from "@/utilities/errorHandlers.js";
-import { validateData, zObjectId } from "@/utilities/validation.js";
+import List, { AccessEnum } from "../../../models/List.js";
+import { dStrings as ds, dynamicMessage } from "../../../strings.js";
+import { createError } from "../../../utilities/errorHandlers.js";
+import { validateData, zObjectId } from "../../../utilities/validation.js";
 
 const params = z.object({
   listId: zObjectId,
@@ -21,7 +21,7 @@ export const addToListValidation = validateData({
 export async function addToList(
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) {
   try {
     const authUser = req.user!;
@@ -29,24 +29,24 @@ export async function addToList(
     const { listId, placeId } = req.params as unknown as Params;
 
     const list = await List.findById(listId).orFail(
-      createError(dynamicMessage(ds.notFound, "List"), StatusCodes.NOT_FOUND)
+      createError(dynamicMessage(ds.notFound, "List"), StatusCodes.NOT_FOUND),
     );
 
     const isCollaborator = list.collaborators.some(
-      (c) => c.user.equals(authUser._id) && c.access === AccessEnum.Edit
+      (c) => c.user.equals(authUser._id) && c.access === AccessEnum.Edit,
     );
 
     if (!isCollaborator) {
       throw createError(
         "You're not a collaborator of this list",
-        StatusCodes.FORBIDDEN
+        StatusCodes.FORBIDDEN,
       );
     }
 
     if (list.places.some((p) => p.place.equals(placeId))) {
       throw createError(
         dynamicMessage(ds.alreadyExists, "Place"),
-        StatusCodes.CONFLICT
+        StatusCodes.CONFLICT,
       );
     }
 

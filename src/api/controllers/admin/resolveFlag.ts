@@ -2,15 +2,15 @@ import type { NextFunction, Request, Response } from "express";
 import { StatusCodes } from "http-status-codes";
 import { z } from "zod";
 
-import DeletionService from "@/api/services/DeletionService.js";
-import CheckIn from "@/models/CheckIn.js";
-import type { FlagAdminAction } from "@/models/Flag.js";
-import Flag from "@/models/Flag.js";
-import Homemade from "@/models/Homemade.js";
-import Review from "@/models/Review.js";
-import { dStrings as ds, dynamicMessage } from "@/strings.js";
-import { createError } from "@/utilities/errorHandlers.js";
-import { validateData, zObjectId } from "@/utilities/validation.js";
+import DeletionService from "../../../api/services/DeletionService.js";
+import CheckIn from "../../../models/CheckIn.js";
+import type { FlagAdminAction } from "../../../models/Flag.js";
+import Flag from "../../../models/Flag.js";
+import Homemade from "../../../models/Homemade.js";
+import Review from "../../../models/Review.js";
+import { dStrings as ds, dynamicMessage } from "../../../strings.js";
+import { createError } from "../../../utilities/errorHandlers.js";
+import { validateData, zObjectId } from "../../../utilities/validation.js";
 
 const params = z.object({
   id: zObjectId,
@@ -32,7 +32,7 @@ export const resolveFlagValidation = validateData({
 export async function resolveFlag(
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) {
   try {
     const authUser = req.user!;
@@ -42,7 +42,7 @@ export async function resolveFlag(
 
     const flag = await Flag.findById(id)
       .orFail(
-        createError(dynamicMessage(ds.notFound, "Flag"), StatusCodes.NOT_FOUND)
+        createError(dynamicMessage(ds.notFound, "Flag"), StatusCodes.NOT_FOUND),
       )
       .populate("target");
 

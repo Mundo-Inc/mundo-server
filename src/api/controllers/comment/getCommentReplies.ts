@@ -2,16 +2,16 @@ import type { NextFunction, Request, Response } from "express";
 import { StatusCodes } from "http-status-codes";
 import { z } from "zod";
 
-import Block from "@/models/Block.js";
-import Comment from "@/models/Comment.js";
-import { dStrings as ds, dynamicMessage } from "@/strings.js";
-import { createError } from "@/utilities/errorHandlers.js";
-import { getPaginationFromQuery } from "@/utilities/pagination.js";
+import Block from "../../../models/Block.js";
+import Comment from "../../../models/Comment.js";
+import { dStrings as ds, dynamicMessage } from "../../../strings.js";
+import { createError } from "../../../utilities/errorHandlers.js";
+import { getPaginationFromQuery } from "../../../utilities/pagination.js";
 import {
   validateData,
   zObjectId,
   zPaginationSpread,
-} from "@/utilities/validation.js";
+} from "../../../utilities/validation.js";
 import { getCommentsFromDB } from "./helpers.js";
 
 const params = z.object({
@@ -29,7 +29,7 @@ export const getCommentRepliesValidation = validateData({
 export async function getCommentReplies(
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) {
   try {
     const authUser = req.user!;
@@ -42,7 +42,10 @@ export async function getCommentReplies(
     });
 
     const comment = await Comment.findById(id).orFail(
-      createError(dynamicMessage(ds.notFound, "Comment"), StatusCodes.NOT_FOUND)
+      createError(
+        dynamicMessage(ds.notFound, "Comment"),
+        StatusCodes.NOT_FOUND,
+      ),
     );
 
     if (comment.children.length === 0) {
@@ -65,7 +68,7 @@ export async function getCommentReplies(
       authUser._id,
       false,
       skip,
-      limit
+      limit,
     );
 
     res.status(StatusCodes.OK).json({

@@ -1,13 +1,13 @@
 import type { NextFunction, Request, Response } from "express";
 import { StatusCodes } from "http-status-codes";
 
-import UserProjection from "@/api/dto/user.js";
-import User from "@/models/User.js";
+import UserProjection from "../../../api/dto/user.js";
+import User from "../../../models/User.js";
 
 export async function getConversations(
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) {
   try {
     const authUser = req.user!;

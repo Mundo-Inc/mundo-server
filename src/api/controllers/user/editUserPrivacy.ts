@@ -2,13 +2,13 @@ import type { NextFunction, Request, Response } from "express";
 import { StatusCodes } from "http-status-codes";
 import { z } from "zod";
 
-import Follow from "@/models/Follow.js";
-import FollowRequest from "@/models/FollowRequest.js";
-import User from "@/models/User.js";
-import UserActivity from "@/models/UserActivity.js";
-import strings, { dStrings as ds, dynamicMessage } from "@/strings.js";
-import { createError } from "@/utilities/errorHandlers.js";
-import { validateData, zObjectId } from "@/utilities/validation.js";
+import Follow from "../../../models/Follow.js";
+import FollowRequest from "../../../models/FollowRequest.js";
+import User from "../../../models/User.js";
+import UserActivity from "../../../models/UserActivity.js";
+import strings, { dStrings as ds, dynamicMessage } from "../../../strings.js";
+import { createError } from "../../../utilities/errorHandlers.js";
+import { validateData, zObjectId } from "../../../utilities/validation.js";
 
 const editUserPrivacyParams = z.object({
   id: zObjectId,
@@ -29,7 +29,7 @@ export const editUserPrivacyValidation = validateData({
 export async function editUserPrivacy(
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) {
   try {
     const authUser = req.user!;
@@ -40,12 +40,12 @@ export async function editUserPrivacy(
     if (!authUser._id.equals(id) && authUser.role !== "admin") {
       throw createError(
         strings.authorization.accessDenied,
-        StatusCodes.FORBIDDEN
+        StatusCodes.FORBIDDEN,
       );
     }
 
     const user = await User.findById(id).orFail(
-      createError(dynamicMessage(ds.notFound, "User"), StatusCodes.NOT_FOUND)
+      createError(dynamicMessage(ds.notFound, "User"), StatusCodes.NOT_FOUND),
     );
 
     if (user.isPrivate && !isPrivate) {
@@ -67,7 +67,7 @@ export async function editUserPrivacy(
     // Change all UserActivity isAccountPrivate to isPrivate
     await UserActivity.updateMany(
       { userId: user._id },
-      { isAccountPrivate: isPrivate }
+      { isAccountPrivate: isPrivate },
     );
 
     res.sendStatus(StatusCodes.NO_CONTENT);

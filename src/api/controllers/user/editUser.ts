@@ -2,13 +2,17 @@ import type { NextFunction, Request, Response } from "express";
 import { StatusCodes } from "http-status-codes";
 import { z } from "zod";
 
-import UserProjection from "@/api/dto/user.js";
-import CoinReward, { CoinRewardTypeEnum } from "@/models/CoinReward.js";
-import User, { UserRoleEnum } from "@/models/User.js";
-import strings, { dStrings as ds, dynamicMessage } from "@/strings.js";
-import { createError } from "@/utilities/errorHandlers.js";
-import S3Manager from "@/utilities/S3Manager/index.js";
-import { validateData, zObjectId, zUsername } from "@/utilities/validation.js";
+import UserProjection from "../../../api/dto/user.js";
+import CoinReward, { CoinRewardTypeEnum } from "../../../models/CoinReward.js";
+import User, { UserRoleEnum } from "../../../models/User.js";
+import strings, { dStrings as ds, dynamicMessage } from "../../../strings.js";
+import { createError } from "../../../utilities/errorHandlers.js";
+import S3Manager from "../../../utilities/S3Manager/index.js";
+import {
+  validateData,
+  zObjectId,
+  zUsername,
+} from "../../../utilities/validation.js";
 
 const edutUserParams = z.object({
   id: zObjectId,
@@ -34,7 +38,7 @@ export const editUserValidation = validateData({
 export async function editUser(
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) {
   try {
     const authUser = req.user!;
@@ -44,12 +48,12 @@ export async function editUser(
     if (!authUser._id.equals(id) && authUser.role !== UserRoleEnum.Admin) {
       throw createError(
         strings.authorization.accessDenied,
-        StatusCodes.FORBIDDEN
+        StatusCodes.FORBIDDEN,
       );
     }
 
     const user = await User.findById(id).orFail(
-      createError(dynamicMessage(ds.notFound, "User"), StatusCodes.NOT_FOUND)
+      createError(dynamicMessage(ds.notFound, "User"), StatusCodes.NOT_FOUND),
     );
 
     const { name, bio, username, removeProfileImage, eula, referrer } =
@@ -59,7 +63,7 @@ export async function editUser(
       if (user.accepted_eula) {
         throw createError(
           "Cannot set referrer after signing up",
-          StatusCodes.BAD_REQUEST
+          StatusCodes.BAD_REQUEST,
         );
       }
       if (user.referredBy) {
@@ -72,8 +76,8 @@ export async function editUser(
       const referredBy = await User.findById(referrer).orFail(
         createError(
           dynamicMessage(ds.notFound, "Referrer"),
-          StatusCodes.NOT_FOUND
-        )
+          StatusCodes.NOT_FOUND,
+        ),
       );
 
       referredBy.phantomCoins.balance += 250;

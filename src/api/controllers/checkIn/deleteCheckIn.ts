@@ -2,10 +2,10 @@ import type { NextFunction, Request, Response } from "express";
 import { StatusCodes } from "http-status-codes";
 import { z } from "zod";
 
-import CheckIn from "@/models/CheckIn.js";
-import strings, { dStrings as ds, dynamicMessage } from "@/strings.js";
-import { createError } from "@/utilities/errorHandlers.js";
-import { validateData, zObjectId } from "@/utilities/validation.js";
+import CheckIn from "../../../models/CheckIn.js";
+import strings, { dStrings as ds, dynamicMessage } from "../../../strings.js";
+import { createError } from "../../../utilities/errorHandlers.js";
+import { validateData, zObjectId } from "../../../utilities/validation.js";
 
 const params = z.object({
   id: zObjectId,
@@ -20,7 +20,7 @@ export const deleteCheckInValidation = validateData({
 export async function deleteCheckIn(
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) {
   try {
     const authUser = req.user!;
@@ -30,8 +30,8 @@ export async function deleteCheckIn(
     const checkin = await CheckIn.findById(id).orFail(
       createError(
         dynamicMessage(ds.notFound, "Check-in"),
-        StatusCodes.NOT_FOUND
-      )
+        StatusCodes.NOT_FOUND,
+      ),
     );
 
     if (!authUser._id.equals(checkin.user) && authUser.role !== "admin") {

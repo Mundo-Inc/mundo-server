@@ -2,16 +2,16 @@ import type { NextFunction, Request, Response } from "express";
 import { StatusCodes } from "http-status-codes";
 import { z } from "zod";
 
-import { BrevoService } from "@/api/services/BrevoService.js";
-import logger from "@/api/services/logger/index.js";
-import type { IPrize } from "@/models/Prize.js";
-import Prize from "@/models/Prize.js";
-import PrizeRedemption from "@/models/PrizeRedemption.js";
-import type { IUser } from "@/models/User.js";
-import User from "@/models/User.js";
-import { dStrings as ds, dynamicMessage } from "@/strings.js";
-import { createError } from "@/utilities/errorHandlers.js";
-import { validateData, zObjectId } from "@/utilities/validation.js";
+import { BrevoService } from "../../../api/services/BrevoService.js";
+import logger from "../../../api/services/logger/index.js";
+import type { IPrize } from "../../../models/Prize.js";
+import Prize from "../../../models/Prize.js";
+import PrizeRedemption from "../../../models/PrizeRedemption.js";
+import type { IUser } from "../../../models/User.js";
+import User from "../../../models/User.js";
+import { dStrings as ds, dynamicMessage } from "../../../strings.js";
+import { createError } from "../../../utilities/errorHandlers.js";
+import { validateData, zObjectId } from "../../../utilities/validation.js";
 
 const params = z.object({
   id: zObjectId,
@@ -26,7 +26,7 @@ export const redeemPrizeValidation = validateData({
 export async function redeemPrize(
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) {
   try {
     const authUser = req.user!;
@@ -34,11 +34,11 @@ export async function redeemPrize(
     const { id } = req.params as unknown as Params;
 
     const user = await User.findById(authUser._id).orFail(
-      createError(dynamicMessage(ds.notFound, "User"), StatusCodes.NOT_FOUND)
+      createError(dynamicMessage(ds.notFound, "User"), StatusCodes.NOT_FOUND),
     );
 
     const prize = await Prize.findById(id).orFail(
-      createError("prize not found", StatusCodes.NOT_FOUND)
+      createError("prize not found", StatusCodes.NOT_FOUND),
     );
 
     if (prize.count <= 0) {
@@ -96,7 +96,7 @@ async function notifyRedemptionInProgress(user: IUser, prize: IPrize) {
         name,
         prizeTitle,
         prizeAmount,
-      }
+      },
     );
   } catch (error) {
     logger.error("error while sending email for redemption");

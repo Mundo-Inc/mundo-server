@@ -1,12 +1,12 @@
 import type { Types } from "mongoose";
 
-import UserProjection from "@/api/dto/user.js";
-import Comment from "@/models/Comment.js";
-import Reaction from "@/models/Reaction.js";
+import UserProjection from "../../../api/dto/user.js";
+import Comment from "../../../models/Comment.js";
+import Reaction from "../../../models/Reaction.js";
 
 export function getReactionsOfActivity(
   activityId: Types.ObjectId,
-  authId: Types.ObjectId
+  authId: Types.ObjectId,
 ) {
   return Reaction.aggregate([
     {
@@ -55,7 +55,7 @@ export function getReactionsOfActivity(
 
 export function getCommentsOfActivity(
   activityId: Types.ObjectId,
-  authId: Types.ObjectId
+  authId: Types.ObjectId,
 ) {
   return Comment.aggregate([
     {

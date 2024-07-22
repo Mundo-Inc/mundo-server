@@ -3,13 +3,13 @@ import { StatusCodes } from "http-status-codes";
 import type { Types } from "mongoose";
 import { z } from "zod";
 
-import Block from "@/models/Block.js";
-import { getPaginationFromQuery } from "@/utilities/pagination.js";
+import Block from "../../../models/Block.js";
+import { getPaginationFromQuery } from "../../../utilities/pagination.js";
 import {
   validateData,
   zObjectId,
   zPaginationSpread,
-} from "@/utilities/validation.js";
+} from "../../../utilities/validation.js";
 import { getCommentsFromDB } from "../comment/helpers.js";
 
 const params = z.object({
@@ -27,7 +27,7 @@ export const getActivityCommentsValidation = validateData({
 export async function getActivityComments(
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) {
   try {
     const authUser = req.user!;
@@ -55,7 +55,7 @@ export async function getActivityComments(
       authUser._id,
       true,
       skip,
-      limit
+      limit,
     );
 
     const replyIds: Types.ObjectId[] = [];
@@ -70,7 +70,7 @@ export async function getActivityComments(
       },
       undefined,
       authUser._id,
-      false
+      false,
     );
 
     res.status(StatusCodes.OK).json({

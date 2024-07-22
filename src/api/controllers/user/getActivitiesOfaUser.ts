@@ -3,24 +3,24 @@ import { StatusCodes } from "http-status-codes";
 import type { FilterQuery, Types } from "mongoose";
 import { z } from "zod";
 
-import { getResourceInfo } from "@/api/services/feed.service.js";
-import Comment from "@/models/Comment.js";
-import Follow from "@/models/Follow.js";
-import User from "@/models/User.js";
-import type { IUserActivity } from "@/models/UserActivity.js";
+import { getResourceInfo } from "../../../api/services/feed.service.js";
+import Comment from "../../../models/Comment.js";
+import Follow from "../../../models/Follow.js";
+import User from "../../../models/User.js";
+import type { IUserActivity } from "../../../models/UserActivity.js";
 import UserActivity, {
   ActivityTypeEnum,
   ResourcePrivacyEnum,
-} from "@/models/UserActivity.js";
-import { dStrings as ds, dynamicMessage } from "@/strings.js";
-import { getConnectionStatuses } from "@/utilities/connections.js";
-import { createError } from "@/utilities/errorHandlers.js";
-import { getPaginationFromQuery } from "@/utilities/pagination.js";
+} from "../../../models/UserActivity.js";
+import { dStrings as ds, dynamicMessage } from "../../../strings.js";
+import { getConnectionStatuses } from "../../../utilities/connections.js";
+import { createError } from "../../../utilities/errorHandlers.js";
+import { getPaginationFromQuery } from "../../../utilities/pagination.js";
 import {
   validateData,
   zObjectId,
   zPaginationSpread,
-} from "@/utilities/validation.js";
+} from "../../../utilities/validation.js";
 import {
   getCommentsOfActivity,
   getReactionsOfActivity,
@@ -35,23 +35,23 @@ const query = z.object({
     .string()
     .toUpperCase()
     .refine((value) =>
-      Object.values(ActivityTypeEnum).includes(value as ActivityTypeEnum)
+      Object.values(ActivityTypeEnum).includes(value as ActivityTypeEnum),
     )
     .transform((value) => value as ActivityTypeEnum)
     .optional(),
   types: z
     .string()
     .transform((value) =>
-      value.split(",").map((type) => type.trim().toUpperCase())
+      value.split(",").map((type) => type.trim().toUpperCase()),
     )
     .refine(
       (value) =>
         value.every((type) =>
-          Object.values(ActivityTypeEnum).includes(type as ActivityTypeEnum)
+          Object.values(ActivityTypeEnum).includes(type as ActivityTypeEnum),
         ),
       {
         message: "Invalid activity type found in the list",
-      }
+      },
     )
     .transform((value) => value as ActivityTypeEnum[])
     .optional(),
@@ -68,7 +68,7 @@ export const getActivitiesOfaUserValidation = validateData({
 export async function getActivitiesOfaUser(
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) {
   try {
     const authUser = req.user!;
@@ -84,7 +84,7 @@ export async function getActivitiesOfaUser(
 
     //PRIVACY
     const user = await User.findById(userId).orFail(
-      createError(dynamicMessage(ds.notFound, "User"), StatusCodes.NOT_FOUND)
+      createError(dynamicMessage(ds.notFound, "User"), StatusCodes.NOT_FOUND),
     );
 
     const query: FilterQuery<IUserActivity> = {
@@ -98,8 +98,8 @@ export async function getActivitiesOfaUser(
       }).orFail(
         createError(
           "You are not allowed to view this user's activities.",
-          StatusCodes.FORBIDDEN
-        )
+          StatusCodes.FORBIDDEN,
+        ),
       );
 
       query.resourcePrivacy = { $ne: ResourcePrivacyEnum.Private };

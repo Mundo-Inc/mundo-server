@@ -2,14 +2,14 @@ import type { NextFunction, Request, Response } from "express";
 import { StatusCodes } from "http-status-codes";
 import { z } from "zod";
 
-import Prize from "@/models/Prize.js";
+import Prize from "../../../models/Prize.js";
 import PrizeRedemption, {
   PrizeRedemptionStatusTypeEnum,
-} from "@/models/PrizeRedemption.js";
-import User from "@/models/User.js";
-import { dStrings as ds, dynamicMessage } from "@/strings.js";
-import { createError } from "@/utilities/errorHandlers.js";
-import { validateData, zObjectId } from "@/utilities/validation.js";
+} from "../../../models/PrizeRedemption.js";
+import User from "../../../models/User.js";
+import { dStrings as ds, dynamicMessage } from "../../../strings.js";
+import { createError } from "../../../utilities/errorHandlers.js";
+import { validateData, zObjectId } from "../../../utilities/validation.js";
 
 const body = z.object({
   validation: z.nativeEnum(PrizeRedemptionStatusTypeEnum),
@@ -30,29 +30,29 @@ export const reviewRedemptionValidation = validateData({
 export async function reviewRedemption(
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) {
   try {
     const { validation, note } = req.body as Body;
     const { id } = req.query as unknown as Query;
 
     const redemption = await PrizeRedemption.findById(id).orFail(
-      createError("Prize Redemption Not Found", StatusCodes.NOT_FOUND)
+      createError("Prize Redemption Not Found", StatusCodes.NOT_FOUND),
     );
 
     if (redemption.status !== PrizeRedemptionStatusTypeEnum.Pending) {
       throw createError(
         "Prize Redemption Is Already Verified as " + redemption.status,
-        StatusCodes.BAD_REQUEST
+        StatusCodes.BAD_REQUEST,
       );
     }
 
     const prize = await Prize.findById(redemption.prizeId).orFail(
-      createError(dynamicMessage(ds.notFound, "Prize"), StatusCodes.NOT_FOUND)
+      createError(dynamicMessage(ds.notFound, "Prize"), StatusCodes.NOT_FOUND),
     );
 
     const user = await User.findById(redemption.userId).orFail(
-      createError(dynamicMessage(ds.notFound, "User"), StatusCodes.NOT_FOUND)
+      createError(dynamicMessage(ds.notFound, "User"), StatusCodes.NOT_FOUND),
     );
 
     switch (validation) {

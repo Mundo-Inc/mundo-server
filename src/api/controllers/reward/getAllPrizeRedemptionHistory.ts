@@ -2,10 +2,13 @@ import type { NextFunction, Request, Response } from "express";
 import { StatusCodes } from "http-status-codes";
 import { z } from "zod";
 
-import UserProjection from "@/api/dto/user.js";
-import PrizeRedemption from "@/models/PrizeRedemption.js";
-import { getPaginationFromQuery } from "@/utilities/pagination.js";
-import { validateData, zPaginationSpread } from "@/utilities/validation.js";
+import UserProjection from "../../../api/dto/user.js";
+import PrizeRedemption from "../../../models/PrizeRedemption.js";
+import { getPaginationFromQuery } from "../../../utilities/pagination.js";
+import {
+  validateData,
+  zPaginationSpread,
+} from "../../../utilities/validation.js";
 
 const query = z.object(zPaginationSpread);
 
@@ -16,7 +19,7 @@ export const getAllPrizeRedemptionHistoryValidation = validateData({
 export async function getAllPrizeRedemptionHistory(
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) {
   try {
     const { limit, skip } = getPaginationFromQuery(req, {

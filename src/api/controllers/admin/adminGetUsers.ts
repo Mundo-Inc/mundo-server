@@ -1,14 +1,17 @@
 import type { NextFunction, Request, Response } from "express";
 import { StatusCodes } from "http-status-codes";
-import { z } from "zod";
 import type { PipelineStage } from "mongoose";
+import { z } from "zod";
 
-import { validateData, zPaginationSpread } from "@/utilities/validation.js";
-import { getPaginationFromQuery } from "@/utilities/pagination.js";
-import User from "@/models/User.js";
-import UserProjection from "@/api/dto/user.js";
-import { createError } from "@/utilities/errorHandlers.js";
-import { dStrings as ds, dynamicMessage } from "@/strings.js";
+import UserProjection from "../../../api/dto/user.js";
+import User from "../../../models/User.js";
+import { dStrings as ds, dynamicMessage } from "../../../strings.js";
+import { createError } from "../../../utilities/errorHandlers.js";
+import { getPaginationFromQuery } from "../../../utilities/pagination.js";
+import {
+  validateData,
+  zPaginationSpread,
+} from "../../../utilities/validation.js";
 
 const query = z.object({
   ...zPaginationSpread,
@@ -25,7 +28,7 @@ export const adminGetUsersValidation = validateData({
 export async function adminGetUsers(
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) {
   try {
     const { q, signupMethod } = req.query as Query;
@@ -80,7 +83,7 @@ export async function adminGetUsers(
     if (!results) {
       throw createError(
         dynamicMessage(ds.notFound, "User"),
-        StatusCodes.NOT_FOUND
+        StatusCodes.NOT_FOUND,
       );
     }
 

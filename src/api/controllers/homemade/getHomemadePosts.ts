@@ -3,15 +3,15 @@ import { StatusCodes } from "http-status-codes";
 import type { PipelineStage } from "mongoose";
 import { z } from "zod";
 
-import MediaProjection from "@/api/dto/media.js";
-import UserProjection from "@/api/dto/user.js";
-import Homemade from "@/models/Homemade.js";
-import { getPaginationFromQuery } from "@/utilities/pagination.js";
+import MediaProjection from "../../../api/dto/media.js";
+import UserProjection from "../../../api/dto/user.js";
+import Homemade from "../../../models/Homemade.js";
+import { getPaginationFromQuery } from "../../../utilities/pagination.js";
 import {
   validateData,
   zObjectId,
   zPaginationSpread,
-} from "@/utilities/validation.js";
+} from "../../../utilities/validation.js";
 
 const query = z.object({
   ...zPaginationSpread,
@@ -28,7 +28,7 @@ export const getHomemadePostsValidation = validateData({
 export async function getHomemadePosts(
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) {
   try {
     const authUser = req.user!;
@@ -154,7 +154,7 @@ export async function getHomemadePosts(
           tags: 1,
           reactions: { $arrayElemAt: ["$reactions", 0] },
         },
-      }
+      },
     );
 
     const homemades = await Homemade.aggregate(pipeline);

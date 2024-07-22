@@ -3,22 +3,22 @@ import { StatusCodes } from "http-status-codes";
 import type { PipelineStage } from "mongoose";
 import { z } from "zod";
 
-import MediaProjection from "@/api/dto/media.js";
-import PlaceProjection from "@/api/dto/place.js";
-import UserProjection from "@/api/dto/user.js";
-import CheckIn from "@/models/CheckIn.js";
-import Follow from "@/models/Follow.js";
-import User from "@/models/User.js";
-import { ResourcePrivacyEnum } from "@/models/UserActivity.js";
-import { dStrings as ds, dynamicMessage } from "@/strings.js";
-import { createError } from "@/utilities/errorHandlers.js";
-import { fakeObjectIdString } from "@/utilities/generator.js";
-import { getPaginationFromQuery } from "@/utilities/pagination.js";
+import MediaProjection from "../../../api/dto/media.js";
+import PlaceProjection from "../../../api/dto/place.js";
+import UserProjection from "../../../api/dto/user.js";
+import CheckIn from "../../../models/CheckIn.js";
+import Follow from "../../../models/Follow.js";
+import User from "../../../models/User.js";
+import { ResourcePrivacyEnum } from "../../../models/UserActivity.js";
+import { dStrings as ds, dynamicMessage } from "../../../strings.js";
+import { createError } from "../../../utilities/errorHandlers.js";
+import { fakeObjectIdString } from "../../../utilities/generator.js";
+import { getPaginationFromQuery } from "../../../utilities/pagination.js";
 import {
   validateData,
   zObjectId,
   zPaginationSpread,
-} from "@/utilities/validation.js";
+} from "../../../utilities/validation.js";
 
 const query = z.object({
   ...zPaginationSpread,
@@ -40,7 +40,7 @@ export const getCheckInsValidation = validateData({
 export async function getCheckIns(
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) {
   try {
     const authUser = req.user!;
@@ -95,7 +95,7 @@ export async function getCheckIns(
     if (user) {
       //PRIVACY
       const userObject = await User.findById(user).orFail(
-        createError(dynamicMessage(ds.notFound, "User"), StatusCodes.NOT_FOUND)
+        createError(dynamicMessage(ds.notFound, "User"), StatusCodes.NOT_FOUND),
       );
 
       if (!user.equals(authUser._id) && userObject.isPrivate) {
@@ -105,8 +105,8 @@ export async function getCheckIns(
         }).orFail(
           createError(
             "You are not allowed to view this user's check-ins",
-            StatusCodes.FORBIDDEN
-          )
+            StatusCodes.FORBIDDEN,
+          ),
         );
       }
 
@@ -245,7 +245,7 @@ export async function getCheckIns(
           checkIn.user.progress = {
             xp: Math.round(Math.random() * checkIn.user.progress?.xp ?? 100),
             level: Math.round(
-              Math.random() * checkIn.user.progress?.level ?? 10
+              Math.random() * checkIn.user.progress?.level ?? 10,
             ),
           };
         }

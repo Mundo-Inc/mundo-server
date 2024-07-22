@@ -3,30 +3,32 @@ import { StatusCodes } from "http-status-codes";
 import type { Types } from "mongoose";
 import { z } from "zod";
 
-import { reviewEarning } from "@/api/services/earning.service.js";
-import logger from "@/api/services/logger/index.js";
-import { addReward } from "@/api/services/reward/reward.service.js";
-import { UserActivityManager } from "@/api/services/UserActivityManager.js";
-import { ResourceTypeEnum } from "@/models/Enum/ResourceTypeEnum.js";
-import Follow from "@/models/Follow.js";
-import type { IMedia } from "@/models/Media.js";
-import Media from "@/models/Media.js";
-import Notification, { NotificationTypeEnum } from "@/models/Notification.js";
-import Place from "@/models/Place.js";
-import Review from "@/models/Review.js";
+import { reviewEarning } from "../../../api/services/earning.service.js";
+import logger from "../../../api/services/logger/index.js";
+import { addReward } from "../../../api/services/reward/reward.service.js";
+import { UserActivityManager } from "../../../api/services/UserActivityManager.js";
+import { ResourceTypeEnum } from "../../../models/Enum/ResourceTypeEnum.js";
+import Follow from "../../../models/Follow.js";
+import type { IMedia } from "../../../models/Media.js";
+import Media from "../../../models/Media.js";
+import Notification, {
+  NotificationTypeEnum,
+} from "../../../models/Notification.js";
+import Place from "../../../models/Place.js";
+import Review from "../../../models/Review.js";
 import ScheduledTask, {
   ScheduledTaskStatus,
   ScheduledTaskType,
-} from "@/models/ScheduledTask.js";
-import Upload from "@/models/Upload.js";
-import User from "@/models/User.js";
-import { ResourcePrivacyEnum } from "@/models/UserActivity.js";
-import strings, { dStrings as ds, dynamicMessage } from "@/strings.js";
-import { getRandomDateInRange } from "@/utilities/dateTime.js";
-import { createError } from "@/utilities/errorHandlers.js";
-import { shouldBotInteract } from "@/utilities/mundo.js";
-import { openAiAnalyzeReview } from "@/utilities/openAi.js";
-import { validateData, zObjectId } from "@/utilities/validation.js";
+} from "../../../models/ScheduledTask.js";
+import Upload from "../../../models/Upload.js";
+import User from "../../../models/User.js";
+import { ResourcePrivacyEnum } from "../../../models/UserActivity.js";
+import strings, { dStrings as ds, dynamicMessage } from "../../../strings.js";
+import { getRandomDateInRange } from "../../../utilities/dateTime.js";
+import { createError } from "../../../utilities/errorHandlers.js";
+import { shouldBotInteract } from "../../../utilities/mundo.js";
+import { openAiAnalyzeReview } from "../../../utilities/openAi.js";
+import { validateData, zObjectId } from "../../../utilities/validation.js";
 
 const body = z.object({
   place: zObjectId,
@@ -68,7 +70,7 @@ export const createReviewValidation = validateData({
 export async function createReview(
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) {
   try {
     const authUser = req.user!;
@@ -95,7 +97,7 @@ export async function createReview(
     }
 
     const place = await Place.findById(placeId).orFail(
-      createError(dynamicMessage(ds.notFound, "Place"), StatusCodes.NOT_FOUND)
+      createError(dynamicMessage(ds.notFound, "Place"), StatusCodes.NOT_FOUND),
     );
 
     if (authUser.role !== "admin") {
@@ -108,7 +110,7 @@ export async function createReview(
       if (lastReviewExists) {
         throw createError(
           "You can't review the same place within 24 hours",
-          StatusCodes.CONFLICT
+          StatusCodes.CONFLICT,
         );
       }
     }
@@ -121,15 +123,15 @@ export async function createReview(
           .orFail(
             createError(
               dynamicMessage(ds.notFound, `Upload ${m.uploadId}`),
-              StatusCodes.NOT_FOUND
-            )
+              StatusCodes.NOT_FOUND,
+            ),
           )
           .lean();
 
         if (!authUser._id.equals(upload.user)) {
           throw createError(
             strings.authorization.otherUser,
-            StatusCodes.FORBIDDEN
+            StatusCodes.FORBIDDEN,
           );
         }
 
@@ -191,8 +193,8 @@ export async function createReview(
             },
           ],
           importance: 2,
-        })
-      )
+        }),
+      ),
     );
 
     try {
@@ -203,14 +205,14 @@ export async function createReview(
         activity = await UserActivityManager.createRecommendedActivity(
           authUser,
           placeId,
-          review._id
+          review._id,
         );
       } else {
         activity = await UserActivityManager.createReviewActivity(
           authUser,
           placeId,
           media.length > 0,
-          review._id
+          review._id,
         );
       }
       if (activity) {

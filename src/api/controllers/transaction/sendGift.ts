@@ -2,13 +2,13 @@ import type { NextFunction, Request, Response } from "express";
 import { StatusCodes } from "http-status-codes";
 import { z } from "zod";
 
-import Transaction from "@/models/Transaction.js";
-import User from "@/models/User.js";
-import { dStrings as ds, dynamicMessage } from "@/strings.js";
-import { createError } from "@/utilities/errorHandlers.js";
-import { roundUpToTwoDecimals } from "@/utilities/numbers.js";
-import { ensureNonEmptyString } from "@/utilities/requireValue.js";
-import { validateData, zObjectId } from "@/utilities/validation.js";
+import Transaction from "../../../models/Transaction.js";
+import User from "../../../models/User.js";
+import { dStrings as ds, dynamicMessage } from "../../../strings.js";
+import { createError } from "../../../utilities/errorHandlers.js";
+import { roundUpToTwoDecimals } from "../../../utilities/numbers.js";
+import { ensureNonEmptyString } from "../../../utilities/requireValue.js";
+import { validateData, zObjectId } from "../../../utilities/validation.js";
 import { sendAttributtedMessage } from "../conversation/helpers.js";
 import stripe from "./stripe.js";
 
@@ -30,7 +30,7 @@ export const sendGiftValidation = validateData({
 export async function sendGift(
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) {
   try {
     const authUser = req.user!;
@@ -52,14 +52,14 @@ export async function sendGift(
       User.findById(authUser._id).orFail(
         createError(
           dynamicMessage(ds.notFound, "User (sender)"),
-          StatusCodes.NOT_FOUND
-        )
+          StatusCodes.NOT_FOUND,
+        ),
       ),
       User.findById(recipientId).orFail(
         createError(
           dynamicMessage(ds.notFound, "User (recipient)"),
-          StatusCodes.NOT_FOUND
-        )
+          StatusCodes.NOT_FOUND,
+        ),
       ),
     ]);
 
@@ -67,16 +67,16 @@ export async function sendGift(
       sender.stripe.customerId,
       createError(
         "No customerID found. Please contact support.",
-        StatusCodes.BAD_REQUEST
-      )
+        StatusCodes.BAD_REQUEST,
+      ),
     );
 
     const recipientAccountId = ensureNonEmptyString(
       recipient.stripe.connectAccountId,
       createError(
         "Recipient does not have a Stripe Connect account",
-        StatusCodes.BAD_REQUEST
-      )
+        StatusCodes.BAD_REQUEST,
+      ),
     );
 
     const serviceFee = roundUpToTwoDecimals(amount * SERVICE_FEE_RATIO); // Round up the service fee

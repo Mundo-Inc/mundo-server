@@ -2,13 +2,13 @@ import type { NextFunction, Request, Response } from "express";
 import { StatusCodes } from "http-status-codes";
 import { z } from "zod";
 
-import { validateData, zObjectId } from "@/utilities/validation.js";
-import { dStrings as ds, dynamicMessage } from "@/strings.js";
-import { createError } from "@/utilities/errorHandlers.js";
-import UserActivity from "@/models/UserActivity.js";
-import { getResourceInfo } from "@/api/services/feed.service.js";
-import Comment from "@/models/Comment.js";
-import { getConnectionStatus } from "@/utilities/connections.js";
+import { getResourceInfo } from "../../../api/services/feed.service.js";
+import Comment from "../../../models/Comment.js";
+import UserActivity from "../../../models/UserActivity.js";
+import { dStrings as ds, dynamicMessage } from "../../../strings.js";
+import { getConnectionStatus } from "../../../utilities/connections.js";
+import { createError } from "../../../utilities/errorHandlers.js";
+import { validateData, zObjectId } from "../../../utilities/validation.js";
 import { getCommentsOfActivity, getReactionsOfActivity } from "./helpers.js";
 
 const params = z.object({
@@ -24,7 +24,7 @@ export const getActivityValidation = validateData({
 export async function getActivity(
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) {
   try {
     const authUser = req.user!;
@@ -34,19 +34,19 @@ export async function getActivity(
     const activity = await UserActivity.findById(id).orFail(
       createError(
         "Either the activity does not exist or you do not have permission to view it",
-        StatusCodes.NOT_FOUND
-      )
+        StatusCodes.NOT_FOUND,
+      ),
     );
 
     const [resourceInfo, placeInfo, userInfo] = await getResourceInfo(
       activity,
-      authUser._id
+      authUser._id,
     );
 
     if (!resourceInfo) {
       throw createError(
         dynamicMessage(ds.notFound, "Resource"),
-        StatusCodes.NOT_FOUND
+        StatusCodes.NOT_FOUND,
       );
     }
 

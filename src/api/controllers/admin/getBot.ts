@@ -2,11 +2,11 @@ import type { NextFunction, Request, Response } from "express";
 import { StatusCodes } from "http-status-codes";
 import { z } from "zod";
 
-import Bot from "@/models/Bot.js";
-import User from "@/models/User.js";
-import { dStrings as ds, dynamicMessage } from "@/strings.js";
-import { createError } from "@/utilities/errorHandlers.js";
-import { validateData, zObjectId } from "@/utilities/validation.js";
+import Bot from "../../../models/Bot.js";
+import User from "../../../models/User.js";
+import { dStrings as ds, dynamicMessage } from "../../../strings.js";
+import { createError } from "../../../utilities/errorHandlers.js";
+import { validateData, zObjectId } from "../../../utilities/validation.js";
 
 const params = z.object({
   id: zObjectId,
@@ -23,7 +23,7 @@ export async function getBot(req: Request, res: Response, next: NextFunction) {
     const { id } = req.params as unknown as Params;
 
     const bot = await User.findById(id).orFail(
-      createError(dynamicMessage(ds.notFound, "Bot"), StatusCodes.NOT_FOUND)
+      createError(dynamicMessage(ds.notFound, "Bot"), StatusCodes.NOT_FOUND),
     );
 
     const duties = await Bot.find({

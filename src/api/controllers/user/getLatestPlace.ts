@@ -2,12 +2,12 @@ import type { NextFunction, Request, Response } from "express";
 import { StatusCodes } from "http-status-codes";
 import { z } from "zod";
 
-import Place from "@/models/Place.js";
-import type { IUser } from "@/models/User.js";
-import User from "@/models/User.js";
-import strings, { dStrings as ds, dynamicMessage } from "@/strings.js";
-import { createError } from "@/utilities/errorHandlers.js";
-import { validateData, zObjectId } from "@/utilities/validation.js";
+import Place from "../../../models/Place.js";
+import type { IUser } from "../../../models/User.js";
+import User from "../../../models/User.js";
+import strings, { dStrings as ds, dynamicMessage } from "../../../strings.js";
+import { createError } from "../../../utilities/errorHandlers.js";
+import { validateData, zObjectId } from "../../../utilities/validation.js";
 
 const getLatestPlaceParams = z.object({
   id: zObjectId,
@@ -22,7 +22,7 @@ export const getLatestPlaceValidation = validateData({
 export async function getLatestPlace(
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) {
   try {
     const authUser = req.user!;
@@ -32,14 +32,14 @@ export async function getLatestPlace(
     if (!authUser._id.equals(id) && authUser.role !== "admin") {
       throw createError(
         strings.authorization.accessDenied,
-        StatusCodes.FORBIDDEN
+        StatusCodes.FORBIDDEN,
       );
     }
 
     const user = await User.findById(id)
       .select<Pick<IUser, "latestPlace">>("latestPlace")
       .orFail(
-        createError(dynamicMessage(ds.notFound, "User"), StatusCodes.NOT_FOUND)
+        createError(dynamicMessage(ds.notFound, "User"), StatusCodes.NOT_FOUND),
       )
       .lean();
 

@@ -1,9 +1,9 @@
 import type { NextFunction, Request, Response } from "express";
 import { z } from "zod";
 
-import UserProjection from "@/api/dto/user.js";
-import List from "@/models/List.js";
-import { validateData, zObjectId } from "@/utilities/validation.js";
+import UserProjection from "../../../api/dto/user.js";
+import List from "../../../models/List.js";
+import { validateData, zObjectId } from "../../../utilities/validation.js";
 
 const params = z.object({
   id: zObjectId,
@@ -18,7 +18,7 @@ export const getUserListsValidation = validateData({
 export async function getUserLists(
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) {
   try {
     const authUser = req.user!;

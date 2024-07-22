@@ -2,10 +2,10 @@ import type { NextFunction, Request, Response } from "express";
 import { StatusCodes } from "http-status-codes";
 import { z } from "zod";
 
-import User from "@/models/User.js";
-import { dStrings as ds, dynamicMessage } from "@/strings.js";
-import { createError } from "@/utilities/errorHandlers.js";
-import { validateData } from "@/utilities/validation.js";
+import User from "../../../models/User.js";
+import { dStrings as ds, dynamicMessage } from "../../../strings.js";
+import { createError } from "../../../utilities/errorHandlers.js";
+import { validateData } from "../../../utilities/validation.js";
 import { createStripeCustomer } from "./helpers.js";
 import stripe from "./stripe.js";
 
@@ -22,7 +22,7 @@ export const addOrUpdatePaymentMethodValidation = validateData({
 export async function addOrUpdatePaymentMethod(
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) {
   try {
     const authUser = req.user!;
@@ -30,7 +30,7 @@ export async function addOrUpdatePaymentMethod(
     const { paymentMethodId } = req.body as unknown as Body;
 
     const user = await User.findById(authUser._id).orFail(
-      createError(dynamicMessage(ds.notFound, "User"), StatusCodes.NOT_FOUND)
+      createError(dynamicMessage(ds.notFound, "User"), StatusCodes.NOT_FOUND),
     );
 
     if (!user.stripe.defaultPaymentMethodId) {

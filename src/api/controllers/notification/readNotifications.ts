@@ -2,10 +2,8 @@ import type { NextFunction, Request, Response } from "express";
 import { StatusCodes } from "http-status-codes";
 import { z } from "zod";
 
-import { validateData, zObjectId } from "@/utilities/validation.js";
-import { dStrings as ds, dynamicMessage } from "@/strings.js";
-import { createError } from "@/utilities/errorHandlers.js";
-import Notification from "@/models/Notification.js";
+import Notification from "../../../models/Notification.js";
+import { validateData } from "../../../utilities/validation.js";
 
 const body = z.object({
   date: z
@@ -23,7 +21,7 @@ export const readNotificationsValidation = validateData({
 export async function readNotifications(
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) {
   try {
     const authUser = req.user!;
@@ -40,7 +38,7 @@ export async function readNotifications(
       },
       {
         readAt: date,
-      }
+      },
     );
 
     res.sendStatus(StatusCodes.NO_CONTENT);

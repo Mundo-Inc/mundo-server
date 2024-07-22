@@ -2,8 +2,8 @@ import type { NextFunction, Request, Response } from "express";
 import { StatusCodes } from "http-status-codes";
 import { z } from "zod";
 
-import Mission from "@/models/Mission.js";
-import { validateData, zObjectId } from "@/utilities/validation.js";
+import Mission from "../../../models/Mission.js";
+import { validateData, zObjectId } from "../../../utilities/validation.js";
 
 const params = z.object({
   id: zObjectId,
@@ -18,7 +18,7 @@ export const deleteMissionValidation = validateData({
 export async function deleteMission(
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) {
   try {
     const { id } = req.params as unknown as Params;

@@ -2,10 +2,10 @@ import type { NextFunction, Request, Response } from "express";
 import { StatusCodes } from "http-status-codes";
 import { z } from "zod";
 
-import List from "@/models/List.js";
-import strings, { dStrings as ds, dynamicMessage } from "@/strings.js";
-import { createError } from "@/utilities/errorHandlers.js";
-import { validateData, zObjectId } from "@/utilities/validation.js";
+import List from "../../../models/List.js";
+import strings, { dStrings as ds, dynamicMessage } from "../../../strings.js";
+import { createError } from "../../../utilities/errorHandlers.js";
+import { validateData, zObjectId } from "../../../utilities/validation.js";
 
 const params = z.object({
   listId: zObjectId,
@@ -20,7 +20,7 @@ export const deleteListValidation = validateData({
 export async function deleteList(
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) {
   try {
     const authUser = req.user!;
@@ -28,7 +28,7 @@ export async function deleteList(
     const { listId } = req.params as unknown as Params;
 
     const list = await List.findById(listId).orFail(
-      createError(dynamicMessage(ds.notFound, "List"), StatusCodes.NOT_FOUND)
+      createError(dynamicMessage(ds.notFound, "List"), StatusCodes.NOT_FOUND),
     );
 
     // Check if the reaction belongs to the authenticated user
@@ -41,7 +41,7 @@ export async function deleteList(
     if (deletedList.deletedCount === 0) {
       throw createError(
         "Error deleting the list",
-        StatusCodes.INTERNAL_SERVER_ERROR
+        StatusCodes.INTERNAL_SERVER_ERROR,
       );
     }
 

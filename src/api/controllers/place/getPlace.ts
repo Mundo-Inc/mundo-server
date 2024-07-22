@@ -2,9 +2,7 @@ import type { NextFunction, Request, Response } from "express";
 import { StatusCodes } from "http-status-codes";
 import { z } from "zod";
 
-import { validateData, zObjectId } from "@/utilities/validation.js";
-import { dStrings as ds, dynamicMessage } from "@/strings.js";
-import { createError } from "@/utilities/errorHandlers.js";
+import { validateData, zObjectId } from "../../../utilities/validation.js";
 import { getDetailedPlace } from "./helpers.js";
 
 const params = z.object({
@@ -20,7 +18,7 @@ export const getPlaceValidation = validateData({
 export async function getPlace(
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) {
   try {
     const { placeId } = req.params as unknown as Params;

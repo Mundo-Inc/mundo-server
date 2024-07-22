@@ -2,12 +2,12 @@ import type { NextFunction, Request, Response } from "express";
 import { StatusCodes } from "http-status-codes";
 import { z } from "zod";
 
-import { addReward } from "@/api/services/reward/reward.service.js";
-import Reaction from "@/models/Reaction.js";
-import UserActivity from "@/models/UserActivity.js";
-import { dStrings as ds, dynamicMessage } from "@/strings.js";
-import { createError } from "@/utilities/errorHandlers.js";
-import { validateData, zObjectId } from "@/utilities/validation.js";
+import { addReward } from "../../../api/services/reward/reward.service.js";
+import Reaction from "../../../models/Reaction.js";
+import UserActivity from "../../../models/UserActivity.js";
+import { dStrings as ds, dynamicMessage } from "../../../strings.js";
+import { createError } from "../../../utilities/errorHandlers.js";
+import { validateData, zObjectId } from "../../../utilities/validation.js";
 
 const body = z.object({
   target: zObjectId,
@@ -24,7 +24,7 @@ export const createReactionValidation = validateData({
 export async function createReaction(
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) {
   try {
     const authUser = req.user!;
@@ -41,7 +41,7 @@ export async function createReaction(
     if (existingReaction) {
       throw createError(
         dynamicMessage(ds.alreadyExists, "Reaction"),
-        StatusCodes.CONFLICT
+        StatusCodes.CONFLICT,
       );
     }
 
@@ -54,7 +54,7 @@ export async function createReaction(
     // update reaction count in user activity
     await UserActivity.updateOne(
       { _id: target },
-      { $inc: { "engagements.reactions": 1 } }
+      { $inc: { "engagements.reactions": 1 } },
     );
 
     // adding reward

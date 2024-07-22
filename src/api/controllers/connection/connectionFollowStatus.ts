@@ -2,8 +2,8 @@ import type { NextFunction, Request, Response } from "express";
 import { StatusCodes } from "http-status-codes";
 import { z } from "zod";
 
-import { getConnectionStatus } from "@/utilities/connections.js";
-import { validateData, zObjectId } from "@/utilities/validation.js";
+import { getConnectionStatus } from "../../../utilities/connections.js";
+import { validateData, zObjectId } from "../../../utilities/validation.js";
 
 const params = z.object({
   id: zObjectId,
@@ -18,7 +18,7 @@ export const connectionFollowStatusValidation = validateData({
 export async function connectionFollowStatus(
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) {
   try {
     const authUser = req.user!;

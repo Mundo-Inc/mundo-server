@@ -2,13 +2,13 @@ import type { NextFunction, Request, Response } from "express";
 import { StatusCodes } from "http-status-codes";
 import { z } from "zod";
 
-import { UserActivityManager } from "@/api/services/UserActivityManager.js";
-import Follow from "@/models/Follow.js";
-import FollowRequest from "@/models/FollowRequest.js";
-import User from "@/models/User.js";
-import { dStrings as ds, dynamicMessage } from "@/strings.js";
-import { createError } from "@/utilities/errorHandlers.js";
-import { validateData, zObjectId } from "@/utilities/validation.js";
+import { UserActivityManager } from "../../../api/services/UserActivityManager.js";
+import Follow from "../../../models/Follow.js";
+import FollowRequest from "../../../models/FollowRequest.js";
+import User from "../../../models/User.js";
+import { dStrings as ds, dynamicMessage } from "../../../strings.js";
+import { createError } from "../../../utilities/errorHandlers.js";
+import { validateData, zObjectId } from "../../../utilities/validation.js";
 
 const params = z.object({
   id: zObjectId,
@@ -23,7 +23,7 @@ export const createUserConnectionValidation = validateData({
 export async function createUserConnection(
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) {
   try {
     const authUser = req.user!;
@@ -39,12 +39,12 @@ export async function createUserConnection(
     if (existingFollow) {
       throw createError(
         dynamicMessage(ds.alreadyExists, "Follow"),
-        StatusCodes.CONFLICT
+        StatusCodes.CONFLICT,
       );
     }
 
     const targetUser = await User.findById(id).orFail(
-      createError(dynamicMessage(ds.notFound, "User"), StatusCodes.NOT_FOUND)
+      createError(dynamicMessage(ds.notFound, "User"), StatusCodes.NOT_FOUND),
     );
 
     if (targetUser.isPrivate) {
@@ -56,7 +56,7 @@ export async function createUserConnection(
       if (existingFollowRequest) {
         throw createError(
           "You have already sent a follow request",
-          StatusCodes.BAD_REQUEST
+          StatusCodes.BAD_REQUEST,
         );
       }
 

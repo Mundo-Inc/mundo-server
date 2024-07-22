@@ -2,11 +2,11 @@ import type { NextFunction, Request, Response } from "express";
 import { StatusCodes } from "http-status-codes";
 import { z } from "zod";
 
-import { validateData, zObjectId } from "@/utilities/validation.js";
-import { dStrings as ds, dynamicMessage } from "@/strings.js";
-import { createError } from "@/utilities/errorHandlers.js";
-import Conversation from "@/models/Conversation.js";
-import UserProjection from "@/api/dto/user.js";
+import UserProjection from "../../../api/dto/user.js";
+import Conversation from "../../../models/Conversation.js";
+import { dStrings as ds, dynamicMessage } from "../../../strings.js";
+import { createError } from "../../../utilities/errorHandlers.js";
+import { validateData, zObjectId } from "../../../utilities/validation.js";
 
 const params = z.object({
   id: zObjectId,
@@ -21,7 +21,7 @@ export const getConversationValidation = validateData({
 export async function getConversation(
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) {
   try {
     const authUser = req.user!;
@@ -37,8 +37,8 @@ export async function getConversation(
       .orFail(
         createError(
           dynamicMessage(ds.notFound, "Conversation"),
-          StatusCodes.NOT_FOUND
-        )
+          StatusCodes.NOT_FOUND,
+        ),
       )
       .populate({
         path: "participants.user",

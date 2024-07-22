@@ -2,11 +2,11 @@ import type { NextFunction, Request, Response } from "express";
 import { StatusCodes } from "http-status-codes";
 import { z } from "zod";
 
-import UserProjection from "@/api/dto/user.js";
-import List from "@/models/List.js";
-import { dStrings as ds, dynamicMessage } from "@/strings.js";
-import { createError } from "@/utilities/errorHandlers.js";
-import { validateData, zObjectId } from "@/utilities/validation.js";
+import UserProjection from "../../../api/dto/user.js";
+import List from "../../../models/List.js";
+import { dStrings as ds, dynamicMessage } from "../../../strings.js";
+import { createError } from "../../../utilities/errorHandlers.js";
+import { validateData, zObjectId } from "../../../utilities/validation.js";
 
 const params = z.object({
   listId: zObjectId,
@@ -28,7 +28,7 @@ export const editListValidation = validateData({
 export async function editList(
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) {
   try {
     const authUser = req.user!;
@@ -37,13 +37,13 @@ export async function editList(
     const { name, icon, isPrivate } = req.body as Body;
 
     const list = await List.findById(listId).orFail(
-      createError(dynamicMessage(ds.notFound, "List"), StatusCodes.NOT_FOUND)
+      createError(dynamicMessage(ds.notFound, "List"), StatusCodes.NOT_FOUND),
     );
 
     if (!authUser._id.equals(list.owner)) {
       throw createError(
         "You're not the owner of this list",
-        StatusCodes.FORBIDDEN
+        StatusCodes.FORBIDDEN,
       );
     }
 

@@ -2,10 +2,13 @@ import type { NextFunction, Request, Response } from "express";
 import { StatusCodes } from "http-status-codes";
 import { z } from "zod";
 
-import { populateMissionProgress } from "@/api/services/reward/coinReward.service.js";
-import Mission from "@/models/Mission.js";
-import { getPaginationFromQuery } from "@/utilities/pagination.js";
-import { validateData, zPaginationSpread } from "@/utilities/validation.js";
+import { populateMissionProgress } from "../../../api/services/reward/coinReward.service.js";
+import Mission from "../../../models/Mission.js";
+import { getPaginationFromQuery } from "../../../utilities/pagination.js";
+import {
+  validateData,
+  zPaginationSpread,
+} from "../../../utilities/validation.js";
 
 const query = z.object(zPaginationSpread);
 
@@ -16,7 +19,7 @@ export const getMissionsValidation = validateData({
 export async function getMissions(
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) {
   try {
     const authUser = req.user!;
@@ -43,7 +46,7 @@ export async function getMissions(
     const populatedMissions = [];
     for (const mission of missions) {
       populatedMissions.push(
-        await populateMissionProgress(mission, authUser._id)
+        await populateMissionProgress(mission, authUser._id),
       );
     }
 

@@ -3,23 +3,23 @@ import fs from "fs";
 import { StatusCodes } from "http-status-codes";
 import path from "path";
 
-import type { UploadUsecase } from "@/models/Upload.js";
-import Upload from "@/models/Upload.js";
-import User from "@/models/User.js";
-import strings from "@/strings.js";
-import { createError } from "@/utilities/errorHandlers.js";
-import S3Manager from "@/utilities/S3Manager/index.js";
+import type { UploadUsecase } from "../../../models/Upload.js";
+import Upload from "../../../models/Upload.js";
+import User from "../../../models/User.js";
+import strings from "../../../strings.js";
+import { createError } from "../../../utilities/errorHandlers.js";
+import S3Manager from "../../../utilities/S3Manager/index.js";
 import {
   createThumbnail,
   generateFilename,
   parseForm,
   resizeVideo,
-} from "@/utilities/storage.js";
+} from "../../../utilities/storage.js";
 
 export async function uploadFile(
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) {
   try {
     const authUser = req.user!;
@@ -39,7 +39,7 @@ export async function uploadFile(
       const { key } = generateFileKey(
         usecase,
         authUser._id.toString(),
-        mimetype
+        mimetype,
       );
 
       const url = await S3Manager.uploadImage(
@@ -47,7 +47,7 @@ export async function uploadFile(
           mimetype: mimetype,
           path: filepath,
         },
-        key
+        key,
       );
 
       fs.unlinkSync(filepath);
@@ -79,7 +79,7 @@ export async function uploadFile(
       const { key, fileName } = generateFileKey(
         usecase,
         authUser._id.toString(),
-        mimetype
+        mimetype,
       );
 
       const convertOutputPath = path.resolve(`./tmp/${fileName}`);
@@ -102,7 +102,7 @@ export async function uploadFile(
             mimetype: mimetype,
             path: convertOutputPath,
           },
-          key
+          key,
         );
       } else {
         const url = await S3Manager.uploadVideo(
@@ -110,7 +110,7 @@ export async function uploadFile(
             mimetype: mimetype,
             path: filepath,
           },
-          key
+          key,
         );
 
         const upload = await Upload.create({
@@ -126,7 +126,7 @@ export async function uploadFile(
 
       await createThumbnail(filepath);
       const thumbnailOutputPath = path.resolve(
-        `./tmp/${fileName.replace(/\.[^/.]+$/, "-thumbnail.jpg")}`
+        `./tmp/${fileName.replace(/\.[^/.]+$/, "-thumbnail.jpg")}`,
       );
 
       await S3Manager.uploadImage(
@@ -134,7 +134,7 @@ export async function uploadFile(
           mimetype: S3Manager.AllowedMimeTypes.JPEG,
           path: thumbnailOutputPath,
         },
-        key.replace(/\.[^/.]+$/, "-thumbnail.jpg")
+        key.replace(/\.[^/.]+$/, "-thumbnail.jpg"),
       );
 
       fs.unlinkSync(thumbnailOutputPath);
@@ -154,7 +154,7 @@ export async function uploadFile(
 function generateFileKey(
   usecase: UploadUsecase,
   userId: string,
-  mimeType: string
+  mimeType: string,
 ) {
   let key = "";
   let fileName: string;

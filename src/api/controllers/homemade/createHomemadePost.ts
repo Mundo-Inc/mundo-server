@@ -3,20 +3,22 @@ import { StatusCodes } from "http-status-codes";
 import type { Types } from "mongoose";
 import { z } from "zod";
 
-import logger from "@/api/services/logger/index.js";
-import { addReward } from "@/api/services/reward/reward.service.js";
-import { UserActivityManager } from "@/api/services/UserActivityManager.js";
-import { ResourceTypeEnum } from "@/models/Enum/ResourceTypeEnum.js";
-import Follow from "@/models/Follow.js";
-import Homemade from "@/models/Homemade.js";
-import Media, { MediaTypeEnum } from "@/models/Media.js";
-import Notification, { NotificationTypeEnum } from "@/models/Notification.js";
-import Upload from "@/models/Upload.js";
-import User, { UserRoleEnum } from "@/models/User.js";
-import { ResourcePrivacyEnum } from "@/models/UserActivity.js";
-import strings, { dStrings as ds, dynamicMessage } from "@/strings.js";
-import { createError } from "@/utilities/errorHandlers.js";
-import { validateData, zObjectId } from "@/utilities/validation.js";
+import logger from "../../../api/services/logger/index.js";
+import { addReward } from "../../../api/services/reward/reward.service.js";
+import { UserActivityManager } from "../../../api/services/UserActivityManager.js";
+import { ResourceTypeEnum } from "../../../models/Enum/ResourceTypeEnum.js";
+import Follow from "../../../models/Follow.js";
+import Homemade from "../../../models/Homemade.js";
+import Media, { MediaTypeEnum } from "../../../models/Media.js";
+import Notification, {
+  NotificationTypeEnum,
+} from "../../../models/Notification.js";
+import Upload from "../../../models/Upload.js";
+import User, { UserRoleEnum } from "../../../models/User.js";
+import { ResourcePrivacyEnum } from "../../../models/UserActivity.js";
+import strings, { dStrings as ds, dynamicMessage } from "../../../strings.js";
+import { createError } from "../../../utilities/errorHandlers.js";
+import { validateData, zObjectId } from "../../../utilities/validation.js";
 
 const body = z.object({
   user: zObjectId.optional(),
@@ -29,7 +31,7 @@ const body = z.object({
     .refine(
       (val) =>
         val === ResourcePrivacyEnum.Private ||
-        val === ResourcePrivacyEnum.Followers
+        val === ResourcePrivacyEnum.Followers,
     )
     .optional()
     .default(ResourcePrivacyEnum.Public),
@@ -44,7 +46,7 @@ export const createHomemadePostValidation = validateData({
 export async function createHomemadePost(
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) {
   try {
     const authUser = req.user!;
@@ -65,13 +67,13 @@ export async function createHomemadePost(
       const upload = await Upload.findById(m.uploadId).orFail(
         createError(
           dynamicMessage(ds.notFound, "Uploaded media"),
-          StatusCodes.NOT_FOUND
-        )
+          StatusCodes.NOT_FOUND,
+        ),
       );
       if (!authUser._id.equals(upload.user)) {
         throw createError(
           strings.authorization.otherUser,
-          StatusCodes.FORBIDDEN
+          StatusCodes.FORBIDDEN,
         );
       }
       uploadIds.push(m.uploadId);
@@ -91,7 +93,7 @@ export async function createHomemadePost(
     if (mediaIds.length === 0) {
       throw createError(
         "At least one media (img/vid) should be included",
-        StatusCodes.BAD_REQUEST
+        StatusCodes.BAD_REQUEST,
       );
     }
 
@@ -99,7 +101,7 @@ export async function createHomemadePost(
       logger.verbose("validate tags");
       for (const userId of tags) {
         await User.exists({ _id: userId }).orFail(
-          createError("Tagged user does not exist", StatusCodes.NOT_FOUND)
+          createError("Tagged user does not exist", StatusCodes.NOT_FOUND),
         );
       }
     }
@@ -154,7 +156,7 @@ export async function createHomemadePost(
       // const _act = await addHomemadeActivity(authUser._id, homemade._id);
       const activity = await UserActivityManager.createHomemadeActivity(
         authUser,
-        homemade._id
+        homemade._id,
       );
       homemade.userActivityId = activity._id;
       await homemade.save();

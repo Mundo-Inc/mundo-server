@@ -2,11 +2,11 @@ import type { NextFunction, Request, Response } from "express";
 import { StatusCodes } from "http-status-codes";
 import { z } from "zod";
 
-import UserProjection from "@/api/dto/user.js";
-import Comment from "@/models/Comment.js";
-import strings, { dStrings as ds, dynamicMessage } from "@/strings.js";
-import { createError } from "@/utilities/errorHandlers.js";
-import { validateData, zObjectId } from "@/utilities/validation.js";
+import UserProjection from "../../../api/dto/user.js";
+import Comment from "../../../models/Comment.js";
+import strings, { dStrings as ds, dynamicMessage } from "../../../strings.js";
+import { createError } from "../../../utilities/errorHandlers.js";
+import { validateData, zObjectId } from "../../../utilities/validation.js";
 
 const params = z.object({
   id: zObjectId,
@@ -21,7 +21,7 @@ export const deleteCommentLikeValidation = validateData({
 export async function deleteCommentLike(
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) {
   try {
     const authUser = req.user!;
@@ -29,7 +29,10 @@ export async function deleteCommentLike(
     const { id } = req.params as unknown as Params;
 
     const comment = await Comment.findById(id).orFail(
-      createError(dynamicMessage(ds.notFound, "Comment"), StatusCodes.NOT_FOUND)
+      createError(
+        dynamicMessage(ds.notFound, "Comment"),
+        StatusCodes.NOT_FOUND,
+      ),
     );
 
     if (!comment.likes.some((l) => authUser._id.equals(l))) {

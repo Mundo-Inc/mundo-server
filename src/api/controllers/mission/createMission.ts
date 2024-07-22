@@ -2,8 +2,8 @@ import type { NextFunction, Request, Response } from "express";
 import { StatusCodes } from "http-status-codes";
 import { z } from "zod";
 
-import Mission, { TaskTypeEnum } from "@/models/Mission.js";
-import { validateData } from "@/utilities/validation.js";
+import Mission, { TaskTypeEnum } from "../../../models/Mission.js";
+import { validateData } from "../../../utilities/validation.js";
 
 const body = z.object({
   title: z.string(),
@@ -34,7 +34,7 @@ export const createMissionValidation = validateData({
 export async function createMission(
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) {
   try {
     const { title, subtitle, icon, task, rewardAmount, startsAt, expiresAt } =

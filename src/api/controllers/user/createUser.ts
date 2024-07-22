@@ -4,23 +4,25 @@ import { getAuth } from "firebase-admin/auth";
 import { StatusCodes } from "http-status-codes";
 import { z } from "zod";
 
-import { handleSignUp } from "@/api/lib/profile-handlers.js";
-import { BrevoService } from "@/api/services/BrevoService.js";
-import logger from "@/api/services/logger/index.js";
-import { MundoApp } from "@/config/firebase-config.js";
-import CoinReward, { CoinRewardTypeEnum } from "@/models/CoinReward.js";
-import Notification, { NotificationTypeEnum } from "@/models/Notification.js";
-import type { IUser } from "@/models/User.js";
-import User, { SignupMethodEnum } from "@/models/User.js";
-import { dStrings as ds, dynamicMessage } from "@/strings.js";
-import { createError } from "@/utilities/errorHandlers.js";
+import { handleSignUp } from "../../../api/lib/profile-handlers.js";
+import { BrevoService } from "../../../api/services/BrevoService.js";
+import logger from "../../../api/services/logger/index.js";
+import { MundoApp } from "../../../config/firebase-config.js";
+import CoinReward, { CoinRewardTypeEnum } from "../../../models/CoinReward.js";
+import Notification, {
+  NotificationTypeEnum,
+} from "../../../models/Notification.js";
+import type { IUser } from "../../../models/User.js";
+import User, { SignupMethodEnum } from "../../../models/User.js";
+import { dStrings as ds, dynamicMessage } from "../../../strings.js";
+import { createError } from "../../../utilities/errorHandlers.js";
 import {
   validateData,
   zObjectId,
   zPassword,
   zPhone,
   zUsername,
-} from "@/utilities/validation.js";
+} from "../../../utilities/validation.js";
 import { sendSlackMessage } from "../SlackController.js";
 
 const createUserBody = z.object({
@@ -41,7 +43,7 @@ export const createUserValidation = validateData({
 export async function createUser(
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) {
   try {
     const { name, username, email, password, referrer } =
@@ -54,7 +56,7 @@ export async function createUser(
     if (existingUser) {
       throw createError(
         dynamicMessage(ds.alreadyExists, "User"),
-        StatusCodes.CONFLICT
+        StatusCodes.CONFLICT,
       );
     }
 
@@ -62,8 +64,8 @@ export async function createUser(
       const referredBy = await User.findById(referrer).orFail(
         createError(
           dynamicMessage(ds.notFound, "Referrer"),
-          StatusCodes.NOT_FOUND
-        )
+          StatusCodes.NOT_FOUND,
+        ),
       );
       const amount = 250;
       referredBy.phantomCoins.balance += amount;
@@ -83,7 +85,7 @@ export async function createUser(
       name,
       username,
       SignupMethodEnum.Traditional,
-      hashedPassword
+      hashedPassword,
     );
 
     if (referrer) {
@@ -106,7 +108,7 @@ export async function createUser(
         "phantomAssistant",
         `New user: ${newUser.name || "- - -"}\n${newUser.username} (${
           newUser.email.address
-        })`
+        })`,
       );
     } catch (error) {
       logger.error("Error sending slack message", { error });
@@ -121,7 +123,7 @@ export async function createUser(
 async function notifyReferrer(
   referredBy: IUser,
   newUserName: string,
-  amount: number
+  amount: number,
 ) {
   try {
     // Sending app notification
@@ -151,7 +153,7 @@ async function notifyReferrer(
         referredByName,
         newUserName,
         amount,
-      }
+      },
     );
   } catch (error) {
     logger.error(error);
@@ -160,7 +162,7 @@ async function notifyReferrer(
       referredBy.email.address,
       referredBy.name,
       amount,
-      newUserName
+      newUserName,
     );
   }
 }

@@ -2,10 +2,10 @@ import type { NextFunction, Request, Response } from "express";
 import { StatusCodes } from "http-status-codes";
 import { z } from "zod";
 
-import User from "@/models/User.js";
-import strings from "@/strings.js";
-import { createError } from "@/utilities/errorHandlers.js";
-import { validateData } from "@/utilities/validation.js";
+import User from "../../../models/User.js";
+import strings from "../../../strings.js";
+import { createError } from "../../../utilities/errorHandlers.js";
+import { validateData } from "../../../utilities/validation.js";
 
 const usernameAvailabilityParams = z.object({
   username: z.string(),
@@ -20,7 +20,7 @@ export const usernameAvailabilityValidation = validateData({
 export async function usernameAvailability(
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) {
   try {
     const authUser = req.user;
@@ -30,7 +30,7 @@ export async function usernameAvailability(
     if (!username) {
       throw createError(
         strings.validations.missRequiredFields,
-        StatusCodes.BAD_REQUEST
+        StatusCodes.BAD_REQUEST,
       );
     }
 
@@ -39,12 +39,12 @@ export async function usernameAvailability(
       if (username.length < 5) {
         throw createError(
           strings.validations.invalidUsernameLength,
-          StatusCodes.BAD_REQUEST
+          StatusCodes.BAD_REQUEST,
         );
       }
       throw createError(
         strings.validations.invalidUsername,
-        StatusCodes.BAD_REQUEST
+        StatusCodes.BAD_REQUEST,
       );
     }
 

@@ -1,10 +1,10 @@
 import cron from "node-cron";
 
-import type { NotificationItemByToken } from "@/api/services/NotificationsService.js";
-import NotificationsService from "@/api/services/NotificationsService.js";
 import type { UserProjectionEssentials } from "../api/dto/user.js";
 import UserProjection from "../api/dto/user.js";
 import logger from "../api/services/logger/index.js";
+import type { NotificationItemByToken } from "../api/services/NotificationsService.js";
+import NotificationsService from "../api/services/NotificationsService.js";
 import CheckIn from "../models/CheckIn.js";
 import Comment from "../models/Comment.js";
 import Follow from "../models/Follow.js";
@@ -29,9 +29,8 @@ cron.schedule("*/30 * * * * *", async () => {
 
     for (const notification of notifications) {
       let failReason: string | null = null;
-      const { title, content, link } = await getNotificationContent(
-        notification
-      );
+      const { title, content, link } =
+        await getNotificationContent(notification);
 
       const user = await User.findById(notification.user)
         .select<{ devices: IUser["devices"] }>("devices")
@@ -57,7 +56,7 @@ cron.schedule("*/30 * * * * *", async () => {
         try {
           const batchResponse =
             await NotificationsService.getInstance().sendNotificationsByToken(
-              items
+              items,
             );
 
           if (!batchResponse || batchResponse.successCount == 0) {

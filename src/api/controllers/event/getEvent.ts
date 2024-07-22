@@ -2,12 +2,12 @@ import type { NextFunction, Request, Response } from "express";
 import { StatusCodes } from "http-status-codes";
 import { z } from "zod";
 
-import type { PlaceProjectionBrief } from "@/api/dto/place.js";
-import PlaceProjection from "@/api/dto/place.js";
-import Event from "@/models/Event.js";
-import { dStrings as ds, dynamicMessage } from "@/strings.js";
-import { createError } from "@/utilities/errorHandlers.js";
-import { validateData, zObjectId } from "@/utilities/validation.js";
+import type { PlaceProjectionBrief } from "../../../api/dto/place.js";
+import PlaceProjection from "../../../api/dto/place.js";
+import Event from "../../../models/Event.js";
+import { dStrings as ds, dynamicMessage } from "../../../strings.js";
+import { createError } from "../../../utilities/errorHandlers.js";
+import { validateData, zObjectId } from "../../../utilities/validation.js";
 
 const params = z.object({
   id: zObjectId,
@@ -22,7 +22,7 @@ export const getEventValidation = validateData({
 export async function getEvent(
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) {
   try {
     const { id } = req.params as unknown as Params;

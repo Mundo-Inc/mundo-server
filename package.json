@@ -9,7 +9,6 @@
     "build": "npx tsc",
     "start": "node dist/server.js",
     "dev": "tsx watch src/server.ts",
-    "preinstall": "npx only-allow pnpm",
     "deploy": "bash ./deploy.sh"
   },
   "repository": {
@@ -72,6 +71,8 @@
     "@types/tz-lookup": "^6.1.2",
     "@types/uuid": "^9.0.8",
     "concurrently": "^8.2.2",
+    "prettier": "^3.3.3",
+    "prettier-plugin-organize-imports": "^4.0.0",
     "tsx": "^4.16.2",
     "typescript": "^5.5.3"
   }

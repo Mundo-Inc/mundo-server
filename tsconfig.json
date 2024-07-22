@@ -1,5 +1,5 @@
 {
-  "include": ["src/**/*"],
+  "include": ["src"],
   "exclude": ["node_modules", "dist", "**/*.spec.ts", "**/*.test.ts"],
   "compilerOptions": {
     /* Base Options: */
@@ -22,9 +22,6 @@
     /* Bundled projects */
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
-    "incremental": true,
-    "paths": {
-      "@/*": ["./src/*"]
-    }
+    "incremental": true
   }
 }

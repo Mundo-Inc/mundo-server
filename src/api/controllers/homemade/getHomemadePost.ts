@@ -2,12 +2,12 @@ import type { NextFunction, Request, Response } from "express";
 import { StatusCodes } from "http-status-codes";
 import { z } from "zod";
 
-import MediaProjection from "@/api/dto/media.js";
-import UserProjection from "@/api/dto/user.js";
-import Homemade from "@/models/Homemade.js";
-import { dStrings as ds, dynamicMessage } from "@/strings.js";
-import { createError } from "@/utilities/errorHandlers.js";
-import { validateData, zObjectId } from "@/utilities/validation.js";
+import MediaProjection from "../../../api/dto/media.js";
+import UserProjection from "../../../api/dto/user.js";
+import Homemade from "../../../models/Homemade.js";
+import { dStrings as ds, dynamicMessage } from "../../../strings.js";
+import { createError } from "../../../utilities/errorHandlers.js";
+import { validateData, zObjectId } from "../../../utilities/validation.js";
 
 const params = z.object({
   id: zObjectId,
@@ -22,7 +22,7 @@ export const getHomemadePostValidation = validateData({
 export async function getHomemadePost(
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) {
   try {
     const authUser = req.user!;
@@ -143,7 +143,7 @@ export async function getHomemadePost(
     if (!post) {
       throw createError(
         dynamicMessage(ds.notFound, "Post"),
-        StatusCodes.NOT_FOUND
+        StatusCodes.NOT_FOUND,
       );
     }
 

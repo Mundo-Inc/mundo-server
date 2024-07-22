@@ -2,11 +2,11 @@ import type { NextFunction, Request, Response } from "express";
 import { StatusCodes } from "http-status-codes";
 import { z } from "zod";
 
-import Conversation from "@/models/Conversation.js";
-import User from "@/models/User.js";
-import { dStrings as ds, dynamicMessage } from "@/strings.js";
-import { createError } from "@/utilities/errorHandlers.js";
-import { validateData, zObjectId } from "@/utilities/validation.js";
+import Conversation from "../../../models/Conversation.js";
+import User from "../../../models/User.js";
+import { dStrings as ds, dynamicMessage } from "../../../strings.js";
+import { createError } from "../../../utilities/errorHandlers.js";
+import { validateData, zObjectId } from "../../../utilities/validation.js";
 import client from "./client.js";
 
 const params = z.object({
@@ -27,7 +27,7 @@ export const removeUserFromGroupConversationValidation = validateData({
 export async function removeUserFromGroupConversation(
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) {
   try {
     const { id } = req.params as unknown as Params;
@@ -41,13 +41,13 @@ export async function removeUserFromGroupConversation(
       .participants.list();
 
     const participantToRemove = participants.find(
-      (participant) => participant.identity === user.toString()
+      (participant) => participant.identity === user.toString(),
     );
 
     if (!participantToRemove) {
       throw createError(
         "Participant not found in this conversation.",
-        StatusCodes.NOT_FOUND
+        StatusCodes.NOT_FOUND,
       );
     }
 
@@ -75,12 +75,12 @@ export async function removeUserFromGroupConversation(
       const conversation = await Conversation.findById(id).orFail(
         createError(
           dynamicMessage(ds.notFound, "Conversation"),
-          StatusCodes.NOT_FOUND
-        )
+          StatusCodes.NOT_FOUND,
+        ),
       );
 
       conversation.participants = conversation.participants.filter(
-        (p) => !p.user.equals(user)
+        (p) => !p.user.equals(user),
       );
 
       await conversation.save();

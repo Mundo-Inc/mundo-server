@@ -3,13 +3,13 @@ import { StatusCodes } from "http-status-codes";
 import type { FilterQuery } from "mongoose";
 import { z } from "zod";
 
-import type { PlaceProjectionBrief } from "@/api/dto/place.js";
-import PlaceProjection from "@/api/dto/place.js";
-import type { IEvent } from "@/models/Event.js";
-import Event from "@/models/Event.js";
-import { dStrings as ds, dynamicMessage } from "@/strings.js";
-import { createError } from "@/utilities/errorHandlers.js";
-import { validateData } from "@/utilities/validation.js";
+import type { PlaceProjectionBrief } from "../../../api/dto/place.js";
+import PlaceProjection from "../../../api/dto/place.js";
+import type { IEvent } from "../../../models/Event.js";
+import Event from "../../../models/Event.js";
+import { dStrings as ds, dynamicMessage } from "../../../strings.js";
+import { createError } from "../../../utilities/errorHandlers.js";
+import { validateData } from "../../../utilities/validation.js";
 
 const query = z.object({
   q: z.string().min(1).trim().optional(),
@@ -24,7 +24,7 @@ export const getEventsValidation = validateData({
 export async function getEvents(
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) {
   try {
     const { q } = req.query as Query;

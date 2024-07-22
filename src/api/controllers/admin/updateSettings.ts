@@ -2,8 +2,8 @@ import type { NextFunction, Request, Response } from "express";
 import { StatusCodes } from "http-status-codes";
 import { z } from "zod";
 
-import AppSetting from "@/models/AppSetting.js";
-import { validateData } from "@/utilities/validation.js";
+import AppSetting from "../../../models/AppSetting.js";
+import { validateData } from "../../../utilities/validation.js";
 
 const body = z.object({
   key: z.enum(["latestAppVersion", "minOperationalVersion"]),
@@ -19,7 +19,7 @@ export const updateSettingsValidation = validateData({
 export async function updateSettings(
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) {
   try {
     const { key, value } = req.body as Body;

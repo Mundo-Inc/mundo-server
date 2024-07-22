@@ -2,10 +2,10 @@ import type { NextFunction, Request, Response } from "express";
 import { StatusCodes } from "http-status-codes";
 import { z } from "zod";
 
-import Homemade from "@/models/Homemade.js";
-import strings, { dStrings as ds, dynamicMessage } from "@/strings.js";
-import { createError } from "@/utilities/errorHandlers.js";
-import { validateData, zObjectId } from "@/utilities/validation.js";
+import Homemade from "../../../models/Homemade.js";
+import strings, { dStrings as ds, dynamicMessage } from "../../../strings.js";
+import { createError } from "../../../utilities/errorHandlers.js";
+import { validateData, zObjectId } from "../../../utilities/validation.js";
 
 const params = z.object({
   id: zObjectId,
@@ -20,7 +20,7 @@ export const removeHomemadePostValidation = validateData({
 export async function removeHomemadePost(
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) {
   try {
     const authUser = req.user!;
@@ -28,7 +28,7 @@ export async function removeHomemadePost(
     const { id } = req.params as unknown as Params;
 
     const homemade = await Homemade.findById(id).orFail(
-      createError(dynamicMessage(ds.notFound, "Post"), StatusCodes.NOT_FOUND)
+      createError(dynamicMessage(ds.notFound, "Post"), StatusCodes.NOT_FOUND),
     );
 
     if (!authUser._id.equals(homemade.user)) {

@@ -6,11 +6,11 @@ import { z } from "zod";
 import type {
   NotificationItemByToken,
   NotificationItemByUser,
-} from "@/api/services/NotificationsService.js";
-import NotificationsService from "@/api/services/NotificationsService.js";
-import type { IUser } from "@/models/User.js";
-import User from "@/models/User.js";
-import { validateData, zObjectId } from "@/utilities/validation.js";
+} from "../../../api/services/NotificationsService.js";
+import NotificationsService from "../../../api/services/NotificationsService.js";
+import type { IUser } from "../../../models/User.js";
+import User from "../../../models/User.js";
+import { validateData, zObjectId } from "../../../utilities/validation.js";
 
 const body = z.object({
   audience: z.enum(["all", "referredBy", "list"]),
@@ -32,7 +32,7 @@ export const notifyUsersValidation = validateData({
 export async function notifyUsers(
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) {
   try {
     const {
@@ -73,7 +73,7 @@ export async function notifyUsers(
       }));
 
       await NotificationsService.getInstance().sendNotificationsByUser(
-        adminItems
+        adminItems,
       );
 
       const items: NotificationItemByToken[] = [];
@@ -95,14 +95,14 @@ export async function notifyUsers(
                   token: d.fcmToken!,
                 },
                 user: user._id,
-              }))
+              })),
           );
         }
       }
 
       const responses =
         await NotificationsService.getInstance().sendNotificationsByToken(
-          items
+          items,
         );
 
       res.status(StatusCodes.OK).json({

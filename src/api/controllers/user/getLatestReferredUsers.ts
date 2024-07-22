@@ -1,12 +1,15 @@
 import type { NextFunction, Request, Response } from "express";
 import { z } from "zod";
 
-import type { UserProjectionEssentials } from "@/api/dto/user.js";
-import UserProjection from "@/api/dto/user.js";
-import User from "@/models/User.js";
-import { getConnectionStatuses } from "@/utilities/connections.js";
-import { getPaginationFromQuery } from "@/utilities/pagination.js";
-import { validateData, zPaginationSpread } from "@/utilities/validation.js";
+import type { UserProjectionEssentials } from "../../../api/dto/user.js";
+import UserProjection from "../../../api/dto/user.js";
+import User from "../../../models/User.js";
+import { getConnectionStatuses } from "../../../utilities/connections.js";
+import { getPaginationFromQuery } from "../../../utilities/pagination.js";
+import {
+  validateData,
+  zPaginationSpread,
+} from "../../../utilities/validation.js";
 
 const query = z.object(zPaginationSpread);
 
@@ -19,7 +22,7 @@ export const getLatestReferredUsersValidation = validateData({
 export async function getLatestReferredUsers(
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) {
   try {
     const authUser = req.user!;
@@ -40,7 +43,7 @@ export async function getLatestReferredUsers(
 
     const connectionStatuses = await getConnectionStatuses(
       authUser._id,
-      latestReferredUsers.map((user) => user._id)
+      latestReferredUsers.map((user) => user._id),
     );
 
     const results: object[] = [];

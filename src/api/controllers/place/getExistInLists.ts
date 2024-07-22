@@ -1,8 +1,8 @@
 import type { NextFunction, Request, Response } from "express";
 import { z } from "zod";
 
-import List from "@/models/List.js";
-import { validateData, zObjectId } from "@/utilities/validation.js";
+import List from "../../../models/List.js";
+import { validateData, zObjectId } from "../../../utilities/validation.js";
 
 const params = z.object({
   placeId: zObjectId,
@@ -17,7 +17,7 @@ export const getExistInListsValidation = validateData({
 export async function getExistInLists(
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) {
   try {
     const authUser = req.user!;

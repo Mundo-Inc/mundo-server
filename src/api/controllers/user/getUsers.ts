@@ -2,12 +2,12 @@ import type { NextFunction, Request, Response } from "express";
 import { StatusCodes } from "http-status-codes";
 import { z } from "zod";
 
-import type { UserProjectionEssentials } from "@/api/dto/user.js";
-import UserProjection from "@/api/dto/user.js";
-import Follow from "@/models/Follow.js";
-import User from "@/models/User.js";
-import { getPaginationFromQuery } from "@/utilities/pagination.js";
-import { validateData } from "@/utilities/validation.js";
+import type { UserProjectionEssentials } from "../../../api/dto/user.js";
+import UserProjection from "../../../api/dto/user.js";
+import Follow from "../../../models/Follow.js";
+import User from "../../../models/User.js";
+import { getPaginationFromQuery } from "../../../utilities/pagination.js";
+import { validateData } from "../../../utilities/validation.js";
 
 const getUsersQuery = z.object({
   q: z.string().trim().max(100).optional(),
@@ -24,7 +24,7 @@ export const getUsersValidation = validateData({
 export async function getUsers(
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) {
   try {
     const authUser = req.user;

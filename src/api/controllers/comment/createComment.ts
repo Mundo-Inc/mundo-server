@@ -3,23 +3,23 @@ import { StatusCodes } from "http-status-codes";
 import type { AnyKeys } from "mongoose";
 import { z } from "zod";
 
-import type { UserProjectionEssentials } from "@/api/dto/user.js";
-import UserProjection from "@/api/dto/user.js";
-import { addReward } from "@/api/services/reward/reward.service.js";
-import { env } from "@/env.js";
-import type { IComment, IMention } from "@/models/Comment.js";
-import Comment from "@/models/Comment.js";
+import type { UserProjectionEssentials } from "../../../api/dto/user.js";
+import UserProjection from "../../../api/dto/user.js";
+import { addReward } from "../../../api/services/reward/reward.service.js";
+import { env } from "../../../env.js";
+import type { IComment, IMention } from "../../../models/Comment.js";
+import Comment from "../../../models/Comment.js";
 import ScheduledTask, {
   ScheduledTaskStatus,
   ScheduledTaskType,
-} from "@/models/ScheduledTask.js";
-import User from "@/models/User.js";
-import UserActivity from "@/models/UserActivity.js";
-import { dStrings as ds, dynamicMessage } from "@/strings.js";
-import { getRandomDateInRange } from "@/utilities/dateTime.js";
-import { createError } from "@/utilities/errorHandlers.js";
-import { shouldBotInteract } from "@/utilities/mundo.js";
-import { validateData, zObjectId } from "@/utilities/validation.js";
+} from "../../../models/ScheduledTask.js";
+import User from "../../../models/User.js";
+import UserActivity from "../../../models/UserActivity.js";
+import { dStrings as ds, dynamicMessage } from "../../../strings.js";
+import { getRandomDateInRange } from "../../../utilities/dateTime.js";
+import { createError } from "../../../utilities/errorHandlers.js";
+import { shouldBotInteract } from "../../../utilities/mundo.js";
+import { validateData, zObjectId } from "../../../utilities/validation.js";
 
 const body = z.object({
   activity: zObjectId,
@@ -36,7 +36,7 @@ export const createCommentValidation = validateData({
 export async function createComment(
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) {
   try {
     const authUser = req.user!;
@@ -46,15 +46,15 @@ export async function createComment(
     const user = await User.findById(authUser._id)
       .select<UserProjectionEssentials>(UserProjection.essentials)
       .orFail(
-        createError(dynamicMessage(ds.notFound, "User"), StatusCodes.NOT_FOUND)
+        createError(dynamicMessage(ds.notFound, "User"), StatusCodes.NOT_FOUND),
       )
       .lean();
 
     await UserActivity.exists({ _id: activity }).orFail(
       createError(
         dynamicMessage(ds.notFound, "Activity"),
-        StatusCodes.NOT_FOUND
-      )
+        StatusCodes.NOT_FOUND,
+      ),
     );
 
     const body: IComment | AnyKeys<IComment> = {
@@ -68,8 +68,8 @@ export async function createComment(
       (await Comment.findById(parent).orFail(
         createError(
           dynamicMessage(ds.notFound, "Parent comment"),
-          StatusCodes.NOT_FOUND
-        )
+          StatusCodes.NOT_FOUND,
+        ),
       ));
 
     if (parentComment) {
@@ -121,7 +121,7 @@ export async function createComment(
     // update comments count in user activity
     await UserActivity.updateOne(
       { _id: activity },
-      { $inc: { "engagements.comments": 1 } }
+      { $inc: { "engagements.comments": 1 } },
     );
 
     // adding reward

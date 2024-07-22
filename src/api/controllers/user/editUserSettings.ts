@@ -2,10 +2,10 @@ import type { NextFunction, Request, Response } from "express";
 import { StatusCodes } from "http-status-codes";
 import { z } from "zod";
 
-import User from "@/models/User.js";
-import strings, { dStrings as ds, dynamicMessage } from "@/strings.js";
-import { createError } from "@/utilities/errorHandlers.js";
-import { validateData, zObjectId } from "@/utilities/validation.js";
+import User from "../../../models/User.js";
+import strings, { dStrings as ds, dynamicMessage } from "../../../strings.js";
+import { createError } from "../../../utilities/errorHandlers.js";
+import { validateData, zObjectId } from "../../../utilities/validation.js";
 
 const edutUserSettingsParams = z.object({
   id: zObjectId,
@@ -30,7 +30,7 @@ export const editUserSettingsValidation = validateData({
 export async function editUserSettings(
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) {
   try {
     const authUser = req.user!;
@@ -42,7 +42,7 @@ export async function editUserSettings(
     if (!authUser._id.equals(id) && authUser.role !== "admin") {
       throw createError(
         strings.authorization.accessDenied,
-        StatusCodes.FORBIDDEN
+        StatusCodes.FORBIDDEN,
       );
     }
 
@@ -50,7 +50,7 @@ export async function editUserSettings(
       if (!token && !apnToken && !fcmToken) {
         throw createError(
           strings.validations.missRequiredFields,
-          StatusCodes.BAD_REQUEST
+          StatusCodes.BAD_REQUEST,
         );
       }
 
@@ -58,16 +58,17 @@ export async function editUserSettings(
       if ((!token && !newToken && !fcmToken) || !platform) {
         throw createError(
           strings.validations.missRequiredFields,
-          StatusCodes.BAD_REQUEST
+          StatusCodes.BAD_REQUEST,
         );
       }
 
       const user = await User.findById(id).orFail(
-        createError(dynamicMessage(ds.notFound, "User"), StatusCodes.NOT_FOUND)
+        createError(dynamicMessage(ds.notFound, "User"), StatusCodes.NOT_FOUND),
       );
 
       const found = user.devices.find(
-        (device) => device.apnToken === newToken || device.fcmToken === fcmToken
+        (device) =>
+          device.apnToken === newToken || device.fcmToken === fcmToken,
       );
       if (found) {
         if (found.fcmToken !== fcmToken) {

@@ -3,21 +3,21 @@ import { StatusCodes } from "http-status-codes";
 import type { Types } from "mongoose";
 import { z } from "zod";
 
-import UserProjection from "@/api/dto/user.js";
-import { calcRemainingXP } from "@/api/services/reward/helpers/levelCalculations.js";
-import { getLevelThresholds } from "@/api/services/reward/utils/levelupThresholds.js";
-import Block from "@/models/Block.js";
-import CheckIn from "@/models/CheckIn.js";
-import Follow, { FollowStatusEnum } from "@/models/Follow.js";
-import Review from "@/models/Review.js";
-import User from "@/models/User.js";
-import strings, { dStrings as ds, dynamicMessage } from "@/strings.js";
+import UserProjection from "../../../api/dto/user.js";
+import { calcRemainingXP } from "../../../api/services/reward/helpers/levelCalculations.js";
+import { getLevelThresholds } from "../../../api/services/reward/utils/levelupThresholds.js";
+import Block from "../../../models/Block.js";
+import CheckIn from "../../../models/CheckIn.js";
+import Follow, { FollowStatusEnum } from "../../../models/Follow.js";
+import Review from "../../../models/Review.js";
+import User from "../../../models/User.js";
+import strings, { dStrings as ds, dynamicMessage } from "../../../strings.js";
 import {
   getConnectionStatus,
   type ConnectionStatus,
-} from "@/utilities/connections.js";
-import { createError } from "@/utilities/errorHandlers.js";
-import { validateData } from "@/utilities/validation.js";
+} from "../../../utilities/connections.js";
+import { createError } from "../../../utilities/errorHandlers.js";
+import { validateData } from "../../../utilities/validation.js";
 
 const getUserParams = z.object({
   id: z.string(),
@@ -50,8 +50,8 @@ export async function getUser(req: Request, res: Response, next: NextFunction) {
         .orFail(
           createError(
             dynamicMessage(ds.notFound, "User"),
-            StatusCodes.NOT_FOUND
-          )
+            StatusCodes.NOT_FOUND,
+          ),
         )
         .lean();
 
@@ -61,7 +61,7 @@ export async function getUser(req: Request, res: Response, next: NextFunction) {
         if (!authUser) {
           throw createError(
             strings.authorization.loginRequired,
-            StatusCodes.UNAUTHORIZED
+            StatusCodes.UNAUTHORIZED,
           );
         }
 
@@ -77,8 +77,8 @@ export async function getUser(req: Request, res: Response, next: NextFunction) {
           .orFail(
             createError(
               dynamicMessage(ds.notFound, "User"),
-              StatusCodes.NOT_FOUND
-            )
+              StatusCodes.NOT_FOUND,
+            ),
           )
           .lean();
 
@@ -103,8 +103,8 @@ export async function getUser(req: Request, res: Response, next: NextFunction) {
         .orFail(
           createError(
             dynamicMessage(ds.notFound, "User"),
-            StatusCodes.NOT_FOUND
-          )
+            StatusCodes.NOT_FOUND,
+          ),
         )
         .populate({
           path: "progress.achievements",
@@ -141,12 +141,12 @@ export async function getUser(req: Request, res: Response, next: NextFunction) {
         if (authUser._id.equals(isBlocked.user)) {
           throw createError(
             strings.blocks.user.isBlocked,
-            StatusCodes.FORBIDDEN
+            StatusCodes.FORBIDDEN,
           );
         } else {
           throw createError(
             strings.blocks.user.hasBlocked,
-            StatusCodes.FORBIDDEN
+            StatusCodes.FORBIDDEN,
           );
         }
       }
@@ -155,8 +155,8 @@ export async function getUser(req: Request, res: Response, next: NextFunction) {
         .orFail(
           createError(
             dynamicMessage(ds.notFound, "User"),
-            StatusCodes.NOT_FOUND
-          )
+            StatusCodes.NOT_FOUND,
+          ),
         )
         .populate({
           path: "progress.achievements",
@@ -188,8 +188,8 @@ export async function getUser(req: Request, res: Response, next: NextFunction) {
         .orFail(
           createError(
             dynamicMessage(ds.notFound, "User"),
-            StatusCodes.NOT_FOUND
-          )
+            StatusCodes.NOT_FOUND,
+          ),
         )
         .populate({
           path: "progress.achievements",
@@ -215,7 +215,7 @@ export async function getUser(req: Request, res: Response, next: NextFunction) {
     } else {
       throw createError(
         strings.authorization.loginRequired,
-        StatusCodes.FORBIDDEN
+        StatusCodes.FORBIDDEN,
       );
     }
 

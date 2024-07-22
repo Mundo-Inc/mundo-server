@@ -4,17 +4,19 @@ import type { FilterQuery } from "mongoose";
 import { Types } from "mongoose";
 import { z } from "zod";
 
-import PlaceProjection from "@/api/dto/place.js";
-import UserProjection from "@/api/dto/user.js";
-import Follow from "@/models/Follow.js";
-import type { IUserActivity } from "@/models/UserActivity.js";
-import UserActivity, { ResourcePrivacyEnum } from "@/models/UserActivity.js";
-import { createError } from "@/utilities/errorHandlers.js";
+import PlaceProjection from "../../../api/dto/place.js";
+import UserProjection from "../../../api/dto/user.js";
+import Follow from "../../../models/Follow.js";
+import type { IUserActivity } from "../../../models/UserActivity.js";
+import UserActivity, {
+  ResourcePrivacyEnum,
+} from "../../../models/UserActivity.js";
+import { createError } from "../../../utilities/errorHandlers.js";
 import {
   validateData,
   zGeoValidation,
   zStringInt,
-} from "@/utilities/validation.js";
+} from "../../../utilities/validation.js";
 
 const query = z.object({
   northEastLat: zGeoValidation.string.lat,
@@ -40,7 +42,7 @@ export const getMapActivitiesValidation = validateData({
 export async function getMapActivities(
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) {
   try {
     const authUser = req.user!;
@@ -99,7 +101,7 @@ export async function getMapActivities(
         },
         {
           target: 1,
-        }
+        },
       )
         .lean()
         .then((followings) => followings.map((f) => f.target));

@@ -6,22 +6,22 @@ import {
   checkEligibleForDailyReward,
   getDailyRewardAmount,
   updateUserCoinsAndStreak,
-} from "@/api/services/reward/coinReward.service.js";
-import CoinReward, { CoinRewardTypeEnum } from "@/models/CoinReward.js";
-import User from "@/models/User.js";
-import { dStrings as ds, dynamicMessage } from "@/strings.js";
-import { createError } from "@/utilities/errorHandlers.js";
+} from "../../../api/services/reward/coinReward.service.js";
+import CoinReward, { CoinRewardTypeEnum } from "../../../models/CoinReward.js";
+import User from "../../../models/User.js";
+import { dStrings as ds, dynamicMessage } from "../../../strings.js";
+import { createError } from "../../../utilities/errorHandlers.js";
 
 export async function claimDailyCoins(
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) {
   try {
     const authUser = req.user!;
 
     let user = await User.findById(authUser._id).orFail(
-      createError(dynamicMessage(ds.notFound, "User"), StatusCodes.NOT_FOUND)
+      createError(dynamicMessage(ds.notFound, "User"), StatusCodes.NOT_FOUND),
     );
 
     const isEligible = checkEligibleForDailyReward(user.phantomCoins.daily);
@@ -29,7 +29,7 @@ export async function claimDailyCoins(
     if (!isEligible) {
       throw createError(
         "You are ineligible to claim at this time, try again later.",
-        StatusCodes.BAD_REQUEST
+        StatusCodes.BAD_REQUEST,
       );
     }
 

@@ -2,9 +2,12 @@ import type { NextFunction, Request, Response } from "express";
 import { StatusCodes } from "http-status-codes";
 import { z } from "zod";
 
-import UserProjection from "@/api/dto/user.js";
-import List from "@/models/List.js";
-import { validateData, zUniqueObjectIdArray } from "@/utilities/validation.js";
+import UserProjection from "../../../api/dto/user.js";
+import List from "../../../models/List.js";
+import {
+  validateData,
+  zUniqueObjectIdArray,
+} from "../../../utilities/validation.js";
 
 const body = z.object({
   name: z.string(),
@@ -22,7 +25,7 @@ export const createListValidation = validateData({
 export async function createList(
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) {
   try {
     const authUser = req.user!;

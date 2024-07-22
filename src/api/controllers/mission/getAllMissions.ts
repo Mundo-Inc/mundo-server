@@ -1,13 +1,13 @@
 import type { NextFunction, Request, Response } from "express";
 import { StatusCodes } from "http-status-codes";
 
-import Mission from "@/models/Mission.js";
-import { getPaginationFromQuery } from "@/utilities/pagination.js";
+import Mission from "../../../models/Mission.js";
+import { getPaginationFromQuery } from "../../../utilities/pagination.js";
 
 export async function getAllMissions(
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) {
   try {
     const { page, limit, skip } = getPaginationFromQuery(req, {

@@ -1,11 +1,11 @@
+import { createDecipheriv, createHash } from "crypto";
 import type { NextFunction, Request, Response } from "express";
 import { StatusCodes } from "http-status-codes";
 import { z } from "zod";
 
-import logger from "@/api/services/logger/index.js";
-import { createError } from "@/utilities/errorHandlers.js";
-import { validateData } from "@/utilities/validation.js";
-import { createDecipheriv, createHash } from "crypto";
+import logger from "../../../api/services/logger/index.js";
+import { createError } from "../../../utilities/errorHandlers.js";
+import { validateData } from "../../../utilities/validation.js";
 import { sendSlackMessage } from "../SlackController.js";
 
 const body = z.object({
@@ -25,7 +25,7 @@ export const reportBugValidation = validateData({
 export async function reportBug(
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) {
   try {
     const authUser = req.user;
@@ -48,7 +48,7 @@ export async function reportBug(
 
       function decrypt(
         encryptedData: string,
-        userId: string
+        userId: string,
       ): CrashReport | null {
         try {
           const dataBuffer = Buffer.from(encryptedData, "base64"); // Decode the Base64 string to a buffer
@@ -79,7 +79,7 @@ export async function reportBug(
           "devAssistant",
           `Bug report\nfunction:\n\`${crashReport.function}\`\nfile:\n\`${crashReport.file}\` line \`${crashReport.line}\`\nmessage:\n\`\`\`${crashReport.message}\`\`\`\nuser: ${authUser.name} (${authUser.email.address})`,
           undefined,
-          true
+          true,
         );
       }
     } else if (functionName && file && line && message) {
@@ -89,7 +89,7 @@ export async function reportBug(
           authUser ? `${authUser.name} (${authUser.email.address})` : "Unknown"
         }`,
         undefined,
-        true
+        true,
       );
     } else {
       throw createError("Bad request", StatusCodes.BAD_REQUEST);

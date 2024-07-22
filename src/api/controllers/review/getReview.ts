@@ -2,12 +2,12 @@ import type { NextFunction, Request, Response } from "express";
 import { StatusCodes } from "http-status-codes";
 import { z } from "zod";
 
-import MediaProjection from "@/api/dto/media.js";
-import UserProjection from "@/api/dto/user.js";
-import Review from "@/models/Review.js";
-import { dStrings as ds, dynamicMessage } from "@/strings.js";
-import { createError } from "@/utilities/errorHandlers.js";
-import { validateData, zObjectId } from "@/utilities/validation.js";
+import MediaProjection from "../../../api/dto/media.js";
+import UserProjection from "../../../api/dto/user.js";
+import Review from "../../../models/Review.js";
+import { dStrings as ds, dynamicMessage } from "../../../strings.js";
+import { createError } from "../../../utilities/errorHandlers.js";
+import { validateData, zObjectId } from "../../../utilities/validation.js";
 
 const params = z.object({
   reviewId: zObjectId,
@@ -22,7 +22,7 @@ export const getReviewValidation = validateData({
 export async function getReview(
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) {
   try {
     const authUser = req.user!;
@@ -181,7 +181,7 @@ export async function getReview(
     if (!reviews) {
       throw createError(
         dynamicMessage(ds.notFound, "Review"),
-        StatusCodes.NOT_FOUND
+        StatusCodes.NOT_FOUND,
       );
     }
 

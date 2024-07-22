@@ -2,11 +2,11 @@ import type { NextFunction, Request, Response } from "express";
 import { StatusCodes } from "http-status-codes";
 import { z } from "zod";
 
-import MediaProjection from "@/api/dto/media.js";
-import Place from "@/models/Place.js";
-import { dStrings as ds, dynamicMessage } from "@/strings.js";
-import { createError } from "@/utilities/errorHandlers.js";
-import { validateData, zObjectId } from "@/utilities/validation.js";
+import MediaProjection from "../../../api/dto/media.js";
+import Place from "../../../models/Place.js";
+import { dStrings as ds, dynamicMessage } from "../../../strings.js";
+import { createError } from "../../../utilities/errorHandlers.js";
+import { validateData, zObjectId } from "../../../utilities/validation.js";
 
 const params = z.object({
   placeId: zObjectId,
@@ -21,7 +21,7 @@ export const getPlaceOverviewValidation = validateData({
 export async function getPlaceOverview(
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) {
   try {
     const { placeId } = req.params as unknown as Params;
@@ -90,7 +90,7 @@ export async function getPlaceOverview(
     if (!response) {
       throw createError(
         dynamicMessage(ds.notFound, "Place"),
-        StatusCodes.NOT_FOUND
+        StatusCodes.NOT_FOUND,
       );
     }
 

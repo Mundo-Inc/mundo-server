@@ -2,12 +2,12 @@ import type { NextFunction, Request, Response } from "express";
 import { StatusCodes } from "http-status-codes";
 import twilio from "twilio";
 
-import { env } from "@/env.js";
+import { env } from "../../../env.js";
 
 export async function getConversationToken(
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) {
   try {
     const authUser = req.user!;
@@ -21,7 +21,7 @@ export async function getConversationToken(
       env.TWILIO_API_KEY_SECRET,
       {
         identity: authUser._id.toString(),
-      }
+      },
     );
 
     const chatGrant = new AccessToken.ChatGrant({

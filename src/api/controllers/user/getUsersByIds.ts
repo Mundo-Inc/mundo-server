@@ -2,10 +2,10 @@ import type { NextFunction, Request, Response } from "express";
 import { StatusCodes } from "http-status-codes";
 import { z } from "zod";
 
-import type { UserProjectionEssentials } from "@/api/dto/user.js";
-import UserProjection from "@/api/dto/user.js";
-import User from "@/models/User.js";
-import { validateData, zObjectId } from "@/utilities/validation.js";
+import type { UserProjectionEssentials } from "../../../api/dto/user.js";
+import UserProjection from "../../../api/dto/user.js";
+import User from "../../../models/User.js";
+import { validateData, zObjectId } from "../../../utilities/validation.js";
 
 const getUsersByIdsBody = z.object({
   ids: z.array(zObjectId).min(1),
@@ -20,7 +20,7 @@ export const getUsersByIdsValidation = validateData({
 export async function getUsersByIds(
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) {
   try {
     const { ids } = req.body as GetUsersByIdsBody;

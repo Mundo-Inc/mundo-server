@@ -2,16 +2,16 @@ import type { NextFunction, Request, Response } from "express";
 import { StatusCodes } from "http-status-codes";
 import { z } from "zod";
 
-import type { PlaceProjectionBrief } from "@/api/dto/place.js";
-import PlaceProjection from "@/api/dto/place.js";
-import type { UserProjectionEssentials } from "@/api/dto/user.js";
-import UserProjection from "@/api/dto/user.js";
-import List from "@/models/List.js";
-import Place from "@/models/Place.js";
-import User from "@/models/User.js";
-import strings, { dStrings as ds, dynamicMessage } from "@/strings.js";
-import { createError } from "@/utilities/errorHandlers.js";
-import { validateData, zObjectId } from "@/utilities/validation.js";
+import type { PlaceProjectionBrief } from "../../../api/dto/place.js";
+import PlaceProjection from "../../../api/dto/place.js";
+import type { UserProjectionEssentials } from "../../../api/dto/user.js";
+import UserProjection from "../../../api/dto/user.js";
+import List from "../../../models/List.js";
+import Place from "../../../models/Place.js";
+import User from "../../../models/User.js";
+import strings, { dStrings as ds, dynamicMessage } from "../../../strings.js";
+import { createError } from "../../../utilities/errorHandlers.js";
+import { validateData, zObjectId } from "../../../utilities/validation.js";
 
 const params = z.object({
   listId: zObjectId,
@@ -63,18 +63,18 @@ export async function getList(req: Request, res: Response, next: NextFunction) {
     if (!list) {
       throw createError(
         dynamicMessage(ds.notFound, "List"),
-        StatusCodes.NOT_FOUND
+        StatusCodes.NOT_FOUND,
       );
     }
 
     if (list.isPrivate) {
       const isCollaborator = list.collaborators.some((c: any) =>
-        authUser._id.equals(c.user)
+        authUser._id.equals(c.user),
       );
       if (!isCollaborator) {
         throw createError(
           strings.authorization.accessDenied,
-          StatusCodes.FORBIDDEN
+          StatusCodes.FORBIDDEN,
         );
       }
     }
@@ -85,8 +85,8 @@ export async function getList(req: Request, res: Response, next: NextFunction) {
         .orFail(
           createError(
             dynamicMessage(ds.notFound, "User"),
-            StatusCodes.NOT_FOUND
-          )
+            StatusCodes.NOT_FOUND,
+          ),
         )
         .lean();
       list.collaborators[i].user = user;
@@ -98,16 +98,16 @@ export async function getList(req: Request, res: Response, next: NextFunction) {
           .orFail(
             createError(
               dynamicMessage(ds.notFound, "Place"),
-              StatusCodes.NOT_FOUND
-            )
+              StatusCodes.NOT_FOUND,
+            ),
           )
           .lean(),
         User.findById(list.places[i].user)
           .orFail(
             createError(
               dynamicMessage(ds.notFound, "User"),
-              StatusCodes.NOT_FOUND
-            )
+              StatusCodes.NOT_FOUND,
+            ),
           )
           .select<UserProjectionEssentials>(UserProjection.essentials)
           .lean(),

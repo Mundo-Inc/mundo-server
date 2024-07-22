@@ -2,14 +2,16 @@ import type { NextFunction, Request, Response } from "express";
 import { StatusCodes } from "http-status-codes";
 import { z } from "zod";
 
-import logger from "@/api/services/logger/index.js";
-import { ResourceTypeEnum } from "@/models/Enum/ResourceTypeEnum.js";
-import Follow from "@/models/Follow.js";
-import Notification from "@/models/Notification.js";
-import UserActivity, { ActivityTypeEnum } from "@/models/UserActivity.js";
-import { dStrings as ds, dynamicMessage } from "@/strings.js";
-import { createError } from "@/utilities/errorHandlers.js";
-import { validateData, zObjectId } from "@/utilities/validation.js";
+import logger from "../../../api/services/logger/index.js";
+import { ResourceTypeEnum } from "../../../models/Enum/ResourceTypeEnum.js";
+import Follow from "../../../models/Follow.js";
+import Notification from "../../../models/Notification.js";
+import UserActivity, {
+  ActivityTypeEnum,
+} from "../../../models/UserActivity.js";
+import { dStrings as ds, dynamicMessage } from "../../../strings.js";
+import { createError } from "../../../utilities/errorHandlers.js";
+import { validateData, zObjectId } from "../../../utilities/validation.js";
 
 const params = z.object({
   userId: zObjectId,
@@ -24,7 +26,7 @@ export const removeFollowerValidation = validateData({
 export async function removeFollower(
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) {
   try {
     const authUser = req.user!;
@@ -37,8 +39,8 @@ export async function removeFollower(
     }).orFail(
       createError(
         dynamicMessage(ds.notFound, "Connection"),
-        StatusCodes.NOT_FOUND
-      )
+        StatusCodes.NOT_FOUND,
+      ),
     );
 
     await followDoc.deleteOne();
@@ -66,7 +68,7 @@ export async function removeFollower(
     if (!deleteNotification.deletedCount) {
       logger.error(
         "Error while deleting notification after deleting user connection",
-        { error: "Notification not found" }
+        { error: "Notification not found" },
       );
     }
 

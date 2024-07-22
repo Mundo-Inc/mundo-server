@@ -2,13 +2,11 @@ import type { NextFunction, Request, Response } from "express";
 import { StatusCodes } from "http-status-codes";
 import { z } from "zod";
 
-import type { UserProjectionEssentials } from "@/api/dto/user.js";
-import UserProjection from "@/api/dto/user.js";
-import Follow from "@/models/Follow.js";
-import User from "@/models/User.js";
-import { getPaginationFromQuery } from "@/utilities/pagination.js";
-import { validateData } from "@/utilities/validation.js";
-import { getConnectionStatuses } from "@/utilities/connections.js";
+import UserProjection from "../../../api/dto/user.js";
+import User from "../../../models/User.js";
+import { getConnectionStatuses } from "../../../utilities/connections.js";
+import { getPaginationFromQuery } from "../../../utilities/pagination.js";
+import { validateData } from "../../../utilities/validation.js";
 
 const getLeaderboardQuery = z.object({
   page: z.string().optional(),
@@ -22,7 +20,7 @@ export const getLeaderboardValidation = validateData({
 export async function getLeaderboard(
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) {
   try {
     const authUser = req.user!;
@@ -57,7 +55,7 @@ export async function getLeaderboard(
 
     const usersObject = await getConnectionStatuses(
       authUser._id,
-      leaderboard.map((u) => u._id)
+      leaderboard.map((u) => u._id),
     );
 
     for (const user of leaderboard) {

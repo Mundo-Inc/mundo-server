@@ -2,11 +2,11 @@ import type { NextFunction, Request, Response } from "express";
 import type { Types } from "mongoose";
 import { z } from "zod";
 
-import UserProjection from "@/api/dto/user.js";
-import Block from "@/models/Block.js";
-import Comment from "@/models/Comment.js";
-import Reaction from "@/models/Reaction.js";
-import { validateData, zObjectId } from "@/utilities/validation.js";
+import UserProjection from "../../../api/dto/user.js";
+import Block from "../../../models/Block.js";
+import Comment from "../../../models/Comment.js";
+import Reaction from "../../../models/Reaction.js";
+import { validateData, zObjectId } from "../../../utilities/validation.js";
 
 const params = z.object({
   id: zObjectId,
@@ -35,7 +35,7 @@ export const getEngagementsValidation = validateData({
 export async function getEngagements(
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) {
   try {
     const authUser = req.user!;
@@ -52,14 +52,14 @@ export async function getEngagements(
       authUser._id,
       blockedUsers,
       before,
-      limit
+      limit,
     );
 
     const reactions = await getReactions(id, blockedUsers, before, limit);
 
     // Merge and sort by createdAt
     const mergedArray = [...comments, ...reactions].sort(
-      (a, b) => b.createdAt - a.createdAt
+      (a, b) => b.createdAt - a.createdAt,
     );
 
     const paginatedEngagements = mergedArray.slice(0, limit);
@@ -76,7 +76,7 @@ async function getComments(
   authId: Types.ObjectId,
   blockedUsers: Types.ObjectId[],
   before: Date,
-  limit: number
+  limit: number,
 ) {
   const comments = await Comment.aggregate([
     {
@@ -133,7 +133,7 @@ async function getReactions(
   id: Types.ObjectId,
   blockedUsers: Types.ObjectId[],
   before: Date,
-  limit: number
+  limit: number,
 ) {
   const reactions = await Reaction.aggregate([
     {

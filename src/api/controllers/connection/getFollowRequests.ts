@@ -3,14 +3,17 @@ import { StatusCodes } from "http-status-codes";
 import { Types } from "mongoose";
 import { z } from "zod";
 
-import type { UserProjectionEssentials } from "@/api/dto/user.js";
-import UserProjection from "@/api/dto/user.js";
-import Follow, { FollowStatusEnum } from "@/models/Follow.js";
-import type { IFollowRequest } from "@/models/FollowRequest.js";
-import FollowRequest from "@/models/FollowRequest.js";
-import type { ConnectionStatus } from "@/utilities/connections.js";
-import { getPaginationFromQuery } from "@/utilities/pagination.js";
-import { validateData, zPaginationSpread } from "@/utilities/validation.js";
+import type { UserProjectionEssentials } from "../../../api/dto/user.js";
+import UserProjection from "../../../api/dto/user.js";
+import Follow, { FollowStatusEnum } from "../../../models/Follow.js";
+import type { IFollowRequest } from "../../../models/FollowRequest.js";
+import FollowRequest from "../../../models/FollowRequest.js";
+import type { ConnectionStatus } from "../../../utilities/connections.js";
+import { getPaginationFromQuery } from "../../../utilities/pagination.js";
+import {
+  validateData,
+  zPaginationSpread,
+} from "../../../utilities/validation.js";
 
 const query = z.object(zPaginationSpread);
 
@@ -21,7 +24,7 @@ export const getFollowRequestsValidation = validateData({
 export async function getFollowRequests(
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) {
   try {
     const authUser = req.user!;
@@ -92,7 +95,7 @@ export async function getFollowRequests(
     });
 
     const usersObjectKeys = Object.keys(usersObject).map(
-      (key) => new Types.ObjectId(key)
+      (key) => new Types.ObjectId(key),
     );
     const followItems = await Follow.find({
       $or: [

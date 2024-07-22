@@ -11,7 +11,7 @@ export async function sendSlackMessage(
   channel: keyof typeof slackChannels,
   message: string,
   image?: string,
-  sendInDevEnvironment: boolean = false
+  sendInDevEnvironment: boolean = false,
 ) {
   let prefix = "";
   if (env.NODE_ENV !== "production") {

@@ -2,12 +2,12 @@ import type { NextFunction, Request, Response } from "express";
 import { StatusCodes } from "http-status-codes";
 import { z } from "zod";
 
-import User from "@/models/User.js";
-import Withdrawal from "@/models/Withdrawal.js";
-import { dStrings as ds, dynamicMessage } from "@/strings.js";
-import { createError } from "@/utilities/errorHandlers.js";
-import { ensureNonEmptyString } from "@/utilities/requireValue.js";
-import { validateData } from "@/utilities/validation.js";
+import User from "../../../models/User.js";
+import Withdrawal from "../../../models/Withdrawal.js";
+import { dStrings as ds, dynamicMessage } from "../../../strings.js";
+import { createError } from "../../../utilities/errorHandlers.js";
+import { ensureNonEmptyString } from "../../../utilities/requireValue.js";
+import { validateData } from "../../../utilities/validation.js";
 import stripe from "./stripe.js";
 
 const body = z.object({
@@ -23,7 +23,7 @@ export const withdrawValidation = validateData({
 export async function withdraw(
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) {
   try {
     const authUser = req.user!;
@@ -33,7 +33,7 @@ export async function withdraw(
     const amount = Math.round(inputAmount * 100) / 100; // Ensure amount is rounded to 2 decimal places
 
     const user = await User.findById(authUser._id).orFail(
-      createError(dynamicMessage(ds.notFound, "User"), StatusCodes.NOT_FOUND)
+      createError(dynamicMessage(ds.notFound, "User"), StatusCodes.NOT_FOUND),
     );
 
     // Ensure the user's balance is sufficient
@@ -46,8 +46,8 @@ export async function withdraw(
       user.stripe.connectAccountId,
       createError(
         "Stripe Connect account not configured",
-        StatusCodes.BAD_REQUEST
-      )
+        StatusCodes.BAD_REQUEST,
+      ),
     );
 
     // Retrieve the Stripe Connect account to confirm that it has an external account set up
@@ -63,7 +63,7 @@ export async function withdraw(
       ) {
         throw createError(
           "Please update your account information to be eligible for the withdrawal",
-          StatusCodes.BAD_REQUEST
+          StatusCodes.BAD_REQUEST,
         );
       }
       // Transfer funds to the Connect account, assuming the platform has enough balance
@@ -75,7 +75,7 @@ export async function withdraw(
     } catch (error) {
       throw createError(
         "Error retrieving Stripe account details:",
-        StatusCodes.INTERNAL_SERVER_ERROR
+        StatusCodes.INTERNAL_SERVER_ERROR,
       );
     }
 
@@ -87,7 +87,7 @@ export async function withdraw(
       },
       {
         stripeAccount: connectAccountId, // Specify the connected Stripe account to payout from
-      }
+      },
     );
 
     // Deduct the payout amount from the user's balance

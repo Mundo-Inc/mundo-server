@@ -1,10 +1,10 @@
 import type { NextFunction, Request, Response } from "express";
 import { StatusCodes } from "http-status-codes";
 
-import { handleSignUp } from "@/api/lib/profile-handlers.js";
-import logger from "@/api/services/logger/index.js";
-import { env } from "@/env.js";
-import User, { SignupMethodEnum } from "@/models/User.js";
+import { handleSignUp } from "../../../api/lib/profile-handlers.js";
+import logger from "../../../api/services/logger/index.js";
+import { env } from "../../../env.js";
+import User, { SignupMethodEnum } from "../../../models/User.js";
 import { sendSlackMessage } from "../SlackController.js";
 
 function createRandomUsername() {
@@ -22,7 +22,7 @@ function createRandomUsername() {
 export async function firebaseSync(
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) {
   try {
     // Add user data to your database
@@ -45,7 +45,7 @@ export async function firebaseSync(
           SignupMethodEnum.Cloud,
           null,
           userData.uid,
-          userData.photoURL
+          userData.photoURL,
         );
 
         try {
@@ -54,7 +54,7 @@ export async function firebaseSync(
             `New user: ${userData.displayName || "- - -"}\n${username} (${
               userData.email
             })`,
-            userData.photoURL || undefined
+            userData.photoURL || undefined,
           );
         } catch (error) {
           logger.error("Error sending slack message", error);

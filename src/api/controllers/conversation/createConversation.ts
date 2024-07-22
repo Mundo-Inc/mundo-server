@@ -2,11 +2,11 @@ import type { NextFunction, Request, Response } from "express";
 import { StatusCodes } from "http-status-codes";
 import { z } from "zod";
 
-import Conversation from "@/models/Conversation.js";
-import User from "@/models/User.js";
-import { dStrings as ds, dynamicMessage } from "@/strings.js";
-import { createError } from "@/utilities/errorHandlers.js";
-import { validateData, zObjectId } from "@/utilities/validation.js";
+import Conversation from "../../../models/Conversation.js";
+import User from "../../../models/User.js";
+import { dStrings as ds, dynamicMessage } from "../../../strings.js";
+import { createError } from "../../../utilities/errorHandlers.js";
+import { validateData, zObjectId } from "../../../utilities/validation.js";
 import client from "./client.js";
 
 const body = z.object({
@@ -22,7 +22,7 @@ export const createConversationValidation = validateData({
 export async function createConversation(
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) {
   try {
     const authUser = req.user!;
@@ -31,10 +31,10 @@ export async function createConversation(
 
     const [creatorUser, participant] = await Promise.all([
       User.findById(authUser._id).orFail(
-        createError(dynamicMessage(ds.notFound, "User"), StatusCodes.NOT_FOUND)
+        createError(dynamicMessage(ds.notFound, "User"), StatusCodes.NOT_FOUND),
       ),
       User.findById(user).orFail(
-        createError(dynamicMessage(ds.notFound, "User"), StatusCodes.NOT_FOUND)
+        createError(dynamicMessage(ds.notFound, "User"), StatusCodes.NOT_FOUND),
       ),
     ]);
 
@@ -124,11 +124,11 @@ export async function createConversation(
     await Promise.all([
       User.updateOne(
         { _id: user },
-        { $push: { conversations: conversation._id } }
+        { $push: { conversations: conversation._id } },
       ),
       User.updateOne(
         { _id: authUser._id },
-        { $push: { conversations: conversation._id } }
+        { $push: { conversations: conversation._id } },
       ),
     ]);
 

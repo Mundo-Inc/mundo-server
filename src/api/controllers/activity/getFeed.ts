@@ -2,10 +2,13 @@ import type { NextFunction, Request, Response } from "express";
 import { StatusCodes } from "http-status-codes";
 import { z } from "zod";
 
-import { getUserFeed } from "@/api/services/feed.service.js";
-import { getConnectionStatuses } from "@/utilities/connections.js";
-import { getPaginationFromQuery } from "@/utilities/pagination.js";
-import { validateData, zPaginationSpread } from "@/utilities/validation.js";
+import { getUserFeed } from "../../../api/services/feed.service.js";
+import { getConnectionStatuses } from "../../../utilities/connections.js";
+import { getPaginationFromQuery } from "../../../utilities/pagination.js";
+import {
+  validateData,
+  zPaginationSpread,
+} from "../../../utilities/validation.js";
 
 const query = z.object({
   ...zPaginationSpread,
@@ -54,7 +57,7 @@ export async function getFeed(req: Request, res: Response, next: NextFunction) {
 
     const usersObject = await getConnectionStatuses(
       authUser._id,
-      Array.from(usersIdSet)
+      Array.from(usersIdSet),
     );
 
     result.forEach((activity) => {

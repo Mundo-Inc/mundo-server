@@ -2,10 +2,10 @@ import type { NextFunction, Request, Response } from "express";
 import { StatusCodes } from "http-status-codes";
 import { z } from "zod";
 
-import User, { SignupMethodEnum, UserRoleEnum } from "@/models/User.js";
-import { createError } from "@/utilities/errorHandlers.js";
-import { validateData, zUsername } from "@/utilities/validation.js";
-import { dStrings, dynamicMessage } from "@/strings.js";
+import User, { SignupMethodEnum, UserRoleEnum } from "../../../models/User.js";
+import { dStrings as ds, dynamicMessage } from "../../../strings.js";
+import { createError } from "../../../utilities/errorHandlers.js";
+import { validateData, zUsername } from "../../../utilities/validation.js";
 
 const body = z.object({
   email: z.string().email(),
@@ -22,7 +22,7 @@ export const createBotValidation = validateData({
 export async function createBot(
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) {
   try {
     const { name, username, email } = req.body as Body;
@@ -33,8 +33,8 @@ export async function createBot(
 
     if (user) {
       throw createError(
-        dynamicMessage(dStrings.alreadyExists, "User"),
-        StatusCodes.CONFLICT
+        dynamicMessage(ds.alreadyExists, "User"),
+        StatusCodes.CONFLICT,
       );
     }
 
@@ -44,8 +44,8 @@ export async function createBot(
       });
       if (user) {
         throw createError(
-          dynamicMessage(dStrings.alreadyExists, "User"),
-          StatusCodes.CONFLICT
+          dynamicMessage(ds.alreadyExists, "User"),
+          StatusCodes.CONFLICT,
         );
       }
     }

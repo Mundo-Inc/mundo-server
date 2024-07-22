@@ -3,15 +3,15 @@ import { StatusCodes } from "http-status-codes";
 import type { PipelineStage } from "mongoose";
 import { z } from "zod";
 
-import UserProjection from "@/api/dto/user.js";
-import Media from "@/models/Media.js";
-import { createError } from "@/utilities/errorHandlers.js";
-import { getPaginationFromQuery } from "@/utilities/pagination.js";
+import UserProjection from "../../../api/dto/user.js";
+import Media from "../../../models/Media.js";
+import { createError } from "../../../utilities/errorHandlers.js";
+import { getPaginationFromQuery } from "../../../utilities/pagination.js";
 import {
   validateData,
   zObjectId,
   zPaginationSpread,
-} from "@/utilities/validation.js";
+} from "../../../utilities/validation.js";
 
 const params = z.object({
   placeId: zObjectId,
@@ -33,7 +33,7 @@ export const getPlaceMediaValidation = validateData({
 export async function getPlaceMedia(
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) {
   try {
     const { placeId } = req.params as unknown as Params;
@@ -50,7 +50,7 @@ export async function getPlaceMedia(
       if (type) {
         throw createError(
           "Cannot specify both type and priority",
-          StatusCodes.BAD_REQUEST
+          StatusCodes.BAD_REQUEST,
         );
       }
 

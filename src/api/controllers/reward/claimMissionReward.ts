@@ -2,13 +2,13 @@ import type { NextFunction, Request, Response } from "express";
 import { StatusCodes } from "http-status-codes";
 import { z } from "zod";
 
-import { populateMissionProgress } from "@/api/services/reward/coinReward.service.js";
-import CoinReward, { CoinRewardTypeEnum } from "@/models/CoinReward.js";
-import Mission from "@/models/Mission.js";
-import User from "@/models/User.js";
-import { dStrings as ds, dynamicMessage } from "@/strings.js";
-import { createError } from "@/utilities/errorHandlers.js";
-import { validateData, zObjectId } from "@/utilities/validation.js";
+import { populateMissionProgress } from "../../../api/services/reward/coinReward.service.js";
+import CoinReward, { CoinRewardTypeEnum } from "../../../models/CoinReward.js";
+import Mission from "../../../models/Mission.js";
+import User from "../../../models/User.js";
+import { dStrings as ds, dynamicMessage } from "../../../strings.js";
+import { createError } from "../../../utilities/errorHandlers.js";
+import { validateData, zObjectId } from "../../../utilities/validation.js";
 
 const params = z.object({
   id: zObjectId,
@@ -23,7 +23,7 @@ export const claimMissionRewardValidation = validateData({
 export async function claimMissionReward(
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) {
   const authUser = req.user!;
 
@@ -32,19 +32,19 @@ export async function claimMissionReward(
   try {
     const [user, mission] = await Promise.all([
       User.findById(authUser._id).orFail(
-        createError(dynamicMessage(ds.notFound, "User"), StatusCodes.NOT_FOUND)
+        createError(dynamicMessage(ds.notFound, "User"), StatusCodes.NOT_FOUND),
       ),
       Mission.findById(id).orFail(
         createError(
           dynamicMessage(ds.notFound, "Mission"),
-          StatusCodes.NOT_FOUND
-        )
+          StatusCodes.NOT_FOUND,
+        ),
       ),
     ]);
 
     const missionWithProgress = await populateMissionProgress(
       mission,
-      user._id
+      user._id,
     );
 
     const isClaimable =
@@ -54,7 +54,7 @@ export async function claimMissionReward(
     if (!isClaimable) {
       throw createError(
         "Mission requirements are not done yet",
-        StatusCodes.FORBIDDEN
+        StatusCodes.FORBIDDEN,
       );
     }
 
@@ -66,7 +66,7 @@ export async function claimMissionReward(
     if (gotRewardBefore) {
       throw createError(
         "You have already got rewarded for this mission",
-        StatusCodes.FORBIDDEN
+        StatusCodes.FORBIDDEN,
       );
     }
 

@@ -2,11 +2,11 @@ import type { NextFunction, Request, Response } from "express";
 import { StatusCodes } from "http-status-codes";
 import { z } from "zod";
 
-import type { IPlace } from "@/models/Place.js";
-import Place from "@/models/Place.js";
-import { createError } from "@/utilities/errorHandlers.js";
-import { areStrictlySimilar } from "@/utilities/stringHelper.js";
-import { validateData, zGeoValidation } from "@/utilities/validation.js";
+import type { IPlace } from "../../../models/Place.js";
+import Place from "../../../models/Place.js";
+import { createError } from "../../../utilities/errorHandlers.js";
+import { areStrictlySimilar } from "../../../utilities/stringHelper.js";
+import { validateData, zGeoValidation } from "../../../utilities/validation.js";
 import { getDetailedPlace } from "./helpers.js";
 
 const query = z.object({
@@ -24,7 +24,7 @@ export const getPlacesByContextValidation = validateData({
 export async function getPlacesByContext(
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) {
   try {
     const { lat, lng, title } = req.query as unknown as Query;

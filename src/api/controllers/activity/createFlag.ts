@@ -3,18 +3,18 @@ import { StatusCodes } from "http-status-codes";
 import type { Types } from "mongoose";
 import { z } from "zod";
 
-import logger from "@/api/services/logger/index.js";
-import CheckIn from "@/models/CheckIn.js";
-import Comment from "@/models/Comment.js";
-import { ResourceTypeEnum } from "@/models/Enum/ResourceTypeEnum.js";
-import type { FlagTargetType } from "@/models/Flag.js";
-import Flag, { FlagTypeEnum } from "@/models/Flag.js";
-import Homemade from "@/models/Homemade.js";
-import Review from "@/models/Review.js";
-import UserActivity from "@/models/UserActivity.js";
-import { dStrings as ds, dynamicMessage } from "@/strings.js";
-import { createError } from "@/utilities/errorHandlers.js";
-import { validateData, zObjectId } from "@/utilities/validation.js";
+import logger from "../../../api/services/logger/index.js";
+import CheckIn from "../../../models/CheckIn.js";
+import Comment from "../../../models/Comment.js";
+import { ResourceTypeEnum } from "../../../models/Enum/ResourceTypeEnum.js";
+import type { FlagTargetType } from "../../../models/Flag.js";
+import Flag, { FlagTypeEnum } from "../../../models/Flag.js";
+import Homemade from "../../../models/Homemade.js";
+import Review from "../../../models/Review.js";
+import UserActivity from "../../../models/UserActivity.js";
+import { dStrings as ds, dynamicMessage } from "../../../strings.js";
+import { createError } from "../../../utilities/errorHandlers.js";
+import { validateData, zObjectId } from "../../../utilities/validation.js";
 import { sendSlackMessage } from "../SlackController.js";
 
 const body = z.object({
@@ -28,7 +28,7 @@ const body = z.object({
     .string()
     .toUpperCase()
     .refine((value) =>
-      Object.values(FlagTypeEnum).includes(value as FlagTypeEnum)
+      Object.values(FlagTypeEnum).includes(value as FlagTypeEnum),
     )
     .transform((value) => value as FlagTypeEnum),
   note: z.string().optional(),
@@ -43,7 +43,7 @@ export const createFlagValidation = validateData({
 export async function createFlag(
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) {
   try {
     const authUser = req.user!;
@@ -58,15 +58,15 @@ export async function createFlag(
         .orFail(
           createError(
             dynamicMessage(ds.notFound, "Activity"),
-            StatusCodes.NOT_FOUND
-          )
+            StatusCodes.NOT_FOUND,
+          ),
         )
         .lean();
 
       if (!userActivity.resourceId) {
         throw createError(
           "Activity does not have a resourceId",
-          StatusCodes.BAD_REQUEST
+          StatusCodes.BAD_REQUEST,
         );
       }
       target = userActivity.resourceId;
@@ -75,8 +75,8 @@ export async function createFlag(
       await Review.exists({ _id: review }).orFail(
         createError(
           dynamicMessage(ds.notFound, "Review"),
-          StatusCodes.NOT_FOUND
-        )
+          StatusCodes.NOT_FOUND,
+        ),
       );
 
       target = review;
@@ -85,8 +85,8 @@ export async function createFlag(
       await Comment.exists({ _id: comment }).orFail(
         createError(
           dynamicMessage(ds.notFound, "Review"),
-          StatusCodes.NOT_FOUND
-        )
+          StatusCodes.NOT_FOUND,
+        ),
       );
       target = comment;
       targetType = ResourceTypeEnum.Comment;
@@ -94,8 +94,8 @@ export async function createFlag(
       await Homemade.exists({ _id: homemade }).orFail(
         createError(
           dynamicMessage(ds.notFound, "Homemade"),
-          StatusCodes.NOT_FOUND
-        )
+          StatusCodes.NOT_FOUND,
+        ),
       );
       target = homemade;
       targetType = ResourceTypeEnum.Homemade;
@@ -103,8 +103,8 @@ export async function createFlag(
       await CheckIn.exists({ _id: checkIn }).orFail(
         createError(
           dynamicMessage(ds.notFound, "CheckIn"),
-          StatusCodes.NOT_FOUND
-        )
+          StatusCodes.NOT_FOUND,
+        ),
       );
       target = checkIn;
       targetType = ResourceTypeEnum.CheckIn;
@@ -123,7 +123,7 @@ export async function createFlag(
     try {
       sendSlackMessage(
         "phantomAssistant",
-        `${targetType} flagged!\nType: ${flagType}\nNote: ${note}`
+        `${targetType} flagged!\nType: ${flagType}\nNote: ${note}`,
       );
     } catch (error) {
       logger.error("Error sending slack message", { error });

@@ -2,21 +2,21 @@ import type { NextFunction, Request, Response } from "express";
 import { StatusCodes } from "http-status-codes";
 import type Stripe from "stripe";
 
-import User from "@/models/User.js";
-import { dStrings as ds, dynamicMessage } from "@/strings.js";
-import { createError } from "@/utilities/errorHandlers.js";
+import User from "../../../models/User.js";
+import { dStrings as ds, dynamicMessage } from "../../../strings.js";
+import { createError } from "../../../utilities/errorHandlers.js";
 import stripe from "./stripe.js";
 
 export async function addOrUpdatePayoutMethod(
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) {
   try {
     const authUser = req.user!;
 
     const user = await User.findById(authUser._id).orFail(
-      createError(dynamicMessage(ds.notFound, "User"), StatusCodes.NOT_FOUND)
+      createError(dynamicMessage(ds.notFound, "User"), StatusCodes.NOT_FOUND),
     );
 
     let accountId = user.stripe.connectAccountId;
@@ -38,9 +38,8 @@ export async function addOrUpdatePayoutMethod(
     }
 
     // Retrieve the account to check for required information
-    const account: Stripe.Account | null = await stripe.accounts.retrieve(
-      accountId
-    );
+    const account: Stripe.Account | null =
+      await stripe.accounts.retrieve(accountId);
 
     if (
       !(
@@ -51,7 +50,7 @@ export async function addOrUpdatePayoutMethod(
     ) {
       throw createError(
         "Error retrieving account requirements",
-        StatusCodes.INTERNAL_SERVER_ERROR
+        StatusCodes.INTERNAL_SERVER_ERROR,
       );
     }
 

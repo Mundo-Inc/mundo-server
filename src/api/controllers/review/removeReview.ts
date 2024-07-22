@@ -2,10 +2,10 @@ import type { NextFunction, Request, Response } from "express";
 import { StatusCodes } from "http-status-codes";
 import { z } from "zod";
 
-import Review from "@/models/Review.js";
-import strings, { dStrings as ds, dynamicMessage } from "@/strings.js";
-import { createError } from "@/utilities/errorHandlers.js";
-import { validateData, zObjectId } from "@/utilities/validation.js";
+import Review from "../../../models/Review.js";
+import strings, { dStrings as ds, dynamicMessage } from "../../../strings.js";
+import { createError } from "../../../utilities/errorHandlers.js";
+import { validateData, zObjectId } from "../../../utilities/validation.js";
 
 const params = z.object({
   reviewId: zObjectId,
@@ -20,7 +20,7 @@ export const removeReviewValidation = validateData({
 export async function removeReview(
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) {
   try {
     const authUser = req.user!;
@@ -28,7 +28,7 @@ export async function removeReview(
     const { reviewId } = req.params as unknown as Params;
 
     const review = await Review.findById(reviewId).orFail(
-      createError(dynamicMessage(ds.notFound, "Review"), StatusCodes.NOT_FOUND)
+      createError(dynamicMessage(ds.notFound, "Review"), StatusCodes.NOT_FOUND),
     );
 
     if (!authUser._id.equals(review.writer)) {

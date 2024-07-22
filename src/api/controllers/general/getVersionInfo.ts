@@ -3,9 +3,9 @@ import { StatusCodes } from "http-status-codes";
 import semver from "semver";
 import { z } from "zod";
 
-import AppSetting from "@/models/AppSetting.js";
-import { createError } from "@/utilities/errorHandlers.js";
-import { validateData } from "@/utilities/validation.js";
+import AppSetting from "../../../models/AppSetting.js";
+import { createError } from "../../../utilities/errorHandlers.js";
+import { validateData } from "../../../utilities/validation.js";
 
 const params = z.object({
   version: z.string().min(1).max(20),
@@ -20,7 +20,7 @@ export const getVersionInfoValidation = validateData({
 export async function getVersionInfo(
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) {
   try {
     const { version } = req.params as unknown as Params;

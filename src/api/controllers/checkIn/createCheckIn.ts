@@ -3,38 +3,40 @@ import { StatusCodes } from "http-status-codes";
 import type { AnyKeys, Types } from "mongoose";
 import { z } from "zod";
 
-import MediaProjection from "@/api/dto/media.js";
-import { checkinEarning } from "@/api/services/earning.service.js";
-import logger from "@/api/services/logger/index.js";
-import { addReward } from "@/api/services/reward/reward.service.js";
-import { UserActivityManager } from "@/api/services/UserActivityManager.js";
-import type { ICheckIn } from "@/models/CheckIn.js";
-import CheckIn from "@/models/CheckIn.js";
-import { ResourceTypeEnum } from "@/models/Enum/ResourceTypeEnum.js";
-import type { IEvent } from "@/models/Event.js";
-import Event from "@/models/Event.js";
-import Follow from "@/models/Follow.js";
-import type { IMedia } from "@/models/Media.js";
-import Media from "@/models/Media.js";
-import Notification, { NotificationTypeEnum } from "@/models/Notification.js";
-import Place from "@/models/Place.js";
+import MediaProjection from "../../../api/dto/media.js";
+import { checkinEarning } from "../../../api/services/earning.service.js";
+import logger from "../../../api/services/logger/index.js";
+import { addReward } from "../../../api/services/reward/reward.service.js";
+import { UserActivityManager } from "../../../api/services/UserActivityManager.js";
+import type { ICheckIn } from "../../../models/CheckIn.js";
+import CheckIn from "../../../models/CheckIn.js";
+import { ResourceTypeEnum } from "../../../models/Enum/ResourceTypeEnum.js";
+import type { IEvent } from "../../../models/Event.js";
+import Event from "../../../models/Event.js";
+import Follow from "../../../models/Follow.js";
+import type { IMedia } from "../../../models/Media.js";
+import Media from "../../../models/Media.js";
+import Notification, {
+  NotificationTypeEnum,
+} from "../../../models/Notification.js";
+import Place from "../../../models/Place.js";
 import ScheduledTask, {
   ScheduledTaskStatus,
   ScheduledTaskType,
-} from "@/models/ScheduledTask.js";
-import Upload from "@/models/Upload.js";
-import User, { UserRoleEnum } from "@/models/User.js";
-import { ResourcePrivacyEnum } from "@/models/UserActivity.js";
-import strings, { dStrings as ds, dynamicMessage } from "@/strings.js";
-import { getRandomDateInRange } from "@/utilities/dateTime.js";
-import { createError } from "@/utilities/errorHandlers.js";
-import { filterObjectByConfig } from "@/utilities/filtering.js";
-import { shouldBotInteract } from "@/utilities/mundo.js";
+} from "../../../models/ScheduledTask.js";
+import Upload from "../../../models/Upload.js";
+import User, { UserRoleEnum } from "../../../models/User.js";
+import { ResourcePrivacyEnum } from "../../../models/UserActivity.js";
+import strings, { dStrings as ds, dynamicMessage } from "../../../strings.js";
+import { getRandomDateInRange } from "../../../utilities/dateTime.js";
+import { createError } from "../../../utilities/errorHandlers.js";
+import { filterObjectByConfig } from "../../../utilities/filtering.js";
+import { shouldBotInteract } from "../../../utilities/mundo.js";
 import {
   validateData,
   zObjectId,
   zUniqueObjectIdArray,
-} from "@/utilities/validation.js";
+} from "../../../utilities/validation.js";
 
 const body = z.object({
   place: zObjectId.optional(), // TODO: make sure only one is provided
@@ -60,7 +62,7 @@ const checkInWaitTime = 1; // minutes
 export async function createCheckIn(
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) {
   try {
     const authUser = req.user!;
@@ -73,7 +75,10 @@ export async function createCheckIn(
     let thePlace: Types.ObjectId;
     if (place) {
       await Place.exists({ _id: place }).orFail(
-        createError(dynamicMessage(ds.notFound, "Place"), StatusCodes.NOT_FOUND)
+        createError(
+          dynamicMessage(ds.notFound, "Place"),
+          StatusCodes.NOT_FOUND,
+        ),
       );
       thePlace = place;
     } else if (event) {
@@ -82,15 +87,15 @@ export async function createCheckIn(
         .orFail(
           createError(
             dynamicMessage(ds.notFound, "Event"),
-            StatusCodes.NOT_FOUND
-          )
+            StatusCodes.NOT_FOUND,
+          ),
         )
         .lean();
       thePlace = theEvent.place;
     } else {
       throw createError(
         "Either place or event is required",
-        StatusCodes.BAD_REQUEST
+        StatusCodes.BAD_REQUEST,
       );
     }
 
@@ -103,10 +108,10 @@ export async function createCheckIn(
           User.exists({ _id: userId }).orFail(
             createError(
               dynamicMessage(ds.notFound, "Tagged user"),
-              StatusCodes.NOT_FOUND
-            )
-          )
-        )
+              StatusCodes.NOT_FOUND,
+            ),
+          ),
+        ),
       );
     }
 
@@ -118,14 +123,14 @@ export async function createCheckIn(
         const upload = await Upload.findById(mediaUploadId).orFail(
           createError(
             dynamicMessage(ds.notFound, "Uploaded media"),
-            StatusCodes.NOT_FOUND
-          )
+            StatusCodes.NOT_FOUND,
+          ),
         );
 
         if (!authUser._id.equals(upload.user)) {
           throw createError(
             strings.authorization.otherUser,
-            StatusCodes.FORBIDDEN
+            StatusCodes.FORBIDDEN,
           );
         }
 
@@ -161,7 +166,7 @@ export async function createCheckIn(
       thePlace,
       mediaDocs !== null && mediaDocs.length > 0,
       checkIn._id,
-      privacyType
+      privacyType,
     );
 
     checkIn.userActivityId = activity._id;
@@ -183,7 +188,7 @@ export async function createCheckIn(
       data: {
         ...checkInObject,
         media: mediaDocs?.map((m) =>
-          filterObjectByConfig(m, MediaProjection.brief)
+          filterObjectByConfig(m, MediaProjection.brief),
         ),
       },
       reward: reward,
@@ -193,7 +198,7 @@ export async function createCheckIn(
       checkinEarning(authUser._id, checkIn._id),
       Place.updateOne(
         { _id: thePlace },
-        { $inc: { "activities.checkinCount": 1 } }
+        { $inc: { "activities.checkinCount": 1 } },
       ),
       User.updateOne({ _id: authUser._id }, { latestPlace: thePlace }),
       sendNotificiationToFollowers(authUser._id, checkIn),
@@ -217,11 +222,11 @@ export async function createCheckIn(
 
 async function enforceCheckInInterval(
   authId: Types.ObjectId,
-  authRole: UserRoleEnum
+  authRole: UserRoleEnum,
 ) {
   if (authRole !== UserRoleEnum.Admin) {
     const lastCheckIn = await CheckIn.findOne({ user: authId }).sort(
-      "-createdAt"
+      "-createdAt",
     );
     if (lastCheckIn) {
       const diffMinutes =
@@ -230,7 +235,7 @@ async function enforceCheckInInterval(
         logger.debug(`check-in cool down: ${checkInWaitTime} minutes`);
         throw createError(
           `You must wait at least ${checkInWaitTime} minutes between check-ins`,
-          StatusCodes.BAD_REQUEST
+          StatusCodes.BAD_REQUEST,
         );
       }
     }
@@ -247,7 +252,7 @@ async function addCheckInReward(authId: Types.ObjectId, checkin: ICheckIn) {
 
 async function sendNotificiationToFollowers(
   authId: Types.ObjectId,
-  checkin: ICheckIn
+  checkin: ICheckIn,
 ) {
   const followers = await Follow.find({
     target: authId,

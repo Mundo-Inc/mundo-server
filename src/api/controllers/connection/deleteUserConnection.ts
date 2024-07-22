@@ -2,15 +2,17 @@ import type { NextFunction, Request, Response } from "express";
 import { StatusCodes } from "http-status-codes";
 import { z } from "zod";
 
-import logger from "@/api/services/logger/index.js";
-import { ResourceTypeEnum } from "@/models/Enum/ResourceTypeEnum.js";
-import Follow from "@/models/Follow.js";
-import FollowRequest from "@/models/FollowRequest.js";
-import Notification from "@/models/Notification.js";
-import UserActivity, { ActivityTypeEnum } from "@/models/UserActivity.js";
-import { dStrings as ds, dynamicMessage } from "@/strings.js";
-import { createError } from "@/utilities/errorHandlers.js";
-import { validateData, zObjectId } from "@/utilities/validation.js";
+import logger from "../../../api/services/logger/index.js";
+import { ResourceTypeEnum } from "../../../models/Enum/ResourceTypeEnum.js";
+import Follow from "../../../models/Follow.js";
+import FollowRequest from "../../../models/FollowRequest.js";
+import Notification from "../../../models/Notification.js";
+import UserActivity, {
+  ActivityTypeEnum,
+} from "../../../models/UserActivity.js";
+import { dStrings as ds, dynamicMessage } from "../../../strings.js";
+import { createError } from "../../../utilities/errorHandlers.js";
+import { validateData, zObjectId } from "../../../utilities/validation.js";
 
 const params = z.object({
   id: zObjectId,
@@ -25,7 +27,7 @@ export const deleteUserConnectionValidation = validateData({
 export async function deleteUserConnection(
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) {
   try {
     const authUser = req.user!;
@@ -69,7 +71,7 @@ export async function deleteUserConnection(
       if (!deleteNotification.deletedCount) {
         logger.error(
           "Error while deleting notification after deleting user connection",
-          { error: "Notification not found" }
+          { error: "Notification not found" },
         );
       }
     } else {
@@ -79,8 +81,8 @@ export async function deleteUserConnection(
       }).orFail(
         createError(
           dynamicMessage(ds.notFound, "Entity"),
-          StatusCodes.NOT_FOUND
-        )
+          StatusCodes.NOT_FOUND,
+        ),
       );
 
       const [deleteRequest, deleteNotification] = await Promise.all([
@@ -104,7 +106,7 @@ export async function deleteUserConnection(
       if (!deleteNotification.deletedCount) {
         logger.error(
           "Error while deleting notification after deleting user connection",
-          { error: "Notification not found" }
+          { error: "Notification not found" },
         );
       }
     }

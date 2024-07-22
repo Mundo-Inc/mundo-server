@@ -6,26 +6,26 @@ import { z } from "zod";
 import type {
   GooglePlaceDetailsPreferred,
   GooglePlaceReview,
-} from "@/DataManagers/GoogleDataManager.js";
+} from "../../../DataManagers/GoogleDataManager.js";
 import {
   GoogleDataManager,
   GooglePlaceFields,
-} from "@/DataManagers/GoogleDataManager.js";
-import type { MediaProjectionBrief } from "@/api/dto/media.js";
-import MediaProjection from "@/api/dto/media.js";
-import UserProjection from "@/api/dto/user.js";
-import { getYelpReviews } from "@/api/services/provider.service.js";
-import { MediaTypeEnum } from "@/models/Media.js";
-import Place from "@/models/Place.js";
-import Review from "@/models/Review.js";
-import { dStrings as ds, dynamicMessage } from "@/strings.js";
-import { createError } from "@/utilities/errorHandlers.js";
-import { getPaginationFromQuery } from "@/utilities/pagination.js";
+} from "../../../DataManagers/GoogleDataManager.js";
+import type { MediaProjectionBrief } from "../../../api/dto/media.js";
+import MediaProjection from "../../../api/dto/media.js";
+import UserProjection from "../../../api/dto/user.js";
+import { getYelpReviews } from "../../../api/services/provider.service.js";
+import { MediaTypeEnum } from "../../../models/Media.js";
+import Place from "../../../models/Place.js";
+import Review from "../../../models/Review.js";
+import { dStrings as ds, dynamicMessage } from "../../../strings.js";
+import { createError } from "../../../utilities/errorHandlers.js";
+import { getPaginationFromQuery } from "../../../utilities/pagination.js";
 import {
   validateData,
   zObjectId,
   zPaginationSpread,
-} from "@/utilities/validation.js";
+} from "../../../utilities/validation.js";
 
 const params = z.object({
   placeId: zObjectId,
@@ -49,7 +49,7 @@ export const getPlaceReviewsValidation = validateData({
 export async function getPlaceReviews(
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) {
   try {
     const authUser = req.user;
@@ -62,8 +62,8 @@ export async function getPlaceReviews(
         .orFail(
           createError(
             dynamicMessage(ds.notFound, "Place"),
-            StatusCodes.NOT_FOUND
-          )
+            StatusCodes.NOT_FOUND,
+          ),
         )
         .lean();
 
@@ -73,7 +73,7 @@ export async function getPlaceReviews(
         const googleData =
           await GoogleDataManager.getPlaceDetails<GooglePlaceDetailsPreferred>(
             place.otherSources.googlePlaces._id,
-            [GooglePlaceFields.PREFERRED]
+            [GooglePlaceFields.PREFERRED],
           );
         if (googleData.reviews) {
           reviews = googleData.reviews;
@@ -89,8 +89,8 @@ export async function getPlaceReviews(
         .orFail(
           createError(
             dynamicMessage(ds.notFound, "Place"),
-            StatusCodes.NOT_FOUND
-          )
+            StatusCodes.NOT_FOUND,
+          ),
         )
         .lean();
 
@@ -291,10 +291,10 @@ export async function getPlaceReviews(
       // TODO: remove this temporary fix
       for (const review of results) {
         review.images = review.media?.filter(
-          (media: MediaProjectionBrief) => media.type === MediaTypeEnum.Image
+          (media: MediaProjectionBrief) => media.type === MediaTypeEnum.Image,
         );
         review.videos = review.media?.filter(
-          (media: MediaProjectionBrief) => media.type === MediaTypeEnum.Video
+          (media: MediaProjectionBrief) => media.type === MediaTypeEnum.Video,
         );
       }
 
