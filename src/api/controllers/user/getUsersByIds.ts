@@ -5,6 +5,7 @@ import { z } from "zod";
 import type { UserProjectionEssentials } from "../../../api/dto/user.js";
 import UserProjection from "../../../api/dto/user.js";
 import User from "../../../models/User.js";
+import { createResponse } from "../../../utilities/response.js";
 import { validateData, zObjectId } from "../../../utilities/validation.js";
 
 const getUsersByIdsBody = z.object({
@@ -38,7 +39,7 @@ export async function getUsersByIds(
       },
     ]);
 
-    res.status(StatusCodes.OK).json({ success: true, data: users });
+    res.status(StatusCodes.OK).json(createResponse(users));
   } catch (err) {
     next(err);
   }

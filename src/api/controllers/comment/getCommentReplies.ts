@@ -7,6 +7,7 @@ import Comment from "../../../models/Comment.js";
 import { dStrings as ds, dynamicMessage } from "../../../strings.js";
 import { createError } from "../../../utilities/errorHandlers.js";
 import { getPaginationFromQuery } from "../../../utilities/pagination.js";
+import { createResponse } from "../../../utilities/response.js";
 import {
   validateData,
   zObjectId,
@@ -49,10 +50,7 @@ export async function getCommentReplies(
     );
 
     if (comment.children.length === 0) {
-      return res.status(StatusCodes.OK).json({
-        success: true,
-        data: [],
-      });
+      return res.status(StatusCodes.OK).json(createResponse([]));
     }
 
     const blockedUsers = (
@@ -71,15 +69,13 @@ export async function getCommentReplies(
       limit,
     );
 
-    res.status(StatusCodes.OK).json({
-      success: true,
-      data: result.comments,
-      pagination: {
+    res.status(StatusCodes.OK).json(
+      createResponse(result.comments, {
         totalCount: result.count || 0,
         page: page,
         limit: limit,
-      },
-    });
+      }),
+    );
   } catch (err) {
     next(err);
   }

@@ -6,6 +6,7 @@ import UserProjection from "../../../api/dto/user.js";
 import Conversation from "../../../models/Conversation.js";
 import { dStrings as ds, dynamicMessage } from "../../../strings.js";
 import { createError } from "../../../utilities/errorHandlers.js";
+import { createResponse } from "../../../utilities/response.js";
 import { validateData, zObjectId } from "../../../utilities/validation.js";
 
 const params = z.object({
@@ -46,7 +47,7 @@ export async function getConversation(
       })
       .lean();
 
-    res.status(StatusCodes.OK).json({ success: true, data: conversation });
+    res.status(StatusCodes.OK).json(createResponse(conversation));
   } catch (err) {
     next(err);
   }

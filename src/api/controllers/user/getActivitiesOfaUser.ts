@@ -16,6 +16,7 @@ import { dStrings as ds, dynamicMessage } from "../../../strings.js";
 import { getConnectionStatuses } from "../../../utilities/connections.js";
 import { createError } from "../../../utilities/errorHandlers.js";
 import { getPaginationFromQuery } from "../../../utilities/pagination.js";
+import { createResponse } from "../../../utilities/response.js";
 import {
   validateData,
   zObjectId,
@@ -165,15 +166,13 @@ export async function getActivitiesOfaUser(
         usersObject[activity.user._id.toString()];
     }
 
-    res.status(StatusCodes.OK).json({
-      success: true,
-      data: result,
-      pagination: {
+    res.status(StatusCodes.OK).json(
+      createResponse(result, {
         totalCount: total,
         page,
         limit,
-      },
-    });
+      }),
+    );
   } catch (err) {
     next(err);
   }

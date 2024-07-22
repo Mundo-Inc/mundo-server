@@ -8,6 +8,7 @@ import User from "../../../models/User.js";
 import { dStrings as ds, dynamicMessage } from "../../../strings.js";
 import { createError } from "../../../utilities/errorHandlers.js";
 import { getPaginationFromQuery } from "../../../utilities/pagination.js";
+import { createResponse } from "../../../utilities/response.js";
 import {
   validateData,
   zPaginationSpread,
@@ -87,15 +88,13 @@ export async function adminGetUsers(
       );
     }
 
-    res.status(StatusCodes.OK).json({
-      success: true,
-      data: results.users,
-      pagination: {
+    res.status(StatusCodes.OK).json(
+      createResponse(results.users, {
         totalCount: results.total,
         page,
         limit,
-      },
-    });
+      }),
+    );
   } catch (err) {
     next(err);
   }

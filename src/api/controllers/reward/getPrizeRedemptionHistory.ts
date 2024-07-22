@@ -8,6 +8,7 @@ import User from "../../../models/User.js";
 import { dStrings as ds, dynamicMessage } from "../../../strings.js";
 import { createError } from "../../../utilities/errorHandlers.js";
 import { getPaginationFromQuery } from "../../../utilities/pagination.js";
+import { createResponse } from "../../../utilities/response.js";
 import {
   validateData,
   zPaginationSpread,
@@ -48,15 +49,13 @@ export async function getPrizeRedemptionHistory(
         .lean(),
     ]);
 
-    res.status(StatusCodes.OK).json({
-      success: true,
-      data: redemptions,
-      pagination: {
+    res.status(StatusCodes.OK).json(
+      createResponse(redemptions, {
         totalCount,
         page,
         limit,
-      },
-    });
+      }),
+    );
   } catch (error) {
     next(error);
   }

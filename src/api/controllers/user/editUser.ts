@@ -7,6 +7,7 @@ import CoinReward, { CoinRewardTypeEnum } from "../../../models/CoinReward.js";
 import User, { UserRoleEnum } from "../../../models/User.js";
 import strings, { dStrings as ds, dynamicMessage } from "../../../strings.js";
 import { createError } from "../../../utilities/errorHandlers.js";
+import { createResponse } from "../../../utilities/response.js";
 import S3Manager from "../../../utilities/S3Manager/index.js";
 import {
   validateData,
@@ -139,10 +140,7 @@ export async function editUser(
     }
     updatedUser.progress.achievements = Object.values(achievements);
 
-    res.status(StatusCodes.OK).json({
-      success: true,
-      data: updatedUser,
-    });
+    res.status(StatusCodes.OK).json(createResponse(updatedUser));
   } catch (err) {
     next(err);
   }

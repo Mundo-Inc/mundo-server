@@ -7,6 +7,7 @@ import UserProjection from "../../../api/dto/user.js";
 import Follow from "../../../models/Follow.js";
 import User from "../../../models/User.js";
 import { getPaginationFromQuery } from "../../../utilities/pagination.js";
+import { createResponse } from "../../../utilities/response.js";
 import { validateData } from "../../../utilities/validation.js";
 
 const getUsersQuery = z.object({
@@ -91,7 +92,7 @@ export async function getUsers(
       users = followers.map((follower) => follower.user);
     }
 
-    res.status(StatusCodes.OK).json({ success: true, data: users });
+    res.status(StatusCodes.OK).json(createResponse(users));
   } catch (err) {
     next(err);
   }

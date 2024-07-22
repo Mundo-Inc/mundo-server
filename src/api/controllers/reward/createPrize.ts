@@ -6,6 +6,7 @@ import Prize from "../../../models/Prize.js";
 import Upload from "../../../models/Upload.js";
 import { dStrings as ds, dynamicMessage } from "../../../strings.js";
 import { createError } from "../../../utilities/errorHandlers.js";
+import { createResponse } from "../../../utilities/response.js";
 import { validateData, zObjectId } from "../../../utilities/validation.js";
 
 const body = z.object({
@@ -20,13 +21,6 @@ type Body = z.infer<typeof body>;
 export const createPrizeValidation = validateData({
   body: body,
 });
-
-// export const createPrizeValidation: ValidationChain[] = [
-//   body("title").isString(),
-//   body("thumbnail").isMongoId(),
-//   body("amount").isNumeric(),
-//   body("count").optional().isNumeric(),
-// ];
 
 // admin only
 export async function createPrize(
@@ -53,10 +47,7 @@ export async function createPrize(
 
     await upload.deleteOne();
 
-    res.status(StatusCodes.CREATED).json({
-      succss: true,
-      data: prize,
-    });
+    res.status(StatusCodes.CREATED).json(createResponse(prize));
   } catch (error) {
     next(error);
   }

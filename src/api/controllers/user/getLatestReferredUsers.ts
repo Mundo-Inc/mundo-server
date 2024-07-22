@@ -6,6 +6,7 @@ import UserProjection from "../../../api/dto/user.js";
 import User from "../../../models/User.js";
 import { getConnectionStatuses } from "../../../utilities/connections.js";
 import { getPaginationFromQuery } from "../../../utilities/pagination.js";
+import { createResponse } from "../../../utilities/response.js";
 import {
   validateData,
   zPaginationSpread,
@@ -55,15 +56,13 @@ export async function getLatestReferredUsers(
       });
     });
 
-    res.json({
-      success: true,
-      data: results,
-      pagination: {
+    res.json(
+      createResponse(results, {
         totalCount: total,
         page,
         limit,
-      },
-    });
+      }),
+    );
   } catch (error) {
     next(error);
   }

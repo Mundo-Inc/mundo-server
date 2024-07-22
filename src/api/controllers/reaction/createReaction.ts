@@ -7,6 +7,7 @@ import Reaction from "../../../models/Reaction.js";
 import UserActivity from "../../../models/UserActivity.js";
 import { dStrings as ds, dynamicMessage } from "../../../strings.js";
 import { createError } from "../../../utilities/errorHandlers.js";
+import { createResponse } from "../../../utilities/response.js";
 import { validateData, zObjectId } from "../../../utilities/validation.js";
 
 const body = z.object({
@@ -58,15 +59,14 @@ export async function createReaction(
     );
 
     // adding reward
+    // TODO: use websocket to send reward changes
     const reward = await addReward(authUser._id, {
       refType: "Reaction",
       refId: newReaction._id,
       userActivityId: target,
     });
 
-    res
-      .status(StatusCodes.CREATED)
-      .json({ success: true, data: newReaction, reward: reward });
+    res.status(StatusCodes.CREATED).json(createResponse(newReaction));
   } catch (err) {
     next(err);
   }

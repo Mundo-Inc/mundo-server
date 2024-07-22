@@ -8,6 +8,7 @@ import Upload from "../../../models/Upload.js";
 import User from "../../../models/User.js";
 import strings from "../../../strings.js";
 import { createError } from "../../../utilities/errorHandlers.js";
+import { createResponse } from "../../../utilities/response.js";
 import S3Manager from "../../../utilities/S3Manager/index.js";
 import {
   createThumbnail,
@@ -67,7 +68,7 @@ export async function uploadFile(
           type: mimetype.split("/")[0],
         });
 
-        res.status(StatusCodes.CREATED).json({ success: true, data: upload });
+        res.status(StatusCodes.CREATED).json(createResponse(upload));
       }
     } else if (files.video && files.video[0]) {
       const { filepath, mimetype } = files.video[0];
@@ -93,7 +94,7 @@ export async function uploadFile(
           type: mimetype.split("/")[0],
         });
 
-        res.status(StatusCodes.CREATED).json({ success: true, data: upload });
+        res.status(StatusCodes.CREATED).json(createResponse(upload));
 
         await resizeVideo(filepath, convertOutputPath);
 
@@ -121,7 +122,7 @@ export async function uploadFile(
           type: "video",
         });
 
-        res.status(StatusCodes.CREATED).json({ success: true, data: upload });
+        res.status(StatusCodes.CREATED).json(createResponse(upload));
       }
 
       await createThumbnail(filepath);

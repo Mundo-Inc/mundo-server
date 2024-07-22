@@ -6,6 +6,7 @@ import Conversation from "../../../models/Conversation.js";
 import User from "../../../models/User.js";
 import { dStrings as ds, dynamicMessage } from "../../../strings.js";
 import { createError } from "../../../utilities/errorHandlers.js";
+import { createResponse } from "../../../utilities/response.js";
 import { validateData, zObjectId } from "../../../utilities/validation.js";
 import client from "./client.js";
 
@@ -68,9 +69,8 @@ export async function createConversation(
     ]).then((conversations) => conversations[0]);
 
     if (alreadyExists) {
-      return res
-        .status(StatusCodes.OK)
-        .json({ success: true, data: alreadyExists });
+      res.status(StatusCodes.OK).json(createResponse(alreadyExists));
+      return;
     }
 
     const friendlyName = authUser._id.toString() + "_" + user;
@@ -132,7 +132,7 @@ export async function createConversation(
       ),
     ]);
 
-    res.status(StatusCodes.CREATED).json({ success: true, data: conversation });
+    res.status(StatusCodes.CREATED).json(createResponse(conversation));
   } catch (err) {
     next(err);
   }

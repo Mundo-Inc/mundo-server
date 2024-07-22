@@ -5,6 +5,7 @@ import { z } from "zod";
 import User, { SignupMethodEnum, UserRoleEnum } from "../../../models/User.js";
 import { dStrings as ds, dynamicMessage } from "../../../strings.js";
 import { createError } from "../../../utilities/errorHandlers.js";
+import { createResponse } from "../../../utilities/response.js";
 import { validateData, zUsername } from "../../../utilities/validation.js";
 
 const body = z.object({
@@ -49,6 +50,7 @@ export async function createBot(
         );
       }
     }
+
     user = await User.create({
       name,
       username: username || Math.random().toString(36).substring(2, 15),
@@ -61,12 +63,7 @@ export async function createBot(
       password: null,
     });
 
-    return res.json({
-      sucess: true,
-      data: {
-        user,
-      },
-    });
+    res.status(StatusCodes.CREATED).json(createResponse(user));
   } catch (err) {
     next(err);
   }

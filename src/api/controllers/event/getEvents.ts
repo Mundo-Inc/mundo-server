@@ -9,6 +9,7 @@ import type { IEvent } from "../../../models/Event.js";
 import Event from "../../../models/Event.js";
 import { dStrings as ds, dynamicMessage } from "../../../strings.js";
 import { createError } from "../../../utilities/errorHandlers.js";
+import { createResponse } from "../../../utilities/response.js";
 import { validateData } from "../../../utilities/validation.js";
 
 const query = z.object({
@@ -54,7 +55,7 @@ export async function getEvents(
       }
     }
 
-    res.status(StatusCodes.OK).json({ success: true, data: events });
+    res.status(StatusCodes.OK).json(createResponse(events));
   } catch (error) {
     next(error);
   }

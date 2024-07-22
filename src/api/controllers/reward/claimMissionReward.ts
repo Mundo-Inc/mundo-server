@@ -8,6 +8,7 @@ import Mission from "../../../models/Mission.js";
 import User from "../../../models/User.js";
 import { dStrings as ds, dynamicMessage } from "../../../strings.js";
 import { createError } from "../../../utilities/errorHandlers.js";
+import { createResponse } from "../../../utilities/response.js";
 import { validateData, zObjectId } from "../../../utilities/validation.js";
 
 const params = z.object({
@@ -80,7 +81,7 @@ export async function claimMissionReward(
     user.phantomCoins.balance = user.phantomCoins.balance + coinReward.amount;
     await user.save();
 
-    res.status(StatusCodes.OK).json({ success: true, data: user });
+    res.status(StatusCodes.OK).json(createResponse(user));
   } catch (error) {
     next(error);
   }

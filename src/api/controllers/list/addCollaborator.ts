@@ -5,6 +5,7 @@ import { z } from "zod";
 import List, { AccessEnum } from "../../../models/List.js";
 import { dStrings as ds, dynamicMessage } from "../../../strings.js";
 import { createError } from "../../../utilities/errorHandlers.js";
+import { createResponse } from "../../../utilities/response.js";
 import { validateData, zObjectId } from "../../../utilities/validation.js";
 
 const params = z.object({
@@ -59,10 +60,7 @@ export async function addCollaborator(
 
     await list.save();
 
-    res.status(StatusCodes.OK).json({
-      success: true,
-      data: list,
-    });
+    res.status(StatusCodes.OK).json(createResponse(list));
   } catch (err) {
     next(err);
   }

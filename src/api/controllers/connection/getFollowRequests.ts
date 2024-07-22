@@ -10,6 +10,7 @@ import type { IFollowRequest } from "../../../models/FollowRequest.js";
 import FollowRequest from "../../../models/FollowRequest.js";
 import type { ConnectionStatus } from "../../../utilities/connections.js";
 import { getPaginationFromQuery } from "../../../utilities/pagination.js";
+import { createResponse } from "../../../utilities/response.js";
 import {
   validateData,
   zPaginationSpread,
@@ -131,15 +132,13 @@ export async function getFollowRequests(
       f.user.connectionStatus = usersObject[f.user._id.toString()];
     });
 
-    res.status(StatusCodes.OK).json({
-      success: true,
-      data: userFollowRequests,
-      pagination: {
+    res.status(StatusCodes.OK).json(
+      createResponse(userFollowRequests, {
         totalCount,
         page,
         limit,
-      },
-    });
+      }),
+    );
   } catch (error) {
     next(error);
   }

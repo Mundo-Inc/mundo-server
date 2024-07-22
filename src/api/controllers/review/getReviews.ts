@@ -7,6 +7,7 @@ import MediaProjection from "../../../api/dto/media.js";
 import UserProjection from "../../../api/dto/user.js";
 import Review from "../../../models/Review.js";
 import { getPaginationFromQuery } from "../../../utilities/pagination.js";
+import { createResponse } from "../../../utilities/response.js";
 import {
   validateData,
   zObjectId,
@@ -35,7 +36,7 @@ export async function getReviews(
 
     const { writer, sort } = req.query as unknown as Query;
 
-    const { limit, skip } = getPaginationFromQuery(req, {
+    const { page, limit, skip } = getPaginationFromQuery(req, {
       defaultLimit: 10,
       maxLimit: 50,
     });
@@ -197,7 +198,7 @@ export async function getReviews(
 
     const reviews = await Review.aggregate(pipeline);
 
-    res.status(StatusCodes.OK).json({ success: true, data: reviews });
+    res.status(StatusCodes.OK).json(createResponse(reviews));
   } catch (err) {
     next(err);
   }

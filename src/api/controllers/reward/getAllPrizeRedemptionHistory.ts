@@ -5,6 +5,7 @@ import { z } from "zod";
 import UserProjection from "../../../api/dto/user.js";
 import PrizeRedemption from "../../../models/PrizeRedemption.js";
 import { getPaginationFromQuery } from "../../../utilities/pagination.js";
+import { createResponse } from "../../../utilities/response.js";
 import {
   validateData,
   zPaginationSpread,
@@ -22,7 +23,7 @@ export async function getAllPrizeRedemptionHistory(
   next: NextFunction,
 ) {
   try {
-    const { limit, skip } = getPaginationFromQuery(req, {
+    const { page, limit, skip } = getPaginationFromQuery(req, {
       defaultLimit: 20,
       maxLimit: 50,
     });
@@ -38,15 +39,13 @@ export async function getAllPrizeRedemptionHistory(
         .lean(),
     ]);
 
-    res.status(StatusCodes.OK).json({
-      success: true,
-      data: redemptions,
-      pagination: {
+    res.status(StatusCodes.OK).json(
+      createResponse(redemptions, {
         totalCount,
-        page: req.query.page,
-        limit: req.query.limit,
-      },
-    });
+        page,
+        limit,
+      }),
+    );
   } catch (error) {
     next(error);
   }

@@ -10,6 +10,7 @@ import type {
 import NotificationsService from "../../../api/services/NotificationsService.js";
 import type { IUser } from "../../../models/User.js";
 import User from "../../../models/User.js";
+import { createResponse } from "../../../utilities/response.js";
 import { validateData, zObjectId } from "../../../utilities/validation.js";
 
 const body = z.object({
@@ -105,23 +106,21 @@ export async function notifyUsers(
           items,
         );
 
-      res.status(StatusCodes.OK).json({
-        success: true,
-        data: {
+      res.status(StatusCodes.OK).json(
+        createResponse({
           sentDevices: responses ? responses.successCount : 0,
           failedDevices: responses ? responses.failureCount : 0,
           total: `${users.length} recepients + ${ADMINS.length} admins`,
-        },
-      });
+        }),
+      );
     } else {
-      res.status(StatusCodes.OK).json({
-        success: true,
-        data: {
+      res.status(StatusCodes.OK).json(
+        createResponse({
           total: `${users.length} recepients + ${ADMINS.length} admins`,
           haveDevices: users.filter((u) => u.devices.length > 0).length,
           admins: ADMINS.length,
-        },
-      });
+        }),
+      );
     }
   } catch (error) {
     next(error);

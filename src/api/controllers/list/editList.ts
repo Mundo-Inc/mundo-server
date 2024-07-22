@@ -6,6 +6,7 @@ import UserProjection from "../../../api/dto/user.js";
 import List from "../../../models/List.js";
 import { dStrings as ds, dynamicMessage } from "../../../strings.js";
 import { createError } from "../../../utilities/errorHandlers.js";
+import { createResponse } from "../../../utilities/response.js";
 import { validateData, zObjectId } from "../../../utilities/validation.js";
 
 const params = z.object({
@@ -63,9 +64,8 @@ export async function editList(
 
     await list.populate("owner", UserProjection.essentials);
 
-    return res.status(StatusCodes.OK).json({
-      success: true,
-      data: {
+    return res.status(StatusCodes.OK).json(
+      createResponse({
         _id: list._id,
         name: list.name,
         owner: list.owner,
@@ -74,8 +74,8 @@ export async function editList(
         createdAt: list.createdAt,
         collaboratorsCount: list.collaborators.length,
         placesCount: list.places.length,
-      },
-    });
+      }),
+    );
   } catch (err) {
     next(err);
   }

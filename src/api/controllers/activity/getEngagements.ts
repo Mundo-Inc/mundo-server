@@ -1,4 +1,5 @@
 import type { NextFunction, Request, Response } from "express";
+import { StatusCodes } from "http-status-codes";
 import type { Types } from "mongoose";
 import { z } from "zod";
 
@@ -6,6 +7,7 @@ import UserProjection from "../../../api/dto/user.js";
 import Block from "../../../models/Block.js";
 import Comment from "../../../models/Comment.js";
 import Reaction from "../../../models/Reaction.js";
+import { createResponse } from "../../../utilities/response.js";
 import { validateData, zObjectId } from "../../../utilities/validation.js";
 
 const params = z.object({
@@ -64,8 +66,9 @@ export async function getEngagements(
 
     const paginatedEngagements = mergedArray.slice(0, limit);
 
-    // Send response
-    return res.json(paginatedEngagements);
+    return res
+      .status(StatusCodes.OK)
+      .json(createResponse(paginatedEngagements));
   } catch (err) {
     next(err);
   }

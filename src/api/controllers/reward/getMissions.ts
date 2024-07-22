@@ -5,6 +5,7 @@ import { z } from "zod";
 import { populateMissionProgress } from "../../../api/services/reward/coinReward.service.js";
 import Mission from "../../../models/Mission.js";
 import { getPaginationFromQuery } from "../../../utilities/pagination.js";
+import { createResponse } from "../../../utilities/response.js";
 import {
   validateData,
   zPaginationSpread,
@@ -50,15 +51,13 @@ export async function getMissions(
       );
     }
 
-    res.status(StatusCodes.OK).json({
-      success: true,
-      data: populatedMissions,
-      pagination: {
+    res.status(StatusCodes.OK).json(
+      createResponse(populatedMissions, {
         totalCount: totalMissions,
         page: page,
         limit: limit,
-      },
-    });
+      }),
+    );
   } catch (error) {
     next(error);
   }

@@ -7,6 +7,7 @@ import Withdrawal from "../../../models/Withdrawal.js";
 import { dStrings as ds, dynamicMessage } from "../../../strings.js";
 import { createError } from "../../../utilities/errorHandlers.js";
 import { ensureNonEmptyString } from "../../../utilities/requireValue.js";
+import { createResponse } from "../../../utilities/response.js";
 import { validateData } from "../../../utilities/validation.js";
 import stripe from "./stripe.js";
 
@@ -100,10 +101,7 @@ export async function withdraw(
       payoutId: payout.id,
     });
 
-    res.status(StatusCodes.OK).json({
-      success: true,
-      data: payout,
-    });
+    res.status(StatusCodes.OK).json(createResponse(payout));
   } catch (error) {
     next(error);
   }

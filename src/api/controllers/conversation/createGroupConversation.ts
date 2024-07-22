@@ -6,6 +6,7 @@ import Conversation from "../../../models/Conversation.js";
 import User from "../../../models/User.js";
 import { dStrings as ds, dynamicMessage } from "../../../strings.js";
 import { createError } from "../../../utilities/errorHandlers.js";
+import { createResponse } from "../../../utilities/response.js";
 import {
   validateData,
   zUniqueObjectIdArray,
@@ -107,7 +108,7 @@ export async function createGroupConversation(
       { $push: { conversations: conversation._id } },
     );
 
-    res.status(StatusCodes.CREATED).json({ success: true, data: conversation });
+    res.status(StatusCodes.CREATED).json(createResponse(conversation));
   } catch (err) {
     next(err);
   }

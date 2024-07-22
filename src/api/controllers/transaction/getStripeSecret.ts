@@ -5,6 +5,7 @@ import { env } from "../../../env.js";
 import User from "../../../models/User.js";
 import { dStrings as ds, dynamicMessage } from "../../../strings.js";
 import { createError } from "../../../utilities/errorHandlers.js";
+import { createResponse } from "../../../utilities/response.js";
 import { createStripeCustomer } from "./helpers.js";
 import stripe from "./stripe.js";
 
@@ -31,13 +32,12 @@ export async function getStripeSecret(
       { apiVersion: env.STRIPE_API_VERSION },
     );
 
-    res.status(StatusCodes.OK).json({
-      success: true,
-      data: {
+    res.status(StatusCodes.OK).json(
+      createResponse({
         customer: customerId,
         ephemeralKeySecret: ephemeralKey.secret,
-      },
-    });
+      }),
+    );
   } catch (error) {
     next(error);
   }

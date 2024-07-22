@@ -7,6 +7,7 @@ import UserProjection from "../../../api/dto/user.js";
 import Review from "../../../models/Review.js";
 import { dStrings as ds, dynamicMessage } from "../../../strings.js";
 import { createError } from "../../../utilities/errorHandlers.js";
+import { createResponse } from "../../../utilities/response.js";
 import { validateData, zObjectId } from "../../../utilities/validation.js";
 
 const params = z.object({
@@ -185,7 +186,7 @@ export async function getReview(
       );
     }
 
-    res.status(StatusCodes.OK).json({ success: true, data: reviews });
+    res.status(StatusCodes.OK).json(createResponse(reviews));
   } catch (err) {
     next(err);
   }

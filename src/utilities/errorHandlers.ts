@@ -1,13 +1,12 @@
 import type { NextFunction, Request, Response } from "express";
 import { ReasonPhrases, StatusCodes } from "http-status-codes";
 
+import logger from "../api/services/logger/index.js";
 import {
   ErrorResponse,
-  ResponseStatusEnum,
-  createResponse,
+  createErrorResponse,
   type ErrorDetails,
 } from "./response.js";
-import logger from "../api/services/logger/index.js";
 
 interface ErrorOptions {
   type: string;
@@ -26,7 +25,7 @@ export function createError(
     | (ErrorOptions & {
         statusCode: StatusCodes;
       })
-    | StatusCodes
+    | StatusCodes,
 ): CustomError {
   const error = new Error(message) as CustomError;
 
@@ -44,7 +43,7 @@ export function errorHandler(
   err: CustomError | Error,
   req: Request,
   res: Response<ErrorResponse>,
-  next: NextFunction
+  next: NextFunction,
 ) {
   let statusCode = StatusCodes.INTERNAL_SERVER_ERROR;
 
@@ -65,7 +64,7 @@ export function errorHandler(
     logger.error("Internal Server Error", err);
   }
 
-  res.status(statusCode).json(createResponse(ResponseStatusEnum.Error, body));
+  res.status(statusCode).json(createErrorResponse(body));
 
   return;
 }

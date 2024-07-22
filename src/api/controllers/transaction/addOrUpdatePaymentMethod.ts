@@ -5,6 +5,7 @@ import { z } from "zod";
 import User from "../../../models/User.js";
 import { dStrings as ds, dynamicMessage } from "../../../strings.js";
 import { createError } from "../../../utilities/errorHandlers.js";
+import { createResponse } from "../../../utilities/response.js";
 import { validateData } from "../../../utilities/validation.js";
 import { createStripeCustomer } from "./helpers.js";
 import stripe from "./stripe.js";
@@ -50,7 +51,7 @@ export async function addOrUpdatePaymentMethod(
 
     res
       .status(StatusCodes.OK)
-      .json({ success: true, data: { paymentMethodId: paymentMethodId } });
+      .json(createResponse({ paymentMethodId: paymentMethodId }));
   } catch (error) {
     next(error);
   }

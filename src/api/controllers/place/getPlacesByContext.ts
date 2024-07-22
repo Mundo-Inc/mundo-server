@@ -5,6 +5,7 @@ import { z } from "zod";
 import type { IPlace } from "../../../models/Place.js";
 import Place from "../../../models/Place.js";
 import { createError } from "../../../utilities/errorHandlers.js";
+import { createResponse } from "../../../utilities/response.js";
 import { areStrictlySimilar } from "../../../utilities/stringHelper.js";
 import { validateData, zGeoValidation } from "../../../utilities/validation.js";
 import { getDetailedPlace } from "./helpers.js";
@@ -75,10 +76,7 @@ export async function getPlacesByContext(
       await Place.deleteOne({ _id: matchedPlace?._id });
       throw createError("Place doesn't exist", StatusCodes.NOT_FOUND);
     } else {
-      res.status(StatusCodes.OK).json({
-        success: true,
-        data: result,
-      });
+      res.status(StatusCodes.OK).json(createResponse(result));
     }
   } catch (err) {
     next(err);

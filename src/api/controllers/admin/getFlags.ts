@@ -7,6 +7,7 @@ import Flag from "../../../models/Flag.js";
 import Review from "../../../models/Review.js";
 import { createError } from "../../../utilities/errorHandlers.js";
 import { getPaginationFromQuery } from "../../../utilities/pagination.js";
+import { createResponse } from "../../../utilities/response.js";
 import {
   validateData,
   zObjectId,
@@ -84,15 +85,13 @@ export async function getFlags(
       }
     }
 
-    res.status(StatusCodes.OK).json({
-      success: true,
-      data: result,
-      pagination: {
+    res.status(StatusCodes.OK).json(
+      createResponse(result, {
         totalCount: totalDocuments,
         page,
         limit,
-      },
-    });
+      }),
+    );
   } catch (err) {
     next(err);
   }

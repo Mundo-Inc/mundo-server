@@ -7,6 +7,7 @@ import UserProjection from "../../../api/dto/user.js";
 import Media from "../../../models/Media.js";
 import { createError } from "../../../utilities/errorHandlers.js";
 import { getPaginationFromQuery } from "../../../utilities/pagination.js";
+import { createResponse } from "../../../utilities/response.js";
 import {
   validateData,
   zObjectId,
@@ -110,15 +111,13 @@ export async function getPlaceMedia(
       },
     ]);
 
-    res.status(StatusCodes.OK).json({
-      success: true,
-      data: media[0].media || [],
-      pagination: {
+    res.status(StatusCodes.OK).json(
+      createResponse(media[0].media || [], {
         totalCount: media[0].total[0]?.count || 0,
         page,
         limit,
-      },
-    });
+      }),
+    );
   } catch (err) {
     next(err);
   }

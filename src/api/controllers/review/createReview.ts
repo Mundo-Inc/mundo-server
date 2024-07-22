@@ -28,6 +28,7 @@ import { getRandomDateInRange } from "../../../utilities/dateTime.js";
 import { createError } from "../../../utilities/errorHandlers.js";
 import { shouldBotInteract } from "../../../utilities/mundo.js";
 import { openAiAnalyzeReview } from "../../../utilities/openAi.js";
+import { createResponse } from "../../../utilities/response.js";
 import { validateData, zObjectId } from "../../../utilities/validation.js";
 
 const body = z.object({
@@ -161,15 +162,14 @@ export async function createReview(
       ...(mediaDocs.length < 0 ? {} : { media: mediaDocs.map((m) => m._id) }),
     });
 
+    // TODO: use websocket to send reward changes
     const reward = await addReward(authUser._id, {
       refType: "Review",
       refId: review._id,
       placeId: placeId,
     });
 
-    res
-      .status(StatusCodes.CREATED)
-      .json({ success: true, data: review, reward });
+    res.status(StatusCodes.CREATED).json(createResponse(review));
 
     place.activities.reviewCount += 1;
     await place.save();

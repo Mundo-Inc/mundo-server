@@ -5,6 +5,7 @@ import { z } from "zod";
 
 import Notification from "../../../models/Notification.js";
 import { getPaginationFromQuery } from "../../../utilities/pagination.js";
+import { createResponse } from "../../../utilities/response.js";
 import {
   validateData,
   zPaginationSpread,
@@ -123,15 +124,13 @@ export async function getNotifications(
       );
     }
 
-    res.status(StatusCodes.OK).json({
-      success: true,
-      data: result?.notifications || [],
-      pagination: {
+    res.status(StatusCodes.OK).json(
+      createResponse(result?.notifications || [], {
         totalCount: result ? result.total : 0,
         page: page,
         limit: limit,
-      },
-    });
+      }),
+    );
   } catch (err) {
     next(err);
   }

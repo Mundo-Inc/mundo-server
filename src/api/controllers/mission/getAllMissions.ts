@@ -3,6 +3,7 @@ import { StatusCodes } from "http-status-codes";
 
 import Mission from "../../../models/Mission.js";
 import { getPaginationFromQuery } from "../../../utilities/pagination.js";
+import { createResponse } from "../../../utilities/response.js";
 
 export async function getAllMissions(
   req: Request,
@@ -20,15 +21,13 @@ export async function getAllMissions(
       Mission.countDocuments({}),
     ]);
 
-    res.status(StatusCodes.OK).json({
-      success: true,
-      data: missions,
-      pagination: {
+    res.status(StatusCodes.OK).json(
+      createResponse(missions, {
         totalCount: totalMissions,
         page: page,
         limit: limit,
-      },
-    });
+      }),
+    );
   } catch (error) {
     next(error);
   }

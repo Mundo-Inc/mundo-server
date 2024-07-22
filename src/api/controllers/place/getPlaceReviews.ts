@@ -21,6 +21,7 @@ import Review from "../../../models/Review.js";
 import { dStrings as ds, dynamicMessage } from "../../../strings.js";
 import { createError } from "../../../utilities/errorHandlers.js";
 import { getPaginationFromQuery } from "../../../utilities/pagination.js";
+import { createResponse } from "../../../utilities/response.js";
 import {
   validateData,
   zObjectId,
@@ -80,10 +81,7 @@ export async function getPlaceReviews(
         }
       }
 
-      res.status(StatusCodes.OK).json({
-        success: true,
-        data: reviews,
-      });
+      res.status(StatusCodes.OK).json(createResponse(reviews));
     } else if (type === "yelp") {
       const place = await Place.findById(placeId)
         .orFail(
@@ -100,10 +98,7 @@ export async function getPlaceReviews(
         reviews = await getYelpReviews(place.otherSources.yelp._id);
       }
 
-      res.status(StatusCodes.OK).json({
-        success: true,
-        data: reviews,
-      });
+      res.status(StatusCodes.OK).json(createResponse(reviews));
     } else {
       const { page, limit, skip } = getPaginationFromQuery(req, {
         defaultLimit: 20,
@@ -298,15 +293,13 @@ export async function getPlaceReviews(
         );
       }
 
-      res.status(StatusCodes.OK).json({
-        success: true,
-        data: results || [],
-        pagination: {
+      res.status(StatusCodes.OK).json(
+        createResponse(results || [], {
           totalCount: total,
           page,
           limit,
-        },
-      });
+        }),
+      );
     }
   } catch (err) {
     next(err);

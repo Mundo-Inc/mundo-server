@@ -17,6 +17,7 @@ import {
   type ConnectionStatus,
 } from "../../../utilities/connections.js";
 import { createError } from "../../../utilities/errorHandlers.js";
+import { createResponse } from "../../../utilities/response.js";
 import { validateData } from "../../../utilities/validation.js";
 
 const getUserParams = z.object({
@@ -251,7 +252,7 @@ export async function getUser(req: Request, res: Response, next: NextFunction) {
       result.connectionStatus = connectionStatus;
     }
 
-    res.status(StatusCodes.OK).json({ success: true, data: result });
+    res.status(StatusCodes.OK).json(createResponse(result));
   } catch (err) {
     next(err);
   }

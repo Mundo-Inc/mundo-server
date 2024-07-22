@@ -1,7 +1,9 @@
 import type { NextFunction, Request, Response } from "express";
+import { StatusCodes } from "http-status-codes";
 import { z } from "zod";
 
 import List from "../../../models/List.js";
+import { createResponse } from "../../../utilities/response.js";
 import { validateData, zObjectId } from "../../../utilities/validation.js";
 
 const params = z.object({
@@ -33,10 +35,7 @@ export async function getExistInLists(
 
     const result = lists.map((obj) => obj._id);
 
-    res.json({
-      success: true,
-      data: result,
-    });
+    res.status(StatusCodes.OK).json(createResponse(result));
   } catch (error) {
     next(error);
   }

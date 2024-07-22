@@ -7,6 +7,7 @@ import UserProjection from "../../../api/dto/user.js";
 import Homemade from "../../../models/Homemade.js";
 import { dStrings as ds, dynamicMessage } from "../../../strings.js";
 import { createError } from "../../../utilities/errorHandlers.js";
+import { createResponse } from "../../../utilities/response.js";
 import { validateData, zObjectId } from "../../../utilities/validation.js";
 
 const params = z.object({
@@ -147,7 +148,7 @@ export async function getHomemadePost(
       );
     }
 
-    res.status(StatusCodes.OK).json({ success: true, data: post });
+    res.status(StatusCodes.OK).json(createResponse(post));
   } catch (err) {
     next(err);
   }

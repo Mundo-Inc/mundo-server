@@ -8,6 +8,7 @@ import { dStrings as ds, dynamicMessage } from "../../../strings.js";
 import { createError } from "../../../utilities/errorHandlers.js";
 import { roundUpToTwoDecimals } from "../../../utilities/numbers.js";
 import { ensureNonEmptyString } from "../../../utilities/requireValue.js";
+import { createResponse } from "../../../utilities/response.js";
 import { validateData, zObjectId } from "../../../utilities/validation.js";
 import { sendAttributtedMessage } from "../conversation/helpers.js";
 import stripe from "./stripe.js";
@@ -118,10 +119,7 @@ export async function sendGift(
       transactionId: transaction._id.toString(),
     });
 
-    res.status(StatusCodes.OK).send({
-      success: true,
-      data: transaction,
-    });
+    res.status(StatusCodes.OK).json(createResponse(transaction));
   } catch (error) {
     next(error);
   }

@@ -7,6 +7,7 @@ import MediaProjection from "../../../api/dto/media.js";
 import UserProjection from "../../../api/dto/user.js";
 import Homemade from "../../../models/Homemade.js";
 import { getPaginationFromQuery } from "../../../utilities/pagination.js";
+import { createResponse } from "../../../utilities/response.js";
 import {
   validateData,
   zObjectId,
@@ -159,7 +160,7 @@ export async function getHomemadePosts(
 
     const homemades = await Homemade.aggregate(pipeline);
 
-    res.status(StatusCodes.OK).json({ success: true, data: homemades });
+    res.status(StatusCodes.OK).json(createResponse(homemades));
   } catch (err) {
     next(err);
   }

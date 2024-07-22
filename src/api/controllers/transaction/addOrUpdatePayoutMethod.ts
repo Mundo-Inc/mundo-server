@@ -5,6 +5,7 @@ import type Stripe from "stripe";
 import User from "../../../models/User.js";
 import { dStrings as ds, dynamicMessage } from "../../../strings.js";
 import { createError } from "../../../utilities/errorHandlers.js";
+import { createResponse } from "../../../utilities/response.js";
 import stripe from "./stripe.js";
 
 export async function addOrUpdatePayoutMethod(
@@ -59,15 +60,14 @@ export async function addOrUpdatePayoutMethod(
       account.requirements.eventually_due.length === 0;
 
     // Check if there are any requirements pending that prevent payouts
-    res.status(StatusCodes.OK).json({
-      success: true,
-      data: {
+    res.status(StatusCodes.OK).json(
+      createResponse({
         eligible: isEligible,
         message: isEligible
           ? "No additional setup required. Account is fully set up for payouts."
           : "Please complete the required account setup.",
-      },
-    });
+      }),
+    );
   } catch (error) {
     next(error);
   }

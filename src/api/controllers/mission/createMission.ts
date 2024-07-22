@@ -3,6 +3,7 @@ import { StatusCodes } from "http-status-codes";
 import { z } from "zod";
 
 import Mission, { TaskTypeEnum } from "../../../models/Mission.js";
+import { createResponse } from "../../../utilities/response.js";
 import { validateData } from "../../../utilities/validation.js";
 
 const body = z.object({
@@ -53,10 +54,7 @@ export async function createMission(
       expiresAt: expireDate,
     });
 
-    res.status(StatusCodes.CREATED).json({
-      success: true,
-      data: mission,
-    });
+    res.status(StatusCodes.CREATED).json(createResponse(mission));
   } catch (error) {
     next(error);
   }

@@ -7,6 +7,7 @@ import PlaceProjection from "../../../api/dto/place.js";
 import Event from "../../../models/Event.js";
 import { dStrings as ds, dynamicMessage } from "../../../strings.js";
 import { createError } from "../../../utilities/errorHandlers.js";
+import { createResponse } from "../../../utilities/response.js";
 import { validateData, zObjectId } from "../../../utilities/validation.js";
 
 const params = z.object({
@@ -43,7 +44,7 @@ export async function getEvent(
       } as any;
     }
 
-    res.status(StatusCodes.OK).json({ success: true, data: event });
+    res.status(StatusCodes.OK).json(createResponse(event));
   } catch (error) {
     next(error);
   }

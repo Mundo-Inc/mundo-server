@@ -2,6 +2,7 @@ import type { NextFunction, Request, Response } from "express";
 import { StatusCodes } from "http-status-codes";
 
 import AppSetting from "../../../models/AppSetting.js";
+import { createResponse } from "../../../utilities/response.js";
 
 export async function getSettings(
   req: Request,
@@ -17,7 +18,7 @@ export async function getSettings(
       data[setting.key] = setting.value;
     }
 
-    res.status(StatusCodes.OK).json({ success: true, data });
+    res.status(StatusCodes.OK).json(createResponse(data));
   } catch (err) {
     next(err);
   }

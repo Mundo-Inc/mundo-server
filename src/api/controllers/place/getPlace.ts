@@ -2,6 +2,7 @@ import type { NextFunction, Request, Response } from "express";
 import { StatusCodes } from "http-status-codes";
 import { z } from "zod";
 
+import { createResponse } from "../../../utilities/response.js";
 import { validateData, zObjectId } from "../../../utilities/validation.js";
 import { getDetailedPlace } from "./helpers.js";
 
@@ -25,10 +26,7 @@ export async function getPlace(
 
     const response = await getDetailedPlace(placeId);
 
-    res.status(StatusCodes.OK).json({
-      success: true,
-      data: response,
-    });
+    res.status(StatusCodes.OK).json(createResponse(response));
   } catch (err) {
     next(err);
   }

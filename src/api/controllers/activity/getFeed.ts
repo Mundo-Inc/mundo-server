@@ -5,6 +5,7 @@ import { z } from "zod";
 import { getUserFeed } from "../../../api/services/feed.service.js";
 import { getConnectionStatuses } from "../../../utilities/connections.js";
 import { getPaginationFromQuery } from "../../../utilities/pagination.js";
+import { createResponse } from "../../../utilities/response.js";
 import {
   validateData,
   zPaginationSpread,
@@ -73,7 +74,7 @@ export async function getFeed(req: Request, res: Response, next: NextFunction) {
       activity.privacyType = "PUBLIC";
     });
 
-    res.status(StatusCodes.OK).json({ success: true, data: result });
+    res.status(StatusCodes.OK).json(createResponse(result));
   } catch (err) {
     next(err);
   }

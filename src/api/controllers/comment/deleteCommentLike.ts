@@ -6,6 +6,7 @@ import UserProjection from "../../../api/dto/user.js";
 import Comment from "../../../models/Comment.js";
 import strings, { dStrings as ds, dynamicMessage } from "../../../strings.js";
 import { createError } from "../../../utilities/errorHandlers.js";
+import { createResponse } from "../../../utilities/response.js";
 import { validateData, zObjectId } from "../../../utilities/validation.js";
 
 const params = z.object({
@@ -48,9 +49,8 @@ export async function deleteCommentLike(
       select: UserProjection.essentials,
     });
 
-    res.status(StatusCodes.OK).json({
-      success: true,
-      data: {
+    res.status(StatusCodes.OK).json(
+      createResponse({
         _id: comment._id,
         createdAt: comment.createdAt,
         updatedAt: comment.updatedAt,
@@ -59,8 +59,8 @@ export async function deleteCommentLike(
         author: comment.author,
         likes: comment.likes.length,
         liked: false,
-      },
-    });
+      }),
+    );
   } catch (err) {
     next(err);
   }

@@ -3,6 +3,7 @@ import { StatusCodes } from "http-status-codes";
 
 import UserProjection from "../../../api/dto/user.js";
 import User from "../../../models/User.js";
+import { createResponse } from "../../../utilities/response.js";
 
 export async function getConversations(
   req: Request,
@@ -64,7 +65,7 @@ export async function getConversations(
       },
     ]);
 
-    res.status(StatusCodes.OK).json({ success: true, data: conversations });
+    res.status(StatusCodes.OK).json(createResponse(conversations));
   } catch (err) {
     next(err);
   }

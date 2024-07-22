@@ -7,6 +7,7 @@ import Bot, { IBotTargetEnum, IBotTypeEnum } from "../../../models/Bot.js";
 import User from "../../../models/User.js";
 import { dStrings as ds, dynamicMessage } from "../../../strings.js";
 import { createError } from "../../../utilities/errorHandlers.js";
+import { createResponse } from "../../../utilities/response.js";
 import { validateData, zObjectId } from "../../../utilities/validation.js";
 
 const params = z.object({
@@ -63,10 +64,7 @@ export async function createDuty(
 
     createCron(duty._id.toString(), duty, botUser)?.start();
 
-    res.status(StatusCodes.CREATED).json({
-      sucess: true,
-      data: duty,
-    });
+    res.status(StatusCodes.CREATED).json(createResponse(duty));
   } catch (err) {
     next(err);
   }

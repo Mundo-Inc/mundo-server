@@ -14,6 +14,7 @@ import Review from "../../../models/Review.js";
 import UserActivity from "../../../models/UserActivity.js";
 import { dStrings as ds, dynamicMessage } from "../../../strings.js";
 import { createError } from "../../../utilities/errorHandlers.js";
+import { createResponse } from "../../../utilities/response.js";
 import { validateData, zObjectId } from "../../../utilities/validation.js";
 import { sendSlackMessage } from "../SlackController.js";
 
@@ -129,7 +130,7 @@ export async function createFlag(
       logger.error("Error sending slack message", { error });
     }
 
-    res.status(StatusCodes.CREATED).json({ success: true, data: newFlag });
+    res.status(StatusCodes.CREATED).json(createResponse(newFlag));
   } catch (err) {
     next(err);
   }

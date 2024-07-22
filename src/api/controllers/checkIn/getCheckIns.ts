@@ -14,6 +14,7 @@ import { dStrings as ds, dynamicMessage } from "../../../strings.js";
 import { createError } from "../../../utilities/errorHandlers.js";
 import { fakeObjectIdString } from "../../../utilities/generator.js";
 import { getPaginationFromQuery } from "../../../utilities/pagination.js";
+import { createResponse } from "../../../utilities/response.js";
 import {
   validateData,
   zObjectId,
@@ -252,15 +253,13 @@ export async function getCheckIns(
       }
     }
 
-    res.status(StatusCodes.OK).json({
-      success: true,
-      data: result.checkIns,
-      pagination: {
+    res.status(StatusCodes.OK).json(
+      createResponse(result.checkIns, {
         totalCount: result.total || 0,
         page: page,
         limit: limit,
-      },
-    });
+      }),
+    );
   } catch (err) {
     next(err);
   }

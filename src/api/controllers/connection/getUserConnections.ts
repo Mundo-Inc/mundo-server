@@ -8,6 +8,7 @@ import User from "../../../models/User.js";
 import { dStrings as ds, dynamicMessage } from "../../../strings.js";
 import { createError } from "../../../utilities/errorHandlers.js";
 import { getPaginationFromQuery } from "../../../utilities/pagination.js";
+import { createResponse } from "../../../utilities/response.js";
 import {
   validateData,
   zObjectId,
@@ -101,15 +102,13 @@ export async function getUserConnections(
       },
     ]).then((result) => result[0]);
 
-    res.status(StatusCodes.OK).json({
-      success: true,
-      data: data?.connections || [],
-      pagination: {
+    res.status(StatusCodes.OK).json(
+      createResponse(data?.connections || [], {
         totalCount: data?.total || 0,
         page: page,
         limit: limit,
-      },
-    });
+      }),
+    );
   } catch (err) {
     next(err);
   }

@@ -2,6 +2,7 @@ import type { NextFunction, Request, Response } from "express";
 import { StatusCodes } from "http-status-codes";
 
 import Prize from "../../../models/Prize.js";
+import { createResponse } from "../../../utilities/response.js";
 
 export async function getPrizes(
   req: Request,
@@ -57,7 +58,7 @@ export async function getPrizes(
       },
     ]);
 
-    res.status(StatusCodes.OK).json({ success: true, data: prizes });
+    res.status(StatusCodes.OK).json(createResponse(prizes));
   } catch (error) {
     next(error);
   }

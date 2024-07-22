@@ -32,6 +32,7 @@ import { getRandomDateInRange } from "../../../utilities/dateTime.js";
 import { createError } from "../../../utilities/errorHandlers.js";
 import { filterObjectByConfig } from "../../../utilities/filtering.js";
 import { shouldBotInteract } from "../../../utilities/mundo.js";
+import { createResponse } from "../../../utilities/response.js";
 import {
   validateData,
   zObjectId,
@@ -173,6 +174,7 @@ export async function createCheckIn(
 
     await checkIn.save();
 
+    // TODO: Use websockets to send reward change
     const reward = await addCheckInReward(authUser._id, checkIn);
 
     const checkInObject = checkIn.toObject();
@@ -183,16 +185,14 @@ export async function createCheckIn(
       ? filterObjectByConfig(mediaDocs[0], MediaProjection.brief)
       : null;
 
-    res.status(StatusCodes.CREATED).json({
-      success: true,
-      data: {
+    res.status(StatusCodes.CREATED).json(
+      createResponse({
         ...checkInObject,
         media: mediaDocs?.map((m) =>
           filterObjectByConfig(m, MediaProjection.brief),
         ),
-      },
-      reward: reward,
-    });
+      }),
+    );
 
     await Promise.all([
       checkinEarning(authUser._id, checkIn._id),

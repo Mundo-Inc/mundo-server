@@ -3,6 +3,7 @@ import { StatusCodes } from "http-status-codes";
 import twilio from "twilio";
 
 import { env } from "../../../env.js";
+import { createResponse } from "../../../utilities/response.js";
 
 export async function getConversationToken(
   req: Request,
@@ -30,9 +31,11 @@ export async function getConversationToken(
 
     token.addGrant(chatGrant);
 
-    res
-      .status(StatusCodes.OK)
-      .json({ success: true, data: { token: token.toJwt() } });
+    res.status(StatusCodes.OK).json(
+      createResponse({
+        token: token.toJwt(),
+      }),
+    );
   } catch (err) {
     next(err);
   }

@@ -6,6 +6,7 @@ import Conversation from "../../../models/Conversation.js";
 import User from "../../../models/User.js";
 import { dStrings as ds, dynamicMessage } from "../../../strings.js";
 import { createError } from "../../../utilities/errorHandlers.js";
+import { createResponse } from "../../../utilities/response.js";
 import { validateData, zObjectId } from "../../../utilities/validation.js";
 import client from "./client.js";
 
@@ -85,7 +86,7 @@ export async function removeUserFromGroupConversation(
 
       await conversation.save();
 
-      res.status(StatusCodes.OK).json({ success: true, data: conversation });
+      res.status(StatusCodes.OK).json(createResponse(conversation));
     }
   } catch (err) {
     next(err);

@@ -12,6 +12,7 @@ import UserActivity, {
   ResourcePrivacyEnum,
 } from "../../../models/UserActivity.js";
 import { createError } from "../../../utilities/errorHandlers.js";
+import { createResponse } from "../../../utilities/response.js";
 import {
   validateData,
   zGeoValidation,
@@ -170,10 +171,7 @@ export async function getMapActivities(
       },
     ]);
 
-    res.status(StatusCodes.OK).json({
-      success: true,
-      data: activities,
-    });
+    res.status(StatusCodes.OK).json(createResponse(activities));
   } catch (error: any) {
     next(error);
   }

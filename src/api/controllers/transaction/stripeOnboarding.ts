@@ -4,6 +4,7 @@ import { StatusCodes } from "http-status-codes";
 import User from "../../../models/User.js";
 import { dStrings as ds, dynamicMessage } from "../../../strings.js";
 import { createError } from "../../../utilities/errorHandlers.js";
+import { createResponse } from "../../../utilities/response.js";
 import stripe from "./stripe.js";
 
 export async function stripeOnboarding(
@@ -34,9 +35,7 @@ export async function stripeOnboarding(
       type: "account_onboarding",
     });
 
-    res
-      .status(StatusCodes.OK)
-      .json({ success: true, data: { url: accountLink.url } });
+    res.status(StatusCodes.OK).json(createResponse({ url: accountLink.url }));
   } catch (error) {
     next(error);
   }

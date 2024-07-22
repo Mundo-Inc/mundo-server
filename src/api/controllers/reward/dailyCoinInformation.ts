@@ -6,6 +6,7 @@ import { dailyCoinsCFG } from "../../../config/dailyCoins.js";
 import User from "../../../models/User.js";
 import { dStrings as ds, dynamicMessage } from "../../../strings.js";
 import { createError } from "../../../utilities/errorHandlers.js";
+import { createResponse } from "../../../utilities/response.js";
 
 export async function dailyCoinInformation(
   req: Request,
@@ -21,13 +22,12 @@ export async function dailyCoinInformation(
 
     user = await applyDailyStreakResetIfNeeded(user);
 
-    res.status(StatusCodes.OK).json({
-      success: true,
-      data: {
+    res.status(StatusCodes.OK).json(
+      createResponse({
         phantomCoins: user.phantomCoins,
         dailyRewards: dailyCoinsCFG.rewards,
-      },
-    });
+      }),
+    );
   } catch (error) {
     next(error);
   }

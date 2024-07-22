@@ -8,6 +8,7 @@ import Place from "../../../models/Place.js";
 import { dStrings as ds, dynamicMessage } from "../../../strings.js";
 import { createError } from "../../../utilities/errorHandlers.js";
 import { filterObjectByConfig } from "../../../utilities/filtering.js";
+import { createResponse } from "../../../utilities/response.js";
 import {
   validateData,
   zGeoValidation,
@@ -100,7 +101,7 @@ export async function createEvent(
 
     eventObj.place = filterObjectByConfig(eventPlaceObj, PlaceProjection.brief);
 
-    res.status(StatusCodes.CREATED).json({ success: true, data: eventObj });
+    res.status(StatusCodes.CREATED).json(createResponse(eventObj));
   } catch (error) {
     next(error);
   }

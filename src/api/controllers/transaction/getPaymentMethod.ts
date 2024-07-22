@@ -4,6 +4,7 @@ import { StatusCodes } from "http-status-codes";
 import User from "../../../models/User.js";
 import { dStrings as ds, dynamicMessage } from "../../../strings.js";
 import { createError } from "../../../utilities/errorHandlers.js";
+import { createResponse } from "../../../utilities/response.js";
 import stripe from "./stripe.js";
 
 export async function getPaymentMethod(
@@ -36,10 +37,7 @@ export async function getPaymentMethod(
       exp_year: paymentMethod.card?.exp_year,
     };
 
-    res.status(StatusCodes.OK).json({
-      success: true,
-      data: paymentMethodDetails,
-    });
+    res.status(StatusCodes.OK).json(createResponse(paymentMethodDetails));
   } catch (error) {
     next(error);
   }

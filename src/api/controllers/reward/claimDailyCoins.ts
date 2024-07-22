@@ -11,6 +11,7 @@ import CoinReward, { CoinRewardTypeEnum } from "../../../models/CoinReward.js";
 import User from "../../../models/User.js";
 import { dStrings as ds, dynamicMessage } from "../../../strings.js";
 import { createError } from "../../../utilities/errorHandlers.js";
+import { createResponse } from "../../../utilities/response.js";
 
 export async function claimDailyCoins(
   req: Request,
@@ -46,7 +47,7 @@ export async function claimDailyCoins(
 
     res
       .status(StatusCodes.OK)
-      .json({ success: true, data: { phantomCoins: user.phantomCoins } });
+      .json(createResponse({ phantomCoins: user.phantomCoins }));
   } catch (error) {
     next(error);
   }

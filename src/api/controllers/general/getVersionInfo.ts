@@ -5,6 +5,7 @@ import { z } from "zod";
 
 import AppSetting from "../../../models/AppSetting.js";
 import { createError } from "../../../utilities/errorHandlers.js";
+import { ResponseStatusEnum } from "../../../utilities/response.js";
 import { validateData } from "../../../utilities/validation.js";
 
 const params = z.object({
@@ -43,6 +44,15 @@ export async function getVersionInfo(
       isOperational,
       minOperationalVersion: minOperationalVersion.value,
       message: isOperational ? "" : "Please update to the latest version",
+
+      status: ResponseStatusEnum.Success,
+      data: {
+        isLatest,
+        latestAppVersion: latestAppVersion.value,
+        isOperational,
+        minOperationalVersion: minOperationalVersion.value,
+        message: isOperational ? "" : "Please update to the latest version",
+      },
     });
   } catch (err) {
     next(err);

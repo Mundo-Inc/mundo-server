@@ -9,6 +9,7 @@ import Place from "../../../models/Place.js";
 import { dStrings as ds, dynamicMessage } from "../../../strings.js";
 import { createError } from "../../../utilities/errorHandlers.js";
 import { getPaginationFromQuery } from "../../../utilities/pagination.js";
+import { createResponse } from "../../../utilities/response.js";
 import {
   validateData,
   zObjectId,
@@ -75,15 +76,13 @@ export async function getMedia(
       .populate("user", UserProjection.essentials)
       .lean();
 
-    res.status(StatusCodes.OK).json({
-      success: true,
-      data: medias,
-      pagination: {
+    res.status(StatusCodes.OK).json(
+      createResponse(medias, {
         totalCount: medias.length,
         page,
         limit,
-      },
-    });
+      }),
+    );
   } catch (err) {
     next(err);
   }

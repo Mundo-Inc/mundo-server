@@ -6,6 +6,7 @@ import UserProjection from "../../../api/dto/user.js";
 import User from "../../../models/User.js";
 import { getConnectionStatuses } from "../../../utilities/connections.js";
 import { getPaginationFromQuery } from "../../../utilities/pagination.js";
+import { createResponse } from "../../../utilities/response.js";
 import { validateData } from "../../../utilities/validation.js";
 
 const getLeaderboardQuery = z.object({
@@ -77,7 +78,7 @@ export async function getLeaderboard(
       user.connectionStatus = usersObject[user._id.toString()];
     }
 
-    res.status(StatusCodes.OK).json({ success: true, data: leaderboard });
+    res.status(StatusCodes.OK).json(createResponse(leaderboard));
   } catch (err) {
     next(err);
   }

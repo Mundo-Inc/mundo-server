@@ -5,6 +5,7 @@ import { z } from "zod";
 
 import Block from "../../../models/Block.js";
 import { getPaginationFromQuery } from "../../../utilities/pagination.js";
+import { createResponse } from "../../../utilities/response.js";
 import {
   validateData,
   zObjectId,
@@ -73,18 +74,19 @@ export async function getActivityComments(
       false,
     );
 
-    res.status(StatusCodes.OK).json({
-      success: true,
-      data: {
-        comments: result.comments,
-        replies: replies.comments,
-      },
-      pagination: {
-        totalCount: result.count || 0,
-        page: page,
-        limit: limit,
-      },
-    });
+    res.status(StatusCodes.OK).json(
+      createResponse(
+        {
+          comments: result.comments,
+          replies: replies.comments,
+        },
+        {
+          totalCount: result.count || 0,
+          page: page,
+          limit: limit,
+        },
+      ),
+    );
   } catch (err) {
     next(err);
   }

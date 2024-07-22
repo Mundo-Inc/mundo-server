@@ -6,6 +6,7 @@ import MediaProjection from "../../../api/dto/media.js";
 import Place from "../../../models/Place.js";
 import { dStrings as ds, dynamicMessage } from "../../../strings.js";
 import { createError } from "../../../utilities/errorHandlers.js";
+import { createResponse } from "../../../utilities/response.js";
 import { validateData, zObjectId } from "../../../utilities/validation.js";
 
 const params = z.object({
@@ -94,10 +95,7 @@ export async function getPlaceOverview(
       );
     }
 
-    res.status(StatusCodes.OK).json({
-      success: true,
-      data: response,
-    });
+    res.status(StatusCodes.OK).json(createResponse(response));
   } catch (err) {
     next(err);
   }

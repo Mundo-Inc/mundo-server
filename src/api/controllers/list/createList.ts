@@ -4,6 +4,7 @@ import { z } from "zod";
 
 import UserProjection from "../../../api/dto/user.js";
 import List from "../../../models/List.js";
+import { createResponse } from "../../../utilities/response.js";
 import {
   validateData,
   zUniqueObjectIdArray,
@@ -45,13 +46,12 @@ export async function createList(
       newList.populate("collaborators.user", UserProjection.essentials),
     ]);
 
-    res.status(StatusCodes.CREATED).json({
-      success: true,
-      data: {
+    res.status(StatusCodes.CREATED).json(
+      createResponse({
         ...newList.toObject(),
         placesCount: 0,
-      },
-    });
+      }),
+    );
   } catch (err) {
     next(err);
   }

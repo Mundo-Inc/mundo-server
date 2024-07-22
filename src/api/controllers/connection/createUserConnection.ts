@@ -8,6 +8,7 @@ import FollowRequest from "../../../models/FollowRequest.js";
 import User from "../../../models/User.js";
 import { dStrings as ds, dynamicMessage } from "../../../strings.js";
 import { createError } from "../../../utilities/errorHandlers.js";
+import { createResponse } from "../../../utilities/response.js";
 import { validateData, zObjectId } from "../../../utilities/validation.js";
 
 const params = z.object({
@@ -65,10 +66,7 @@ export async function createUserConnection(
         target: id,
       });
 
-      res.status(StatusCodes.ACCEPTED).json({
-        success: true,
-        data: request,
-      });
+      res.status(StatusCodes.ACCEPTED).json(createResponse(request));
 
       //TODO: Send Notification to Target that they have a follow request
     } else {
@@ -81,7 +79,7 @@ export async function createUserConnection(
       // Create following activity
       await UserActivityManager.createFollowActivity(authUser, id);
 
-      res.status(StatusCodes.CREATED).json({ success: true, data: follow });
+      res.status(StatusCodes.CREATED).json(createResponse(follow));
     }
   } catch (err) {
     next(err); // Pass any errors to the error handling middleware

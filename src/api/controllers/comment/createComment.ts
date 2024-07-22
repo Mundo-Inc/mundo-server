@@ -18,7 +18,7 @@ import UserActivity from "../../../models/UserActivity.js";
 import { dStrings as ds, dynamicMessage } from "../../../strings.js";
 import { getRandomDateInRange } from "../../../utilities/dateTime.js";
 import { createError } from "../../../utilities/errorHandlers.js";
-import { shouldBotInteract } from "../../../utilities/mundo.js";
+import { createResponse } from "../../../utilities/response.js";
 import { validateData, zObjectId } from "../../../utilities/validation.js";
 
 const body = z.object({
@@ -125,35 +125,32 @@ export async function createComment(
     );
 
     // adding reward
+    // TODO: Use websockets to send reward change
     const reward = await addReward(user._id, {
       refType: "Comment",
       refId: comment._id,
       userActivityId: activity,
     });
 
-    res.status(StatusCodes.CREATED).json({
-      success: true,
-      data: {
+    res.status(StatusCodes.CREATED).json(
+      createResponse({
         ...comment.toObject(),
         author: user,
         repliesCount: 0,
         replies: [],
         likes: 0,
         liked: false,
-      },
-      reward: reward,
-    });
+      }),
+    );
 
     // AI reply
     if (parentComment && parentComment.author.equals(env.MUNDO_USER_ID)) {
-      if (await shouldBotInteract(user._id)) {
-        await ScheduledTask.create({
-          status: ScheduledTaskStatus.Pending,
-          type: ScheduledTaskType.ReplyToComment,
-          resourceId: comment._id,
-          scheduledAt: getRandomDateInRange(60 * 60 * 2, 60 * 5),
-        });
-      }
+      await ScheduledTask.create({
+        status: ScheduledTaskStatus.Pending,
+        type: ScheduledTaskType.ReplyToComment,
+        resourceId: comment._id,
+        scheduledAt: getRandomDateInRange(60 * 60 * 2, 60 * 5),
+      });
     }
   } catch (err) {
     next(err);

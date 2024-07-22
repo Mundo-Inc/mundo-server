@@ -3,6 +3,12 @@ export enum ResponseStatusEnum {
   Error = "error",
 }
 
+type Pagination = {
+  totalCount: number;
+  page: number;
+  limit: number;
+};
+
 export type ErrorDetails = {
   type: string;
   message: string;
@@ -14,6 +20,7 @@ export type ErrorDetails = {
 export type SuccessResponse<T> = {
   status: ResponseStatusEnum.Success;
   data: T;
+  pagination?: Pagination;
 };
 
 export type ErrorResponse = {
@@ -21,37 +28,33 @@ export type ErrorResponse = {
   error: ErrorDetails;
 };
 
-export type ApiResponse<T> = SuccessResponse<T> | ErrorResponse;
-
 /**
- * Create a typed API response.
- * @param status - The response status
- * @param payload - The data payload for a success response, or error details for an error response.
- * @returns A typed ApiResponse object.
+ * Create a typed API response
+ * @param data - The data payload for a success response, or error details for an error response.
+ * @param pagination - The pagination object for a success response.
  */
 export function createResponse<T>(
-  status: ResponseStatusEnum.Success,
-  data: T
-): SuccessResponse<T>;
-export function createResponse(
-  status: ResponseStatusEnum.Error,
-  error: ErrorDetails
-): ErrorResponse;
-export function createResponse<T>(
-  status: ResponseStatusEnum,
-  payload: T | ErrorDetails
-): ApiResponse<T> {
-  if (status === ResponseStatusEnum.Success) {
-    return { status, data: payload as T };
-  } else {
-    const errorPayload = payload as ErrorDetails & {
-      success?: boolean;
-      validation?: any;
-      title?: string;
-    };
-    errorPayload.success = false;
-    errorPayload.validation = errorPayload.details;
-    errorPayload.title = errorPayload.type;
-    return { status, error: payload as ErrorDetails };
-  }
+  data: T,
+  pagination?: Pagination,
+): SuccessResponse<T> {
+  return {
+    status: ResponseStatusEnum.Success,
+    data: data,
+    pagination,
+  };
+}
+
+export function createErrorResponse(payload: ErrorDetails): ErrorResponse {
+  const errorPayload = payload as ErrorDetails & {
+    success?: boolean;
+    validation?: any;
+    title?: string;
+  };
+  errorPayload.success = false;
+  errorPayload.validation = errorPayload.details;
+  errorPayload.title = errorPayload.type;
+  return {
+    status: ResponseStatusEnum.Error,
+    error: payload as ErrorDetails,
+  };
 }

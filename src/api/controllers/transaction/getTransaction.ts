@@ -9,6 +9,7 @@ import UserProjection from "../../../api/dto/user.js";
 import Transaction from "../../../models/Transaction.js";
 import { dStrings as ds, dynamicMessage } from "../../../strings.js";
 import { createError } from "../../../utilities/errorHandlers.js";
+import { createResponse } from "../../../utilities/response.js";
 import { validateData, zObjectId } from "../../../utilities/validation.js";
 
 const params = z.object({
@@ -57,10 +58,7 @@ export async function getTransaction(
       );
     }
 
-    res.status(StatusCodes.OK).json({
-      success: true,
-      data: transaction,
-    });
+    res.status(StatusCodes.OK).json(createResponse(transaction));
   } catch (error) {
     next(error);
   }

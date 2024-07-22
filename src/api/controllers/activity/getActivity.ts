@@ -8,6 +8,7 @@ import UserActivity from "../../../models/UserActivity.js";
 import { dStrings as ds, dynamicMessage } from "../../../strings.js";
 import { getConnectionStatus } from "../../../utilities/connections.js";
 import { createError } from "../../../utilities/errorHandlers.js";
+import { createResponse } from "../../../utilities/response.js";
 import { validateData, zObjectId } from "../../../utilities/validation.js";
 import { getCommentsOfActivity, getReactionsOfActivity } from "./helpers.js";
 
@@ -62,9 +63,8 @@ export async function getActivity(
 
     userInfo.connectionStatus = connectionStatus;
 
-    res.status(StatusCodes.OK).json({
-      success: true,
-      data: {
+    res.status(StatusCodes.OK).json(
+      createResponse({
         _id: activity._id,
         user: userInfo,
         place: placeInfo,
@@ -79,8 +79,8 @@ export async function getActivity(
         reactions: reactions[0],
         comments: comments,
         commentsCount,
-      },
-    });
+      }),
+    );
   } catch (err) {
     next(err);
   }

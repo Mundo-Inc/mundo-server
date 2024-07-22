@@ -3,6 +3,7 @@ import { StatusCodes } from "http-status-codes";
 import { z } from "zod";
 
 import { getConnectionStatus } from "../../../utilities/connections.js";
+import { createResponse } from "../../../utilities/response.js";
 import { validateData, zObjectId } from "../../../utilities/validation.js";
 
 const params = z.object({
@@ -27,10 +28,7 @@ export async function connectionFollowStatus(
 
     const connectionStatus = await getConnectionStatus(authUser._id, id);
 
-    return res.status(StatusCodes.OK).json({
-      success: true,
-      data: connectionStatus,
-    });
+    return res.status(StatusCodes.OK).json(createResponse(connectionStatus));
   } catch (error) {
     next(error);
   }

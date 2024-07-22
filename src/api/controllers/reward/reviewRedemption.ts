@@ -9,6 +9,7 @@ import PrizeRedemption, {
 import User from "../../../models/User.js";
 import { dStrings as ds, dynamicMessage } from "../../../strings.js";
 import { createError } from "../../../utilities/errorHandlers.js";
+import { createResponse } from "../../../utilities/response.js";
 import { validateData, zObjectId } from "../../../utilities/validation.js";
 
 const body = z.object({
@@ -73,10 +74,7 @@ export async function reviewRedemption(
     redemption.status = validation;
     await redemption.save();
 
-    res.status(StatusCodes.OK).json({
-      success: true,
-      data: redemption,
-    });
+    res.status(StatusCodes.OK).json(createResponse(redemption));
   } catch (error) {
     next(error);
   }

@@ -11,6 +11,7 @@ import Place from "../../../models/Place.js";
 import User from "../../../models/User.js";
 import strings, { dStrings as ds, dynamicMessage } from "../../../strings.js";
 import { createError } from "../../../utilities/errorHandlers.js";
+import { createResponse } from "../../../utilities/response.js";
 import { validateData, zObjectId } from "../../../utilities/validation.js";
 
 const params = z.object({
@@ -126,7 +127,7 @@ export async function getList(req: Request, res: Response, next: NextFunction) {
       list.places[i].user = user;
     }
 
-    return res.json({ success: true, data: list });
+    return res.status(StatusCodes.OK).json(createResponse(list));
   } catch (error) {
     next(error);
   }
