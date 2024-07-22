@@ -38,6 +38,8 @@ export function createResponse<T>(
   pagination?: Pagination,
 ): SuccessResponse<T> {
   return {
+    // @ts-ignore
+    success: true,
     status: ResponseStatusEnum.Success,
     data: data,
     pagination,
@@ -55,6 +57,6 @@ export function createErrorResponse(payload: ErrorDetails): ErrorResponse {
   errorPayload.title = errorPayload.type;
   return {
     status: ResponseStatusEnum.Error,
-    error: payload as ErrorDetails,
+    error: payload,
   };
 }
