@@ -43,7 +43,7 @@ const body = z.object({
   place: zObjectId.optional(), // TODO: make sure only one is provided
   event: zObjectId.optional(), // TODO: make sure only one is provided
   image: zObjectId.optional(), // @deprecated | TODO: remove
-  media: z.array(zObjectId).optional(),
+  media: zUniqueObjectIdArray.optional(),
   tags: zUniqueObjectIdArray.optional(),
   caption: z.string().trim().optional(),
   privacyType: z
@@ -71,7 +71,7 @@ export async function createCheckIn(
     const { caption, image, media, place, event, tags, privacyType } =
       req.body as Body;
 
-    const mediaUploadIds = media || image ? [image] : null;
+    const mediaUploadIds = media || (image ? [image] : null);
 
     let thePlace: Types.ObjectId;
     if (place) {

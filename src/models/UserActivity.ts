@@ -139,7 +139,7 @@ const UserActivitySchema = new Schema<
       },
     },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 UserActivitySchema.index({
@@ -171,7 +171,7 @@ function getFreshHoursBoost(hoursValue: number) {
 UserActivitySchema.methods.calculateHotnessScore = async function () {
   const hoursSinceCreation = Math.max(
     1,
-    (new Date().getTime() - this.createdAt.getTime()) / 36e5
+    (new Date().getTime() - this.createdAt.getTime()) / 36e5,
   );
 
   const hoursValue = Math.max(1, hoursSinceCreation);
@@ -226,7 +226,7 @@ const UserActivity =
   (mongoose.models.UserActivity as UserActivityModel) ||
   mongoose.model<IUserActivity, UserActivityModel>(
     "UserActivity",
-    UserActivitySchema
+    UserActivitySchema,
   );
 
 export default UserActivity;

@@ -27,14 +27,14 @@ router.get(
   "/:activityId/comments",
   authMiddleware,
   getActivityCommentsValidation,
-  getActivityComments
+  getActivityComments,
 );
 
 router.get(
   "/:id/engagements",
   authMiddleware,
   getEngagementsValidation,
-  getEngagements
+  getEngagements,
 );
 
 export default router;

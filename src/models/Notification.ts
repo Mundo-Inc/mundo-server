@@ -157,7 +157,7 @@ const NotificationSchema = new Schema<INotification>(
   },
   {
     timestamps: true,
-  }
+  },
 );
 
 NotificationSchema.index({ updatedAt: 1 });

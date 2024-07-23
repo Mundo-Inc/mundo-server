@@ -1,11 +1,11 @@
 import { StatusCodes } from "http-status-codes";
 
+import { MediaTypeEnum } from "../../../../models/Media.js";
 import type { IReview } from "../../../../models/Review.js";
 import { createError } from "../../../../utilities/errorHandlers.js";
 import { type MediaProjectionBrief } from "../../../dto/media.js";
 import { getLevelThresholds } from "../utils/levelupThresholds.js";
 import { rewards_amounts } from "../utils/rewardsAmounts.js";
-import { MediaTypeEnum } from "../../../../models/Media.js";
 
 export const calcLevel = (xp: number) => {
   const thresholds = getLevelThresholds();
@@ -41,7 +41,7 @@ export const calcRemainingXP = (currentXP: number): number => {
   if (nextLevelThreshold === undefined) {
     throw createError(
       `XP threshold for level ${currentLevel + 1} is not defined.`,
-      StatusCodes.INTERNAL_SERVER_ERROR
+      StatusCodes.INTERNAL_SERVER_ERROR,
     );
   }
 
@@ -51,7 +51,7 @@ export const calcRemainingXP = (currentXP: number): number => {
 
 export function calcReviewReward(
   review: IReview,
-  media: MediaProjectionBrief[]
+  media: MediaProjectionBrief[],
 ) {
   let amt = 0;
 

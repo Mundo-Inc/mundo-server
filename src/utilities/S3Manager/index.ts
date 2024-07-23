@@ -71,17 +71,17 @@ namespace S3Manager {
   export async function uploadImage(
     file: ImageFileObjectWithStream,
     key: string,
-    options?: UploadImageOptions
+    options?: UploadImageOptions,
   ): Promise<string>;
   export async function uploadImage(
     file: ImageFileObjectWithPath,
     key: string,
-    options?: UploadImageOptions
+    options?: UploadImageOptions,
   ): Promise<string>;
   export async function uploadImage(
     file: ImageFileObjectWithStream | ImageFileObjectWithPath,
     key: string,
-    options?: UploadImageOptions
+    options?: UploadImageOptions,
   ): Promise<string> {
     const { allowedMimeTypes, cacheControl } = validateImageOptions(options);
 
@@ -92,7 +92,7 @@ namespace S3Manager {
     if (options?.sizeLimit) {
       validateFileSize(
         options.sizeLimit.fileSize,
-        options.sizeLimit.fileSizeLimit
+        options.sizeLimit.fileSizeLimit,
       );
     }
 
@@ -181,17 +181,17 @@ namespace S3Manager {
   export async function uploadVideo(
     file: VideoFileObjectWithStream,
     key: string,
-    options?: UploadVideoOptions
+    options?: UploadVideoOptions,
   ): Promise<string>;
   export async function uploadVideo(
     file: VideoFileObjectWithPath,
     key: string,
-    options?: UploadVideoOptions
+    options?: UploadVideoOptions,
   ): Promise<string>;
   export async function uploadVideo(
     file: VideoFileObjectWithStream | VideoFileObjectWithPath,
     key: string,
-    options?: UploadVideoOptions
+    options?: UploadVideoOptions,
   ) {
     const { allowedMimeTypes, cacheControl } = validateVideoOptions(options);
 
@@ -200,14 +200,14 @@ namespace S3Manager {
     if (options?.sizeLimit) {
       validateFileSize(
         options.sizeLimit.fileSize,
-        options.sizeLimit.fileSizeLimit
+        options.sizeLimit.fileSizeLimit,
       );
     }
 
     if (options?.durationLimit) {
       await validateVideoDuration(
         options.durationLimit.url,
-        options.durationLimit.maxDuration
+        options.durationLimit.maxDuration,
       );
     }
 

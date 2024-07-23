@@ -7,27 +7,27 @@ export function validateFileSize(size: number, maxSizeInMB?: number) {
   if (maxSizeInMB && size > maxSizeInMB * 1024 * 1024) {
     throw createError(
       `File size exceeds the allowed limit of ${maxSizeInMB} MB.`,
-      StatusCodes.BAD_REQUEST
+      StatusCodes.BAD_REQUEST,
     );
   }
 }
 
 export function validateMimeType(
   type: string,
-  allowedMimeTypes: S3Manager.AllowedMimeTypes[]
+  allowedMimeTypes: S3Manager.AllowedMimeTypes[],
 ) {
   if (!allowedMimeTypes.includes(type as S3Manager.AllowedMimeTypes)) {
     throw createError(
       `File type '${type}' not allowed. Allowed types: ${allowedMimeTypes.join(
-        ", "
+        ", ",
       )}`,
-      StatusCodes.BAD_REQUEST
+      StatusCodes.BAD_REQUEST,
     );
   }
 }
 
 export function validateImageOptions(
-  options: S3Manager.UploadImageOptions | undefined
+  options: S3Manager.UploadImageOptions | undefined,
 ) {
   return {
     allowedMimeTypes:
@@ -37,7 +37,7 @@ export function validateImageOptions(
 }
 
 export function validateVideoOptions(
-  options: S3Manager.UploadVideoOptions | undefined
+  options: S3Manager.UploadVideoOptions | undefined,
 ) {
   return {
     allowedMimeTypes:
@@ -55,7 +55,7 @@ export function validateVideoOptions(
  */
 export async function validateVideoDuration(
   objectUrl: string,
-  maxDurationInSeconds: number
+  maxDurationInSeconds: number,
 ): Promise<boolean> {
   return new Promise((resolve, reject) => {
     const video = document.createElement("video");
@@ -72,8 +72,8 @@ export async function validateVideoDuration(
         reject(
           createError(
             `Video duration exceeds the allowed limit of ${maxDurationInSeconds} seconds. Actual duration: ${duration} seconds.`,
-            StatusCodes.BAD_REQUEST
-          )
+            StatusCodes.BAD_REQUEST,
+          ),
         );
       } else {
         resolve(true);

@@ -1,19 +1,19 @@
 import axios from "axios";
 import { StatusCodes } from "http-status-codes";
 
+import { env } from "../../env.js";
 import type { IPlace } from "../../models/Place.js";
 import type { IYelpPlaceDetails } from "../../types/yelpPlace.interface.js";
 import { createError } from "../../utilities/errorHandlers.js";
 import logger from "./logger/index.js";
-import { env } from "../../env.js";
 
 export async function findYelpId(place: IPlace) {
   try {
     const url = new URL(
       `https://api.yelp.com/v3/businesses/matches?name=${place.name}&address1=${place.location.address}&city=${place.location.city}&state=${place.location.state}&country=${place.location.country}&latitude=${place.location.geoLocation.coordinates[1]}&longitude=${place.location.geoLocation.coordinates[0]}`.replaceAll(
         "#",
-        ""
-      )
+        "",
+      ),
     );
 
     const yelpResult = await axios({
@@ -32,7 +32,7 @@ export async function findYelpId(place: IPlace) {
     }
   } catch (error) {
     const url = new URL(
-      `https://api.yelp.com/v3/businesses/search?latitude=${place.location.geoLocation.coordinates[1]}&longitude=${place.location.geoLocation.coordinates[0]}&term=${place.name}`
+      `https://api.yelp.com/v3/businesses/search?latitude=${place.location.geoLocation.coordinates[1]}&longitude=${place.location.geoLocation.coordinates[0]}&term=${place.name}`,
     );
 
     const yelpResult = await axios({
@@ -73,7 +73,7 @@ export async function getYelpData(yelpId: string) {
     logger.error("Error fetching Yelp rating:", error);
     throw createError(
       "Something went wrong",
-      StatusCodes.INTERNAL_SERVER_ERROR
+      StatusCodes.INTERNAL_SERVER_ERROR,
     );
   }
 }
@@ -99,7 +99,7 @@ export const getYelpReviews = async (yelpId: string) => {
     logger.error("Error fetching Yelp reviews:", error);
     throw createError(
       "Something went wrong",
-      StatusCodes.INTERNAL_SERVER_ERROR
+      StatusCodes.INTERNAL_SERVER_ERROR,
     );
   }
 };
@@ -120,14 +120,14 @@ export const findFoursquareId = async (place: IPlace) => {
     } else {
       throw createError(
         `Unexpected response. Status: ${resault.status}`,
-        resault.status
+        resault.status,
       );
     }
   } catch (error) {
     logger.error("Error:", error);
     throw createError(
       "Something went wrong",
-      StatusCodes.INTERNAL_SERVER_ERROR
+      StatusCodes.INTERNAL_SERVER_ERROR,
     );
   }
 };

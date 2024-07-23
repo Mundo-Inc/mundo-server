@@ -37,7 +37,7 @@ const WithdrawalSchema = new Schema<IWithdrawal>(
   },
   {
     timestamps: true,
-  }
+  },
 );
 
 WithdrawalSchema.index({ user: 1 });

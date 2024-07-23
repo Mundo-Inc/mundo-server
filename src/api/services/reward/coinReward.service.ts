@@ -25,14 +25,14 @@ export function getDailyRewardAmount(dailyRewards: IDailyReward): number {
   }
   const streakIndex = Math.min(
     dailyRewards.streak,
-    dailyCoinsCFG.rewards.length - 1
+    dailyCoinsCFG.rewards.length - 1,
   );
   return dailyCoinsCFG.rewards[streakIndex];
 }
 
 export async function updateUserCoinsAndStreak(
   user: IUser & Document<any, any, IUser>,
-  rewardAmount: number
+  rewardAmount: number,
 ) {
   user.phantomCoins.balance += rewardAmount;
   const now = new Date();
@@ -42,7 +42,7 @@ export async function updateUserCoinsAndStreak(
 }
 
 export async function applyDailyStreakResetIfNeeded(
-  user: IUser & Document<any, any, IUser>
+  user: IUser & Document<any, any, IUser>,
 ) {
   let updatedUser = user;
   if (user.phantomCoins.daily.lastClaim) {
@@ -63,7 +63,7 @@ export async function applyDailyStreakResetIfNeeded(
 
 export async function populateMissionProgress(
   mission: IMission,
-  userId: mongoose.Types.ObjectId
+  userId: mongoose.Types.ObjectId,
 ) {
   const isClaimed = await CoinReward.exists({
     userId: userId,

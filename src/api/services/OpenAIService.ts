@@ -42,7 +42,7 @@ export class OpenAIService {
 
     const prompt = `Name: "${user.name}"\nCurrent activity:\n${getReviewText(
       review,
-      place
+      place,
     )}\n${activityHistory}`;
 
     const response = await this.openai.chat.completions.create({
@@ -85,7 +85,7 @@ export class OpenAIService {
     const prompt = `Name: "${user.name}"\nCurrent activity:\n${getCheckInText(
       checkIn,
       mentions,
-      place
+      place,
     )}\n${activityHistory}`;
 
     const response = await this.openai.chat.completions.create({
@@ -133,11 +133,11 @@ export class OpenAIService {
     const prompt = `Name: "${author.name}"\n${getDateTime(
       comment.createdAt,
       userActivity.placeId.location.geoLocation.coordinates[1],
-      userActivity.placeId.location.geoLocation.coordinates[0]
+      userActivity.placeId.location.geoLocation.coordinates[0],
     )} Responded to your reply with: ${comment.content}.\n${getDateTime(
       parentComment.createdAt,
       userActivity.placeId.location.geoLocation.coordinates[1],
-      userActivity.placeId.location.geoLocation.coordinates[0]
+      userActivity.placeId.location.geoLocation.coordinates[0],
     )} Your previous comment: ${parentComment.content}\n${activityHistory}`;
 
     const response = await this.openai.chat.completions.create({
@@ -164,7 +164,7 @@ export class OpenAIService {
   private async getActivityHistory(
     user: Types.ObjectId,
     createdAt?: Date,
-    limit: number = 3
+    limit: number = 3,
   ) {
     const [checkInHistory, reviewHistory] = await Promise.all([
       CheckIn.find({
@@ -174,7 +174,7 @@ export class OpenAIService {
         .sort({ createdAt: -1 })
         .limit(limit)
         .select<Pick<ICheckIn, "createdAt" | "caption" | "tags" | "place">>(
-          "createdAt caption tags place"
+          "createdAt caption tags place",
         )
         .populate<{
           place: Pick<IPlace, "_id" | "name" | "location">;
@@ -196,7 +196,7 @@ export class OpenAIService {
         .sort({ createdAt: -1 })
         .limit(limit)
         .select<Pick<IReview, "createdAt" | "content" | "place">>(
-          "createdAt content place"
+          "createdAt content place",
         )
         .populate<{
           place: Pick<IPlace, "_id" | "name" | "location">;
@@ -254,7 +254,7 @@ function getCheckInText(
   tags: {
     name: string;
   }[],
-  place: Pick<IPlace, "_id" | "name" | "location">
+  place: Pick<IPlace, "_id" | "name" | "location">,
 ) {
   const mentionsText =
     tags.length > 0
@@ -266,7 +266,7 @@ function getCheckInText(
 
   const tz = tz_lookup(
     place.location.geoLocation.coordinates[1],
-    place.location.geoLocation.coordinates[0]
+    place.location.geoLocation.coordinates[0],
   );
 
   const dateTimeString = checkIn.createdAt.toLocaleString("en-US", {
@@ -283,11 +283,11 @@ function getCheckInText(
 
 function getReviewText(
   review: Pick<IReview, "createdAt" | "content">,
-  place: Pick<IPlace, "_id" | "name" | "location">
+  place: Pick<IPlace, "_id" | "name" | "location">,
 ) {
   const tz = tz_lookup(
     place.location.geoLocation.coordinates[1],
-    place.location.geoLocation.coordinates[0]
+    place.location.geoLocation.coordinates[0],
   );
 
   const dateTimeString = review.createdAt.toLocaleString("en-US", {

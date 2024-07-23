@@ -27,7 +27,7 @@ import logger from "./logger/index.js";
 
 export const getResourceInfo = async (
   activity: IUserActivity,
-  authUserId: mongoose.Types.ObjectId
+  authUserId: mongoose.Types.ObjectId,
 ) => {
   let resourceInfo: any;
   let placeInfo: any;
@@ -478,7 +478,7 @@ export const getUserFeed = async (
   authUserId: mongoose.Types.ObjectId,
   isForYou: boolean,
   limit: number,
-  skip: number
+  skip: number,
 ) => {
   try {
     const activities = [];
@@ -542,7 +542,7 @@ export const getUserFeed = async (
     for (const activity of userActivities) {
       const [resourceInfo, placeInfo, userInfo] = await getResourceInfo(
         activity,
-        authUserId
+        authUserId,
       );
 
       if (!resourceInfo) continue;

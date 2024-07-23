@@ -52,7 +52,7 @@ const ConversationSchema = new Schema<IConversation>(
   },
   {
     timestamps: true,
-  }
+  },
 );
 
 const Conversation =

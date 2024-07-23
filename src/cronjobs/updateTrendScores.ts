@@ -13,7 +13,7 @@ interface Query {
 
 async function updateHotnessScores(
   before: Date | undefined,
-  after: Date | undefined
+  after: Date | undefined,
 ) {
   const query: Query = { hasMedia: true };
   if (after) {

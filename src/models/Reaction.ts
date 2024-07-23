@@ -60,7 +60,7 @@ async function removeDependencies(reaction: IReaction) {
   });
   // Delete each notification one by one to trigger any associated middleware
   await Promise.all(
-    notifications.map((notification) => notification.deleteOne())
+    notifications.map((notification) => notification.deleteOne()),
   );
 }
 
@@ -75,7 +75,7 @@ ReactionSchema.pre(
     } catch (error) {
       next(error as CallbackError);
     }
-  }
+  },
 );
 
 ReactionSchema.pre("deleteOne", async function (next) {

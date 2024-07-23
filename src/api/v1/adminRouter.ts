@@ -36,16 +36,16 @@ import {
   createPrize,
   createPrizeValidation,
 } from "../controllers/reward/createPrize.js";
-import { getMissionsValidation } from "../controllers/reward/getMissions.js";
-import { adminAuthMiddleware } from "../middlewares/authMiddleWare.js";
 import {
   getAllPrizeRedemptionHistory,
   getAllPrizeRedemptionHistoryValidation,
 } from "../controllers/reward/getAllPrizeRedemptionHistory.js";
+import { getMissionsValidation } from "../controllers/reward/getMissions.js";
 import {
   reviewRedemption,
   reviewRedemptionValidation,
 } from "../controllers/reward/reviewRedemption.js";
+import { adminAuthMiddleware } from "../middlewares/authMiddleWare.js";
 
 // Admin Only
 const router = express.Router();
@@ -75,12 +75,12 @@ router.route("/prizes").post(createPrizeValidation, createPrize);
 router.get(
   "/redemptions/all",
   getAllPrizeRedemptionHistoryValidation,
-  getAllPrizeRedemptionHistory
+  getAllPrizeRedemptionHistory,
 );
 router.post(
   "/redemptions/:id/review",
   reviewRedemptionValidation,
-  reviewRedemption
+  reviewRedemption,
 );
 
 export default router;

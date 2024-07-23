@@ -8,7 +8,7 @@ import * as fs from "fs";
 ffmpeg.setFfmpegPath(path);
 
 export async function parseForm(
-  req: Request
+  req: Request,
 ): Promise<{ fields: Fields; files: Files }> {
   const uploadDir = `./tmp`;
 
@@ -36,7 +36,7 @@ export const resizeVideo = (inputPath: string, outputPath: string) => {
       }
 
       const videoStream = metadata.streams.find(
-        (stream) => stream.codec_type === "video"
+        (stream) => stream.codec_type === "video",
       );
       if (!videoStream) {
         reject(new Error("No video stream found"));
@@ -73,7 +73,9 @@ export function createThumbnail(inputPath: string) {
     ffmpeg(inputPath)
       .on("error", (err: any) => {
         reject(
-          new Error(`Error creating thumbnail for ${inputPath}: ${err.message}`)
+          new Error(
+            `Error creating thumbnail for ${inputPath}: ${err.message}`,
+          ),
         );
       })
       .on("end", () => {

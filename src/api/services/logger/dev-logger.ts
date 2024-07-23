@@ -12,7 +12,7 @@ const customFormat = format.combine(
     }
     return logMessage;
   }),
-  format.metadata()
+  format.metadata(),
 );
 
 export default function buildDevLogger(): Logger {

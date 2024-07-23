@@ -36,7 +36,7 @@ const HomemadeSchema = new Schema<IHomemade>(
       required: true,
     },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 // dependency removal function
@@ -50,7 +50,7 @@ async function removeHomemadeDependencies(homemade: IHomemade) {
     userActivity: homemade.userActivityId,
   });
   await Promise.all(
-    comments.map((comment) => DeletionService.deleteComment(comment._id))
+    comments.map((comment) => DeletionService.deleteComment(comment._id)),
   );
 
   // remove the userActivity related to the homemade
@@ -81,7 +81,7 @@ HomemadeSchema.pre(
       logger.error(`Error in deleteOne middleware for document: ${error}`);
       next(error as CallbackError);
     }
-  }
+  },
 );
 
 // Middleware for homemade.deleteOne (query)
@@ -101,7 +101,7 @@ HomemadeSchema.pre(
       logger.error(`Error in deleteOne middleware for query: ${error}`);
       next(error as CallbackError);
     }
-  }
+  },
 );
 
 const Homemade =

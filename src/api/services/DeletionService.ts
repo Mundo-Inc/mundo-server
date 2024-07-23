@@ -22,13 +22,13 @@ export default class DeletionService {
    */
   static async deleteComment(
     id: mongoose.Types.ObjectId,
-    preRun?: (comment: IComment) => void
+    preRun?: (comment: IComment) => void,
   ) {
     const comment = await Comment.findById(id).orFail(
       createError(
         dynamicMessage(dStrings.notFound, "Comment"),
-        StatusCodes.NOT_FOUND
-      )
+        StatusCodes.NOT_FOUND,
+      ),
     );
 
     if (preRun) {
@@ -41,13 +41,13 @@ export default class DeletionService {
       // Update UserActivity
       UserActivity.updateOne(
         { _id: comment.userActivity },
-        { $inc: { "engagements.comments": -1 } }
+        { $inc: { "engagements.comments": -1 } },
       ),
 
       // Delete children comments
       comment.children.length > 0
         ? Promise.all(
-            comment.children.map((c) => DeletionService.deleteComment(c))
+            comment.children.map((c) => DeletionService.deleteComment(c)),
           )
         : Promise.resolve(),
 
@@ -55,7 +55,7 @@ export default class DeletionService {
       comment.parent
         ? Comment.updateOne(
             { _id: comment.parent },
-            { $pull: { children: comment._id } }
+            { $pull: { children: comment._id } },
           )
         : Promise.resolve(),
 
@@ -82,7 +82,7 @@ export default class DeletionService {
 
   private static async deleteNotifications(
     id: mongoose.Types.ObjectId,
-    type: ResourceTypeEnum
+    type: ResourceTypeEnum,
   ) {
     await Notification.deleteMany({
       "resources._id": id,
@@ -97,7 +97,7 @@ export default class DeletionService {
       refId: mongoose.Types.ObjectId;
       userActivityId?: mongoose.Types.ObjectId;
       placeId?: mongoose.Types.ObjectId;
-    }
+    },
   ) {
     const query: FilterQuery<IReward> = {
       userId,
@@ -116,14 +116,14 @@ export default class DeletionService {
       Reward.findOne(query).orFail(
         createError(
           dynamicMessage(dStrings.notFound, "Reward"),
-          StatusCodes.NOT_FOUND
-        )
+          StatusCodes.NOT_FOUND,
+        ),
       ),
       User.findById(userId).orFail(
         createError(
           dynamicMessage(dStrings.notFound, "User"),
-          StatusCodes.NOT_FOUND
-        )
+          StatusCodes.NOT_FOUND,
+        ),
       ),
     ]);
 

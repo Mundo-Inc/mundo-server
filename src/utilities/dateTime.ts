@@ -6,7 +6,7 @@
  */
 export function getRandomDateInRange(
   seconds: number,
-  offsetInSeconds: number
+  offsetInSeconds: number,
 ): Date {
   const now = Date.now();
   const startTime = now + offsetInSeconds * 1000;

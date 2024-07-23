@@ -22,7 +22,7 @@ const AppSettingSchema = new Schema<IAppSetting>(
   },
   {
     timestamps: true,
-  }
+  },
 );
 
 const AppSetting =

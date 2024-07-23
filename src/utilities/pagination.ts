@@ -7,7 +7,7 @@ type PaginationOptions = {
 
 export function getPaginationFromQuery(
   req: Request,
-  options: PaginationOptions
+  options: PaginationOptions,
 ) {
   let page = parseInt(req.query.page as string, 10) || 1;
   let limit = parseInt(req.query.limit as string, 10) || options.defaultLimit;

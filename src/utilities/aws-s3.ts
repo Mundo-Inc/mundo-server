@@ -9,7 +9,7 @@ const config: S3ClientConfig = {
 if (env.NODE_ENV === "development") {
   if (!env.AWS_DEVELOPER_ACCESS_KEY || !env.AWS_DEVELOPER_SECRET_ACCESS_KEY) {
     throw new Error(
-      "AWS_DEVELOPER_ACCESS_KEY and AWS_DEVELOPER_SECRET_ACCESS_KEY are required in development mode."
+      "AWS_DEVELOPER_ACCESS_KEY and AWS_DEVELOPER_SECRET_ACCESS_KEY are required in development mode.",
     );
   }
 

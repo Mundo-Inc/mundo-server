@@ -47,7 +47,7 @@ const CheckInSchema = new Schema<ICheckIn>(
   },
   {
     timestamps: true,
-  }
+  },
 );
 
 async function removeDependencies(checkin: ICheckIn) {
@@ -63,7 +63,7 @@ async function removeDependencies(checkin: ICheckIn) {
         if (media) {
           await media.deleteOne();
         }
-      })
+      }),
     );
   }
 }
@@ -80,14 +80,14 @@ CheckInSchema.pre(
 
       await Place.updateOne(
         { _id: this.place },
-        { $inc: { "activities.checkinCount": -1 } }
+        { $inc: { "activities.checkinCount": -1 } },
       );
 
       next();
     } catch (error) {
       next(error as CallbackError);
     }
-  }
+  },
 );
 
 CheckInSchema.pre("deleteOne", async function (next) {
@@ -99,7 +99,7 @@ CheckInSchema.pre("deleteOne", async function (next) {
 
     await Place.updateOne(
       { _id: checkin.place },
-      { $inc: { "activities.checkinCount": -1 } }
+      { $inc: { "activities.checkinCount": -1 } },
     );
 
     next();

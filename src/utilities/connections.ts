@@ -30,7 +30,7 @@ export type ConnectionStatus = {
 
 export async function getConnectionStatus(
   authId: Types.ObjectId | string,
-  targetId: Types.ObjectId | string
+  targetId: Types.ObjectId | string,
 ) {
   const connectionStatus: ConnectionStatus = {
     followsUser: false,
@@ -86,7 +86,7 @@ export async function getConnectionStatus(
 
 export async function getConnectionStatuses(
   authId: Types.ObjectId,
-  targetIds: (Types.ObjectId | string)[]
+  targetIds: (Types.ObjectId | string)[],
 ) {
   const connectionStatuses: Record<string, ConnectionStatus> = {};
 
@@ -106,7 +106,7 @@ export async function getConnectionStatuses(
   }
 
   const uniqueTargetIds = Object.keys(connectionStatuses).map(
-    (id) => new Types.ObjectId(id)
+    (id) => new Types.ObjectId(id),
   );
 
   const [followDocs, requestDocs] = await Promise.all([

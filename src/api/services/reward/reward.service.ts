@@ -28,7 +28,7 @@ import { rewards_amounts } from "./utils/rewardsAmounts.js";
 const getValidatedEntity = async (
   refType: string,
   refId: mongoose.Types.ObjectId,
-  user: IUser
+  user: IUser,
 ) => {
   switch (refType) {
     case "Homemade":
@@ -84,7 +84,7 @@ const saveRewardAndUpdateUser = async (
   amount: number,
   customAchivements: mongoose.Types.ObjectId[],
   userActivityId?: mongoose.Types.ObjectId,
-  placeId?: mongoose.Types.ObjectId
+  placeId?: mongoose.Types.ObjectId,
 ) => {
   try {
     const reward = await Reward.create({
@@ -103,14 +103,14 @@ const saveRewardAndUpdateUser = async (
     const newLevelupAchivements = await checkNewLevelupAchivements(
       user,
       oldLevel,
-      user.progress.level
+      user.progress.level,
     );
     await user.save();
 
     if (oldLevel && oldLevel !== user.progress.level) {
       await UserActivityManager.createLevelUpActivity(
         user,
-        user.progress.level
+        user.progress.level,
       );
     }
 
@@ -124,7 +124,7 @@ const saveRewardAndUpdateUser = async (
   } catch (error) {
     throw createError(
       "error creating reward and assigning to the user" + error,
-      StatusCodes.INTERNAL_SERVER_ERROR
+      StatusCodes.INTERNAL_SERVER_ERROR,
     );
   }
 };
@@ -136,7 +136,7 @@ export const addReward = async (
     refId: mongoose.Types.ObjectId | undefined;
     userActivityId?: mongoose.Types.ObjectId;
     placeId?: mongoose.Types.ObjectId;
-  }
+  },
 ) => {
   try {
     const user = await User.findById(userId);
@@ -146,7 +146,7 @@ export const addReward = async (
     const validatedEntity = await getValidatedEntity(
       reason.refType,
       reason.refId,
-      user
+      user,
     );
 
     let customAchivements = [];
@@ -154,7 +154,7 @@ export const addReward = async (
     if (["Review", "Reaction", "CheckIn"].includes(reason.refType)) {
       const achivements = await checkForCustomAchivements(
         user._id,
-        reason.refType
+        reason.refType,
       );
       if (achivements && achivements.length > 0)
         customAchivements.push(...achivements);
@@ -168,7 +168,7 @@ export const addReward = async (
         validatedEntity.rewardAmount,
         customAchivements,
         reason.userActivityId,
-        reason.placeId
+        reason.placeId,
       );
     } else {
       return {
@@ -182,7 +182,7 @@ export const addReward = async (
 
 const checkForCustomAchivements = async (
   userId: mongoose.Types.ObjectId,
-  activityType: string
+  activityType: string,
 ) => {
   try {
     const user = await User.findById(userId);
@@ -199,10 +199,10 @@ const checkForCustomAchivements = async (
         ]) {
           const reviewAchivement = await eligibleForAchivement(
             userId,
-            reviewAchivementType
+            reviewAchivementType,
           );
           logger.debug(
-            "eligibile for " + reviewAchivementType + reviewAchivement
+            "eligibile for " + reviewAchivementType + reviewAchivement,
           );
 
           if (reviewAchivement) {
@@ -221,7 +221,7 @@ const checkForCustomAchivements = async (
         ]) {
           const checkinAchivement = await eligibleForAchivement(
             userId,
-            checkinAchivementType
+            checkinAchivementType,
           );
           if (checkinAchivement) {
             user.progress.achievements.push(checkinAchivement._id);
@@ -235,7 +235,7 @@ const checkForCustomAchivements = async (
         for (let reactionAchivementType of ["REACT_ROLL"]) {
           const reactionAchivement = await eligibleForAchivement(
             userId,
-            reactionAchivementType
+            reactionAchivementType,
           );
           if (reactionAchivement) {
             user.progress.achievements.push(reactionAchivement._id);

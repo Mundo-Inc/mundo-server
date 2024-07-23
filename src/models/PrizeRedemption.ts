@@ -33,7 +33,7 @@ const PrizeRedemptionSchema = new Schema<IPrizeRedemption>(
   },
   {
     timestamps: true,
-  }
+  },
 );
 
 const PrizeRedemption =

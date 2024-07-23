@@ -1,4 +1,4 @@
-import { createLogger, format, transports, type Logger } from "winston";
+import { createLogger, format, transports } from "winston";
 import "winston-mongodb";
 
 import { env } from "../../../env.js";
@@ -18,13 +18,13 @@ const customConsoleFormat = format.combine(
       output += `${metadata.stack}`;
     }
     return output;
-  })
+  }),
 );
 
 const mongoDBformat = format.combine(
   format.timestamp(),
   format.errors({ stack: true }),
-  format.json()
+  format.json(),
 );
 
 export default function buildProdLogger() {
@@ -34,7 +34,7 @@ export default function buildProdLogger() {
       errors({ stack: true }),
       timestamp(),
       format.json(),
-      format.metadata()
+      format.metadata(),
     ),
     defaultMeta: { service: "user-service" },
     transports: [

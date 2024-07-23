@@ -23,7 +23,7 @@ const BlockSchema = new Schema<IBlock>(
       index: true,
     },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 BlockSchema.index({ user: 1, target: 1 });

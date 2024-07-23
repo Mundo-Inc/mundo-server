@@ -51,7 +51,7 @@ function backupMongoDB() {
     } else {
       logger.verbose("Backup success");
       uploadBackupToS3(fileName, filePath).catch((err) =>
-        logger.error("Error in backup upload:", err)
+        logger.error("Error in backup upload:", err),
       );
     }
   });

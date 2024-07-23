@@ -74,7 +74,7 @@ export function createCron(id: string, duty: IBot, botUser: IUser) {
               // update reaction count in user activity
               await UserActivity.updateOne(
                 { _id: userActivity._id },
-                { $inc: { "engagements.reactions": 1 } }
+                { $inc: { "engagements.reactions": 1 } },
               );
             }
           }

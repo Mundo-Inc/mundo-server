@@ -57,7 +57,7 @@ const TransactionSchema = new Schema<ITransaction>(
   },
   {
     timestamps: true,
-  }
+  },
 );
 
 TransactionSchema.index({ sender: 1 });

@@ -23,7 +23,7 @@ async function verifyAndFetchUser(req: Request) {
 
   try {
     const firebaseUser = await getAuth(
-      payload.aud === "the-mundo" ? MundoApp : PhPhApp
+      payload.aud === "the-mundo" ? MundoApp : PhPhApp,
     ).verifyIdToken(token);
 
     const user = await User.findOne({
@@ -41,7 +41,7 @@ async function verifyAndFetchUser(req: Request) {
 export async function authMiddleware(
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) {
   try {
     const user = await verifyAndFetchUser(req);
@@ -61,7 +61,7 @@ export async function authMiddleware(
 export async function optionalAuthMiddleware(
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) {
   try {
     req.user = await verifyAndFetchUser(req);
@@ -75,7 +75,7 @@ export async function optionalAuthMiddleware(
 export async function adminAuthMiddleware(
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) {
   try {
     const user = await verifyAndFetchUser(req);

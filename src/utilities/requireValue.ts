@@ -7,7 +7,7 @@ export function ensureExists<T>(value: T | null | undefined, error: Error): T {
 
 export function ensureNonEmptyString(
   value: string | null | undefined,
-  error: Error
+  error: Error,
 ): string {
   if (value === null || value === undefined || value === "") {
     throw error;

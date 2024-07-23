@@ -30,7 +30,7 @@ const rateLimiter = rateLimit({
       {
         type: "Rate Limit Exceeded",
         statusCode: StatusCodes.TOO_MANY_REQUESTS,
-      }
+      },
     );
   },
 });
@@ -52,7 +52,7 @@ async function main() {
         createError("Route not found", {
           type: "Route Not Found",
           statusCode: StatusCodes.NOT_FOUND,
-        })
+        }),
       );
     });
 

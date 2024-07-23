@@ -44,7 +44,7 @@ const ScheduledTaskSchema = new Schema<IScheduledTask>(
       required: true,
     },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 ScheduledTaskSchema.index({ status: 1, scheduledAt: 1 });

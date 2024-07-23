@@ -29,7 +29,7 @@ export class BrevoService {
     this.apiInstance = new TransactionalEmailsApi();
     this.apiInstance.setApiKey(
       TransactionalEmailsApiApiKeys.apiKey,
-      env.BREVO_API_KEY
+      env.BREVO_API_KEY,
     );
 
     this.accountInstance
@@ -41,7 +41,7 @@ export class BrevoService {
   private compileTemplateToHtml(templatePath: string, replacements: object) {
     const html = readFileSync(
       path.join(process.cwd(), "src/email-templates", templatePath),
-      { encoding: "utf-8" }
+      { encoding: "utf-8" },
     );
     const template = Handlebars.compile(html);
     const compiledHtml = template(replacements);
@@ -61,7 +61,7 @@ export class BrevoService {
     subject: string,
     sender: EmailSender,
     templatePath: string,
-    replacements: object
+    replacements: object,
   ) {
     const compiledHtml = this.compileTemplateToHtml(templatePath, replacements);
     const res = await this.sendEmail({

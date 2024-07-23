@@ -41,21 +41,21 @@ export function validateData(schema: Schema) {
             statusCode: StatusCodes.BAD_REQUEST,
             type: "validation",
             details: errorMessages,
-          })
+          }),
         );
       } else if (error instanceof Error) {
         next(
           createError(error.message, {
             statusCode: StatusCodes.INTERNAL_SERVER_ERROR,
             type: "validation",
-          })
+          }),
         );
       } else {
         next(
           createError("An unknown error occurred", {
             statusCode: StatusCodes.INTERNAL_SERVER_ERROR,
             type: "validation",
-          })
+          }),
         );
       }
     }
@@ -84,7 +84,7 @@ export const zObjectId = z
 export const zUniqueObjectIdArray = z
   .array(z.string().regex(objectIdRegex))
   .transform((args) =>
-    Array.from(new Set(args)).map((id) => new Types.ObjectId(id))
+    Array.from(new Set(args)).map((id) => new Types.ObjectId(id)),
   );
 
 export const zPhone = z.string().regex(/^\+[1-9]\d{1,14}$/);

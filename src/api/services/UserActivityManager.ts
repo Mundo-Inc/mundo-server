@@ -10,7 +10,7 @@ import UserActivity, {
 export class UserActivityManager {
   public static async createFollowActivity(
     user: Pick<IUser, "_id" | "isPrivate">,
-    targetUserId: Types.ObjectId
+    targetUserId: Types.ObjectId,
   ) {
     const activity = await UserActivity.create({
       userId: user._id,
@@ -25,7 +25,7 @@ export class UserActivityManager {
 
   public static async createLevelUpActivity(
     user: Pick<IUser, "_id" | "isPrivate">,
-    newLevel: number
+    newLevel: number,
   ) {
     const activity = await UserActivity.create({
       userId: user._id,
@@ -44,7 +44,7 @@ export class UserActivityManager {
     placeId: Types.ObjectId,
     hasMedia: boolean,
     checkInId: Types.ObjectId,
-    resourcePrivacy: ResourcePrivacyEnum
+    resourcePrivacy: ResourcePrivacyEnum,
   ) {
     const activity = await UserActivity.create({
       userId: user._id,
@@ -63,7 +63,7 @@ export class UserActivityManager {
     user: Pick<IUser, "_id" | "isPrivate">,
     placeId: Types.ObjectId,
     hasMedia: boolean,
-    reviewId: Types.ObjectId
+    reviewId: Types.ObjectId,
   ) {
     const activity = await UserActivity.create({
       userId: user._id,
@@ -80,7 +80,7 @@ export class UserActivityManager {
 
   public static async createHomemadeActivity(
     user: Pick<IUser, "_id" | "isPrivate">,
-    homemadeId: Types.ObjectId
+    homemadeId: Types.ObjectId,
   ) {
     const activity = await UserActivity.create({
       userId: user._id,
@@ -97,7 +97,7 @@ export class UserActivityManager {
   public static async createRecommendedActivity(
     user: Pick<IUser, "_id" | "isPrivate">,
     placeId: Types.ObjectId,
-    reviewId: Types.ObjectId
+    reviewId: Types.ObjectId,
   ) {
     // TODO: Check the flow of this activity type
     const activity = await UserActivity.create({

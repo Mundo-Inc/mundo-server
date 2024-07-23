@@ -27,7 +27,7 @@ export const levelup_achivements: LevelupAcivement = {
 export const checkNewLevelupAchivements = async (
   user: IUser & Document<any, any, IUser>,
   oldLevel: number,
-  currentLevel: number
+  currentLevel: number,
 ) => {
   try {
     // List of newly unlocked achievements

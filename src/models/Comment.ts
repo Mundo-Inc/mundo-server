@@ -35,7 +35,7 @@ const MentionSchema = new Schema<IMention>(
   },
   {
     _id: false,
-  }
+  },
 );
 
 const CommentSchema = new Schema<IComment>(
@@ -91,7 +91,7 @@ const CommentSchema = new Schema<IComment>(
   },
   {
     timestamps: true,
-  }
+  },
 );
 
 CommentSchema.index({ author: 1 });

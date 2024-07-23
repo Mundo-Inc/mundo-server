@@ -19,15 +19,15 @@ import { thresholds } from "../utils/threshold.js";
 
 export const eligibleForAchivement = async (
   userId: Types.ObjectId,
-  AchievementType: string
+  AchievementType: string,
 ) => {
   try {
     const user = await User.findById(userId)
       .orFail(
         createError(
           dynamicMessage(dStrings.notFound, "User"),
-          StatusCodes.NOT_FOUND
-        )
+          StatusCodes.NOT_FOUND,
+        ),
       )
       .populate<{
         progress: { achievements: IAchievement[] };
@@ -39,7 +39,7 @@ export const eligibleForAchivement = async (
       case AchievementTypeEnum.ROOKIE_REVIEWER:
         if (
           !user.progress.achievements.find(
-            (a) => a.type === AchievementTypeEnum.ROOKIE_REVIEWER
+            (a) => a.type === AchievementTypeEnum.ROOKIE_REVIEWER,
           )
         ) {
           const newAchivement = await Achievement.create({
@@ -54,7 +54,7 @@ export const eligibleForAchivement = async (
       case AchievementTypeEnum.CRITIC_ON_THE_RISE:
         if (
           !user.progress.achievements.find(
-            (a) => a.type === AchievementTypeEnum.CRITIC_ON_THE_RISE
+            (a) => a.type === AchievementTypeEnum.CRITIC_ON_THE_RISE,
           )
         ) {
           //check if user has 5 reviews
@@ -75,7 +75,7 @@ export const eligibleForAchivement = async (
       case AchievementTypeEnum.PAPARAZZI_PRO:
         if (
           !user.progress.achievements.find(
-            (a) => a.type === AchievementTypeEnum.PAPARAZZI_PRO
+            (a) => a.type === AchievementTypeEnum.PAPARAZZI_PRO,
           )
         ) {
           //check if user has 5 reviews containing media
@@ -102,7 +102,7 @@ export const eligibleForAchivement = async (
               a.type === AchievementTypeEnum.CHECK_CHECK &&
               a.createdAt &&
               a.createdAt.getTime() >
-                new Date().getTime() - 7 * 24 * 60 * 60 * 1000
+                new Date().getTime() - 7 * 24 * 60 * 60 * 1000,
           ).length;
 
         const userCheckInsCountInLastWeek = await CheckIn.countDocuments({
@@ -125,7 +125,7 @@ export const eligibleForAchivement = async (
       case AchievementTypeEnum.REACT_ROLL:
         //check how many achivements user has with type CHECK_CHECK in the last week (createdAt)
         const reactRollAchivementsCount = user.progress.achievements.filter(
-          (a) => a.type === AchievementTypeEnum.REACT_ROLL
+          (a) => a.type === AchievementTypeEnum.REACT_ROLL,
         ).length;
 
         const userReactsCount = await Reaction.countDocuments({
@@ -151,7 +151,8 @@ export const eligibleForAchivement = async (
             (a) =>
               a.type === AchievementTypeEnum.EARLY_BIRD &&
               a.createdAt &&
-              a.createdAt.getTime() > new Date().getTime() - 12 * 60 * 60 * 1000
+              a.createdAt.getTime() >
+                new Date().getTime() - 12 * 60 * 60 * 1000,
           ).length;
 
         const usersLatestCheckIn = await CheckIn.findOne({
@@ -164,7 +165,7 @@ export const eligibleForAchivement = async (
         if (earlyBirdAchivementInLast12hrs === 0 && usersLatestCheckIn) {
           const placeTimezone = tzlookup(
             usersLatestCheckIn.place.location.geoLocation.coordinates[1],
-            usersLatestCheckIn.place.location.geoLocation.coordinates[0]
+            usersLatestCheckIn.place.location.geoLocation.coordinates[0],
           );
           const currentTimeInPlace = moment().tz(placeTimezone);
 
@@ -184,7 +185,7 @@ export const eligibleForAchivement = async (
           (a) =>
             a.type === AchievementTypeEnum.NIGHT_OWL &&
             a.createdAt &&
-            a.createdAt.getTime() > new Date().getTime() - 12 * 60 * 60 * 1000
+            a.createdAt.getTime() > new Date().getTime() - 12 * 60 * 60 * 1000,
         ).length;
 
         const usersLatestCheckIn_ = await CheckIn.findOne({
@@ -197,7 +198,7 @@ export const eligibleForAchivement = async (
         if (nightOwlAchivementInLast12hrs === 0 && usersLatestCheckIn_) {
           const placeTimezone = tzlookup(
             usersLatestCheckIn_.place.location.geoLocation.coordinates[1],
-            usersLatestCheckIn_.place.location.geoLocation.coordinates[0]
+            usersLatestCheckIn_.place.location.geoLocation.coordinates[0],
           );
           const currentTimeInPlace = moment().tz(placeTimezone);
           if (currentTimeInPlace.hour() > 21 && currentTimeInPlace.hour() < 3) {

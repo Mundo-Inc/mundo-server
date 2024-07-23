@@ -40,7 +40,7 @@ router.get(
   "/context",
   authMiddleware,
   getPlacesByContextValidation,
-  getPlacesByContext
+  getPlacesByContext,
 );
 
 router.get("/:placeId/media", getPlaceMediaValidation, getPlaceMedia);
@@ -49,14 +49,14 @@ router.get(
   "/:placeId/reviews",
   authMiddleware,
   getPlaceReviewsValidation,
-  getPlaceReviews
+  getPlaceReviews,
 );
 
 router.get(
   "/:placeId/lists",
   authMiddleware,
   getExistInListsValidation,
-  getExistInLists
+  getExistInLists,
 );
 
 // Place overview
@@ -68,7 +68,7 @@ router.get(
   getPlaceRateLimiter,
   authMiddleware,
   getPlaceValidation,
-  getPlace
+  getPlace,
 );
 
 export default router;

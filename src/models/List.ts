@@ -75,14 +75,14 @@ const ListSchema = new Schema<IList>(
       default: false,
     },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 ListSchema.pre("save", function (next) {
   // Check if this is a new document and it doesn't have the owner in the collaborators
   if (this.isNew) {
     const ownerAsCollaborator = this.collaborators.find((collaborator) =>
-      collaborator.user.equals(this.owner)
+      collaborator.user.equals(this.owner),
     );
     if (!ownerAsCollaborator) {
       this.collaborators.push({

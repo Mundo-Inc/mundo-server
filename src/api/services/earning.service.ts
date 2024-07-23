@@ -15,7 +15,7 @@ export const placeCoins = { normalValue: 1, expLimit: 5, expMul: 10 };
 export const reviewEarning = async (
   userId: Types.ObjectId,
   reviewId: Types.ObjectId,
-  media?: MediaProjectionBrief[]
+  media?: MediaProjectionBrief[],
 ) => {
   const user = await User.findById(userId);
 
@@ -51,7 +51,7 @@ export const reviewEarning = async (
 };
 export const checkinEarning = async (
   userId: Types.ObjectId,
-  checkInId: Types.ObjectId
+  checkInId: Types.ObjectId,
 ) => {
   const user = await User.findById(userId);
 
@@ -78,7 +78,7 @@ export const checkinEarning = async (
 };
 export const placeEarning = async (
   user: IUser & Document<any, any, IUser>,
-  place: IPlace
+  place: IPlace,
 ) => {
   const placeEarns = await Earning.find({
     userId: user._id,

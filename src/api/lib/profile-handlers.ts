@@ -11,7 +11,7 @@ export const handleSignUp = async (
   signupMethod: SignupMethodEnum,
   password: string | null,
   uid?: string,
-  profileImage?: string
+  profileImage?: string,
 ) => {
   const exists = await User.exists({ "email.address": email.toLowerCase() });
 

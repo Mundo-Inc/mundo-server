@@ -32,7 +32,7 @@ router
 router.post(
   "/group",
   createGroupConversationValidation,
-  createGroupConversation
+  createGroupConversation,
 );
 
 router.get("/token", getConversationToken);
@@ -42,7 +42,7 @@ router.get("/:id", getConversationValidation, getConversation);
 router.delete(
   "/:id/participant",
   removeUserFromGroupConversationValidation,
-  removeUserFromGroupConversation
+  removeUserFromGroupConversation,
 );
 
 export default router;

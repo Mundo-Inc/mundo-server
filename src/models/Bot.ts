@@ -48,7 +48,7 @@ const BotSchema = new Schema<IBot>(
     interval: { type: String, default: "0 0 * * *" },
     isActive: { type: Boolean, default: true },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 const Bot =

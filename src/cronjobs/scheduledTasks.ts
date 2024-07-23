@@ -29,9 +29,9 @@ schedule(
         switch (task.type) {
           case ScheduledTaskType.CommentOnActivity:
             const activity = await UserActivity.findById(
-              task.resourceId
+              task.resourceId,
             ).orFail(
-              new Error(`Activity not found with id ${task.resourceId}`)
+              new Error(`Activity not found with id ${task.resourceId}`),
             );
 
             if (activity.resourcePrivacy !== ResourcePrivacyEnum.Public) {
@@ -42,14 +42,14 @@ schedule(
             if (activity.activityType === ActivityTypeEnum.NewCheckIn) {
               const checkIn = await CheckIn.findById(activity.resourceId)
                 .orFail(
-                  new Error(`CheckIn not found with id ${activity.resourceId}`)
+                  new Error(`CheckIn not found with id ${activity.resourceId}`),
                 )
                 .lean();
 
               if (checkIn.privacyType === ResourcePrivacyEnum.Public) {
                 const content =
                   await OpenAIService.getInstance().makeACommentOnCheckIn(
-                    checkIn
+                    checkIn,
                   );
 
                 if (content && content !== "-") {
@@ -68,7 +68,7 @@ schedule(
             } else if (activity.activityType === ActivityTypeEnum.NewReview) {
               const review = await Review.findById(activity.resourceId)
                 .orFail(
-                  new Error(`Review not found with id ${activity.resourceId}`)
+                  new Error(`Review not found with id ${activity.resourceId}`),
                 )
                 .lean();
 
@@ -93,12 +93,11 @@ schedule(
             break;
           case ScheduledTaskType.ReplyToComment:
             const comment = await Comment.findById(task.resourceId).orFail(
-              new Error(`Comment not found with id ${task.resourceId}`)
+              new Error(`Comment not found with id ${task.resourceId}`),
             );
 
-            const reply = await OpenAIService.getInstance().replyToComment(
-              comment
-            );
+            const reply =
+              await OpenAIService.getInstance().replyToComment(comment);
 
             if (reply && reply !== "-") {
               // Create comment
@@ -116,7 +115,7 @@ schedule(
               // update comments count in user activity
               await UserActivity.updateOne(
                 { _id: comment.userActivity },
-                { $inc: { "engagements.comments": 1 } }
+                { $inc: { "engagements.comments": 1 } },
               );
             }
             break;
@@ -129,10 +128,10 @@ schedule(
         logger.error("Error running scheduled task", error);
         await ScheduledTask.updateOne(
           { _id: task._id },
-          { status: ScheduledTaskStatus.Failed }
+          { status: ScheduledTaskStatus.Failed },
         );
       }
     }
   },
-  { runOnInit: true }
+  { runOnInit: true },
 );

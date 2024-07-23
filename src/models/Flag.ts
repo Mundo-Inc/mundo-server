@@ -103,7 +103,7 @@ const FlagSchema = new Schema<IFlag>(
       required: false,
     },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 FlagSchema.index({ user: 1, target: 1 });

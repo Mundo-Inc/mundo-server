@@ -33,7 +33,7 @@ router.get("/missions", getMissionsValidation, getMissions);
 router.post(
   "/missions/:id/claim",
   claimMissionRewardValidation,
-  claimMissionReward
+  claimMissionReward,
 );
 
 router.get("/prizes", getPrizes);

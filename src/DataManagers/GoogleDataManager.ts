@@ -88,7 +88,7 @@ export class GoogleDataManager {
    */
   public static async getPlaceDetails<T>(
     placeId: string,
-    fields: GooglePlaceFields[]
+    fields: GooglePlaceFields[],
   ): Promise<GooglePlaceDetailsIDsOnly & T> {
     if (!placeId) {
       throw new Error("Place ID cannot be empty");
@@ -143,7 +143,7 @@ export class GoogleDataManager {
       lat: number;
       lng: number;
       radius?: number;
-    } | null = null
+    } | null = null,
   ) {
     if (!textQuery || textQuery === "") {
       throw new Error("Text query cannot be empty");
@@ -190,7 +190,7 @@ export class GoogleDataManager {
       const data = await axios.post<GooglePlaceTextSearchResponse>(
         url.href,
         body,
-        { headers }
+        { headers },
       );
       return data.data.places[0].id;
     } catch (error: any) {
@@ -212,7 +212,7 @@ export class GoogleDataManager {
   public static async getPhoto(
     name: string,
     maxWidthPx: number = 1080,
-    maxHeightPx: number = 1920
+    maxHeightPx: number = 1920,
   ): Promise<string> {
     const url = new URL(`${GoogleDataManager.BASE}/${name}/media`);
     url.searchParams.append("maxWidthPx", maxWidthPx.toString());
@@ -246,13 +246,13 @@ export class GoogleDataManager {
     const country = this.extractComponentAddressComponents(
       components,
       "country",
-      true
+      true,
     );
 
     const state = this.extractComponentAddressComponents(
       components,
       "administrative_area_level_1",
-      true
+      true,
     );
 
     let city = this.extractComponentAddressComponents(components, "locality");
@@ -260,17 +260,17 @@ export class GoogleDataManager {
 
     const streetNumber = this.extractComponentAddressComponents(
       components,
-      "street_number"
+      "street_number",
     );
 
     const streetName = this.extractComponentAddressComponents(
       components,
-      "route"
+      "route",
     );
 
     const postalCode = this.extractComponentAddressComponents(
       components,
-      "postal_code"
+      "postal_code",
     );
 
     const address = `${streetNumber} ${streetName}`;
@@ -289,7 +289,7 @@ export class GoogleDataManager {
   private static extractComponentAddressComponents(
     components: AddressComponent[],
     type: string,
-    useShortName: boolean = false
+    useShortName: boolean = false,
   ) {
     const component = components.find((comp) => comp.types.includes(type));
 

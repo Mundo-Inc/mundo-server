@@ -39,7 +39,7 @@ export default class NotificationsService {
       try {
         const batchItems = items.slice(i, i + 500);
         const batchResponse = await getMessaging(MundoApp).sendEach(
-          batchItems.map((i) => i.tokenMessage)
+          batchItems.map((i) => i.tokenMessage),
         );
 
         if (batchResponse.failureCount > 0) {
@@ -50,7 +50,7 @@ export default class NotificationsService {
           responses = batchResponse;
         } else {
           responses.responses = responses.responses.concat(
-            batchResponse.responses
+            batchResponse.responses,
           );
           responses.successCount += batchResponse.successCount;
           responses.failureCount += batchResponse.failureCount;
@@ -99,7 +99,7 @@ export default class NotificationsService {
       tokenMessage: TokenMessage;
       user: string | Types.ObjectId;
     }[],
-    batchResponse: BatchResponse
+    batchResponse: BatchResponse,
   ) {
     const toDelete: { [userId: string]: string[] } = {};
 
@@ -117,8 +117,8 @@ export default class NotificationsService {
     const deletionPromises = Object.entries(toDelete).map(([userId, tokens]) =>
       User.findOneAndUpdate(
         { _id: new Types.ObjectId(userId) },
-        { $pull: { devices: { fcmToken: { $in: tokens } } } }
-      )
+        { $pull: { devices: { fcmToken: { $in: tokens } } } },
+      ),
     );
 
     await Promise.all(deletionPromises);

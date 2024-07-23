@@ -1,12 +1,12 @@
 import mongoose, { Schema, type CallbackError, type Model } from "mongoose";
 
+import DeletionService from "../api/services/DeletionService.js";
 import logger from "../api/services/logger/index.js";
 import Comment from "./Comment.js";
 import Media from "./Media.js";
 import Place from "./Place.js";
 import Reaction from "./Reaction.js";
 import UserActivity, { ResourcePrivacyEnum } from "./UserActivity.js";
-import DeletionService from "../api/services/DeletionService.js";
 
 export interface IReview {
   _id: mongoose.Types.ObjectId;
@@ -73,7 +73,7 @@ const ReviewSchema = new Schema<IReview>(
       required: true,
     },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 ReviewSchema.index({ place: 1 });
@@ -89,7 +89,7 @@ async function removeReviewDependencies(review: IReview) {
     userActivity: review.userActivityId,
   });
   await Promise.all(
-    comments.map((comment) => DeletionService.deleteComment(comment._id))
+    comments.map((comment) => DeletionService.deleteComment(comment._id)),
   );
 
   // remove the userActivity related to the review
@@ -116,7 +116,7 @@ ReviewSchema.pre(
 
       await Place.updateOne(
         { _id: this.place },
-        { $inc: { "activities.reviewCount": -1 } }
+        { $inc: { "activities.reviewCount": -1 } },
       );
 
       next();
@@ -124,7 +124,7 @@ ReviewSchema.pre(
       logger.error(`Error in deleteOne middleware for document: ${error}`);
       next(error as CallbackError);
     }
-  }
+  },
 );
 
 // Middleware for Review.deleteOne (query)
@@ -144,7 +144,7 @@ ReviewSchema.pre(
 
       await Place.updateOne(
         { _id: review.place },
-        { $inc: { "activities.reviewCount": -1 } }
+        { $inc: { "activities.reviewCount": -1 } },
       );
 
       next();
@@ -152,7 +152,7 @@ ReviewSchema.pre(
       logger.error(`Error in deleteOne middleware for query: ${error}`);
       next(error as CallbackError);
     }
-  }
+  },
 );
 
 const Review =

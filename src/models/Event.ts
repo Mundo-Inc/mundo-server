@@ -40,7 +40,7 @@ const EventSchema = new Schema<IEvent>(
   },
   {
     timestamps: true,
-  }
+  },
 );
 
 const Event =

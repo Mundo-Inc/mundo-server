@@ -22,5 +22,5 @@ export const ScoresSchema = new Schema<IScores>(
     phantom: { type: Number },
     updatedAt: { type: Date, default: Date.now },
   },
-  { _id: false }
+  { _id: false },
 );

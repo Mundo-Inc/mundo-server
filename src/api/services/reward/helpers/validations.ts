@@ -27,7 +27,7 @@ export const validateReviewReward = async (user: IUser, review: IReview) => {
 
 export const validateReactionReward = async (
   user: IUser,
-  reaction: IReaction
+  reaction: IReaction,
 ) => {
   try {
     // check if the user has already been rewarded for the review

@@ -273,7 +273,7 @@ const PlaceSchema = new Schema<IPlace, PlaceModel, IPlaceMethods>(
         }
       },
     },
-  }
+  },
 );
 
 PlaceSchema.index({ name: "text" });

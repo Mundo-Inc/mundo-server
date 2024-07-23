@@ -19,5 +19,5 @@ export const OtherScoresSchema = new Schema<IOtherSources>(
     googlePlaces: GooglePlacesSchema,
     yelp: YelpSchema,
   },
-  { _id: false }
+  { _id: false },
 );

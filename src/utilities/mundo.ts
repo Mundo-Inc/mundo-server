@@ -9,8 +9,8 @@ export async function shouldBotInteract(userId: Types.ObjectId) {
   const user = await User.findById(userId).orFail(
     createError(
       dynamicMessage(dStrings.notFound, "User"),
-      StatusCodes.NOT_FOUND
-    )
+      StatusCodes.NOT_FOUND,
+    ),
   );
 
   if (!user.mundoInteractionFrequency) {
