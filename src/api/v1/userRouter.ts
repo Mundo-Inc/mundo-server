@@ -79,6 +79,7 @@ import {
   getUsersByIds,
   getUsersByIdsValidation,
 } from "../controllers/user/getUsersByIds.js";
+import { getUserStats } from "../controllers/user/getUserStats.js";
 import {
   unblockUser,
   unblockUserValidation,
@@ -87,6 +88,7 @@ import {
   usernameAvailability,
   usernameAvailabilityValidation,
 } from "../controllers/user/usernameAvailability.js";
+import { trackAppUsage } from "../middlewares/appUsageMiddleWare.js";
 import {
   authMiddleware,
   optionalAuthMiddleware,
@@ -102,25 +104,27 @@ router
 
 router.post("/by-ids", getUsersByIdsValidation, getUsersByIds);
 
+router.get("/stats", authMiddleware, trackAppUsage, getUserStats);
+
 router.get(
   "/leaderboard",
   authMiddleware,
   getLeaderboardValidation,
-  getLeaderboard
+  getLeaderboard,
 );
 
 router.get(
   "/username-availability/:username",
   optionalAuthMiddleware,
   usernameAvailabilityValidation,
-  usernameAvailability
+  usernameAvailability,
 );
 
 router.get(
   "/followRequests",
   authMiddleware,
   getFollowRequestsValidation,
-  getFollowRequests
+  getFollowRequests,
 );
 
 router
@@ -132,14 +136,14 @@ router.delete(
   "/followers/:userId",
   authMiddleware,
   removeFollowerValidation,
-  removeFollower
+  removeFollower,
 );
 
 router.get(
   "/latestReferrals",
   authMiddleware,
   getLatestReferredUsersValidation,
-  getLatestReferredUsers
+  getLatestReferredUsers,
 );
 
 router
@@ -150,35 +154,35 @@ router
 router.get(
   "/:id/connections/followStatus",
   connectionFollowStatusValidation,
-  connectionFollowStatus
+  connectionFollowStatus,
 );
 
 router.get(
   "/:id/connections/:type",
   authMiddleware,
   getUserConnectionsValidation,
-  getUserConnections
+  getUserConnections,
 );
 
 router.put(
   "/:id/privacy",
   authMiddleware,
   editUserPrivacyValidation,
-  editUserPrivacy
+  editUserPrivacy,
 );
 
 router.put(
   "/:id/settings",
   authMiddleware,
   editUserSettingsValidation,
-  editUserSettings
+  editUserSettings,
 );
 
 router.get(
   "/:id/latestplace",
   authMiddleware,
   getLatestPlaceValidation,
-  getLatestPlace
+  getLatestPlace,
 );
 
 router.get("/:id/lists", authMiddleware, getUserListsValidation, getUserLists);
@@ -187,7 +191,7 @@ router.get(
   "/:userId/userActivities",
   authMiddleware,
   getActivitiesOfaUserValidation,
-  getActivitiesOfaUser
+  getActivitiesOfaUser,
 );
 
 router

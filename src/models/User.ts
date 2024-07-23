@@ -46,7 +46,7 @@ const dailyRewardSchema = new Schema<IDailyReward>(
       required: false,
     },
   },
-  { _id: false }
+  { _id: false },
 );
 
 export interface IUser {
@@ -115,6 +115,13 @@ export interface IUser {
     balance: number;
   };
   mundoInteractionFrequency?: number;
+  appUsage: {
+    lastLogin: Date;
+    streak: {
+      currentStreak: number;
+      lastLoginDate: Date;
+    };
+  };
 }
 
 const UserSchema = new Schema<IUser>(
@@ -284,8 +291,15 @@ const UserSchema = new Schema<IUser>(
       min: 0,
       max: 100,
     },
+    appUsage: {
+      lastLogin: { type: Date },
+      streak: {
+        currentStreak: { type: Number, default: 0 },
+        lastLoginDate: { type: Date },
+      },
+    },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 UserSchema.pre("validate", function (next) {
@@ -309,7 +323,7 @@ async function removeDependencies(user: IUser) {
     $or: [{ observerId: user._id }, { subjectId: user._id }],
   });
   await Promise.all(
-    activitiesSeen.map((activitySeen) => activitySeen.deleteOne())
+    activitiesSeen.map((activitySeen) => activitySeen.deleteOne()),
   );
 
   // remove all checkins of the user
@@ -319,7 +333,7 @@ async function removeDependencies(user: IUser) {
   //remove all comments of that user
   const comments = await Comment.find({ author: user._id });
   await Promise.all(
-    comments.map((comment) => DeletionService.deleteComment(comment._id))
+    comments.map((comment) => DeletionService.deleteComment(comment._id)),
   );
 
   // remove all followings and followers of that user
@@ -339,7 +353,7 @@ async function removeDependencies(user: IUser) {
   // remove the user from all the lists that he is a collaborator of
   await List.updateMany(
     { "collaborators.user": user._id },
-    { $pull: { collaborators: { user: user._id } } }
+    { $pull: { collaborators: { user: user._id } } },
   );
 
   // remove all media created by that user
@@ -365,7 +379,7 @@ UserSchema.pre(
     } catch (error) {
       next(error as CallbackError);
     }
-  }
+  },
 );
 
 UserSchema.pre("deleteOne", async function (next) {
