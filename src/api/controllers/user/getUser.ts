@@ -1,6 +1,6 @@
 import type { NextFunction, Request, Response } from "express";
 import { StatusCodes } from "http-status-codes";
-import type { Types } from "mongoose";
+import { Types } from "mongoose";
 import { z } from "zod";
 
 import UserProjection from "../../../api/dto/user.js";
@@ -57,36 +57,34 @@ export async function getUser(req: Request, res: Response, next: NextFunction) {
         .lean();
 
       oid = user._id;
-    } else if (typeof id === "string") {
-      if (id === "me") {
-        if (!authUser) {
-          throw createError(
-            strings.authorization.loginRequired,
-            StatusCodes.UNAUTHORIZED,
-          );
-        }
-
-        oid = authUser._id;
-      } else {
-        // if id starts with @ -> get user by username
-        const user = await User.findOne({
-          username: {
-            $regex: `^${id.slice(1)}$`,
-            $options: "i",
-          },
-        })
-          .orFail(
-            createError(
-              dynamicMessage(ds.notFound, "User"),
-              StatusCodes.NOT_FOUND,
-            ),
-          )
-          .lean();
-
-        oid = user._id;
+    } else if (id === "me") {
+      if (!authUser) {
+        throw createError(
+          strings.authorization.loginRequired,
+          StatusCodes.UNAUTHORIZED,
+        );
       }
+
+      oid = authUser._id;
+    } else if (id.startsWith("@")) {
+      // if id starts with @ -> get user by username
+      const user = await User.findOne({
+        username: {
+          $regex: `^${id.slice(1)}$`,
+          $options: "i",
+        },
+      })
+        .orFail(
+          createError(
+            dynamicMessage(ds.notFound, "User"),
+            StatusCodes.NOT_FOUND,
+          ),
+        )
+        .lean();
+
+      oid = user._id;
     } else {
-      oid = id;
+      oid = new Types.ObjectId(id);
     }
 
     let user: any;
