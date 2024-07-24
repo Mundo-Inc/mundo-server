@@ -1,9 +1,12 @@
-import { type Document, type Types } from "mongoose";
+import mongoose, { type Document, type Types } from "mongoose";
 
+import { StatusCodes } from "http-status-codes";
 import Earning, { EarningTypeEnum } from "../../models/Earning.js";
 import { MediaTypeEnum } from "../../models/Media.js";
 import { type IPlace } from "../../models/Place.js";
 import User, { type IUser } from "../../models/User.js";
+import { dStrings as ds, dynamicMessage } from "../../strings.js";
+import { createError } from "../../utilities/errorHandlers.js";
 import { type MediaProjectionBrief } from "../dto/media.js";
 
 export const reviewCoins = { normalValue: 1, expLimit: 5, expMul: 10 };
@@ -98,4 +101,42 @@ export const placeEarning = async (
     earning: place._id,
     coins: totalCoins,
   });
+};
+
+export enum EarningsType {
+  MEDIA_INCLUDED_USER_ACTIVITY = "MEDIA_INCLUDED_USER_ACTIVITY",
+  GAINED_REACTIONS = "GAINED_REACTIONS",
+}
+
+const earningValues = {
+  MEDIA_INCLUDED_USER_ACTIVITY: 20,
+  GAINED_REACTIONS: 5, //per 10 unique users
+};
+
+export const UNIQUE_USERS_REQUIRED_TO_REWARD = 10;
+
+// adding USD Earnings in Cents
+export const addEarnings = async (
+  userId: mongoose.Types.ObjectId,
+  earningType: EarningsType,
+) => {
+  try {
+    const user = await User.findById(userId).orFail(
+      createError(dynamicMessage(ds.notFound, "User"), StatusCodes.NOT_FOUND),
+    );
+
+    if (!user.earnings) {
+      user.earnings = { total: 0, balance: 0 };
+    }
+
+    user.earnings.balance = user.earnings.balance + earningValues[earningType];
+    user.earnings.total = user.earnings.total + earningValues[earningType];
+    await user.save();
+  } catch (error) {
+    throw createError("Error adding reward (usd)" + error, 500);
+  }
+};
+
+export const redeemEarnings = async (userId: mongoose.Types.ObjectId) => {
+  //TODO: WiP.
 };

@@ -61,6 +61,7 @@ export interface IUserActivity {
     comments: number;
     views: number;
   };
+  uniqueReactions: mongoose.Types.ObjectId[];
   createdAt: Date;
   updatedAt: Date;
 }
@@ -137,6 +138,10 @@ const UserActivitySchema = new Schema<
         type: Number,
         default: 0,
       },
+    },
+    uniqueReactions: {
+      type: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
+      default: [],
     },
   },
   { timestamps: true },

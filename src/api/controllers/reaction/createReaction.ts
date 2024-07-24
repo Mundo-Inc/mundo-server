@@ -9,6 +9,11 @@ import { dStrings as ds, dynamicMessage } from "../../../strings.js";
 import { createError } from "../../../utilities/errorHandlers.js";
 import { createResponse } from "../../../utilities/response.js";
 import { validateData, zObjectId } from "../../../utilities/validation.js";
+import {
+  addEarnings,
+  EarningsType,
+  UNIQUE_USERS_REQUIRED_TO_REWARD,
+} from "../../services/earning.service.js";
 
 const body = z.object({
   target: zObjectId,
@@ -65,6 +70,29 @@ export async function createReaction(
       refId: newReaction._id,
       userActivityId: target,
     });
+
+    const userActivity = await UserActivity.findById(target).orFail(
+      createError(
+        dynamicMessage(ds.notFound, "User Activity"),
+        StatusCodes.NOT_FOUND,
+      ),
+    );
+    // Check if the user is already in the uniqueReactions list
+    if (
+      !userActivity.uniqueReactions.some(
+        (id) => id.toString() === authUser._id.toString(),
+      )
+    ) {
+      userActivity.uniqueReactions.push(authUser._id);
+    }
+    // Save the user activity
+    await userActivity.save();
+
+    const uniqueReactionCount = userActivity.uniqueReactions.length;
+    if (uniqueReactionCount % UNIQUE_USERS_REQUIRED_TO_REWARD === 0) {
+      // Reward the user who created the post
+      await addEarnings(userActivity.userId, EarningsType.GAINED_REACTIONS);
+    }
 
     res.status(StatusCodes.CREATED).json(createResponse(newReaction));
   } catch (err) {

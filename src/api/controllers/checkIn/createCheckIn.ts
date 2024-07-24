@@ -4,7 +4,11 @@ import type { AnyKeys, Types } from "mongoose";
 import { z } from "zod";
 
 import MediaProjection from "../../../api/dto/media.js";
-import { checkinEarning } from "../../../api/services/earning.service.js";
+import {
+  addEarnings,
+  checkinEarning,
+  EarningsType,
+} from "../../../api/services/earning.service.js";
 import logger from "../../../api/services/logger/index.js";
 import { addReward } from "../../../api/services/reward/reward.service.js";
 import { UserActivityManager } from "../../../api/services/UserActivityManager.js";
@@ -203,6 +207,14 @@ export async function createCheckIn(
       User.updateOne({ _id: authUser._id }, { latestPlace: thePlace }),
       sendNotificiationToFollowers(authUser._id, checkIn),
     ]);
+
+    // Add usd earning reward if media included and privacyType is public
+    if (mediaDocs !== null && mediaDocs.length > 0 && checkIn.privacyType) {
+      await addEarnings(
+        authUser._id,
+        EarningsType.MEDIA_INCLUDED_USER_ACTIVITY,
+      );
+    }
 
     // AI Comment
     if (checkIn.privacyType === ResourcePrivacyEnum.Public) {

@@ -3,10 +3,10 @@ import User from "../../models/User.js";
 
 async function updateUsers() {
   const defaultAppUsage = {
-    lastLogin: null, // or new Date() if you want to initialize it to the current date
+    lastLogin: new Date(),
     streak: {
       currentStreak: 0,
-      lastLoginDate: null, // or new Date() if you want to initialize it to the current date
+      lastLoginDate: new Date(),
     },
   };
 
@@ -25,7 +25,7 @@ export async function trackAppUsage(
     const authUser = req.user!;
 
     //TODO: EXEC & REMOVE AFTER LAUNCH
-    //await updateUsers();
+    await updateUsers();
 
     const user = await User.findById(authUser._id);
 

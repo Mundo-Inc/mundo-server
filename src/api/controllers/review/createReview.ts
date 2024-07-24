@@ -3,7 +3,11 @@ import { StatusCodes } from "http-status-codes";
 import type { Types } from "mongoose";
 import { z } from "zod";
 
-import { reviewEarning } from "../../../api/services/earning.service.js";
+import {
+  addEarnings,
+  EarningsType,
+  reviewEarning,
+} from "../../../api/services/earning.service.js";
 import logger from "../../../api/services/logger/index.js";
 import { addReward } from "../../../api/services/reward/reward.service.js";
 import { UserActivityManager } from "../../../api/services/UserActivityManager.js";
@@ -198,6 +202,7 @@ export async function createReview(
     );
 
     try {
+      //phantom coins
       await reviewEarning(authUser._id, review._id, mediaDocs);
       let activity;
       if (media.length == 0 && !content) {
@@ -219,6 +224,14 @@ export async function createReview(
         review.userActivityId = activity._id;
         //TODO: send notification to the follower + nearby users if they haven't seen the post.
         await review.save();
+      }
+
+      // add earnings (usd)
+      if (media.length > 0) {
+        await addEarnings(
+          authUser._id,
+          EarningsType.MEDIA_INCLUDED_USER_ACTIVITY,
+        );
       }
     } catch (e) {
       logger.error("Internal server error during creating the review", {

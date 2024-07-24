@@ -35,6 +35,11 @@ export interface IDailyReward {
   lastClaim?: Date;
 }
 
+export interface Earnings {
+  total: number;
+  balance: number;
+}
+
 const dailyRewardSchema = new Schema<IDailyReward>(
   {
     streak: {
@@ -88,6 +93,7 @@ export interface IUser {
     balance: number;
     daily: IDailyReward;
   };
+  earnings: Earnings;
   latestPlace?: mongoose.Types.ObjectId;
   isPrivate: boolean;
   conversations: string[];
@@ -245,6 +251,10 @@ const UserSchema = new Schema<IUser>(
           streak: 0,
         },
       },
+    },
+    earnings: {
+      total: { type: Number, default: 0 }, //cents
+      balance: { type: Number, default: 0 }, //cents
     },
     latestPlace: {
       type: Schema.Types.ObjectId,
