@@ -2,6 +2,7 @@ import type { NextFunction, Request, Response } from "express";
 import { getAuth } from "firebase-admin/auth";
 import { StatusCodes } from "http-status-codes";
 import jwt from "jsonwebtoken";
+import type { Socket } from "socket.io";
 
 import { MundoApp, PhPhApp } from "../../config/firebase-config.js";
 import User from "../../models/User.js";
@@ -93,6 +94,26 @@ export async function adminAuthMiddleware(
     next();
   } catch (err) {
     next(err);
+  }
+}
+
+export async function authenticateSocket(socket: Socket) {
+  try {
+    const token =
+      socket.handshake.auth.token ?? socket.handshake.headers.authorization;
+
+    const firebaseUser = await getAuth(MundoApp).verifyIdToken(token);
+
+    const user = await User.findOne({
+      uid: firebaseUser.uid,
+    })
+      .orFail(createError("User not found", StatusCodes.NOT_FOUND))
+      .select<UserProjectionPrivate>(UserProjection.private)
+      .lean();
+
+    return user;
+  } catch {
+    return null;
   }
 }
 

@@ -9,14 +9,16 @@ import helmet from "helmet";
 import { StatusCodes } from "http-status-codes";
 
 import logger from "./api/services/logger/index.js";
+import { app, server } from "./app.js";
 import { connectDatabase } from "./config/database.js";
 import { env } from "./env.js";
 import router from "./router.js";
 import { createError, errorHandler } from "./utilities/errorHandlers.js";
 
-const app = express();
+import { loadCronJobs } from "./cronjobs/index.js";
+import "./socket.js";
+import { io } from "./socket.js";
 
-// Trust the first proxy in the chain
 app.set("trust proxy", 1);
 
 const rateLimiter = rateLimit({
@@ -58,22 +60,42 @@ async function main() {
 
     app.use(errorHandler);
 
-    app.listen(env.APP_PORT, () => {
+    server.listen(env.APP_PORT, () => {
       logger.verbose(`Server listening on port ${env.APP_PORT}`);
     });
 
-    await import("./cronjobs/scheduledTasks.js");
-    await import("./cronjobs/updateTrendScores.js");
-    await import("./cronjobs/bots.js");
-
-    if (env.NODE_ENV === "production") {
-      await import("./cronjobs/notification.js");
-      await import("./cronjobs/backup.js");
-    }
+    loadCronJobs(env.NODE_ENV);
   } catch (error) {
     logger.error("Error starting server", error);
     process.exit(1);
   }
 }
+
+const gracefulShutdown = () => {
+  if (!shuttingDown) {
+    shuttingDown = true;
+    logger.info("Received shutdown signal, cleaning up...");
+
+    const cleanupPromises = [
+      new Promise((resolve) => {
+        io.close(resolve);
+      }),
+    ];
+
+    Promise.all(cleanupPromises)
+      .then(() => {
+        logger.info("Cleanup completed successfully.");
+        process.exit(0);
+      })
+      .catch((error) => {
+        logger.error("Failed during cleanup:", error);
+        process.exit(1);
+      });
+  }
+};
+
+let shuttingDown = false;
+process.on("SIGTERM", gracefulShutdown);
+process.on("SIGINT", gracefulShutdown);
 
 main();
