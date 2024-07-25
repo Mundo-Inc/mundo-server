@@ -1,5 +1,6 @@
 import express from "express";
 
+import { cashOut } from "../controllers/reward/cashOut.js";
 import { claimDailyCoins } from "../controllers/reward/claimDailyCoins.js";
 import {
   claimMissionReward,
@@ -27,6 +28,8 @@ router.use(authMiddleware);
 
 router.get("/daily", dailyCoinInformation);
 router.post("/daily/claim", claimDailyCoins);
+
+router.post("/cashout", cashOut);
 
 router.get("/missions", getMissionsValidation, getMissions);
 
