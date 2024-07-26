@@ -34,6 +34,7 @@ import { shouldBotInteract } from "../../../utilities/mundo.js";
 import { openAiAnalyzeReview } from "../../../utilities/openAi.js";
 import { createResponse } from "../../../utilities/response.js";
 import { validateData, zObjectId } from "../../../utilities/validation.js";
+import { sendSlackMessage } from "../SlackController.js";
 
 const body = z.object({
   place: zObjectId,
@@ -261,6 +262,11 @@ export async function createReview(
         scheduledAt: getRandomDateInRange(60 * 60 * 3, 60 * 5),
       });
     }
+
+    await sendSlackMessage(
+      "phantomAssistant",
+      `New review from ${authUser.name}\n${mediaDocs && mediaDocs.length > 0 ? mediaDocs.length : "no"} media`,
+    );
   } catch (err) {
     next(err);
   }

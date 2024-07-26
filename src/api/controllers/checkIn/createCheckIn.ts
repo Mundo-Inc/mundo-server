@@ -42,6 +42,7 @@ import {
   zObjectId,
   zUniqueObjectIdArray,
 } from "../../../utilities/validation.js";
+import { sendSlackMessage } from "../SlackController.js";
 
 const body = z.object({
   place: zObjectId.optional(), // TODO: make sure only one is provided
@@ -206,7 +207,13 @@ export async function createCheckIn(
       ),
       User.updateOne({ _id: authUser._id }, { latestPlace: thePlace }),
       sendNotificiationToFollowers(authUser._id, checkIn),
-    ]);
+      sendSlackMessage(
+        "phantomAssistant",
+        `New check-in from ${authUser.name}\n${mediaDocs && mediaDocs.length > 0 ? mediaDocs.length : "no"} media`,
+      ),
+    ]).catch((e) => {
+      logger.error("Error after creating check-in", e);
+    });
 
     // Add usd earning reward if media included and privacyType is public
     if (mediaDocs !== null && mediaDocs.length > 0 && checkIn.privacyType) {
