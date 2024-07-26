@@ -144,16 +144,16 @@ export async function getNotificationContent(notification: INotification) {
     case NotificationTypeEnum.FollowingHomemade:
       await Homemade.findById(notification.resources![0]._id)
         .populate<{
-          userId: UserProjectionEssentials;
+          user: UserProjectionEssentials;
         }>({
-          path: "userId",
+          path: "user",
           select: UserProjection.essentials,
         })
         .then((homemade) => {
           if (!homemade) {
             handleResourceNotFound(notification);
           } else {
-            user = homemade.userId;
+            user = homemade.user;
             title = "Posted a new homemade recipe";
             activity = homemade.userActivityId?.toString();
           }
