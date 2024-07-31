@@ -10,6 +10,15 @@ import Media from "./Media.js";
 import Place from "./Place.js";
 import UserActivity, { ResourcePrivacyEnum } from "./UserActivity.js";
 
+export interface IScores {
+  overall?: number;
+  drinkQuality?: number;
+  foodQuality?: number;
+  atmosphere?: number;
+  service?: number;
+  value?: number;
+}
+
 export interface ICheckIn {
   _id: Types.ObjectId;
   user: Types.ObjectId;
@@ -20,9 +29,22 @@ export interface ICheckIn {
   caption?: string;
   userActivityId?: Types.ObjectId;
   privacyType: ResourcePrivacyEnum;
+  scores?: IScores;
   createdAt: Date;
   updatedAt: Date;
 }
+
+const scoresSchema = new Schema<IScores>(
+  {
+    overall: { type: Number, min: 0, max: 5 },
+    drinkQuality: { type: Number, min: 0, max: 5 },
+    foodQuality: { type: Number, min: 0, max: 5 },
+    atmosphere: { type: Number, min: 0, max: 5 },
+    service: { type: Number, min: 0, max: 5 },
+    value: { type: Number, min: 0, max: 5 },
+  },
+  { _id: false },
+);
 
 const CheckInSchema = new Schema<ICheckIn>(
   {
@@ -44,6 +66,7 @@ const CheckInSchema = new Schema<ICheckIn>(
       default: ResourcePrivacyEnum.Public,
       required: true,
     },
+    scores: scoresSchema,
   },
   {
     timestamps: true,

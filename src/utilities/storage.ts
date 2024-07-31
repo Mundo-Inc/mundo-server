@@ -1,11 +1,12 @@
-import { path } from "@ffmpeg-installer/ffmpeg";
+import { path as ffmpegPath } from "@ffmpeg-installer/ffmpeg";
 import { randomBytes } from "crypto";
-import { type Request } from "express";
+import type { Request } from "express";
 import ffmpeg from "fluent-ffmpeg";
 import formidable, { type Fields, type Files } from "formidable";
 import * as fs from "fs";
+import path from "path";
 
-ffmpeg.setFfmpegPath(path);
+ffmpeg.setFfmpegPath(ffmpegPath);
 
 export async function parseForm(
   req: Request,
@@ -68,10 +69,10 @@ export const resizeVideo = (inputPath: string, outputPath: string) => {
   });
 };
 
-export function createThumbnail(inputPath: string) {
-  return new Promise((resolve, reject) => {
+export function createThumbnail(inputPath: string, outputName: string) {
+  return new Promise<string>((resolve, reject) => {
     ffmpeg(inputPath)
-      .on("error", (err: any) => {
+      .on("error", (err) => {
         reject(
           new Error(
             `Error creating thumbnail for ${inputPath}: ${err.message}`,
@@ -79,11 +80,11 @@ export function createThumbnail(inputPath: string) {
         );
       })
       .on("end", () => {
-        resolve(true);
+        resolve(path.resolve(`./tmp/${outputName}`));
       })
       .screenshots({
         timestamps: ["50%"],
-        filename: "%b-thumbnail.jpg",
+        filename: outputName,
         folder: "./tmp/",
         size: "640x?",
       });

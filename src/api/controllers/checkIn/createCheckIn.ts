@@ -55,6 +55,16 @@ const body = z.object({
     .nativeEnum(ResourcePrivacyEnum)
     .optional()
     .default(ResourcePrivacyEnum.Public),
+  scores: z
+    .object({
+      overall: z.number().min(0).max(5).optional(),
+      drinkQuality: z.number().min(0).max(5).optional(),
+      foodQuality: z.number().min(0).max(5).optional(),
+      service: z.number().min(0).max(5).optional(),
+      atmosphere: z.number().min(0).max(5).optional(),
+      value: z.number().min(0).max(5).optional(),
+    })
+    .optional(),
 });
 
 type Body = z.infer<typeof body>;
@@ -73,7 +83,7 @@ export async function createCheckIn(
   try {
     const authUser = req.user!;
 
-    const { caption, image, media, place, event, tags, privacyType } =
+    const { caption, image, media, place, event, tags, privacyType, scores } =
       req.body as Body;
 
     const mediaUploadIds = media || (image ? [image] : null);
@@ -163,6 +173,7 @@ export async function createCheckIn(
       privacyType: privacyType,
       ...(mediaDocs ? { media: mediaDocs.map((m) => m._id) } : {}),
       ...(event ? { event } : {}),
+      ...(scores ? { scores } : {}),
     };
 
     const checkIn = await CheckIn.create(checkinBody);

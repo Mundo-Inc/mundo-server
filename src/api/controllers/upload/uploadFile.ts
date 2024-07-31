@@ -125,9 +125,9 @@ export async function uploadFile(
         res.status(StatusCodes.CREATED).json(createResponse(upload));
       }
 
-      await createThumbnail(filepath);
-      const thumbnailOutputPath = path.resolve(
-        `./tmp/${fileName.replace(/\.[^/.]+$/, "-thumbnail.jpg")}`,
+      const thumbnailOutputPath = await createThumbnail(
+        filepath,
+        fileName.replace(/\.[^/.]+$/, "-thumbnail.jpg"),
       );
 
       await S3Manager.uploadImage(

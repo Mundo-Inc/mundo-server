@@ -25,7 +25,7 @@
     "node": ">=20.0.0"
   },
   "dependencies": {
-    "@aws-sdk/client-s3": "^3.620.0",
+    "@aws-sdk/client-s3": "^3.621.0",
     "@ffmpeg-installer/ffmpeg": "^1.1.0",
     "@getbrevo/brevo": "^2.2.0",
     "@t3-oss/env-core": "^0.10.1",
@@ -45,9 +45,9 @@
     "http-status-codes": "^2.3.0",
     "jsonwebtoken": "^9.0.2",
     "moment-timezone": "^0.5.45",
-    "mongoose": "^8.5.1",
+    "mongoose": "^8.5.2",
     "node-cron": "^3.0.3",
-    "openai": "^4.53.1",
+    "openai": "^4.53.2",
     "semver": "^7.6.3",
     "socket.io": "^4.7.5",
     "stripe": "^15.12.0",
@@ -63,10 +63,10 @@
     "@types/cookie-parser": "^1.4.7",
     "@types/cors": "^2.8.17",
     "@types/express": "^4.17.21",
-    "@types/fluent-ffmpeg": "^2.1.24",
+    "@types/fluent-ffmpeg": "^2.1.25",
     "@types/formidable": "^3.4.5",
     "@types/jsonwebtoken": "^9.0.6",
-    "@types/node": "^20.14.12",
+    "@types/node": "^20.14.13",
     "@types/node-cron": "^3.0.11",
     "@types/semver": "^7.5.8",
     "@types/tz-lookup": "^6.1.2",
@@ -74,7 +74,7 @@
     "concurrently": "^8.2.2",
     "prettier": "^3.3.3",
     "prettier-plugin-organize-imports": "^4.0.0",
-    "tsx": "^4.16.2",
+    "tsx": "^4.16.3",
     "typescript": "^5.5.4"
   }
 }

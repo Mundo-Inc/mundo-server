@@ -69,11 +69,11 @@ export async function getPlacesByContext(
 
     // combine it with detailed data
 
-    const result = await getDetailedPlace(matchedPlace?._id);
+    const result = await getDetailedPlace(matchedPlace._id);
 
     if (!existing && !result.thirdParty.google?.id) {
       // If the place is new and doesn't exist on Google, delete it
-      await Place.deleteOne({ _id: matchedPlace?._id });
+      await Place.deleteOne({ _id: matchedPlace._id });
       throw createError("Place doesn't exist", StatusCodes.NOT_FOUND);
     } else {
       res.status(StatusCodes.OK).json(createResponse(result));
