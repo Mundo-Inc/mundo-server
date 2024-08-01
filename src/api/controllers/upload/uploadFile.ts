@@ -54,11 +54,21 @@ export async function uploadFile(
       fs.unlinkSync(filepath);
 
       if (usecase === "profileImage") {
+        const timestamp = Math.floor(Date.now() / 1000).toString();
+
         await User.findByIdAndUpdate(authUser._id, {
-          profileImage: url,
+          profileImage: url + `?t=${timestamp}`,
         });
 
-        res.sendStatus(StatusCodes.NO_CONTENT);
+        const upload = new Upload({
+          user: authUser._id,
+          key: key + `?t=${timestamp}`,
+          src: url + `?t=${timestamp}`,
+          usecase,
+          type: mimetype.split("/")[0],
+        });
+
+        res.status(StatusCodes.CREATED).json(createResponse(upload));
       } else {
         const upload = await Upload.create({
           user: authUser._id,

@@ -31,6 +31,10 @@ export async function createUserConnection(
 
     const { id } = req.params as unknown as Params;
 
+    if (authUser._id.equals(id)) {
+      throw createError("Lol", StatusCodes.FORBIDDEN);
+    }
+
     // Check if the follow relationship already exists
     const existingFollow = await Follow.exists({
       user: authUser._id,
