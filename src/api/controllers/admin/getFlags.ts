@@ -1,9 +1,10 @@
 import type { NextFunction, Request, Response } from "express";
 import { StatusCodes } from "http-status-codes";
+import type { FilterQuery } from "mongoose";
 import { z } from "zod";
 
 import UserProjection from "../../../api/dto/user.js";
-import Flag from "../../../models/Flag.js";
+import Flag, { type IFlag } from "../../../models/Flag.js";
 import Review from "../../../models/Review.js";
 import { createError } from "../../../utilities/errorHandlers.js";
 import { getPaginationFromQuery } from "../../../utilities/pagination.js";
@@ -40,18 +41,15 @@ export async function getFlags(
 
     //check if review exists
     if (review) {
-      const reviewExists = await Review.exists({ _id: review });
-      if (!reviewExists) {
-        throw createError("Review not found", StatusCodes.NOT_FOUND);
-      }
+      await Review.exists({ _id: review }).orFail(
+        createError("Review not found", StatusCodes.NOT_FOUND),
+      );
     }
-    // Create a query object to filter the results based on the "review" query parameter if it's set
-    const queryObj = review
-      ? {
-          target: review,
-          adminAction: { $exists: false },
-        }
-      : { adminAction: { $exists: false } };
+
+    const queryObj: FilterQuery<IFlag> = {
+      adminAction: { $exists: false },
+      ...(review ? { target: review } : {}),
+    };
 
     const [totalDocuments, result] = await Promise.all([
       Flag.countDocuments(queryObj),
@@ -63,7 +61,14 @@ export async function getFlags(
         .populate("user", UserProjection.admin),
     ]);
 
+    const response: IFlag[] = [];
+
     for (const flag of result) {
+      if (!flag.target) {
+        flag.deleteOne();
+        continue;
+      }
+
       switch (flag.targetType) {
         case "Review":
           await Promise.all([
@@ -83,10 +88,12 @@ export async function getFlags(
         default:
           break;
       }
+
+      response.push(flag);
     }
 
     res.status(StatusCodes.OK).json(
-      createResponse(result, {
+      createResponse(response, {
         totalCount: totalDocuments,
         page,
         limit,
