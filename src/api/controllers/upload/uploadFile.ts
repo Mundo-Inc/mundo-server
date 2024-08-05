@@ -22,11 +22,17 @@ export async function uploadFile(
   next: NextFunction,
 ) {
   try {
+    logger.verbose("uploadFile");
     const authUser = req.user!;
 
     const { fields, files } = await parseForm(req);
 
     const usecase = fields.usecase![0] as UploadUsecase;
+
+    logger.verbose(1);
+    logger.verbose(files.image);
+    logger.verbose(2);
+    logger.verbose(files.video);
 
     if (files.image && files.image[0]) {
       const { filepath, mimetype } = files.image[0];
