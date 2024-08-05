@@ -1,7 +1,6 @@
 import type { NextFunction, Request, Response } from "express";
 import fs from "fs";
 import { StatusCodes } from "http-status-codes";
-import path from "path";
 
 import type { UploadUsecase } from "../../../models/Upload.js";
 import Upload from "../../../models/Upload.js";
@@ -14,8 +13,8 @@ import {
   createThumbnail,
   generateFilename,
   parseForm,
-  resizeVideo,
 } from "../../../utilities/storage.js";
+import logger from "../../services/logger/index.js";
 
 export async function uploadFile(
   req: Request,
@@ -25,7 +24,6 @@ export async function uploadFile(
   try {
     const authUser = req.user!;
 
-    const { convert } = req.query;
     const { fields, files } = await parseForm(req);
 
     const usecase = fields.usecase![0] as UploadUsecase;
@@ -93,52 +91,32 @@ export async function uploadFile(
         mimetype,
       );
 
-      const convertOutputPath = path.resolve(`./tmp/${fileName}`);
+      const url = await S3Manager.uploadVideo(
+        {
+          mimetype: mimetype,
+          path: filepath,
+        },
+        key,
+      );
 
-      if (convert) {
-        const upload = await Upload.create({
-          user: authUser._id,
-          key,
-          src: S3Manager.getURL(key),
-          usecase,
-          type: mimetype.split("/")[0],
-        });
+      const upload = await Upload.create({
+        user: authUser._id,
+        key,
+        src: url,
+        usecase,
+        type: "video",
+      });
 
-        res.status(StatusCodes.CREATED).json(createResponse(upload));
+      logger.verbose(upload);
 
-        await resizeVideo(filepath, convertOutputPath);
-
-        await S3Manager.uploadVideo(
-          {
-            mimetype: mimetype,
-            path: convertOutputPath,
-          },
-          key,
-        );
-      } else {
-        const url = await S3Manager.uploadVideo(
-          {
-            mimetype: mimetype,
-            path: filepath,
-          },
-          key,
-        );
-
-        const upload = await Upload.create({
-          user: authUser._id,
-          key,
-          src: url,
-          usecase,
-          type: "video",
-        });
-
-        res.status(StatusCodes.CREATED).json(createResponse(upload));
-      }
+      res.status(StatusCodes.CREATED).json(createResponse(upload));
 
       const thumbnailOutputPath = await createThumbnail(
         filepath,
         fileName.replace(/\.[^/.]+$/, "-thumbnail.jpg"),
       );
+
+      logger.verbose(thumbnailOutputPath);
 
       await S3Manager.uploadImage(
         {
@@ -151,9 +129,7 @@ export async function uploadFile(
       fs.unlinkSync(thumbnailOutputPath);
       fs.unlinkSync(filepath);
 
-      if (convert) {
-        fs.unlinkSync(convertOutputPath);
-      }
+      logger.verbose("Done");
     } else {
       throw createError(strings.media.notProvided, StatusCodes.BAD_REQUEST);
     }
