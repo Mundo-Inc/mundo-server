@@ -14,7 +14,6 @@ import {
   generateFilename,
   parseForm,
 } from "../../../utilities/storage.js";
-import logger from "../../services/logger/index.js";
 
 export async function uploadFile(
   req: Request,
@@ -22,17 +21,11 @@ export async function uploadFile(
   next: NextFunction,
 ) {
   try {
-    logger.verbose("uploadFile");
     const authUser = req.user!;
 
     const { fields, files } = await parseForm(req);
 
     const usecase = fields.usecase![0] as UploadUsecase;
-
-    logger.verbose(1);
-    logger.verbose(files.image);
-    logger.verbose(2);
-    logger.verbose(files.video);
 
     if (files.image && files.image[0]) {
       const { filepath, mimetype } = files.image[0];
@@ -113,16 +106,12 @@ export async function uploadFile(
         type: "video",
       });
 
-      logger.verbose(upload);
-
       res.status(StatusCodes.CREATED).json(createResponse(upload));
 
       const thumbnailOutputPath = await createThumbnail(
         filepath,
         fileName.replace(/\.[^/.]+$/, "-thumbnail.jpg"),
       );
-
-      logger.verbose(thumbnailOutputPath);
 
       await S3Manager.uploadImage(
         {
@@ -134,8 +123,6 @@ export async function uploadFile(
 
       fs.unlinkSync(thumbnailOutputPath);
       fs.unlinkSync(filepath);
-
-      logger.verbose("Done");
     } else {
       throw createError(strings.media.notProvided, StatusCodes.BAD_REQUEST);
     }

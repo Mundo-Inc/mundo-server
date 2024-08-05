@@ -88,8 +88,6 @@ export async function createCheckIn(
 
     const mediaUploadIds = media || (image ? [image] : null);
 
-    logger.verbose(mediaUploadIds);
-
     let thePlace: Types.ObjectId;
     if (place) {
       await Place.exists({ _id: place }).orFail(
