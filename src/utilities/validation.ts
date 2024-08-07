@@ -36,8 +36,13 @@ export function validateData(schema: Schema) {
           message: issue.message,
         }));
 
+        const message =
+          errorMessages.length === 1
+            ? errorMessages[0].message
+            : "Invalid input data";
+
         next(
-          createError("Invalid data", {
+          createError(message, {
             statusCode: StatusCodes.BAD_REQUEST,
             type: "validation",
             details: errorMessages,
@@ -87,7 +92,9 @@ export const zUniqueObjectIdArray = z
     Array.from(new Set(args)).map((id) => new Types.ObjectId(id)),
   );
 
-export const zPhone = z.string().regex(/^\+[1-9]\d{1,14}$/);
+export const zPhone = z
+  .string()
+  .regex(/^\+[1-9]\d{1,14}$/, "Invalid phone number");
 
 export const zUsername = z
   .string()

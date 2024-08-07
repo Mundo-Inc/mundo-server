@@ -52,6 +52,10 @@ export function errorHandler(
     message: err.message,
   };
 
+  if ("details" in err) {
+    body.details = err.details;
+  }
+
   if ("statusCode" in err && err.statusCode) {
     statusCode = err.statusCode;
   }

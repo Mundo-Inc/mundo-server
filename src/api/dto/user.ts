@@ -31,6 +31,7 @@ const UserProjection = {
     _id: true,
     name: true,
     email: true,
+    phone: true,
     profileImage: true,
     username: true,
     bio: true,

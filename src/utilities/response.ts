@@ -49,11 +49,9 @@ export function createResponse<T>(
 export function createErrorResponse(payload: ErrorDetails): ErrorResponse {
   const errorPayload = payload as ErrorDetails & {
     success?: boolean;
-    validation?: any;
     title?: string;
   };
   errorPayload.success = false;
-  errorPayload.validation = errorPayload.details;
   errorPayload.title = errorPayload.type;
   return {
     status: ResponseStatusEnum.Error,

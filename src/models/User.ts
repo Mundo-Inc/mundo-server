@@ -63,10 +63,13 @@ export interface IUser {
     address: string;
     verified: boolean;
   };
+  phone: {
+    number: string;
+    verified: boolean;
+  };
   role: UserRoleEnum;
   isActive?: boolean;
   name: string;
-  phone?: string;
   bio: string;
   profileImage: string;
   password: string;
@@ -179,7 +182,14 @@ const UserSchema = new Schema<IUser>(
       default: true,
     },
     phone: {
-      type: String,
+      number: {
+        type: String,
+        trim: true,
+      },
+      verified: {
+        type: Boolean,
+        default: false,
+      },
     },
     bio: {
       type: String,
