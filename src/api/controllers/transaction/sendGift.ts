@@ -10,7 +10,6 @@ import { roundUpToTwoDecimals } from "../../../utilities/numbers.js";
 import { ensureNonEmptyString } from "../../../utilities/requireValue.js";
 import { createResponse } from "../../../utilities/response.js";
 import { validateData, zObjectId } from "../../../utilities/validation.js";
-import { sendAttributtedMessage } from "../conversation/helpers.js";
 import stripe from "./stripe.js";
 
 const SERVICE_FEE_RATIO = 0.05;
@@ -113,11 +112,7 @@ export async function sendGift(
       message: message,
     });
 
-    // Send message to recipient
-    sendAttributtedMessage(authUser._id, recipientId, message, {
-      action: "gift",
-      transactionId: transaction._id.toString(),
-    });
+    // TODO: Send message to recipient
 
     res.status(StatusCodes.OK).json(createResponse(transaction));
   } catch (error) {

@@ -5,7 +5,6 @@ import adminRouter from "./api/v1/adminRouter.js";
 import authRouter from "./api/v1/authRouter.js";
 import checkinRouter from "./api/v1/checkinRouter.js";
 import commentRouter from "./api/v1/commentRouter.js";
-import conversationRouter from "./api/v1/conversationRouter.js";
 import devRouter from "./api/v1/devRouter.js";
 import eventRouter from "./api/v1/eventRouter.js";
 import feedRouter from "./api/v1/feedRouter.js";
@@ -46,7 +45,6 @@ router.use("/lists", listRouter);
 router.use("/rewards", rewardRouter);
 router.use("/dev", devRouter);
 router.use("/admin", adminRouter);
-router.use("/conversations", conversationRouter);
 router.use("/webhooks", webhookRouter);
 router.use("/transactions", transactionRouter);
 
