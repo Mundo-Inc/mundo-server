@@ -11,13 +11,13 @@ import { StatusCodes } from "http-status-codes";
 import logger from "./api/services/logger/index.js";
 import { app, server } from "./app.js";
 import { connectDatabase } from "./config/database.js";
+import { loadCronJobs } from "./cronjobs/index.js";
 import { env } from "./env.js";
+import gracefulShutdown from "./gracefulShutdown.js";
 import router from "./router.js";
 import { createError, errorHandler } from "./utilities/errorHandlers.js";
 
-import { loadCronJobs } from "./cronjobs/index.js";
 import "./socket.js";
-import { io } from "./socket.js";
 
 app.set("trust proxy", 1);
 
@@ -37,65 +37,50 @@ const rateLimiter = rateLimit({
   },
 });
 
-app.use(cors());
+app.use(
+  cors({
+    origin: "*",
+    credentials: true,
+  }),
+);
 app.use(rateLimiter);
 app.use(helmet());
 app.use(cookieParser());
 app.use(express.urlencoded({ extended: true }));
 
-async function main() {
-  try {
-    await connectDatabase();
+await connectDatabase();
 
-    app.use("/api/v1", router);
+app.use("/api/v1", router);
 
-    app.use((req, res, next) => {
-      next(
-        createError("Route not found", {
-          type: "Route Not Found",
-          statusCode: StatusCodes.NOT_FOUND,
-        }),
-      );
-    });
+app.use((req, res, next) => {
+  next(
+    createError("Route not found", {
+      type: "Route Not Found",
+      statusCode: StatusCodes.NOT_FOUND,
+    }),
+  );
+});
 
-    app.use(errorHandler);
+app.use(errorHandler);
 
-    server.listen(env.APP_PORT, () => {
-      logger.verbose(`Server listening on port ${env.APP_PORT}`);
-    });
+loadCronJobs(env.NODE_ENV);
 
-    loadCronJobs(env.NODE_ENV);
-  } catch (error) {
+server.listen(env.APP_PORT, () => {
+  logger.verbose(
+    `${env.NODE_ENV} mode | Server listening on port ${env.APP_PORT}`,
+  );
+});
+
+server.on("error", (error: NodeJS.ErrnoException) => {
+  if (error.code === "EADDRINUSE") {
+    logger.error(`Port ${env.APP_PORT} is already in use.`);
+  } else if (error.code === "EACCES") {
+    logger.error(`Insufficient privileges to bind to port ${env.APP_PORT}.`);
+  } else {
     logger.error("Error starting server", error);
-    process.exit(1);
   }
-}
+  process.exit(1);
+});
 
-const gracefulShutdown = () => {
-  if (!shuttingDown) {
-    shuttingDown = true;
-    logger.info("Received shutdown signal, cleaning up...");
-
-    const cleanupPromises = [
-      new Promise((resolve) => {
-        io.close(resolve);
-      }),
-    ];
-
-    Promise.all(cleanupPromises)
-      .then(() => {
-        logger.info("Cleanup completed successfully.");
-        process.exit(0);
-      })
-      .catch((error) => {
-        logger.error("Failed during cleanup:", error);
-        process.exit(1);
-      });
-  }
-};
-
-let shuttingDown = false;
 process.on("SIGTERM", gracefulShutdown);
 process.on("SIGINT", gracefulShutdown);
-
-main();

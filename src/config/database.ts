@@ -5,10 +5,14 @@ import { env } from "../env.js";
 
 export async function connectDatabase() {
   try {
-    await mongoose.connect(`${env.DB_URI}/${env.DB_NAME}`);
-    logger.verbose("Connected to database");
+    const connectionInstance = await mongoose.connect(
+      `${env.DB_URI}/${env.DB_NAME}`,
+    );
+    logger.verbose(
+      `MongoDB Connected. Db host: ${connectionInstance.connection.host}`,
+    );
   } catch (error) {
-    logger.error("Failed to connect to database", error);
+    logger.error("MongoDB Connection error", error);
     process.exit(1);
   }
 }

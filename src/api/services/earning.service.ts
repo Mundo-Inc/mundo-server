@@ -144,7 +144,7 @@ export const addEarnings = async (
 
     await user.save();
 
-    SocketService.emitToUser(userId, SocketService.Events.Earnings, {
+    SocketService.emitToUser(userId, SocketService.EventsEnum.Earnings, {
       type: earningType,
       title: earningTitles[earningType],
       amount: earningValues[earningType],

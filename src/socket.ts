@@ -25,13 +25,14 @@ io.on("connection", async (socket) => {
     }
 
     await socket.join(`u:${user._id.toString()}`);
+    // mountJoinChatEvent(socket, user._id);
 
-    socket.on(SocketService.Events.Request, async (data, ack) => {
-      const event: SocketService.Events = data.event;
+    socket.on(SocketService.EventsEnum.Request, async (data, ack) => {
+      const event: SocketService.EventsEnum = data.event;
       const type: "emit" | "ack" = data.type;
 
       switch (event) {
-        case SocketService.Events.Earnings:
+        case SocketService.EventsEnum.Earnings:
           await getUserEarnings(user._id).then((earnings) => {
             if (type === "emit") {
               SocketService.emitToUser(user._id, event, earnings);
@@ -50,12 +51,19 @@ io.on("connection", async (socket) => {
 });
 
 namespace SocketService {
-  export enum Events {
+  export enum EventsEnum {
     Earnings = "earnings",
     Request = "request",
+
+    // Chat
+    JoinChat = "joinChat",
   }
 
-  export function emitToUser(userId: Types.ObjectId, event: Events, data: any) {
+  export function emitToUser(
+    userId: Types.ObjectId,
+    event: EventsEnum,
+    data: any,
+  ) {
     io.to(`u:${userId.toString()}`).emit(event, data);
   }
 

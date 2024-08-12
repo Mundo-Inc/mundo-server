@@ -32,7 +32,10 @@ export async function createUserConnection(
     const { id } = req.params as unknown as Params;
 
     if (authUser._id.equals(id)) {
-      throw createError("Lol", StatusCodes.FORBIDDEN);
+      throw createError(
+        "You can't follow yourself, lol",
+        StatusCodes.FORBIDDEN,
+      );
     }
 
     // Check if the follow relationship already exists
