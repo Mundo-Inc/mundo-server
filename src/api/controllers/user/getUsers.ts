@@ -11,7 +11,12 @@ import { createResponse } from "../../../utilities/response.js";
 import { validateData } from "../../../utilities/validation.js";
 
 const getUsersQuery = z.object({
-  q: z.string().trim().max(100).optional(),
+  q: z
+    .string()
+    .trim()
+    .max(100)
+    .transform((value) => decodeURIComponent(value))
+    .optional(),
   page: z.string().optional(),
   limit: z.string().optional(),
 });

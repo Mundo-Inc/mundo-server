@@ -13,7 +13,12 @@ import { createResponse } from "../../../utilities/response.js";
 import { validateData } from "../../../utilities/validation.js";
 
 const query = z.object({
-  q: z.string().min(1).trim().optional(),
+  q: z
+    .string()
+    .min(1)
+    .trim()
+    .transform((value) => decodeURIComponent(value))
+    .optional(),
 });
 
 type Query = z.infer<typeof query>;
