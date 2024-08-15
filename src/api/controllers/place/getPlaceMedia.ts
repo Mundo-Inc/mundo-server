@@ -1,6 +1,5 @@
 import type { NextFunction, Request, Response } from "express";
 import { StatusCodes } from "http-status-codes";
-import type { PipelineStage } from "mongoose";
 import { z } from "zod";
 
 import UserProjection from "../../../api/dto/user.js";
@@ -45,8 +44,6 @@ export async function getPlaceMedia(
       maxLimit: 50,
     });
 
-    const priorityPipeline: PipelineStage[] = [];
-
     if (priority) {
       if (type) {
         throw createError(
@@ -54,12 +51,6 @@ export async function getPlaceMedia(
           StatusCodes.BAD_REQUEST,
         );
       }
-
-      priorityPipeline.push({
-        $sort: {
-          type: priority === "image" ? 1 : -1,
-        },
-      });
     }
 
     const media = await Media.aggregate([
@@ -69,7 +60,12 @@ export async function getPlaceMedia(
           ...(type ? { type } : {}),
         },
       },
-      ...priorityPipeline,
+      {
+        $sort: {
+          createdAt: -1,
+          ...(priority ? { type: priority === "image" ? 1 : -1 } : {}),
+        },
+      },
       {
         $facet: {
           total: [
@@ -109,11 +105,11 @@ export async function getPlaceMedia(
           ],
         },
       },
-    ]);
+    ]).then((result) => result[0]);
 
     res.status(StatusCodes.OK).json(
-      createResponse(media[0].media || [], {
-        totalCount: media[0].total[0]?.count || 0,
+      createResponse(media.media || [], {
+        totalCount: media.total[0]?.count || 0,
         page,
         limit,
       }),

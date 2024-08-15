@@ -13,38 +13,46 @@ export interface IMedia {
   event?: mongoose.Types.ObjectId;
   user: mongoose.Types.ObjectId;
   type: MediaTypeEnum;
+
+  createdAt: Date;
+  updatedAt: Date;
 }
 
-const MediaSchema = new Schema<IMedia>({
-  src: {
-    type: String,
-    required: true,
+const MediaSchema = new Schema<IMedia>(
+  {
+    src: {
+      type: String,
+      required: true,
+    },
+    caption: {
+      type: String,
+      default: null,
+    },
+    place: {
+      type: Schema.Types.ObjectId,
+      ref: "Place",
+      index: true,
+    },
+    event: {
+      type: Schema.Types.ObjectId,
+      ref: "Event",
+      index: true,
+    },
+    user: {
+      type: Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
+    type: {
+      type: String,
+      required: true,
+      enum: Object.values(MediaTypeEnum),
+    },
   },
-  caption: {
-    type: String,
-    default: null,
+  {
+    timestamps: true,
   },
-  place: {
-    type: Schema.Types.ObjectId,
-    ref: "Place",
-    index: true,
-  },
-  event: {
-    type: Schema.Types.ObjectId,
-    ref: "Event",
-    index: true,
-  },
-  user: {
-    type: Schema.Types.ObjectId,
-    ref: "User",
-    required: true,
-  },
-  type: {
-    type: String,
-    required: true,
-    enum: Object.values(MediaTypeEnum),
-  },
-});
+);
 
 MediaSchema.index({ place: 1 }, { sparse: true });
 

@@ -1,6 +1,7 @@
+import axios from "axios";
+import { StatusCodes } from "http-status-codes";
 import type { Document, Types } from "mongoose";
 
-import { StatusCodes } from "http-status-codes";
 import logger from "../../../api/services/logger/index.js";
 import {
   findYelpId,
@@ -22,6 +23,7 @@ import { dStrings as ds, dynamicMessage } from "../../../strings.js";
 import type { IYelpPlaceDetails } from "../../../types/yelpPlace.interface.js";
 import { createError } from "../../../utilities/errorHandlers.js";
 import { filterObjectByConfig } from "../../../utilities/filtering.js";
+import S3Manager from "../../../utilities/S3Manager/index.js";
 
 export async function getDetailedPlace(id: Types.ObjectId) {
   const place = await Place.findById(id).orFail(
@@ -65,6 +67,37 @@ export async function getDetailedPlace(id: Types.ObjectId) {
     } else {
       place.otherSources.yelp.rating = thirdPartyData.yelp.rating;
       place.otherSources.yelp.updatedAt = now;
+    }
+  }
+
+  const url =
+    thirdPartyData.google?.thumbnail || thirdPartyData.yelp?.thumbnail;
+
+  if (url && url !== "") {
+    try {
+      const response = await axios.get(url, {
+        responseType: "arraybuffer",
+      });
+
+      const mimeType = response.headers["content-type"];
+
+      const key = `places/${place._id.toString()}/thumbnail.${
+        mimeType.split("/")[1]
+      }`;
+
+      const thumbnailURL = S3Manager.getURL(key);
+
+      S3Manager.uploadImage(
+        {
+          mimetype: mimeType,
+          stream: response.data,
+        },
+        key,
+      );
+
+      place.thumbnail = thumbnailURL;
+    } catch (error) {
+      logger.error("Error fetching thumbnail", { error });
     }
   }
 

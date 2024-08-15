@@ -7,6 +7,10 @@ import {
 } from "../controllers/place/getExistInLists.js";
 import { getPlace, getPlaceValidation } from "../controllers/place/getPlace.js";
 import {
+  getPlaceByContext,
+  getPlaceByContextValidation,
+} from "../controllers/place/getPlaceByContext.js";
+import {
   getPlaceMedia,
   getPlaceMediaValidation,
 } from "../controllers/place/getPlaceMedia.js";
@@ -18,10 +22,6 @@ import {
   getPlaceReviews,
   getPlaceReviewsValidation,
 } from "../controllers/place/getPlaceReviews.js";
-import {
-  getPlacesByContext,
-  getPlacesByContextValidation,
-} from "../controllers/place/getPlacesByContext.js";
 import { authMiddleware } from "../middlewares/authMiddleWare.js";
 
 const router = express.Router();
@@ -39,8 +39,8 @@ const getPlaceRateLimiter = rateLimit({
 router.get(
   "/context",
   authMiddleware,
-  getPlacesByContextValidation,
-  getPlacesByContext,
+  getPlaceByContextValidation,
+  getPlaceByContext,
 );
 
 router.get("/:placeId/media", getPlaceMediaValidation, getPlaceMedia);

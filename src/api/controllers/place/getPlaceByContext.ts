@@ -2,8 +2,7 @@ import type { NextFunction, Request, Response } from "express";
 import { StatusCodes } from "http-status-codes";
 import { z } from "zod";
 
-import type { IPlace } from "../../../models/Place.js";
-import Place from "../../../models/Place.js";
+import Place, { type IPlace } from "../../../models/Place.js";
 import { createError } from "../../../utilities/errorHandlers.js";
 import { createResponse } from "../../../utilities/response.js";
 import { areStrictlySimilar } from "../../../utilities/stringHelper.js";
@@ -13,16 +12,19 @@ import { getDetailedPlace } from "./helpers.js";
 const query = z.object({
   lat: zGeoValidation.string.lat,
   lng: zGeoValidation.string.lng,
-  title: z.string().min(1),
+  title: z
+    .string()
+    .min(1)
+    .transform((value) => decodeURIComponent(value)),
 });
 
 type Query = z.infer<typeof query>;
 
-export const getPlacesByContextValidation = validateData({
+export const getPlaceByContextValidation = validateData({
   query: query,
 });
 
-export async function getPlacesByContext(
+export async function getPlaceByContext(
   req: Request,
   res: Response,
   next: NextFunction,
