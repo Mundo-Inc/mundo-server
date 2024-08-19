@@ -7,7 +7,7 @@ import { MediaTypeEnum } from "../../models/Media.js";
 import type { IPlace } from "../../models/Place.js";
 import type { IUser } from "../../models/User.js";
 import User from "../../models/User.js";
-import SocketService from "../../socket.js";
+import SocketService from "../../socket/index.js";
 import { dStrings as ds, dynamicMessage } from "../../strings.js";
 import { createError } from "../../utilities/errorHandlers.js";
 import type { MediaProjectionBrief } from "../dto/media.js";
@@ -144,7 +144,7 @@ export const addEarnings = async (
 
     await user.save();
 
-    SocketService.emitToUser(userId, SocketService.EventsEnum.Earnings, {
+    SocketService.emitToUser(userId, SocketService.STCEvents.Earnings, {
       type: earningType,
       title: earningTitles[earningType],
       amount: earningValues[earningType],
