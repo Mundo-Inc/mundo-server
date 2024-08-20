@@ -1,7 +1,9 @@
-import crypto from "crypto";
 import { StatusCodes } from "http-status-codes";
 
-import User, { SignupMethodEnum, UserRoleEnum } from "../../models/User.js";
+import User, {
+  SignupMethodEnum,
+  UserRoleEnum,
+} from "../../models/user/user.js";
 import { createError } from "../../utilities/errorHandlers.js";
 
 export const handleSignUp = async (
@@ -29,7 +31,6 @@ export const handleSignUp = async (
     role: UserRoleEnum.User,
     signupMethod,
     password: password || null,
-    verificationToken: crypto.randomBytes(20).toString("hex"),
     profileImage: profileImage || "",
   });
 

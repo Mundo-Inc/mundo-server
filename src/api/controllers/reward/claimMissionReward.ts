@@ -5,7 +5,7 @@ import { z } from "zod";
 import { populateMissionProgress } from "../../../api/services/reward/coinReward.service.js";
 import CoinReward, { CoinRewardTypeEnum } from "../../../models/CoinReward.js";
 import Mission from "../../../models/Mission.js";
-import User from "../../../models/User.js";
+import User from "../../../models/user/user.js";
 import { dStrings as ds, dynamicMessage } from "../../../strings.js";
 import { createError } from "../../../utilities/errorHandlers.js";
 import { createResponse } from "../../../utilities/response.js";

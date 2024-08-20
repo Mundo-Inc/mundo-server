@@ -9,7 +9,7 @@ import FollowRequest from "../../../models/FollowRequest.js";
 import Notification, {
   NotificationTypeEnum,
 } from "../../../models/Notification.js";
-import type { IUser } from "../../../models/User.js";
+import type { IUser } from "../../../models/user/user.js";
 import { dStrings as ds, dynamicMessage } from "../../../strings.js";
 import { createError } from "../../../utilities/errorHandlers.js";
 import { createResponse } from "../../../utilities/response.js";

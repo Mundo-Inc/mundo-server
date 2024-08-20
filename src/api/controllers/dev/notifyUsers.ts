@@ -8,8 +8,8 @@ import type {
   NotificationItemByUser,
 } from "../../../api/services/NotificationsService.js";
 import NotificationsService from "../../../api/services/NotificationsService.js";
-import type { IUser } from "../../../models/User.js";
-import User from "../../../models/User.js";
+import type { IUser } from "../../../models/user/user.js";
+import User from "../../../models/user/user.js";
 import { createResponse } from "../../../utilities/response.js";
 import { validateData, zObjectId } from "../../../utilities/validation.js";
 

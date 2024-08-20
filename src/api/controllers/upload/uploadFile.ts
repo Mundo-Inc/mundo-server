@@ -4,7 +4,7 @@ import { StatusCodes } from "http-status-codes";
 
 import type { UploadUsecase } from "../../../models/Upload.js";
 import Upload from "../../../models/Upload.js";
-import User from "../../../models/User.js";
+import User from "../../../models/user/user.js";
 import strings from "../../../strings.js";
 import { createError } from "../../../utilities/errorHandlers.js";
 import { createResponse } from "../../../utilities/response.js";

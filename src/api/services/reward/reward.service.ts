@@ -8,7 +8,7 @@ import Media from "../../../models/Media.js";
 import Reaction from "../../../models/Reaction.js";
 import Review from "../../../models/Review.js";
 import Reward from "../../../models/Reward.js";
-import User, { type IUser } from "../../../models/User.js";
+import User, { type IUser } from "../../../models/user/user.js";
 import { createError } from "../../../utilities/errorHandlers.js";
 import MediaProjection, { type MediaProjectionBrief } from "../../dto/media.js";
 import { UserActivityManager } from "../UserActivityManager.js";
@@ -87,12 +87,11 @@ const saveRewardAndUpdateUser = async (
   placeId?: mongoose.Types.ObjectId,
 ) => {
   try {
-    const reward = await Reward.create({
+    await Reward.create({
       userId: user._id,
       reason: { refType, refId, userActivityId, placeId },
       amount,
     });
-    await reward.save();
 
     const oldXP = user.progress.xp || 0;
     const oldLevel = user.progress.level || 1;

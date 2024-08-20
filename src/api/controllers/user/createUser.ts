@@ -12,8 +12,8 @@ import CoinReward, { CoinRewardTypeEnum } from "../../../models/CoinReward.js";
 import Notification, {
   NotificationTypeEnum,
 } from "../../../models/Notification.js";
-import type { IUser } from "../../../models/User.js";
-import User, { SignupMethodEnum } from "../../../models/User.js";
+import type { IUser } from "../../../models/user/user.js";
+import User, { SignupMethodEnum } from "../../../models/user/user.js";
 import { dStrings as ds, dynamicMessage } from "../../../strings.js";
 import { createError } from "../../../utilities/errorHandlers.js";
 import {

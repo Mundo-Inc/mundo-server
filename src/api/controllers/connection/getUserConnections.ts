@@ -4,7 +4,7 @@ import { z } from "zod";
 
 import UserProjection from "../../../api/dto/user.js";
 import Follow from "../../../models/Follow.js";
-import User from "../../../models/User.js";
+import User from "../../../models/user/user.js";
 import { dStrings as ds, dynamicMessage } from "../../../strings.js";
 import { createError } from "../../../utilities/errorHandlers.js";
 import { getPaginationFromQuery } from "../../../utilities/pagination.js";

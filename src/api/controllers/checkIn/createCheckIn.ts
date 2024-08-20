@@ -6,7 +6,6 @@ import { z } from "zod";
 import MediaProjection from "../../../api/dto/media.js";
 import {
   addEarnings,
-  checkinEarning,
   EarningsType,
 } from "../../../api/services/earning.service.js";
 import logger from "../../../api/services/logger/index.js";
@@ -29,7 +28,7 @@ import ScheduledTask, {
   ScheduledTaskType,
 } from "../../../models/ScheduledTask.js";
 import Upload from "../../../models/Upload.js";
-import User, { UserRoleEnum } from "../../../models/User.js";
+import User, { UserRoleEnum } from "../../../models/user/user.js";
 import { ResourcePrivacyEnum } from "../../../models/UserActivity.js";
 import strings, { dStrings as ds, dynamicMessage } from "../../../strings.js";
 import { getRandomDateInRange } from "../../../utilities/dateTime.js";
@@ -211,7 +210,6 @@ export async function createCheckIn(
     );
 
     await Promise.all([
-      checkinEarning(authUser._id, checkIn._id),
       Place.updateOne(
         { _id: thePlace },
         { $inc: { "activities.checkinCount": 1 } },

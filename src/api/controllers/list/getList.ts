@@ -8,7 +8,7 @@ import type { UserProjectionEssentials } from "../../../api/dto/user.js";
 import UserProjection from "../../../api/dto/user.js";
 import List from "../../../models/List.js";
 import Place from "../../../models/Place.js";
-import User from "../../../models/User.js";
+import User from "../../../models/user/user.js";
 import strings, { dStrings as ds, dynamicMessage } from "../../../strings.js";
 import { createError } from "../../../utilities/errorHandlers.js";
 import { createResponse } from "../../../utilities/response.js";

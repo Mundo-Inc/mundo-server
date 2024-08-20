@@ -7,7 +7,7 @@ import {
 import { Types } from "mongoose";
 
 import { MundoApp } from "../../config/firebase-config.js";
-import User, { type IUser } from "../../models/User.js";
+import User, { type IUser } from "../../models/user/user.js";
 import logger from "./logger/index.js";
 
 export interface NotificationItemByToken {

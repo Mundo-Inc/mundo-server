@@ -10,7 +10,7 @@ import Block from "../../../models/Block.js";
 import CheckIn from "../../../models/CheckIn.js";
 import Follow, { FollowStatusEnum } from "../../../models/Follow.js";
 import Review from "../../../models/Review.js";
-import User from "../../../models/User.js";
+import User from "../../../models/user/user.js";
 import strings, { dStrings as ds, dynamicMessage } from "../../../strings.js";
 import {
   getConnectionStatus,

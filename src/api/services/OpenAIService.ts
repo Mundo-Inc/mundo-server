@@ -7,7 +7,7 @@ import CheckIn, { type ICheckIn } from "../../models/CheckIn.js";
 import Comment, { type IComment } from "../../models/Comment.js";
 import Place, { type IPlace } from "../../models/Place.js";
 import Review, { type IReview } from "../../models/Review.js";
-import User, { type IUser } from "../../models/User.js";
+import User, { type IUser } from "../../models/user/user.js";
 import UserActivity, {
   ResourcePrivacyEnum,
 } from "../../models/UserActivity.js";

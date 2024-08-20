@@ -1,21 +1,26 @@
 import cron from "node-cron";
 
-import type { UserProjectionEssentials } from "../api/dto/user.js";
-import UserProjection from "../api/dto/user.js";
+import UserProjection, {
+  type UserProjectionEssentials,
+} from "../api/dto/user.js";
 import logger from "../api/services/logger/index.js";
-import type { NotificationItemByToken } from "../api/services/NotificationsService.js";
-import NotificationsService from "../api/services/NotificationsService.js";
+import NotificationsService, {
+  type NotificationItemByToken,
+} from "../api/services/NotificationsService.js";
 import CheckIn from "../models/CheckIn.js";
 import Comment from "../models/Comment.js";
 import Follow from "../models/Follow.js";
 import Homemade from "../models/Homemade.js";
-import type { INotification } from "../models/Notification.js";
-import Notification, { NotificationTypeEnum } from "../models/Notification.js";
+import Notification, {
+  NotificationTypeEnum,
+  type INotification,
+} from "../models/Notification.js";
 import type { IPlace } from "../models/Place.js";
 import Reaction from "../models/Reaction.js";
 import Review from "../models/Review.js";
-import type { IUser, UserDevice } from "../models/User.js";
-import User from "../models/User.js";
+import type { IUser } from "../models/user/user.js";
+import User from "../models/user/user.js";
+import type { IUserDevice } from "../models/user/userDevice.js";
 
 cron.schedule("*/30 * * * * *", async () => {
   const notifications = await Notification.find({
@@ -38,8 +43,8 @@ cron.schedule("*/30 * * * * *", async () => {
 
       if (user && user.devices.length > 0) {
         const items: NotificationItemByToken[] = user.devices
-          .filter((d: UserDevice) => Boolean(d.fcmToken))
-          .map((d: UserDevice) => ({
+          .filter((d: IUserDevice) => Boolean(d.fcmToken))
+          .map((d: IUserDevice) => ({
             tokenMessage: {
               notification: {
                 title,

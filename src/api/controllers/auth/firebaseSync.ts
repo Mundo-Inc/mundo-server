@@ -4,7 +4,7 @@ import { StatusCodes } from "http-status-codes";
 import { handleSignUp } from "../../../api/lib/profile-handlers.js";
 import logger from "../../../api/services/logger/index.js";
 import { env } from "../../../env.js";
-import User, { SignupMethodEnum } from "../../../models/User.js";
+import User, { SignupMethodEnum } from "../../../models/user/user.js";
 import { sendSlackMessage } from "../SlackController.js";
 
 function createRandomUsername() {

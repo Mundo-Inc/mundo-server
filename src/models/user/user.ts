@@ -1,16 +1,28 @@
-import mongoose, { Schema, type CallbackError, type Model } from "mongoose";
+import mongoose, {
+  Schema,
+  Types,
+  type CallbackError,
+  type Model,
+} from "mongoose";
+import { z } from "zod";
 
-import DeletionService from "../api/services/DeletionService.js";
-import Achievement from "./Achievement.js";
-import ActivitySeen from "./ActivitySeen.js";
-import CheckIn from "./CheckIn.js";
-import Comment from "./Comment.js";
-import Flag from "./Flag.js";
-import Follow from "./Follow.js";
-import List from "./List.js";
-import Media from "./Media.js";
-import Reaction from "./Reaction.js";
-import Review from "./Review.js";
+import DeletionService from "../../api/services/DeletionService.js";
+import Achievement from "../Achievement.js";
+import ActivitySeen from "../ActivitySeen.js";
+import CheckIn from "../CheckIn.js";
+import Comment from "../Comment.js";
+import Flag from "../Flag.js";
+import Follow from "../Follow.js";
+import List from "../List.js";
+import Media from "../Media.js";
+import Reaction from "../Reaction.js";
+import Review from "../Review.js";
+import { phantomCoinsSchema, zPhantomCoinsSchema } from "./phantomCoins.js";
+import { userAppUsageSchema, zUserAppUsageSchema } from "./userAppUsage.js";
+import { userDeviceSchema, zUserDeviceSchema } from "./userDevice.js";
+import { zUserEarningsSchema } from "./userEarnings.js";
+import { userProgressSchema, zUserProgressSchema } from "./userProgress.js";
+import { userStripeSchema, zUserStripeSchema } from "./userStripe.js";
 
 export enum UserRoleEnum {
   Admin = "admin",
@@ -24,114 +36,58 @@ export enum SignupMethodEnum {
   Bot = "bot",
 }
 
-export type UserDevice = {
-  apnToken?: string;
-  fcmToken?: string;
-  platform: string;
-};
+const zUserSchema = z.object({
+  _id: z.instanceof(Types.ObjectId),
+  accepted_eula: z.date().optional(),
+  uid: z.string().optional(),
+  username: z.string(),
+  name: z.string(),
+  email: z.object({
+    address: z.string(),
+    verified: z.boolean(),
+  }),
+  phone: z
+    .object({
+      number: z.string(),
+      verified: z.boolean(),
+    })
+    .optional(),
+  profileImage: z.string(),
+  bio: z.string(),
+  role: z.nativeEnum(UserRoleEnum),
+  isPrivate: z.boolean(),
+  signupMethod: z.nativeEnum(SignupMethodEnum),
+  devices: z.array(zUserDeviceSchema),
+  progress: zUserProgressSchema,
+  verified: z.boolean(),
+  earnings: zUserEarningsSchema,
+  latestPlace: z.instanceof(Types.ObjectId).optional(),
+  referredBy: z.instanceof(Types.ObjectId).optional(),
+  mundoInteractionFrequency: z.number().optional(),
+  stripe: zUserStripeSchema,
+  appUsage: zUserAppUsageSchema,
 
-export interface IDailyReward {
-  streak: number;
-  lastClaim?: Date;
-}
+  /**
+   * @deprecated use `earnings.balance` instead
+   */
+  phantomCoins: zPhantomCoinsSchema,
 
-export interface Earnings {
-  total: number;
-  balance: number;
-}
+  /**
+   * @deprecated
+   */
+  source: z.enum(["yelp", "google"]).optional(),
 
-const dailyRewardSchema = new Schema<IDailyReward>(
-  {
-    streak: {
-      type: Number,
-      default: 0,
-    },
-    lastClaim: {
-      type: Date,
-      required: false,
-    },
-  },
-  { _id: false },
-);
+  /**
+   * @deprecated
+   */
+  password: z.string().optional(),
 
-export interface IUser {
-  _id: mongoose.Types.ObjectId;
-  accepted_eula: Date;
-  uid: string;
-  username: string;
-  email: {
-    address: string;
-    verified: boolean;
-  };
-  phone: {
-    number: string;
-    verified: boolean;
-  };
-  role: UserRoleEnum;
-  isActive?: boolean;
-  name: string;
-  bio: string;
-  profileImage: string;
-  password: string;
-  token?: {
-    verificationToken: string;
-    lastEmailSent: Date;
-    emailTokenExpiry: Date;
-    resetPasswordToken?: String;
-    resetPasswordTokenExpiry?: Date;
-  };
-  signupMethod: string;
-  devices: UserDevice[];
-  progress: {
-    level: number;
-    xp: number;
-    achievements: mongoose.Types.ObjectId[];
-  };
-  source?: "yelp" | "google";
-  createdAt: Date;
-  updatedAt: Date;
-  verified?: boolean;
-  coins: number;
-  phantomCoins: {
-    balance: number;
-    daily: IDailyReward;
-  };
-  earnings: Earnings;
-  latestPlace?: mongoose.Types.ObjectId;
-  isPrivate: boolean;
-  conversations: string[];
-  referredBy?: mongoose.Types.ObjectId;
-  stripe: {
-    /**
-     * Stripe Connect Account ID
-     */
-    connectAccountId?: string;
-    /**
-     * Stripe Customer ID
-     */
-    customerId?: string;
-    /**
-     * Default Stripe Payment Method ID
-     */
-    defaultPaymentMethodId?: string;
-    /**
-     * Default Stripe Payout Method ID
-     */
-    defaultPayoutMethodId?: string;
-    /**
-     * User's balance in cents
-     */
-    balance: number;
-  };
-  mundoInteractionFrequency?: number;
-  appUsage: {
-    lastLogin: Date;
-    streak: {
-      currentStreak: number;
-      lastLoginDate: Date;
-    };
-  };
-}
+  isActive: z.boolean(),
+  createdAt: z.date(),
+  updatedAt: z.date(),
+});
+
+export type IUser = z.infer<typeof zUserSchema>;
 
 const UserSchema = new Schema<IUser>(
   {
@@ -213,54 +169,16 @@ const UserSchema = new Schema<IUser>(
       type: String,
     },
     devices: {
-      type: [
-        {
-          apnToken: String,
-          fcmToken: String,
-          platform: {
-            type: String,
-            required: true,
-          },
-        },
-      ],
+      type: [userDeviceSchema],
       default: [],
-    },
-    token: {
-      verificationToken: {
-        type: String,
-      },
-      lastEmailSent: {
-        type: Date,
-      },
-      emailTokenExpiry: {
-        type: Date,
-      },
-      resetPasswordToken: {
-        type: String,
-      },
-      resetPasswordTokenExpiry: {
-        type: Date,
-      },
     },
     verified: {
       type: Boolean,
       default: false,
     },
-    coins: {
-      type: Number,
-      default: 0,
-    },
     phantomCoins: {
-      balance: {
-        type: Number,
-        default: 0,
-      },
-      daily: {
-        type: dailyRewardSchema,
-        default: {
-          streak: 0,
-        },
-      },
+      type: phantomCoinsSchema,
+      default: {},
     },
     earnings: {
       total: { type: Number, default: 0 }, //cents
@@ -270,60 +188,25 @@ const UserSchema = new Schema<IUser>(
       type: Schema.Types.ObjectId,
       ref: "Place",
     },
-    conversations: [
-      {
-        type: String,
-        ref: "Conversation",
-        default: [],
-      },
-    ],
-    progress: {
-      xp: {
-        type: Number,
-        default: 0,
-      },
-      level: {
-        type: Number,
-        default: 1,
-      },
-      achievements: [
-        {
-          type: Schema.Types.ObjectId,
-          ref: "Achievement",
-          default: [],
-        },
-      ],
-    },
+    progress: userProgressSchema,
     isPrivate: { type: Boolean, default: false },
     referredBy: {
       type: Schema.Types.ObjectId,
       ref: "User",
     },
-    stripe: {
-      connectAccountId: { type: String },
-      customerId: { type: String },
-      defaultPaymentMethodId: { type: String },
-      defaultPayoutMethodId: { type: String },
-      balance: { type: Number, required: true, default: 0 },
-    },
+    stripe: userStripeSchema,
     mundoInteractionFrequency: {
       type: Number,
       min: 0,
       max: 100,
     },
-    appUsage: {
-      lastLogin: { type: Date },
-      streak: {
-        currentStreak: { type: Number, default: 0 },
-        lastLoginDate: { type: Date },
-      },
-    },
+    appUsage: userAppUsageSchema,
   },
   { timestamps: true },
 );
 
 UserSchema.pre("validate", function (next) {
-  if (this.signupMethod === "traditional" && !this.password) {
+  if (this.signupMethod === SignupMethodEnum.Traditional && !this.password) {
     next(new Error("Password is required for traditional signup"));
   } else {
     next();

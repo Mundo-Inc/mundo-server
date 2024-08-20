@@ -4,7 +4,7 @@ import logger from "../api/services/logger/index.js";
 import Bot, { IBotTargetEnum, IBotTypeEnum, type IBot } from "../models/Bot.js";
 import { ResourceTypeEnum } from "../models/Enum/ResourceTypeEnum.js";
 import Reaction from "../models/Reaction.js";
-import User, { type IUser } from "../models/User.js";
+import User, { type IUser } from "../models/user/user.js";
 import UserActivity, {
   type UserActivityResourceType,
 } from "../models/UserActivity.js";

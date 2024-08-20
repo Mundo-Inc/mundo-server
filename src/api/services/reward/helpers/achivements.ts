@@ -3,7 +3,7 @@ import { type Document } from "mongoose";
 import Achievement, {
   type IAchievement,
 } from "../../../../models/Achievement.js";
-import type { IUser } from "../../../../models/User.js";
+import type { IUser } from "../../../../models/user/user.js";
 import logger from "../../logger/index.js";
 
 type LevelupAcivement = {

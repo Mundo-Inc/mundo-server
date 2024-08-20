@@ -8,7 +8,7 @@ import PlaceProjection from "../../../api/dto/place.js";
 import UserProjection from "../../../api/dto/user.js";
 import CheckIn from "../../../models/CheckIn.js";
 import Follow from "../../../models/Follow.js";
-import User from "../../../models/User.js";
+import User from "../../../models/user/user.js";
 import { ResourcePrivacyEnum } from "../../../models/UserActivity.js";
 import { dStrings as ds, dynamicMessage } from "../../../strings.js";
 import { createError } from "../../../utilities/errorHandlers.js";

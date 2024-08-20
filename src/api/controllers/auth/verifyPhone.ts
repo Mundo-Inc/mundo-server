@@ -2,7 +2,7 @@ import type { NextFunction, Request, Response } from "express";
 import { StatusCodes } from "http-status-codes";
 import { z } from "zod";
 
-import User from "../../../models/User.js";
+import User from "../../../models/user/user.js";
 import VerificationCode from "../../../models/VerificationCode.js";
 import { createError } from "../../../utilities/errorHandlers.js";
 import { validateData, zPhone } from "../../../utilities/validation.js";

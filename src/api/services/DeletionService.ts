@@ -5,7 +5,7 @@ import Comment, { type IComment } from "../../models/Comment.js";
 import { ResourceTypeEnum } from "../../models/Enum/ResourceTypeEnum.js";
 import Notification from "../../models/Notification.js";
 import Reward, { type IReward } from "../../models/Reward.js";
-import User from "../../models/User.js";
+import User from "../../models/user/user.js";
 import UserActivity from "../../models/UserActivity.js";
 import { dStrings, dynamicMessage } from "../../strings.js";
 import { createError } from "../../utilities/errorHandlers.js";

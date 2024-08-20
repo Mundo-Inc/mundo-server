@@ -6,7 +6,6 @@ import { z } from "zod";
 import {
   addEarnings,
   EarningsType,
-  reviewEarning,
 } from "../../../api/services/earning.service.js";
 import logger from "../../../api/services/logger/index.js";
 import { addReward } from "../../../api/services/reward/reward.service.js";
@@ -25,7 +24,7 @@ import ScheduledTask, {
   ScheduledTaskType,
 } from "../../../models/ScheduledTask.js";
 import Upload from "../../../models/Upload.js";
-import User from "../../../models/User.js";
+import User from "../../../models/user/user.js";
 import { ResourcePrivacyEnum } from "../../../models/UserActivity.js";
 import strings, { dStrings as ds, dynamicMessage } from "../../../strings.js";
 import { getRandomDateInRange } from "../../../utilities/dateTime.js";
@@ -185,6 +184,7 @@ export async function createReview(
     const followers = await Follow.find({
       target: writer,
     }).lean();
+
     await Promise.all(
       followers.map((follower) =>
         Notification.create({
@@ -203,8 +203,6 @@ export async function createReview(
     );
 
     try {
-      //phantom coins
-      await reviewEarning(authUser._id, review._id, mediaDocs);
       let activity;
       if (media.length == 0 && !content) {
         // activity = await addRecommendActivity(authUser._id, review._id, place);

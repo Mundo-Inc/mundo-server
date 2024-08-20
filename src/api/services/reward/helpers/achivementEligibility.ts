@@ -11,7 +11,7 @@ import CheckIn from "../../../../models/CheckIn.js";
 import { type IPlace } from "../../../../models/Place.js";
 import Reaction from "../../../../models/Reaction.js";
 import Review from "../../../../models/Review.js";
-import User from "../../../../models/User.js";
+import User from "../../../../models/user/user.js";
 import { dStrings, dynamicMessage } from "../../../../strings.js";
 import { createError } from "../../../../utilities/errorHandlers.js";
 import logger from "../../logger/index.js";

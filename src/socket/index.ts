@@ -5,6 +5,7 @@ import { io } from "../socket.js";
 namespace SocketService {
   export enum CTSEvents {
     Request = "request",
+    NewMessage = "newMessage",
   }
 
   export enum STCEvents {
@@ -12,6 +13,7 @@ namespace SocketService {
 
     // Conversation
     NewConversation = "newConversation",
+    NewMessage = "newMessage",
   }
 
   export enum RequestEvents {

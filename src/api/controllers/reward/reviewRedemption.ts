@@ -6,7 +6,7 @@ import Prize from "../../../models/Prize.js";
 import PrizeRedemption, {
   PrizeRedemptionStatusTypeEnum,
 } from "../../../models/PrizeRedemption.js";
-import User from "../../../models/User.js";
+import User from "../../../models/user/user.js";
 import { dStrings as ds, dynamicMessage } from "../../../strings.js";
 import { createError } from "../../../utilities/errorHandlers.js";
 import { createResponse } from "../../../utilities/response.js";

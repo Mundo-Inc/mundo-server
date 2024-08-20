@@ -6,8 +6,9 @@ import CoinReward from "../../../models/CoinReward.js";
 import { ResourceTypeEnum } from "../../../models/Enum/ResourceTypeEnum.js";
 import { TaskTypeEnum, type IMission } from "../../../models/Mission.js";
 import Reaction from "../../../models/Reaction.js";
-import type { IDailyReward, IUser } from "../../../models/User.js";
 import UserActivity from "../../../models/UserActivity.js";
+import type { IDailyReward } from "../../../models/user/dailyReward.js";
+import type { IUser } from "../../../models/user/user.js";
 
 const DAY_HOURS = 24;
 

@@ -4,7 +4,7 @@ import { z } from "zod";
 
 import type { UserProjectionEssentials } from "../../../api/dto/user.js";
 import UserProjection from "../../../api/dto/user.js";
-import User from "../../../models/User.js";
+import User from "../../../models/user/user.js";
 import { createResponse } from "../../../utilities/response.js";
 import { validateData, zObjectId } from "../../../utilities/validation.js";
 

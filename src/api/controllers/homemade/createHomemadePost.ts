@@ -14,7 +14,7 @@ import Notification, {
   NotificationTypeEnum,
 } from "../../../models/Notification.js";
 import Upload from "../../../models/Upload.js";
-import User, { UserRoleEnum } from "../../../models/User.js";
+import User, { UserRoleEnum } from "../../../models/user/user.js";
 import { ResourcePrivacyEnum } from "../../../models/UserActivity.js";
 import strings, { dStrings as ds, dynamicMessage } from "../../../strings.js";
 import { createError } from "../../../utilities/errorHandlers.js";

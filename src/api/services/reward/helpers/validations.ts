@@ -3,7 +3,7 @@ import type { IComment } from "../../../../models/Comment.js";
 import type { IReaction } from "../../../../models/Reaction.js";
 import type { IReview } from "../../../../models/Review.js";
 import Reward from "../../../../models/Reward.js";
-import type { IUser } from "../../../../models/User.js";
+import type { IUser } from "../../../../models/user/user.js";
 import logger from "../../logger/index.js";
 import { thresholds } from "../utils/threshold.js";
 

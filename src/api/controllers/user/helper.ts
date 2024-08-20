@@ -2,7 +2,8 @@ import { StatusCodes } from "http-status-codes";
 import mongoose, { PipelineStage } from "mongoose";
 
 import Reaction from "../../../models/Reaction.js";
-import User, { Earnings } from "../../../models/User.js";
+import User from "../../../models/user/user.js";
+import type { IUserEarnings } from "../../../models/user/userEarnings.js";
 import UserActivity, {
   ResourcePrivacyEnum,
 } from "../../../models/UserActivity.js";
@@ -88,7 +89,7 @@ export async function getUserActivitiesWithMediaCount(
 
 export async function getUserEarnings(
   userId: mongoose.Types.ObjectId,
-): Promise<Earnings> {
+): Promise<IUserEarnings> {
   const user = await User.findById(userId)
     .orFail(
       createError(dynamicMessage(ds.notFound, "User"), StatusCodes.NOT_FOUND),

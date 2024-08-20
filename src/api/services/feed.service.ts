@@ -9,7 +9,7 @@ import Follow from "../../models/Follow.js";
 import Homemade from "../../models/Homemade.js";
 import Place from "../../models/Place.js";
 import Review, { type IReview } from "../../models/Review.js";
-import User from "../../models/User.js";
+import User from "../../models/user/user.js";
 import UserActivity, {
   ResourcePrivacyEnum,
   type IUserActivity,

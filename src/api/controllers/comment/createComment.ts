@@ -13,7 +13,7 @@ import ScheduledTask, {
   ScheduledTaskStatus,
   ScheduledTaskType,
 } from "../../../models/ScheduledTask.js";
-import User from "../../../models/User.js";
+import User from "../../../models/user/user.js";
 import UserActivity from "../../../models/UserActivity.js";
 import { dStrings as ds, dynamicMessage } from "../../../strings.js";
 import { getRandomDateInRange } from "../../../utilities/dateTime.js";

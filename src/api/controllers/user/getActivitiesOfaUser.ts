@@ -6,7 +6,7 @@ import { z } from "zod";
 import { getResourceInfo } from "../../../api/services/feed.service.js";
 import Comment from "../../../models/Comment.js";
 import Follow from "../../../models/Follow.js";
-import User from "../../../models/User.js";
+import User from "../../../models/user/user.js";
 import type { IUserActivity } from "../../../models/UserActivity.js";
 import UserActivity, {
   ActivityTypeEnum,

@@ -1,7 +1,7 @@
 import { StatusCodes } from "http-status-codes";
 import { type Types } from "mongoose";
 
-import User from "../models/User.js";
+import User from "../models/user/user.js";
 import { dStrings, dynamicMessage } from "../strings.js";
 import { createError } from "./errorHandlers.js";
 

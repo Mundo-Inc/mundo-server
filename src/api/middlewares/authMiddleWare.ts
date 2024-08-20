@@ -5,7 +5,7 @@ import jwt from "jsonwebtoken";
 import type { Socket } from "socket.io";
 
 import { MundoApp, PhPhApp } from "../../config/firebase-config.js";
-import User from "../../models/User.js";
+import User from "../../models/user/user.js";
 import { createError } from "../../utilities/errorHandlers.js";
 import UserProjection, { type UserProjectionPrivate } from "../dto/user.js";
 

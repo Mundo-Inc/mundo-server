@@ -5,7 +5,7 @@ import { z } from "zod";
 import { UserActivityManager } from "../../../api/services/UserActivityManager.js";
 import Follow from "../../../models/Follow.js";
 import FollowRequest from "../../../models/FollowRequest.js";
-import User from "../../../models/User.js";
+import User from "../../../models/user/user.js";
 import { dStrings as ds, dynamicMessage } from "../../../strings.js";
 import { createError } from "../../../utilities/errorHandlers.js";
 import { createResponse } from "../../../utilities/response.js";
