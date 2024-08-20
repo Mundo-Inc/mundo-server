@@ -2,7 +2,7 @@ import mongoose, { Schema, type Model } from "mongoose";
 
 import logger from "../api/services/logger/index.js";
 import { weights } from "../config/trendFactors.js";
-import { ResourceTypeEnum } from "./Enum/ResourceTypeEnum.js";
+import { ResourceTypeEnum } from "./_enum/ResourceTypeEnum.js";
 import ScoreWeight from "./ScoreWeight.js";
 
 export enum ActivityTypeEnum {

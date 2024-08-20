@@ -3,7 +3,7 @@ import { StatusCodes } from "http-status-codes";
 import { z } from "zod";
 
 import logger from "../../../api/services/logger/index.js";
-import { ResourceTypeEnum } from "../../../models/Enum/ResourceTypeEnum.js";
+import { ResourceTypeEnum } from "../../../models/_enum/ResourceTypeEnum.js";
 import Follow from "../../../models/Follow.js";
 import FollowRequest from "../../../models/FollowRequest.js";
 import Notification from "../../../models/Notification.js";

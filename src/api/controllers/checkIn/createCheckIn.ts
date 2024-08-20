@@ -11,9 +11,9 @@ import {
 import logger from "../../../api/services/logger/index.js";
 import { addReward } from "../../../api/services/reward/reward.service.js";
 import { UserActivityManager } from "../../../api/services/UserActivityManager.js";
+import { ResourceTypeEnum } from "../../../models/_enum/ResourceTypeEnum.js";
 import type { ICheckIn } from "../../../models/CheckIn.js";
 import CheckIn from "../../../models/CheckIn.js";
-import { ResourceTypeEnum } from "../../../models/Enum/ResourceTypeEnum.js";
 import type { IEvent } from "../../../models/Event.js";
 import Event from "../../../models/Event.js";
 import Follow from "../../../models/Follow.js";

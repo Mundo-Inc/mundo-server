@@ -1,6 +1,6 @@
 import { type Types } from "mongoose";
 
-import { ResourceTypeEnum } from "../../models/Enum/ResourceTypeEnum.js";
+import { ResourceTypeEnum } from "../../models/_enum/ResourceTypeEnum.js";
 import { type IUser } from "../../models/user/user.js";
 import UserActivity, {
   ActivityTypeEnum,

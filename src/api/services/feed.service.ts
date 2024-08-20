@@ -1,10 +1,10 @@
 import mongoose, { type FilterQuery, type SortOrder } from "mongoose";
 
+import { ResourceTypeEnum } from "../../models/_enum/ResourceTypeEnum.js";
 import Achievement from "../../models/Achievement.js";
 import Block from "../../models/Block.js";
 import CheckIn from "../../models/CheckIn.js";
 import Comment from "../../models/Comment.js";
-import { ResourceTypeEnum } from "../../models/Enum/ResourceTypeEnum.js";
 import Follow from "../../models/Follow.js";
 import Homemade from "../../models/Homemade.js";
 import Place from "../../models/Place.js";
