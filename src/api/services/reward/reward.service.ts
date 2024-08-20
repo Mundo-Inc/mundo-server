@@ -148,7 +148,7 @@ export const addReward = async (
       user,
     );
 
-    let customAchivements = [];
+    const customAchivements = [];
 
     if (["Review", "Reaction", "CheckIn"].includes(reason.refType)) {
       const achivements = await checkForCustomAchivements(
@@ -188,10 +188,10 @@ const checkForCustomAchivements = async (
 
     if (!user) return;
 
-    let newAchivements = [];
+    const newAchivements = [];
     switch (activityType) {
       case "Review":
-        for (let reviewAchivementType of [
+        for (const reviewAchivementType of [
           "ROOKIE_REVIEWER",
           "CRITIC_ON_THE_RISE",
           "PAPARAZZI_PRO",
@@ -213,7 +213,7 @@ const checkForCustomAchivements = async (
         break;
 
       case "CheckIn":
-        for (let checkinAchivementType of [
+        for (const checkinAchivementType of [
           "CHECK_CHECK",
           "EARLY_BIRD",
           "NIGHT_OWL",
@@ -231,7 +231,7 @@ const checkForCustomAchivements = async (
         break;
 
       case "Reaction":
-        for (let reactionAchivementType of ["REACT_ROLL"]) {
+        for (const reactionAchivementType of ["REACT_ROLL"]) {
           const reactionAchivement = await eligibleForAchivement(
             userId,
             reactionAchivementType,

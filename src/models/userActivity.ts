@@ -165,7 +165,7 @@ function getFreshHoursBoost(hoursValue: number) {
     { limit: 48, boost: weights.latest48HoursBoost },
   ];
 
-  for (let threshold of boostThresholds) {
+  for (const threshold of boostThresholds) {
     if (hoursValue <= threshold.limit) {
       return threshold.boost;
     }
@@ -181,7 +181,7 @@ UserActivitySchema.methods.calculateHotnessScore = async function () {
 
   const hoursValue = Math.max(1, hoursSinceCreation);
   const timeDecayFactor = Math.pow(1 / hoursValue, weights.timeDecay);
-  let score =
+  const score =
     (this.engagements.reactions * weights.reaction +
       this.engagements.comments * weights.comment +
       this.engagements.views * weights.view) *

@@ -36,7 +36,7 @@ export enum SignupMethodEnum {
   Bot = "bot",
 }
 
-const zUserSchema = z.object({
+export const zUserSchema = z.object({
   _id: z.instanceof(Types.ObjectId),
   accepted_eula: z.date().optional(),
   uid: z.string().optional(),

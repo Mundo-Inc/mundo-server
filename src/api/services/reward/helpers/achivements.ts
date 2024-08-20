@@ -33,7 +33,7 @@ export const checkNewLevelupAchivements = async (
     // List of newly unlocked achievements
     const newAchievements: IAchievement[] = [];
     // Iterate through the achievements and check which ones were unlocked
-    for (let level in levelup_achivements) {
+    for (const level in levelup_achivements) {
       const achievementLevel = parseInt(level);
       if (oldLevel < achievementLevel && currentLevel >= achievementLevel) {
         // Achievement was unlocked

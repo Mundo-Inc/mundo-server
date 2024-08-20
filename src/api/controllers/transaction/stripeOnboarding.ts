@@ -15,7 +15,7 @@ export async function stripeOnboarding(
   try {
     const authUser = req.user!;
 
-    let user = await User.findById(authUser._id).orFail(
+    const user = await User.findById(authUser._id).orFail(
       createError(dynamicMessage(ds.notFound, "User"), StatusCodes.NOT_FOUND),
     );
 

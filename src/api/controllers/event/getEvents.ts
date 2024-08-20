@@ -35,7 +35,7 @@ export async function getEvents(
   try {
     const { q } = req.query as Query;
 
-    let query: FilterQuery<IEvent> = { isActive: true };
+    const query: FilterQuery<IEvent> = { isActive: true };
 
     if (q) {
       query.name = { $regex: new RegExp(q.toString(), "i") };

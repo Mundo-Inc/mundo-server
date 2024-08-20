@@ -95,7 +95,7 @@ export async function getNotifications(
 
     if (result && result.notifications.length > 0) {
       for (const notification of result.notifications) {
-        const { user, title, content, image, activity } =
+        const { user, title, content, activity } =
           await getNotificationContent(notification);
 
         if (user) {
@@ -108,9 +108,6 @@ export async function getNotifications(
         }
         if (title) {
           notification.title = title;
-        }
-        if (image) {
-          notification.image = image;
         }
         if (activity) {
           notification.activity = activity;

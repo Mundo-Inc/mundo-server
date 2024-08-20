@@ -69,8 +69,7 @@ ReactionSchema.pre(
   { document: true, query: false },
   async function (next) {
     try {
-      const reaction = this;
-      removeDependencies(reaction);
+      removeDependencies(this);
       next();
     } catch (error) {
       next(error as CallbackError);

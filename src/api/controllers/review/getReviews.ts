@@ -41,7 +41,7 @@ export async function getReviews(
       maxLimit: 50,
     });
 
-    let pipeline: PipelineStage[] = [];
+    const pipeline: PipelineStage[] = [];
 
     if (writer) {
       pipeline.push({

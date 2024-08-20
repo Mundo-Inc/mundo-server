@@ -47,7 +47,7 @@ export async function getPlaceByContext(
     });
 
     let matchedPlace: IPlace | null = null;
-    let existing: Boolean = false;
+    let existing: boolean = false;
 
     for (const place of nearbyPlaces) {
       if (areStrictlySimilar(title, place.name)) {

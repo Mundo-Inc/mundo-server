@@ -21,7 +21,6 @@ export async function getNotificationContent(notification: INotification) {
   let user = undefined;
   let title: string | undefined = undefined;
   let content: string | undefined = undefined;
-  let image: string | undefined = undefined;
   let activity: string | undefined = undefined;
 
   switch (notification.type) {
@@ -228,5 +227,5 @@ export async function getNotificationContent(notification: INotification) {
     default:
       break;
   }
-  return { user, title, content, image, activity };
+  return { user, title, content, activity };
 }

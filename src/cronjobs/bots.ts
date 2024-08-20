@@ -10,12 +10,12 @@ import UserActivity, {
 } from "../models/userActivity.js";
 
 function getDateHoursAgo(hours: number) {
-  let now = new Date();
+  const now = new Date();
   now.setHours(now.getHours() - hours);
   return now;
 }
 
-function pickRandomReaction(strings: String[]) {
+function pickRandomReaction(strings: string[]) {
   const randomIndex = Math.floor(Math.random() * strings.length);
   return strings[randomIndex];
 }
@@ -26,7 +26,7 @@ interface TaskCollection {
 }
 
 // Create an object to store the tasks
-let tasks: TaskCollection = {};
+const tasks: TaskCollection = {};
 
 export function createCron(id: string, duty: IBot, botUser: IUser) {
   switch (duty.type) {
@@ -40,7 +40,7 @@ export function createCron(id: string, duty: IBot, botUser: IUser) {
       }
       tasks[id] = cron.schedule(duty.interval, async () => {
         try {
-          let query: Query = {};
+          const query: Query = {};
           if (duty.target === "CHECKINS")
             query.resourceType = ResourceTypeEnum.CheckIn;
           if (duty.target === "REVIEWS")

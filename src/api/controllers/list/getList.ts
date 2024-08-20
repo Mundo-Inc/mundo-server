@@ -81,7 +81,7 @@ export async function getList(req: Request, res: Response, next: NextFunction) {
     }
 
     for (let i = 0; i < list.collaborators.length; i++) {
-      let user = await User.findById(list.collaborators[i].user)
+      const user = await User.findById(list.collaborators[i].user)
         .select<UserProjectionEssentials>(UserProjection.essentials)
         .orFail(
           createError(
