@@ -2,7 +2,7 @@ import type { NextFunction, Request, Response } from "express";
 import { StatusCodes } from "http-status-codes";
 import { z } from "zod";
 
-import DeletionService from "../../../api/services/DeletionService.js";
+import DeletionService from "../../../api/services/deletionService.js";
 import CheckIn from "../../../models/CheckIn.js";
 import type { FlagAdminAction } from "../../../models/Flag.js";
 import Flag from "../../../models/Flag.js";

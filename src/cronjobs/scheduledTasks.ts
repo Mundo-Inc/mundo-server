@@ -1,7 +1,7 @@
 import { schedule } from "node-cron";
 
-import { OpenAIService } from "../api/services/OpenAIService.js";
 import logger from "../api/services/logger/index.js";
+import { OpenAIService } from "../api/services/openAIService.js";
 import { env } from "../env.js";
 import CheckIn from "../models/CheckIn.js";
 import Comment from "../models/Comment.js";

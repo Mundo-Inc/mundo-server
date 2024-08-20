@@ -2,7 +2,7 @@ import type { NextFunction, Request, Response } from "express";
 import { StatusCodes } from "http-status-codes";
 import { z } from "zod";
 
-import { BrevoService } from "../../../api/services/BrevoService.js";
+import { BrevoService } from "../../../api/services/brevoService.js";
 import logger from "../../../api/services/logger/index.js";
 import type { IPrize } from "../../../models/Prize.js";
 import Prize from "../../../models/Prize.js";

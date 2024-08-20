@@ -5,7 +5,7 @@ import { StatusCodes } from "http-status-codes";
 import { z } from "zod";
 
 import { handleSignUp } from "../../../api/lib/profile-handlers.js";
-import { BrevoService } from "../../../api/services/BrevoService.js";
+import { BrevoService } from "../../../api/services/brevoService.js";
 import logger from "../../../api/services/logger/index.js";
 import { MundoApp } from "../../../config/firebase-config.js";
 import CoinReward, { CoinRewardTypeEnum } from "../../../models/CoinReward.js";

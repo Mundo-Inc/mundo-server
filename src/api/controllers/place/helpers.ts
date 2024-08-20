@@ -21,9 +21,9 @@ import type { IPlace } from "../../../models/Place.js";
 import Place from "../../../models/Place.js";
 import { dStrings as ds, dynamicMessage } from "../../../strings.js";
 import type { IYelpPlaceDetails } from "../../../types/yelpPlace.interface.js";
-import S3Manager from "../../../utilities/_s3Manager/index.js";
 import { createError } from "../../../utilities/errorHandlers.js";
 import { filterObjectByConfig } from "../../../utilities/filtering.js";
+import S3Manager from "../../../utilities/s3Manager/index.js";
 
 export async function getDetailedPlace(id: Types.ObjectId) {
   const place = await Place.findById(id).orFail(

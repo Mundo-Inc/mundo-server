@@ -6,7 +6,7 @@ import UserProjection, {
 import logger from "../api/services/logger/index.js";
 import NotificationsService, {
   type NotificationItemByToken,
-} from "../api/services/NotificationsService.js";
+} from "../api/services/notificationsService.js";
 import CheckIn from "../models/CheckIn.js";
 import Comment from "../models/Comment.js";
 import Follow from "../models/Follow.js";

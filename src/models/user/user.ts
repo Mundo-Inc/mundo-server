@@ -6,7 +6,7 @@ import mongoose, {
 } from "mongoose";
 import { z } from "zod";
 
-import DeletionService from "../../api/services/DeletionService.js";
+import DeletionService from "../../api/services/deletionService.js";
 import Achievement from "../Achievement.js";
 import ActivitySeen from "../ActivitySeen.js";
 import CheckIn from "../CheckIn.js";

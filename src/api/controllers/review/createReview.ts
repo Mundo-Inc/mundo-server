@@ -9,7 +9,7 @@ import {
 } from "../../../api/services/earning.service.js";
 import logger from "../../../api/services/logger/index.js";
 import { addReward } from "../../../api/services/reward/reward.service.js";
-import { UserActivityManager } from "../../../api/services/UserActivityManager.js";
+import { UserActivityManager } from "../../../api/services/userActivityManager.js";
 import { ResourceTypeEnum } from "../../../models/enum/resourceTypeEnum.js";
 import Follow from "../../../models/Follow.js";
 import type { IMedia } from "../../../models/Media.js";

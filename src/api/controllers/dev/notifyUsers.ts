@@ -6,8 +6,8 @@ import { z } from "zod";
 import type {
   NotificationItemByToken,
   NotificationItemByUser,
-} from "../../../api/services/NotificationsService.js";
-import NotificationsService from "../../../api/services/NotificationsService.js";
+} from "../../../api/services/notificationsService.js";
+import NotificationsService from "../../../api/services/notificationsService.js";
 import type { IUser } from "../../../models/user/user.js";
 import User from "../../../models/user/user.js";
 import { createResponse } from "../../../utilities/response.js";

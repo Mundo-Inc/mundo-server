@@ -1,6 +1,6 @@
 import mongoose, { Schema, type CallbackError, type Model } from "mongoose";
 
-import DeletionService from "../api/services/DeletionService.js";
+import DeletionService from "../api/services/deletionService.js";
 import logger from "../api/services/logger/index.js";
 import Comment from "./Comment.js";
 import Media from "./Media.js";
