@@ -7,14 +7,14 @@ import type { UserProjectionEssentials } from "../../../api/dto/user.js";
 import UserProjection from "../../../api/dto/user.js";
 import { addReward } from "../../../api/services/reward/reward.service.js";
 import { env } from "../../../env.js";
-import type { IComment, IMention } from "../../../models/Comment.js";
-import Comment from "../../../models/Comment.js";
+import type { IComment, IMention } from "../../../models/comment.js";
+import Comment from "../../../models/comment.js";
 import ScheduledTask, {
   ScheduledTaskStatus,
   ScheduledTaskType,
-} from "../../../models/ScheduledTask.js";
+} from "../../../models/scheduledTask.js";
 import User from "../../../models/user/user.js";
-import UserActivity from "../../../models/UserActivity.js";
+import UserActivity from "../../../models/userActivity.js";
 import { dStrings as ds, dynamicMessage } from "../../../strings.js";
 import { getRandomDateInRange } from "../../../utilities/dateTime.js";
 import { createError } from "../../../utilities/errorHandlers.js";

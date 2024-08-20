@@ -1,4 +1,4 @@
-import { type ITransaction } from "../../models/Transaction.js";
+import { type ITransaction } from "../../models/transaction.js";
 
 const TransactionProjection = {
   public: {

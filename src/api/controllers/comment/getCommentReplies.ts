@@ -2,8 +2,8 @@ import type { NextFunction, Request, Response } from "express";
 import { StatusCodes } from "http-status-codes";
 import { z } from "zod";
 
-import Block from "../../../models/Block.js";
-import Comment from "../../../models/Comment.js";
+import Block from "../../../models/block.js";
+import Comment from "../../../models/comment.js";
 import { dStrings as ds, dynamicMessage } from "../../../strings.js";
 import { createError } from "../../../utilities/errorHandlers.js";
 import { getPaginationFromQuery } from "../../../utilities/pagination.js";

@@ -4,8 +4,8 @@ import type { FilterQuery } from "mongoose";
 import { z } from "zod";
 
 import UserProjection from "../../../api/dto/user.js";
-import Flag, { type IFlag } from "../../../models/Flag.js";
-import Review from "../../../models/Review.js";
+import Flag, { type IFlag } from "../../../models/flag.js";
+import Review from "../../../models/review.js";
 import { createError } from "../../../utilities/errorHandlers.js";
 import { getPaginationFromQuery } from "../../../utilities/pagination.js";
 import { createResponse } from "../../../utilities/response.js";

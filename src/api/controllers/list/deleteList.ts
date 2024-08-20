@@ -2,7 +2,7 @@ import type { NextFunction, Request, Response } from "express";
 import { StatusCodes } from "http-status-codes";
 import { z } from "zod";
 
-import List from "../../../models/List.js";
+import List from "../../../models/list.js";
 import strings, { dStrings as ds, dynamicMessage } from "../../../strings.js";
 import { createError } from "../../../utilities/errorHandlers.js";
 import { validateData, zObjectId } from "../../../utilities/validation.js";

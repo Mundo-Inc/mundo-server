@@ -1,13 +1,13 @@
 import cron, { type ScheduledTask } from "node-cron";
 
 import logger from "../api/services/logger/index.js";
-import Bot, { IBotTargetEnum, IBotTypeEnum, type IBot } from "../models/Bot.js";
+import Bot, { IBotTargetEnum, IBotTypeEnum, type IBot } from "../models/bot.js";
 import { ResourceTypeEnum } from "../models/enum/resourceTypeEnum.js";
-import Reaction from "../models/Reaction.js";
+import Reaction from "../models/reaction.js";
 import User, { type IUser } from "../models/user/user.js";
 import UserActivity, {
   type UserActivityResourceType,
-} from "../models/UserActivity.js";
+} from "../models/userActivity.js";
 
 function getDateHoursAgo(hours: number) {
   let now = new Date();

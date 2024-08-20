@@ -1,7 +1,7 @@
 import mongoose, { Schema, type Model, type Types } from "mongoose";
 
 import { ResourceTypeEnum } from "./enum/resourceTypeEnum.js";
-import Notification, { NotificationTypeEnum } from "./Notification.js";
+import Notification, { NotificationTypeEnum } from "./notification.js";
 
 export interface IFollowRequest {
   _id: Types.ObjectId;

@@ -2,7 +2,7 @@ import type { PipelineStage, Types } from "mongoose";
 
 import type { UserProjectionEssentials } from "../../../api/dto/user.js";
 import UserProjection from "../../../api/dto/user.js";
-import Comment from "../../../models/Comment.js";
+import Comment from "../../../models/comment.js";
 
 export async function getCommentsFromDB(
   match: PipelineStage.Match["$match"],

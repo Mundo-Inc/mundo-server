@@ -3,7 +3,7 @@ import { StatusCodes } from "http-status-codes";
 import { z } from "zod";
 
 import UserProjection from "../../../api/dto/user.js";
-import List from "../../../models/List.js";
+import List from "../../../models/list.js";
 import { dStrings as ds, dynamicMessage } from "../../../strings.js";
 import { createError } from "../../../utilities/errorHandlers.js";
 import { createResponse } from "../../../utilities/response.js";

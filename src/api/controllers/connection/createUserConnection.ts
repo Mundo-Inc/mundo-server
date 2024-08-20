@@ -3,8 +3,8 @@ import { StatusCodes } from "http-status-codes";
 import { z } from "zod";
 
 import { UserActivityManager } from "../../../api/services/userActivityManager.js";
-import Follow from "../../../models/Follow.js";
-import FollowRequest from "../../../models/FollowRequest.js";
+import Follow from "../../../models/follow.js";
+import FollowRequest from "../../../models/followRequest.js";
 import User from "../../../models/user/user.js";
 import { dStrings as ds, dynamicMessage } from "../../../strings.js";
 import { createError } from "../../../utilities/errorHandlers.js";

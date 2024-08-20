@@ -3,14 +3,14 @@ import OpenAI from "openai";
 import tz_lookup from "tz-lookup";
 
 import { env } from "../../env.js";
-import CheckIn, { type ICheckIn } from "../../models/CheckIn.js";
-import Comment, { type IComment } from "../../models/Comment.js";
-import Place, { type IPlace } from "../../models/Place.js";
-import Review, { type IReview } from "../../models/Review.js";
+import CheckIn, { type ICheckIn } from "../../models/checkIn.js";
+import Comment, { type IComment } from "../../models/comment.js";
+import Place, { type IPlace } from "../../models/place.js";
+import Review, { type IReview } from "../../models/review.js";
 import User, { type IUser } from "../../models/user/user.js";
 import UserActivity, {
   ResourcePrivacyEnum,
-} from "../../models/UserActivity.js";
+} from "../../models/userActivity.js";
 import { trimQuotes } from "../../utilities/stringHelper.js";
 
 export class OpenAIService {

@@ -1,12 +1,12 @@
 import { StatusCodes } from "http-status-codes";
 import mongoose, { PipelineStage } from "mongoose";
 
-import Reaction from "../../../models/Reaction.js";
+import Reaction from "../../../models/reaction.js";
 import User from "../../../models/user/user.js";
 import type { IUserEarnings } from "../../../models/user/userEarnings.js";
 import UserActivity, {
   ResourcePrivacyEnum,
-} from "../../../models/UserActivity.js";
+} from "../../../models/userActivity.js";
 import { dStrings as ds, dynamicMessage } from "../../../strings.js";
 import { createError } from "../../../utilities/errorHandlers.js";
 

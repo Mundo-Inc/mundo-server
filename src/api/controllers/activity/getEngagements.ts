@@ -4,9 +4,9 @@ import type { Types } from "mongoose";
 import { z } from "zod";
 
 import UserProjection from "../../../api/dto/user.js";
-import Block from "../../../models/Block.js";
-import Comment from "../../../models/Comment.js";
-import Reaction from "../../../models/Reaction.js";
+import Block from "../../../models/block.js";
+import Comment from "../../../models/comment.js";
+import Reaction from "../../../models/reaction.js";
 import { createResponse } from "../../../utilities/response.js";
 import { validateData, zObjectId } from "../../../utilities/validation.js";
 

@@ -3,7 +3,7 @@ import { StatusCodes } from "http-status-codes";
 import { z } from "zod";
 
 import UserProjection from "../../../api/dto/user.js";
-import PrizeRedemption from "../../../models/PrizeRedemption.js";
+import PrizeRedemption from "../../../models/prizeRedemption.js";
 import { getPaginationFromQuery } from "../../../utilities/pagination.js";
 import { createResponse } from "../../../utilities/response.js";
 import {

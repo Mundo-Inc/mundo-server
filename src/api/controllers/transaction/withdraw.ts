@@ -3,7 +3,7 @@ import { StatusCodes } from "http-status-codes";
 import { z } from "zod";
 
 import User from "../../../models/user/user.js";
-import Withdrawal from "../../../models/Withdrawal.js";
+import Withdrawal from "../../../models/withdrawal.js";
 import { dStrings as ds, dynamicMessage } from "../../../strings.js";
 import { createError } from "../../../utilities/errorHandlers.js";
 import { ensureNonEmptyString } from "../../../utilities/requireValue.js";

@@ -4,9 +4,9 @@ import { z } from "zod";
 
 import { BrevoService } from "../../../api/services/brevoService.js";
 import logger from "../../../api/services/logger/index.js";
-import type { IPrize } from "../../../models/Prize.js";
-import Prize from "../../../models/Prize.js";
-import PrizeRedemption from "../../../models/PrizeRedemption.js";
+import type { IPrize } from "../../../models/prize.js";
+import Prize from "../../../models/prize.js";
+import PrizeRedemption from "../../../models/prizeRedemption.js";
 import type { IUser } from "../../../models/user/user.js";
 import User from "../../../models/user/user.js";
 import { dStrings as ds, dynamicMessage } from "../../../strings.js";

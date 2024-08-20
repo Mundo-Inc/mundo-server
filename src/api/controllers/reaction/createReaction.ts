@@ -3,8 +3,8 @@ import { StatusCodes } from "http-status-codes";
 import { z } from "zod";
 
 import { addReward } from "../../../api/services/reward/reward.service.js";
-import Reaction from "../../../models/Reaction.js";
-import UserActivity from "../../../models/UserActivity.js";
+import Reaction from "../../../models/reaction.js";
+import UserActivity from "../../../models/userActivity.js";
 import { dStrings as ds, dynamicMessage } from "../../../strings.js";
 import { createError } from "../../../utilities/errorHandlers.js";
 import { createResponse } from "../../../utilities/response.js";

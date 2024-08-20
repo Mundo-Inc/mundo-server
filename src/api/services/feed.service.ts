@@ -1,19 +1,19 @@
 import mongoose, { type FilterQuery, type SortOrder } from "mongoose";
 
-import Achievement from "../../models/Achievement.js";
-import Block from "../../models/Block.js";
-import CheckIn from "../../models/CheckIn.js";
-import Comment from "../../models/Comment.js";
+import Achievement from "../../models/achievement.js";
+import Block from "../../models/block.js";
+import CheckIn from "../../models/checkIn.js";
+import Comment from "../../models/comment.js";
 import { ResourceTypeEnum } from "../../models/enum/resourceTypeEnum.js";
-import Follow from "../../models/Follow.js";
-import Homemade from "../../models/Homemade.js";
-import Place from "../../models/Place.js";
-import Review, { type IReview } from "../../models/Review.js";
+import Follow from "../../models/follow.js";
+import Homemade from "../../models/homemade.js";
+import Place from "../../models/place.js";
+import Review, { type IReview } from "../../models/review.js";
 import User from "../../models/user/user.js";
 import UserActivity, {
   ResourcePrivacyEnum,
   type IUserActivity,
-} from "../../models/UserActivity.js";
+} from "../../models/userActivity.js";
 import {
   getCommentsOfActivity,
   getReactionsOfActivity,

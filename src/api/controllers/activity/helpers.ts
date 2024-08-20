@@ -1,8 +1,8 @@
 import type { Types } from "mongoose";
 
 import UserProjection from "../../../api/dto/user.js";
-import Comment from "../../../models/Comment.js";
-import Reaction from "../../../models/Reaction.js";
+import Comment from "../../../models/comment.js";
+import Reaction from "../../../models/reaction.js";
 
 export function getReactionsOfActivity(
   activityId: Types.ObjectId,

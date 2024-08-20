@@ -2,7 +2,7 @@ import type { NextFunction, Request, Response } from "express";
 import { StatusCodes } from "http-status-codes";
 import { z } from "zod";
 
-import Notification from "../../../models/Notification.js";
+import Notification from "../../../models/notification.js";
 import { validateData } from "../../../utilities/validation.js";
 
 const body = z.object({

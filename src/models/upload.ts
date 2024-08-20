@@ -1,6 +1,6 @@
 import mongoose, { Schema, type Model } from "mongoose";
 
-import { MediaTypeEnum } from "./Media.js";
+import { MediaTypeEnum } from "./media.js";
 
 export type UploadUsecase = "profileImage" | "placeReview" | "checkin";
 

@@ -6,11 +6,11 @@ import { z } from "zod";
 
 import PlaceProjection from "../../../api/dto/place.js";
 import UserProjection from "../../../api/dto/user.js";
-import Follow from "../../../models/Follow.js";
-import type { IUserActivity } from "../../../models/UserActivity.js";
+import Follow from "../../../models/follow.js";
+import type { IUserActivity } from "../../../models/userActivity.js";
 import UserActivity, {
   ResourcePrivacyEnum,
-} from "../../../models/UserActivity.js";
+} from "../../../models/userActivity.js";
 import { createError } from "../../../utilities/errorHandlers.js";
 import { createResponse } from "../../../utilities/response.js";
 import {

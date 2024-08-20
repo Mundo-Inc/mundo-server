@@ -5,7 +5,7 @@ import type { IUser } from "../../models/user/user.js";
 import UserActivity, {
   ActivityTypeEnum,
   ResourcePrivacyEnum,
-} from "../../models/UserActivity.js";
+} from "../../models/userActivity.js";
 
 export class UserActivityManager {
   public static async createFollowActivity(

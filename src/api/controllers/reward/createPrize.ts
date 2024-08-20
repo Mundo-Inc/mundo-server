@@ -2,8 +2,8 @@ import type { NextFunction, Request, Response } from "express";
 import { StatusCodes } from "http-status-codes";
 import { z } from "zod";
 
-import Prize from "../../../models/Prize.js";
-import Upload from "../../../models/Upload.js";
+import Prize from "../../../models/prize.js";
+import Upload from "../../../models/upload.js";
 import { dStrings as ds, dynamicMessage } from "../../../strings.js";
 import { createError } from "../../../utilities/errorHandlers.js";
 import { createResponse } from "../../../utilities/response.js";

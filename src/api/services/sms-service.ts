@@ -1,7 +1,7 @@
 import twilio from "twilio";
 
 import { env } from "../../env.js";
-import CompanyPhoneNumber from "../../models/CompanyPhoneNumber.js";
+import CompanyPhoneNumber from "../../models/companyPhoneNumber.js";
 import logger from "./logger/index.js";
 
 export default class SmsService {

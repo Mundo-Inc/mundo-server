@@ -4,14 +4,14 @@ import type { FilterQuery, Types } from "mongoose";
 import { z } from "zod";
 
 import { getResourceInfo } from "../../../api/services/feed.service.js";
-import Comment from "../../../models/Comment.js";
-import Follow from "../../../models/Follow.js";
+import Comment from "../../../models/comment.js";
+import Follow from "../../../models/follow.js";
 import User from "../../../models/user/user.js";
-import type { IUserActivity } from "../../../models/UserActivity.js";
+import type { IUserActivity } from "../../../models/userActivity.js";
 import UserActivity, {
   ActivityTypeEnum,
   ResourcePrivacyEnum,
-} from "../../../models/UserActivity.js";
+} from "../../../models/userActivity.js";
 import { dStrings as ds, dynamicMessage } from "../../../strings.js";
 import { getConnectionStatuses } from "../../../utilities/connections.js";
 import { createError } from "../../../utilities/errorHandlers.js";

@@ -5,9 +5,9 @@ import { z } from "zod";
 
 import type { UserProjectionEssentials } from "../../../api/dto/user.js";
 import UserProjection from "../../../api/dto/user.js";
-import Follow, { FollowStatusEnum } from "../../../models/Follow.js";
-import type { IFollowRequest } from "../../../models/FollowRequest.js";
-import FollowRequest from "../../../models/FollowRequest.js";
+import Follow, { FollowStatusEnum } from "../../../models/follow.js";
+import type { IFollowRequest } from "../../../models/followRequest.js";
+import FollowRequest from "../../../models/followRequest.js";
 import type { ConnectionStatus } from "../../../utilities/connections.js";
 import { getPaginationFromQuery } from "../../../utilities/pagination.js";
 import { createResponse } from "../../../utilities/response.js";

@@ -7,16 +7,16 @@ import mongoose, {
 import { z } from "zod";
 
 import DeletionService from "../../api/services/deletionService.js";
-import Achievement from "../Achievement.js";
-import ActivitySeen from "../ActivitySeen.js";
-import CheckIn from "../CheckIn.js";
-import Comment from "../Comment.js";
-import Flag from "../Flag.js";
-import Follow from "../Follow.js";
-import List from "../List.js";
-import Media from "../Media.js";
-import Reaction from "../Reaction.js";
-import Review from "../Review.js";
+import Achievement from "../achievement.js";
+import ActivitySeen from "../activitySeen.js";
+import CheckIn from "../checkIn.js";
+import Comment from "../comment.js";
+import Flag from "../flag.js";
+import Follow from "../follow.js";
+import List from "../list.js";
+import Media from "../media.js";
+import Reaction from "../reaction.js";
+import Review from "../review.js";
 import { phantomCoinsSchema, zPhantomCoinsSchema } from "./phantomCoins.js";
 import { userAppUsageSchema, zUserAppUsageSchema } from "./userAppUsage.js";
 import { userDeviceSchema, zUserDeviceSchema } from "./userDevice.js";

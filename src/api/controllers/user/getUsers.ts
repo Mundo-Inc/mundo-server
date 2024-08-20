@@ -4,7 +4,7 @@ import { z } from "zod";
 
 import type { UserProjectionEssentials } from "../../../api/dto/user.js";
 import UserProjection from "../../../api/dto/user.js";
-import Follow from "../../../models/Follow.js";
+import Follow from "../../../models/follow.js";
 import User from "../../../models/user/user.js";
 import { getPaginationFromQuery } from "../../../utilities/pagination.js";
 import { createResponse } from "../../../utilities/response.js";

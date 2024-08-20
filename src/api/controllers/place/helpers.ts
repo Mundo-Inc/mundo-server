@@ -2,23 +2,23 @@ import axios from "axios";
 import { StatusCodes } from "http-status-codes";
 import type { Document, Types } from "mongoose";
 
-import type {
-  GooglePlaceDetailsAdvanced,
-  GooglePlaceDetailsLocationOnly,
-  OpeningHours,
-} from "../../../_dataManagers/GoogleDataManager.js";
-import {
-  GoogleDataManager,
-  GooglePlaceFields,
-} from "../../../_dataManagers/GoogleDataManager.js";
 import logger from "../../../api/services/logger/index.js";
 import {
   findYelpId,
   getYelpData,
 } from "../../../api/services/provider.service.js";
-import Media from "../../../models/Media.js";
-import type { IPlace } from "../../../models/Place.js";
-import Place from "../../../models/Place.js";
+import type {
+  GooglePlaceDetailsAdvanced,
+  GooglePlaceDetailsLocationOnly,
+  OpeningHours,
+} from "../../../dataManagers/googleDataManager.js";
+import {
+  GoogleDataManager,
+  GooglePlaceFields,
+} from "../../../dataManagers/googleDataManager.js";
+import Media from "../../../models/media.js";
+import type { IPlace } from "../../../models/place.js";
+import Place from "../../../models/place.js";
 import { dStrings as ds, dynamicMessage } from "../../../strings.js";
 import type { IYelpPlaceDetails } from "../../../types/yelpPlace.interface.js";
 import { createError } from "../../../utilities/errorHandlers.js";

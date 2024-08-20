@@ -7,15 +7,15 @@ import logger from "../../../api/services/logger/index.js";
 import { addReward } from "../../../api/services/reward/reward.service.js";
 import { UserActivityManager } from "../../../api/services/userActivityManager.js";
 import { ResourceTypeEnum } from "../../../models/enum/resourceTypeEnum.js";
-import Follow from "../../../models/Follow.js";
-import Homemade from "../../../models/Homemade.js";
-import Media, { MediaTypeEnum } from "../../../models/Media.js";
+import Follow from "../../../models/follow.js";
+import Homemade from "../../../models/homemade.js";
+import Media, { MediaTypeEnum } from "../../../models/media.js";
 import Notification, {
   NotificationTypeEnum,
-} from "../../../models/Notification.js";
-import Upload from "../../../models/Upload.js";
+} from "../../../models/notification.js";
+import Upload from "../../../models/upload.js";
 import User, { UserRoleEnum } from "../../../models/user/user.js";
-import { ResourcePrivacyEnum } from "../../../models/UserActivity.js";
+import { ResourcePrivacyEnum } from "../../../models/userActivity.js";
 import strings, { dStrings as ds, dynamicMessage } from "../../../strings.js";
 import { createError } from "../../../utilities/errorHandlers.js";
 import { createResponse } from "../../../utilities/response.js";

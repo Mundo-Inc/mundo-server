@@ -6,10 +6,10 @@ import { z } from "zod";
 import UserProjection from "../../../api/dto/user.js";
 import { calcRemainingXP } from "../../../api/services/reward/helpers/levelCalculations.js";
 import { getLevelThresholds } from "../../../api/services/reward/utils/levelupThresholds.js";
-import Block from "../../../models/Block.js";
-import CheckIn from "../../../models/CheckIn.js";
-import Follow, { FollowStatusEnum } from "../../../models/Follow.js";
-import Review from "../../../models/Review.js";
+import Block from "../../../models/block.js";
+import CheckIn from "../../../models/checkIn.js";
+import Follow, { FollowStatusEnum } from "../../../models/follow.js";
+import Review from "../../../models/review.js";
 import User from "../../../models/user/user.js";
 import strings, { dStrings as ds, dynamicMessage } from "../../../strings.js";
 import {

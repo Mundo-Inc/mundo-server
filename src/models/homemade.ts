@@ -2,10 +2,10 @@ import mongoose, { Schema, type CallbackError, type Model } from "mongoose";
 
 import DeletionService from "../api/services/deletionService.js";
 import logger from "../api/services/logger/index.js";
-import Comment from "./Comment.js";
-import Media from "./Media.js";
-import Reaction from "./Reaction.js";
-import UserActivity, { ResourcePrivacyEnum } from "./UserActivity.js";
+import Comment from "./comment.js";
+import Media from "./media.js";
+import Reaction from "./reaction.js";
+import UserActivity, { ResourcePrivacyEnum } from "./userActivity.js";
 
 export interface IHomemade {
   _id: mongoose.Types.ObjectId;

@@ -3,8 +3,8 @@ import { StatusCodes } from "http-status-codes";
 import { z } from "zod";
 
 import PlaceProjection from "../../../api/dto/place.js";
-import Event from "../../../models/Event.js";
-import Place from "../../../models/Place.js";
+import Event from "../../../models/event.js";
+import Place from "../../../models/place.js";
 import { dStrings as ds, dynamicMessage } from "../../../strings.js";
 import { createError } from "../../../utilities/errorHandlers.js";
 import { filterObjectByConfig } from "../../../utilities/filtering.js";

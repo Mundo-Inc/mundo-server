@@ -3,9 +3,9 @@ import { StatusCodes } from "http-status-codes";
 import { z } from "zod";
 
 import UserProjection from "../../../api/dto/user.js";
-import Event from "../../../models/Event.js";
-import Media from "../../../models/Media.js";
-import Place from "../../../models/Place.js";
+import Event from "../../../models/event.js";
+import Media from "../../../models/media.js";
+import Place from "../../../models/place.js";
 import { dStrings as ds, dynamicMessage } from "../../../strings.js";
 import { createError } from "../../../utilities/errorHandlers.js";
 import { getPaginationFromQuery } from "../../../utilities/pagination.js";

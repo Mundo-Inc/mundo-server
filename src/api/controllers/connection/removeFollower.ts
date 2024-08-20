@@ -4,11 +4,11 @@ import { z } from "zod";
 
 import logger from "../../../api/services/logger/index.js";
 import { ResourceTypeEnum } from "../../../models/enum/resourceTypeEnum.js";
-import Follow from "../../../models/Follow.js";
-import Notification from "../../../models/Notification.js";
+import Follow from "../../../models/follow.js";
+import Notification from "../../../models/notification.js";
 import UserActivity, {
   ActivityTypeEnum,
-} from "../../../models/UserActivity.js";
+} from "../../../models/userActivity.js";
 import { dStrings as ds, dynamicMessage } from "../../../strings.js";
 import { createError } from "../../../utilities/errorHandlers.js";
 import { validateData, zObjectId } from "../../../utilities/validation.js";

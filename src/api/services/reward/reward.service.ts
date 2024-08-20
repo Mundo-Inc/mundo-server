@@ -1,13 +1,13 @@
 import { StatusCodes } from "http-status-codes";
 import mongoose, { type Document } from "mongoose";
 
-import CheckIn from "../../../models/CheckIn.js";
-import Comment from "../../../models/Comment.js";
-import Homemade from "../../../models/Homemade.js";
-import Media from "../../../models/Media.js";
-import Reaction from "../../../models/Reaction.js";
-import Review from "../../../models/Review.js";
-import Reward from "../../../models/Reward.js";
+import CheckIn from "../../../models/checkIn.js";
+import Comment from "../../../models/comment.js";
+import Homemade from "../../../models/homemade.js";
+import Media from "../../../models/media.js";
+import Reaction from "../../../models/reaction.js";
+import Review from "../../../models/review.js";
+import Reward from "../../../models/reward.js";
 import User, { type IUser } from "../../../models/user/user.js";
 import { createError } from "../../../utilities/errorHandlers.js";
 import MediaProjection, { type MediaProjectionBrief } from "../../dto/media.js";

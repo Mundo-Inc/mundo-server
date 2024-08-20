@@ -3,11 +3,11 @@ import { StatusCodes } from "http-status-codes";
 import { z } from "zod";
 
 import DeletionService from "../../../api/services/deletionService.js";
-import CheckIn from "../../../models/CheckIn.js";
-import type { FlagAdminAction } from "../../../models/Flag.js";
-import Flag from "../../../models/Flag.js";
-import Homemade from "../../../models/Homemade.js";
-import Review from "../../../models/Review.js";
+import CheckIn from "../../../models/checkIn.js";
+import type { FlagAdminAction } from "../../../models/flag.js";
+import Flag from "../../../models/flag.js";
+import Homemade from "../../../models/homemade.js";
+import Review from "../../../models/review.js";
 import { dStrings as ds, dynamicMessage } from "../../../strings.js";
 import { createError } from "../../../utilities/errorHandlers.js";
 import { createResponse } from "../../../utilities/response.js";

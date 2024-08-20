@@ -3,7 +3,7 @@ import { StatusCodes } from "http-status-codes";
 import type { Types } from "mongoose";
 import { z } from "zod";
 
-import Block from "../../../models/Block.js";
+import Block from "../../../models/block.js";
 import { getPaginationFromQuery } from "../../../utilities/pagination.js";
 import { createResponse } from "../../../utilities/response.js";
 import {

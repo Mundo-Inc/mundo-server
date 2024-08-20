@@ -2,7 +2,7 @@ import type { NextFunction, Request, Response } from "express";
 import { StatusCodes } from "http-status-codes";
 import { z } from "zod";
 
-import Place, { type IPlace } from "../../../models/Place.js";
+import Place, { type IPlace } from "../../../models/place.js";
 import { createError } from "../../../utilities/errorHandlers.js";
 import { createResponse } from "../../../utilities/response.js";
 import { areStrictlySimilar } from "../../../utilities/stringHelper.js";

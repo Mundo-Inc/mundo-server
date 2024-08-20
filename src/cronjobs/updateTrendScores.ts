@@ -1,7 +1,7 @@
 import cron from "node-cron";
 
 import logger from "../api/services/logger/index.js";
-import UserActivity from "../models/UserActivity.js";
+import UserActivity from "../models/userActivity.js";
 
 interface Query {
   hasMedia: boolean;

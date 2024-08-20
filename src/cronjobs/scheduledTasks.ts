@@ -3,17 +3,17 @@ import { schedule } from "node-cron";
 import logger from "../api/services/logger/index.js";
 import { OpenAIService } from "../api/services/openAIService.js";
 import { env } from "../env.js";
-import CheckIn from "../models/CheckIn.js";
-import Comment from "../models/Comment.js";
-import Review from "../models/Review.js";
+import CheckIn from "../models/checkIn.js";
+import Comment from "../models/comment.js";
+import Review from "../models/review.js";
 import ScheduledTask, {
   ScheduledTaskStatus,
   ScheduledTaskType,
-} from "../models/ScheduledTask.js";
+} from "../models/scheduledTask.js";
 import UserActivity, {
   ActivityTypeEnum,
   ResourcePrivacyEnum,
-} from "../models/UserActivity.js";
+} from "../models/userActivity.js";
 
 // evey 3 minutes
 schedule(

@@ -11,25 +11,25 @@ import {
 import logger from "../../../api/services/logger/index.js";
 import { addReward } from "../../../api/services/reward/reward.service.js";
 import { UserActivityManager } from "../../../api/services/userActivityManager.js";
-import type { ICheckIn } from "../../../models/CheckIn.js";
-import CheckIn from "../../../models/CheckIn.js";
+import type { ICheckIn } from "../../../models/checkIn.js";
+import CheckIn from "../../../models/checkIn.js";
 import { ResourceTypeEnum } from "../../../models/enum/resourceTypeEnum.js";
-import type { IEvent } from "../../../models/Event.js";
-import Event from "../../../models/Event.js";
-import Follow from "../../../models/Follow.js";
-import type { IMedia } from "../../../models/Media.js";
-import Media from "../../../models/Media.js";
+import type { IEvent } from "../../../models/event.js";
+import Event from "../../../models/event.js";
+import Follow from "../../../models/follow.js";
+import type { IMedia } from "../../../models/media.js";
+import Media from "../../../models/media.js";
 import Notification, {
   NotificationTypeEnum,
-} from "../../../models/Notification.js";
-import Place from "../../../models/Place.js";
+} from "../../../models/notification.js";
+import Place from "../../../models/place.js";
 import ScheduledTask, {
   ScheduledTaskStatus,
   ScheduledTaskType,
-} from "../../../models/ScheduledTask.js";
-import Upload from "../../../models/Upload.js";
+} from "../../../models/scheduledTask.js";
+import Upload from "../../../models/upload.js";
 import User, { UserRoleEnum } from "../../../models/user/user.js";
-import { ResourcePrivacyEnum } from "../../../models/UserActivity.js";
+import { ResourcePrivacyEnum } from "../../../models/userActivity.js";
 import strings, { dStrings as ds, dynamicMessage } from "../../../strings.js";
 import { getRandomDateInRange } from "../../../utilities/dateTime.js";
 import { createError } from "../../../utilities/errorHandlers.js";

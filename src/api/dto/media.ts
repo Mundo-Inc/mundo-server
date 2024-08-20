@@ -1,4 +1,4 @@
-import { type IMedia } from "../../models/Media.js";
+import { type IMedia } from "../../models/media.js";
 
 const MediaProjection = {
   brief: {

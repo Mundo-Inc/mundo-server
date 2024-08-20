@@ -3,7 +3,7 @@ import { StatusCodes } from "http-status-codes";
 import semver from "semver";
 import { z } from "zod";
 
-import AppSetting from "../../../models/AppSetting.js";
+import AppSetting from "../../../models/appSetting.js";
 import { createError } from "../../../utilities/errorHandlers.js";
 import { ResponseStatusEnum } from "../../../utilities/response.js";
 import { validateData } from "../../../utilities/validation.js";

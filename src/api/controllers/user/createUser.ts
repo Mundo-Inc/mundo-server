@@ -8,10 +8,10 @@ import { handleSignUp } from "../../../api/lib/profile-handlers.js";
 import { BrevoService } from "../../../api/services/brevoService.js";
 import logger from "../../../api/services/logger/index.js";
 import { MundoApp } from "../../../config/firebase-config.js";
-import CoinReward, { CoinRewardTypeEnum } from "../../../models/CoinReward.js";
+import CoinReward, { CoinRewardTypeEnum } from "../../../models/coinReward.js";
 import Notification, {
   NotificationTypeEnum,
-} from "../../../models/Notification.js";
+} from "../../../models/notification.js";
 import type { IUser } from "../../../models/user/user.js";
 import User, { SignupMethodEnum } from "../../../models/user/user.js";
 import { dStrings as ds, dynamicMessage } from "../../../strings.js";

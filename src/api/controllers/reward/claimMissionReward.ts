@@ -3,8 +3,8 @@ import { StatusCodes } from "http-status-codes";
 import { z } from "zod";
 
 import { populateMissionProgress } from "../../../api/services/reward/coinReward.service.js";
-import CoinReward, { CoinRewardTypeEnum } from "../../../models/CoinReward.js";
-import Mission from "../../../models/Mission.js";
+import CoinReward, { CoinRewardTypeEnum } from "../../../models/coinReward.js";
+import Mission from "../../../models/mission.js";
 import User from "../../../models/user/user.js";
 import { dStrings as ds, dynamicMessage } from "../../../strings.js";
 import { createError } from "../../../utilities/errorHandlers.js";

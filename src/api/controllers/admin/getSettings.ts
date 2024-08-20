@@ -1,7 +1,7 @@
 import type { NextFunction, Request, Response } from "express";
 import { StatusCodes } from "http-status-codes";
 
-import AppSetting from "../../../models/AppSetting.js";
+import AppSetting from "../../../models/appSetting.js";
 import { createResponse } from "../../../utilities/response.js";
 
 export async function getSettings(

@@ -1,4 +1,4 @@
-import { type ICheckIn } from "../../models/CheckIn.js";
+import { type ICheckIn } from "../../models/checkIn.js";
 import { type MediaProjectionBrief } from "./media.js";
 import { type PlaceProjectionDetail } from "./place.js";
 import { type UserProjectionEssentials } from "./user.js";

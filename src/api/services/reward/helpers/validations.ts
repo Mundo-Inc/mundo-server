@@ -1,8 +1,8 @@
-import type { ICheckIn } from "../../../../models/CheckIn.js";
-import type { IComment } from "../../../../models/Comment.js";
-import type { IReaction } from "../../../../models/Reaction.js";
-import type { IReview } from "../../../../models/Review.js";
-import Reward from "../../../../models/Reward.js";
+import type { ICheckIn } from "../../../../models/checkIn.js";
+import type { IComment } from "../../../../models/comment.js";
+import type { IReaction } from "../../../../models/reaction.js";
+import type { IReview } from "../../../../models/review.js";
+import Reward from "../../../../models/reward.js";
 import type { IUser } from "../../../../models/user/user.js";
 import logger from "../../logger/index.js";
 import { thresholds } from "../utils/threshold.js";

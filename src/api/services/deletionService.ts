@@ -1,12 +1,12 @@
 import { StatusCodes } from "http-status-codes";
 import mongoose, { type FilterQuery } from "mongoose";
 
-import Comment, { type IComment } from "../../models/Comment.js";
+import Comment, { type IComment } from "../../models/comment.js";
 import { ResourceTypeEnum } from "../../models/enum/resourceTypeEnum.js";
-import Notification from "../../models/Notification.js";
-import Reward, { type IReward } from "../../models/Reward.js";
+import Notification from "../../models/notification.js";
+import Reward, { type IReward } from "../../models/reward.js";
 import User from "../../models/user/user.js";
-import UserActivity from "../../models/UserActivity.js";
+import UserActivity from "../../models/userActivity.js";
 import { dStrings, dynamicMessage } from "../../strings.js";
 import { createError } from "../../utilities/errorHandlers.js";
 import logger from "./logger/index.js";

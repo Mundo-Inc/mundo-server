@@ -2,7 +2,7 @@ import type { NextFunction, Request, Response } from "express";
 import { StatusCodes } from "http-status-codes";
 import { z } from "zod";
 
-import Mission, { TaskTypeEnum } from "../../../models/Mission.js";
+import Mission, { TaskTypeEnum } from "../../../models/mission.js";
 import { createResponse } from "../../../utilities/response.js";
 import { validateData } from "../../../utilities/validation.js";
 

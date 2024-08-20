@@ -3,7 +3,7 @@ import { StatusCodes } from "http-status-codes";
 import { z } from "zod";
 
 import UserProjection from "../../../api/dto/user.js";
-import Media from "../../../models/Media.js";
+import Media from "../../../models/media.js";
 import { createError } from "../../../utilities/errorHandlers.js";
 import { getPaginationFromQuery } from "../../../utilities/pagination.js";
 import { createResponse } from "../../../utilities/response.js";

@@ -2,7 +2,7 @@ import { type Document } from "mongoose";
 
 import Achievement, {
   type IAchievement,
-} from "../../../../models/Achievement.js";
+} from "../../../../models/achievement.js";
 import type { IUser } from "../../../../models/user/user.js";
 import logger from "../../logger/index.js";
 

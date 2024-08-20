@@ -1,4 +1,4 @@
-import { type IPlace } from "../../models/Place.js";
+import { type IPlace } from "../../models/place.js";
 
 const PlaceProjection = {
   detail: {

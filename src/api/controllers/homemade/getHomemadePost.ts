@@ -4,7 +4,7 @@ import { z } from "zod";
 
 import MediaProjection from "../../../api/dto/media.js";
 import UserProjection from "../../../api/dto/user.js";
-import Homemade from "../../../models/Homemade.js";
+import Homemade from "../../../models/homemade.js";
 import { dStrings as ds, dynamicMessage } from "../../../strings.js";
 import { createError } from "../../../utilities/errorHandlers.js";
 import { createResponse } from "../../../utilities/response.js";

@@ -2,8 +2,8 @@ import type { NextFunction, Request, Response } from "express";
 import fs from "fs";
 import { StatusCodes } from "http-status-codes";
 
-import type { UploadUsecase } from "../../../models/Upload.js";
-import Upload from "../../../models/Upload.js";
+import type { UploadUsecase } from "../../../models/upload.js";
+import Upload from "../../../models/upload.js";
 import User from "../../../models/user/user.js";
 import strings from "../../../strings.js";
 import { createError } from "../../../utilities/errorHandlers.js";

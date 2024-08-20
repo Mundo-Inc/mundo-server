@@ -3,21 +3,21 @@ import { StatusCodes } from "http-status-codes";
 import type { PipelineStage } from "mongoose";
 import { z } from "zod";
 
-import type {
-  GooglePlaceDetailsPreferred,
-  GooglePlaceReview,
-} from "../../../_dataManagers/GoogleDataManager.js";
-import {
-  GoogleDataManager,
-  GooglePlaceFields,
-} from "../../../_dataManagers/GoogleDataManager.js";
 import type { MediaProjectionBrief } from "../../../api/dto/media.js";
 import MediaProjection from "../../../api/dto/media.js";
 import UserProjection from "../../../api/dto/user.js";
 import { getYelpReviews } from "../../../api/services/provider.service.js";
-import { MediaTypeEnum } from "../../../models/Media.js";
-import Place from "../../../models/Place.js";
-import Review from "../../../models/Review.js";
+import type {
+  GooglePlaceDetailsPreferred,
+  GooglePlaceReview,
+} from "../../../dataManagers/googleDataManager.js";
+import {
+  GoogleDataManager,
+  GooglePlaceFields,
+} from "../../../dataManagers/googleDataManager.js";
+import { MediaTypeEnum } from "../../../models/media.js";
+import Place from "../../../models/place.js";
+import Review from "../../../models/review.js";
 import { dStrings as ds, dynamicMessage } from "../../../strings.js";
 import { createError } from "../../../utilities/errorHandlers.js";
 import { getPaginationFromQuery } from "../../../utilities/pagination.js";

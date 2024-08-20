@@ -5,7 +5,7 @@ import { z } from "zod";
 
 import MediaProjection from "../../../api/dto/media.js";
 import UserProjection from "../../../api/dto/user.js";
-import Homemade from "../../../models/Homemade.js";
+import Homemade from "../../../models/homemade.js";
 import { getPaginationFromQuery } from "../../../utilities/pagination.js";
 import { createResponse } from "../../../utilities/response.js";
 import {

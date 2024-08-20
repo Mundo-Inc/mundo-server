@@ -5,8 +5,8 @@ import { z } from "zod";
 
 import type { PlaceProjectionBrief } from "../../../api/dto/place.js";
 import PlaceProjection from "../../../api/dto/place.js";
-import type { IEvent } from "../../../models/Event.js";
-import Event from "../../../models/Event.js";
+import type { IEvent } from "../../../models/event.js";
+import Event from "../../../models/event.js";
 import { dStrings as ds, dynamicMessage } from "../../../strings.js";
 import { createError } from "../../../utilities/errorHandlers.js";
 import { createResponse } from "../../../utilities/response.js";

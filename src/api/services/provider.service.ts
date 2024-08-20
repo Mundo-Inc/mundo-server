@@ -2,7 +2,7 @@ import axios from "axios";
 import { StatusCodes } from "http-status-codes";
 
 import { env } from "../../env.js";
-import type { IPlace } from "../../models/Place.js";
+import type { IPlace } from "../../models/place.js";
 import type { IYelpPlaceDetails } from "../../types/yelpPlace.interface.js";
 import { createError } from "../../utilities/errorHandlers.js";
 import logger from "./logger/index.js";

@@ -3,7 +3,7 @@ import { StatusCodes } from "http-status-codes";
 import type { PipelineStage } from "mongoose";
 import { z } from "zod";
 
-import Notification from "../../../models/Notification.js";
+import Notification from "../../../models/notification.js";
 import { getPaginationFromQuery } from "../../../utilities/pagination.js";
 import { createResponse } from "../../../utilities/response.js";
 import {

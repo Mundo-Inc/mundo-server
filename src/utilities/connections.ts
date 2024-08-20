@@ -1,6 +1,6 @@
 import { Types } from "mongoose";
-import Follow, { FollowStatusEnum } from "../models/Follow.js";
-import FollowRequest from "../models/FollowRequest.js";
+import Follow, { FollowStatusEnum } from "../models/follow.js";
+import FollowRequest from "../models/followRequest.js";
 
 export type ConnectionStatus = {
   // deprecated

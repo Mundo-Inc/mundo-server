@@ -1,8 +1,8 @@
 import mongoose, { Schema, type Model, type Types } from "mongoose";
 
 import { ResourceTypeEnum } from "./enum/resourceTypeEnum.js";
-import Notification, { NotificationTypeEnum } from "./Notification.js";
-import UserActivity from "./UserActivity.js";
+import Notification, { NotificationTypeEnum } from "./notification.js";
+import UserActivity from "./userActivity.js";
 
 export interface IMention {
   user: Types.ObjectId;

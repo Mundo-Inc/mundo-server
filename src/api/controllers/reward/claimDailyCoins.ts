@@ -7,7 +7,7 @@ import {
   getDailyRewardAmount,
   updateUserCoinsAndStreak,
 } from "../../../api/services/reward/coinReward.service.js";
-import CoinReward, { CoinRewardTypeEnum } from "../../../models/CoinReward.js";
+import CoinReward, { CoinRewardTypeEnum } from "../../../models/coinReward.js";
 import User from "../../../models/user/user.js";
 import { dStrings as ds, dynamicMessage } from "../../../strings.js";
 import { createError } from "../../../utilities/errorHandlers.js";

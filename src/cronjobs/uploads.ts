@@ -1,6 +1,6 @@
 import cron from "node-cron";
 
-import Upload from "../models/Upload.js";
+import Upload from "../models/upload.js";
 import S3Manager from "../utilities/s3Manager/index.js";
 
 cron.schedule("*/15 * * * *", async () => {

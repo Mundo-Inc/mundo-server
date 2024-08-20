@@ -2,7 +2,7 @@ import type { NextFunction, Request, Response } from "express";
 import { StatusCodes } from "http-status-codes";
 import { z } from "zod";
 
-import List, { AccessEnum } from "../../../models/List.js";
+import List, { AccessEnum } from "../../../models/list.js";
 import { dStrings as ds, dynamicMessage } from "../../../strings.js";
 import { createError } from "../../../utilities/errorHandlers.js";
 import { validateData, zObjectId } from "../../../utilities/validation.js";

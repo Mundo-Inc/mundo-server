@@ -2,10 +2,10 @@ import type { NextFunction, Request, Response } from "express";
 import { StatusCodes } from "http-status-codes";
 import { z } from "zod";
 
-import Follow from "../../../models/Follow.js";
-import FollowRequest from "../../../models/FollowRequest.js";
+import Follow from "../../../models/follow.js";
+import FollowRequest from "../../../models/followRequest.js";
 import User from "../../../models/user/user.js";
-import UserActivity from "../../../models/UserActivity.js";
+import UserActivity from "../../../models/userActivity.js";
 import strings, { dStrings as ds, dynamicMessage } from "../../../strings.js";
 import { createError } from "../../../utilities/errorHandlers.js";
 import { validateData, zObjectId } from "../../../utilities/validation.js";

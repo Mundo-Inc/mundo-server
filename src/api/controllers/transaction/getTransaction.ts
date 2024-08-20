@@ -6,7 +6,7 @@ import type { TransactionProjectionPublic } from "../../../api/dto/transaction.j
 import TransactionProjection from "../../../api/dto/transaction.js";
 import type { UserProjectionEssentials } from "../../../api/dto/user.js";
 import UserProjection from "../../../api/dto/user.js";
-import Transaction from "../../../models/Transaction.js";
+import Transaction from "../../../models/transaction.js";
 import { dStrings as ds, dynamicMessage } from "../../../strings.js";
 import { createError } from "../../../utilities/errorHandlers.js";
 import { createResponse } from "../../../utilities/response.js";

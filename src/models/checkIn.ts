@@ -6,9 +6,9 @@ import mongoose, {
 } from "mongoose";
 
 import logger from "../api/services/logger/index.js";
-import Media from "./Media.js";
-import Place from "./Place.js";
-import UserActivity, { ResourcePrivacyEnum } from "./UserActivity.js";
+import Media from "./media.js";
+import Place from "./place.js";
+import UserActivity, { ResourcePrivacyEnum } from "./userActivity.js";
 
 export interface IScores {
   overall?: number;
