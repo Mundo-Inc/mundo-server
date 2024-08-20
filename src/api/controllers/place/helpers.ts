@@ -2,28 +2,28 @@ import axios from "axios";
 import { StatusCodes } from "http-status-codes";
 import type { Document, Types } from "mongoose";
 
+import type {
+  GooglePlaceDetailsAdvanced,
+  GooglePlaceDetailsLocationOnly,
+  OpeningHours,
+} from "../../../_dataManagers/GoogleDataManager.js";
+import {
+  GoogleDataManager,
+  GooglePlaceFields,
+} from "../../../_dataManagers/GoogleDataManager.js";
 import logger from "../../../api/services/logger/index.js";
 import {
   findYelpId,
   getYelpData,
 } from "../../../api/services/provider.service.js";
-import type {
-  GooglePlaceDetailsAdvanced,
-  GooglePlaceDetailsLocationOnly,
-  OpeningHours,
-} from "../../../DataManagers/GoogleDataManager.js";
-import {
-  GoogleDataManager,
-  GooglePlaceFields,
-} from "../../../DataManagers/GoogleDataManager.js";
 import Media from "../../../models/Media.js";
 import type { IPlace } from "../../../models/Place.js";
 import Place from "../../../models/Place.js";
 import { dStrings as ds, dynamicMessage } from "../../../strings.js";
 import type { IYelpPlaceDetails } from "../../../types/yelpPlace.interface.js";
+import S3Manager from "../../../utilities/_s3Manager/index.js";
 import { createError } from "../../../utilities/errorHandlers.js";
 import { filterObjectByConfig } from "../../../utilities/filtering.js";
-import S3Manager from "../../../utilities/S3Manager/index.js";
 
 export async function getDetailedPlace(id: Types.ObjectId) {
   const place = await Place.findById(id).orFail(

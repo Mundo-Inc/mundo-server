@@ -1,6 +1,6 @@
 import mongoose, { Schema, type Model, type Types } from "mongoose";
 
-import { ResourceTypeEnum } from "./_enum/ResourceTypeEnum.js";
+import { ResourceTypeEnum } from "./enum/resourceTypeEnum.js";
 import Notification, { NotificationTypeEnum } from "./Notification.js";
 import UserActivity from "./UserActivity.js";
 

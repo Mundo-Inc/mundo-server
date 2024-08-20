@@ -6,11 +6,11 @@ import { z } from "zod";
 import type {
   GooglePlaceDetailsPreferred,
   GooglePlaceReview,
-} from "../../../DataManagers/GoogleDataManager.js";
+} from "../../../_dataManagers/GoogleDataManager.js";
 import {
   GoogleDataManager,
   GooglePlaceFields,
-} from "../../../DataManagers/GoogleDataManager.js";
+} from "../../../_dataManagers/GoogleDataManager.js";
 import type { MediaProjectionBrief } from "../../../api/dto/media.js";
 import MediaProjection from "../../../api/dto/media.js";
 import UserProjection from "../../../api/dto/user.js";

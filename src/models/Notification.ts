@@ -1,6 +1,6 @@
 import mongoose, { Schema, type Model, type Types } from "mongoose";
 
-import { ResourceTypeEnum } from "./_enum/ResourceTypeEnum.js";
+import { ResourceTypeEnum } from "./enum/resourceTypeEnum.js";
 
 export enum NotificationTypeEnum {
   Reaction = "REACTION",

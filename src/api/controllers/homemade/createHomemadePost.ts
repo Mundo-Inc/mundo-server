@@ -6,7 +6,7 @@ import { z } from "zod";
 import logger from "../../../api/services/logger/index.js";
 import { addReward } from "../../../api/services/reward/reward.service.js";
 import { UserActivityManager } from "../../../api/services/UserActivityManager.js";
-import { ResourceTypeEnum } from "../../../models/_enum/ResourceTypeEnum.js";
+import { ResourceTypeEnum } from "../../../models/enum/resourceTypeEnum.js";
 import Follow from "../../../models/Follow.js";
 import Homemade from "../../../models/Homemade.js";
 import Media, { MediaTypeEnum } from "../../../models/Media.js";

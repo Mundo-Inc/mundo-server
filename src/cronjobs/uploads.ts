@@ -1,7 +1,7 @@
 import cron from "node-cron";
 
 import Upload from "../models/Upload.js";
-import S3Manager from "../utilities/S3Manager/index.js";
+import S3Manager from "../utilities/_s3Manager/index.js";
 
 cron.schedule("*/15 * * * *", async () => {
   const FIFTEEN_MINUTES_AGO = new Date(Date.now() - 1000 * 60 * 15);

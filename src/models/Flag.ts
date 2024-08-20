@@ -1,5 +1,5 @@
 import mongoose, { Schema, type Model } from "mongoose"; // Corrected the import statement
-import { ResourceTypeEnum } from "./_enum/ResourceTypeEnum.js";
+import { ResourceTypeEnum } from "./enum/resourceTypeEnum.js";
 
 // Flag reasons
 export enum FlagTypeEnum {

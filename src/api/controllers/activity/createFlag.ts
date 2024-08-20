@@ -4,9 +4,9 @@ import type { Types } from "mongoose";
 import { z } from "zod";
 
 import logger from "../../../api/services/logger/index.js";
-import { ResourceTypeEnum } from "../../../models/_enum/ResourceTypeEnum.js";
 import CheckIn from "../../../models/CheckIn.js";
 import Comment from "../../../models/Comment.js";
+import { ResourceTypeEnum } from "../../../models/enum/resourceTypeEnum.js";
 import type { FlagTargetType } from "../../../models/Flag.js";
 import Flag, { FlagTypeEnum } from "../../../models/Flag.js";
 import Homemade from "../../../models/Homemade.js";

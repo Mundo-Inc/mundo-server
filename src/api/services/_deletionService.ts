@@ -1,8 +1,8 @@
 import { StatusCodes } from "http-status-codes";
 import mongoose, { type FilterQuery } from "mongoose";
 
-import { ResourceTypeEnum } from "../../models/_enum/ResourceTypeEnum.js";
 import Comment, { type IComment } from "../../models/Comment.js";
+import { ResourceTypeEnum } from "../../models/enum/resourceTypeEnum.js";
 import Notification from "../../models/Notification.js";
 import Reward, { type IReward } from "../../models/Reward.js";
 import User from "../../models/user/user.js";

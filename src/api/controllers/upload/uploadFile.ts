@@ -6,9 +6,9 @@ import type { UploadUsecase } from "../../../models/Upload.js";
 import Upload from "../../../models/Upload.js";
 import User from "../../../models/user/user.js";
 import strings from "../../../strings.js";
+import S3Manager from "../../../utilities/_s3Manager/index.js";
 import { createError } from "../../../utilities/errorHandlers.js";
 import { createResponse } from "../../../utilities/response.js";
-import S3Manager from "../../../utilities/S3Manager/index.js";
 import {
   createThumbnail,
   generateFilename,

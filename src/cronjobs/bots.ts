@@ -1,8 +1,8 @@
 import cron, { type ScheduledTask } from "node-cron";
 
 import logger from "../api/services/logger/index.js";
-import { ResourceTypeEnum } from "../models/_enum/ResourceTypeEnum.js";
 import Bot, { IBotTargetEnum, IBotTypeEnum, type IBot } from "../models/Bot.js";
+import { ResourceTypeEnum } from "../models/enum/resourceTypeEnum.js";
 import Reaction from "../models/Reaction.js";
 import User, { type IUser } from "../models/user/user.js";
 import UserActivity, {

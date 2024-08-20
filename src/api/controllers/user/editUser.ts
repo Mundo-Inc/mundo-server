@@ -6,9 +6,9 @@ import UserProjection from "../../../api/dto/user.js";
 import CoinReward, { CoinRewardTypeEnum } from "../../../models/CoinReward.js";
 import User, { UserRoleEnum } from "../../../models/user/user.js";
 import strings, { dStrings as ds, dynamicMessage } from "../../../strings.js";
+import S3Manager from "../../../utilities/_s3Manager/index.js";
 import { createError } from "../../../utilities/errorHandlers.js";
 import { createResponse } from "../../../utilities/response.js";
-import S3Manager from "../../../utilities/S3Manager/index.js";
 import {
   validateData,
   zObjectId,
