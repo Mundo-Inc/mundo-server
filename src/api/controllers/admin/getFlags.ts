@@ -3,7 +3,7 @@ import { StatusCodes } from "http-status-codes";
 import type { FilterQuery } from "mongoose";
 import { z } from "zod";
 
-import UserProjection from "../../../api/dto/user.js";
+import { UserProjection } from "../../../api/dto/user.js";
 import Flag, { type IFlag } from "../../../models/flag.js";
 import Review from "../../../models/review.js";
 import { createError } from "../../../utilities/errorHandlers.js";

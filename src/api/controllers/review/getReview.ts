@@ -3,7 +3,7 @@ import { StatusCodes } from "http-status-codes";
 import { z } from "zod";
 
 import MediaProjection from "../../../api/dto/media.js";
-import UserProjection from "../../../api/dto/user.js";
+import { UserProjection } from "../../../api/dto/user.js";
 import Review from "../../../models/review.js";
 import { dStrings as ds, dynamicMessage } from "../../../strings.js";
 import { createError } from "../../../utilities/errorHandlers.js";

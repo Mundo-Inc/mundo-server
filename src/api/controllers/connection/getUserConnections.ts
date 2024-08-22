@@ -2,7 +2,7 @@ import type { NextFunction, Request, Response } from "express";
 import { StatusCodes } from "http-status-codes";
 import { z } from "zod";
 
-import UserProjection from "../../../api/dto/user.js";
+import { UserProjection } from "../../../api/dto/user.js";
 import Follow from "../../../models/follow.js";
 import User from "../../../models/user/user.js";
 import { dStrings as ds, dynamicMessage } from "../../../strings.js";

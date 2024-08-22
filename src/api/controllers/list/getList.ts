@@ -4,8 +4,8 @@ import { z } from "zod";
 
 import type { PlaceProjectionBrief } from "../../../api/dto/place.js";
 import PlaceProjection from "../../../api/dto/place.js";
-import type { UserProjectionEssentials } from "../../../api/dto/user.js";
-import UserProjection from "../../../api/dto/user.js";
+import type { UserProjectionType } from "../../../api/dto/user.js";
+import { UserProjection } from "../../../api/dto/user.js";
 import List from "../../../models/list.js";
 import Place from "../../../models/place.js";
 import User from "../../../models/user/user.js";
@@ -82,7 +82,7 @@ export async function getList(req: Request, res: Response, next: NextFunction) {
 
     for (let i = 0; i < list.collaborators.length; i++) {
       const user = await User.findById(list.collaborators[i].user)
-        .select<UserProjectionEssentials>(UserProjection.essentials)
+        .select<UserProjectionType["essentials"]>(UserProjection.essentials)
         .orFail(
           createError(
             dynamicMessage(ds.notFound, "User"),
@@ -110,7 +110,7 @@ export async function getList(req: Request, res: Response, next: NextFunction) {
               StatusCodes.NOT_FOUND,
             ),
           )
-          .select<UserProjectionEssentials>(UserProjection.essentials)
+          .select<UserProjectionType["essentials"]>(UserProjection.essentials)
           .lean(),
       ]);
 

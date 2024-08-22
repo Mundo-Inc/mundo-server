@@ -1,8 +1,10 @@
 import type { NextFunction, Request, Response } from "express";
 import { z } from "zod";
 
-import type { UserProjectionEssentials } from "../../../api/dto/user.js";
-import UserProjection from "../../../api/dto/user.js";
+import {
+  type UserProjectionType,
+  UserProjection,
+} from "../../../api/dto/user.js";
 import User from "../../../models/user/user.js";
 import { getConnectionStatuses } from "../../../utilities/connections.js";
 import { getPaginationFromQuery } from "../../../utilities/pagination.js";
@@ -36,7 +38,7 @@ export async function getLatestReferredUsers(
     const [latestReferredUsers, total] = await Promise.all([
       User.find({ referredBy: authUser._id })
         .sort({ createdAt: -1 })
-        .select<UserProjectionEssentials>(UserProjection.essentials)
+        .select<UserProjectionType["essentials"]>(UserProjection.essentials)
         .skip(skip)
         .limit(limit),
       User.countDocuments({ referredBy: authUser._id }),

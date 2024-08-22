@@ -2,8 +2,10 @@ import type { NextFunction, Request, Response } from "express";
 import { StatusCodes } from "http-status-codes";
 import { z } from "zod";
 
-import type { UserProjectionEssentials } from "../../../api/dto/user.js";
-import UserProjection from "../../../api/dto/user.js";
+import {
+  type UserProjectionType,
+  UserProjection,
+} from "../../../api/dto/user.js";
 import User from "../../../models/user/user.js";
 import { createResponse } from "../../../utilities/response.js";
 import { validateData, zObjectId } from "../../../utilities/validation.js";
@@ -26,7 +28,7 @@ export async function getUsersByIds(
   try {
     const { ids } = req.body as GetUsersByIdsBody;
 
-    const users = await User.aggregate<UserProjectionEssentials>([
+    const users = await User.aggregate<UserProjectionType["essentials"]>([
       {
         $match: {
           _id: {

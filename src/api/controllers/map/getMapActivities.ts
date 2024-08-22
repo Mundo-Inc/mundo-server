@@ -5,7 +5,7 @@ import { Types } from "mongoose";
 import { z } from "zod";
 
 import PlaceProjection from "../../../api/dto/place.js";
-import UserProjection from "../../../api/dto/user.js";
+import { UserProjection } from "../../../api/dto/user.js";
 import Follow from "../../../models/follow.js";
 import type { IUserActivity } from "../../../models/userActivity.js";
 import UserActivity, {

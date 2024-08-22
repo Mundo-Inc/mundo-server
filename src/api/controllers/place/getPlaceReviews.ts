@@ -5,7 +5,7 @@ import { z } from "zod";
 
 import type { MediaProjectionBrief } from "../../../api/dto/media.js";
 import MediaProjection from "../../../api/dto/media.js";
-import UserProjection from "../../../api/dto/user.js";
+import { UserProjection } from "../../../api/dto/user.js";
 import { getYelpReviews } from "../../../api/services/provider.service.js";
 import type {
   GooglePlaceDetailsPreferred,

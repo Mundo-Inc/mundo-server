@@ -1,6 +1,6 @@
 import type { Types } from "mongoose";
 
-import UserProjection from "../../../api/dto/user.js";
+import { UserProjection } from "../../../api/dto/user.js";
 import Comment from "../../../models/comment.js";
 import Reaction from "../../../models/reaction.js";
 

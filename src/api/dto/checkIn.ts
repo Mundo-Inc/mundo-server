@@ -1,7 +1,7 @@
 import { type ICheckIn } from "../../models/checkIn.js";
 import { type MediaProjectionBrief } from "./media.js";
 import { type PlaceProjectionDetail } from "./place.js";
-import { type UserProjectionEssentials } from "./user.js";
+import { type UserProjectionType } from "./user.js";
 
 const CheckInProjection = {
   brief: {
@@ -18,7 +18,7 @@ const CheckInProjection = {
 };
 
 type CheckInBriefOverridden = Omit<ICheckIn, "user" | "place" | "media"> & {
-  user: UserProjectionEssentials;
+  user: UserProjectionType["essentials"];
   place: PlaceProjectionDetail;
   media: Array<MediaProjectionBrief>;
 };

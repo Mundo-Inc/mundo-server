@@ -3,8 +3,8 @@ import { StatusCodes } from "http-status-codes";
 import { Types } from "mongoose";
 import { z } from "zod";
 
-import type { UserProjectionEssentials } from "../../../api/dto/user.js";
-import UserProjection from "../../../api/dto/user.js";
+import type { UserProjectionType } from "../../../api/dto/user.js";
+import { UserProjection } from "../../../api/dto/user.js";
 import Follow, { FollowStatusEnum } from "../../../models/follow.js";
 import type { IFollowRequest } from "../../../models/followRequest.js";
 import FollowRequest from "../../../models/followRequest.js";
@@ -47,7 +47,7 @@ export async function getFollowRequests(
           createdAt: 1,
         })
         .populate<{
-          user: UserProjectionEssentials & {
+          user: UserProjectionType["essentials"] & {
             connectionStatus: ConnectionStatus | null;
           };
         }>("user", UserProjection.essentials)

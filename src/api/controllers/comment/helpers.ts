@@ -1,7 +1,7 @@
 import type { PipelineStage, Types } from "mongoose";
 
-import type { UserProjectionEssentials } from "../../../api/dto/user.js";
-import UserProjection from "../../../api/dto/user.js";
+import type { UserProjectionType } from "../../../api/dto/user.js";
+import { UserProjection } from "../../../api/dto/user.js";
 import Comment from "../../../models/comment.js";
 
 export async function getCommentsFromDB(
@@ -26,7 +26,7 @@ export async function getCommentsFromDB(
       parent: Types.ObjectId | null;
       repliesCount: number;
       replies: Types.ObjectId[];
-      author: UserProjectionEssentials;
+      author: UserProjectionType["essentials"];
       likes: number;
       liked: boolean;
     }[];

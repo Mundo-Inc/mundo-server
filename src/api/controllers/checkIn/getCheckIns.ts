@@ -5,7 +5,7 @@ import { z } from "zod";
 
 import MediaProjection from "../../../api/dto/media.js";
 import PlaceProjection from "../../../api/dto/place.js";
-import UserProjection from "../../../api/dto/user.js";
+import { UserProjection } from "../../../api/dto/user.js";
 import CheckIn from "../../../models/checkIn.js";
 import Follow from "../../../models/follow.js";
 import User from "../../../models/user/user.js";

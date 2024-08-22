@@ -4,8 +4,10 @@ import { z } from "zod";
 
 import type { TransactionProjectionPublic } from "../../../api/dto/transaction.js";
 import TransactionProjection from "../../../api/dto/transaction.js";
-import type { UserProjectionEssentials } from "../../../api/dto/user.js";
-import UserProjection from "../../../api/dto/user.js";
+import {
+  type UserProjectionType,
+  UserProjection,
+} from "../../../api/dto/user.js";
 import Transaction from "../../../models/transaction.js";
 import { dStrings as ds, dynamicMessage } from "../../../strings.js";
 import { createError } from "../../../utilities/errorHandlers.js";
@@ -41,10 +43,10 @@ export async function getTransaction(
         ),
       )
       .populate<{
-        sender: UserProjectionEssentials;
+        sender: UserProjectionType["essentials"];
       }>("sender", UserProjection.essentials)
       .populate<{
-        recipient: UserProjectionEssentials;
+        recipient: UserProjectionType["essentials"];
       }>("recipient", UserProjection.essentials)
       .lean();
 

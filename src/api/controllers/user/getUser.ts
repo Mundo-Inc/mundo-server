@@ -3,7 +3,7 @@ import { StatusCodes } from "http-status-codes";
 import { Types } from "mongoose";
 import { z } from "zod";
 
-import UserProjection from "../../../api/dto/user.js";
+import { UserProjection } from "../../../api/dto/user.js";
 import { calcRemainingXP } from "../../../api/services/reward/helpers/levelCalculations.js";
 import { getLevelThresholds } from "../../../api/services/reward/utils/levelupThresholds.js";
 import Block from "../../../models/block.js";

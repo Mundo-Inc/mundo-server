@@ -3,8 +3,8 @@ import { StatusCodes } from "http-status-codes";
 import type { AnyKeys } from "mongoose";
 import { z } from "zod";
 
-import type { UserProjectionEssentials } from "../../../api/dto/user.js";
-import UserProjection from "../../../api/dto/user.js";
+import type { UserProjectionType } from "../../../api/dto/user.js";
+import { UserProjection } from "../../../api/dto/user.js";
 import { addReward } from "../../../api/services/reward/reward.service.js";
 import { env } from "../../../env.js";
 import type { IComment, IMention } from "../../../models/comment.js";
@@ -44,7 +44,7 @@ export async function createComment(
     const { content, activity, parent } = req.body as Body;
 
     const user = await User.findById(authUser._id)
-      .select<UserProjectionEssentials>(UserProjection.essentials)
+      .select<UserProjectionType["essentials"]>(UserProjection.essentials)
       .orFail(
         createError(dynamicMessage(ds.notFound, "User"), StatusCodes.NOT_FOUND),
       )

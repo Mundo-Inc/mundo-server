@@ -1,12 +1,12 @@
 import { Socket } from "socket.io";
 
 import { getUserEarnings } from "../api/controllers/user/helper.js";
-import { UserProjectionPrivate } from "../api/dto/user.js";
+import type { UserProjectionType } from "../api/dto/user.js";
 import SocketService from "./index.js";
 
 export default function mountRequestEvent(
   socket: Socket,
-  user: UserProjectionPrivate,
+  user: UserProjectionType["private"],
 ) {
   socket.on(SocketService.CTSEvents.Request, async (data, ack) => {
     const event = data.event as SocketService.RequestEvents;

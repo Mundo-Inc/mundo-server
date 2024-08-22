@@ -1,5 +1,7 @@
-import type { UserProjectionEssentials } from "../../../api/dto/user.js";
-import UserProjection from "../../../api/dto/user.js";
+import {
+  UserProjection,
+  type UserProjectionType,
+} from "../../../api/dto/user.js";
 import CheckIn from "../../../models/checkIn.js";
 import Comment from "../../../models/comment.js";
 import Follow from "../../../models/follow.js";
@@ -27,7 +29,7 @@ export async function getNotificationContent(notification: INotification) {
     case NotificationTypeEnum.Comment:
       await Comment.findById(notification.resources![0]._id)
         .populate<{
-          author: UserProjectionEssentials;
+          author: UserProjectionType["essentials"];
         }>({
           path: "author",
           select: UserProjection.essentials,
@@ -46,7 +48,7 @@ export async function getNotificationContent(notification: INotification) {
     case NotificationTypeEnum.Follow:
       await Follow.findById(notification.resources![0]._id)
         .populate<{
-          user: UserProjectionEssentials;
+          user: UserProjectionType["essentials"];
         }>({
           path: "user",
           select: UserProjection.essentials,
@@ -63,7 +65,7 @@ export async function getNotificationContent(notification: INotification) {
     case NotificationTypeEnum.CommentMention:
       await Comment.findById(notification.resources![0]._id)
         .populate<{
-          author: UserProjectionEssentials;
+          author: UserProjectionType["essentials"];
         }>({
           path: "author",
           select: UserProjection.essentials,
@@ -82,7 +84,7 @@ export async function getNotificationContent(notification: INotification) {
     case NotificationTypeEnum.Reaction:
       await Reaction.findById(notification.resources![0]._id)
         .populate<{
-          user: UserProjectionEssentials;
+          user: UserProjectionType["essentials"];
         }>({
           path: "user",
           select: UserProjection.essentials,
@@ -104,7 +106,7 @@ export async function getNotificationContent(notification: INotification) {
     case NotificationTypeEnum.FollowingReview:
       await Review.findById(notification.resources![0]._id)
         .populate<{
-          writer: UserProjectionEssentials;
+          writer: UserProjectionType["essentials"];
         }>({
           path: "writer",
           select: UserProjection.essentials,
@@ -143,7 +145,7 @@ export async function getNotificationContent(notification: INotification) {
     case NotificationTypeEnum.FollowingHomemade:
       await Homemade.findById(notification.resources![0]._id)
         .populate<{
-          user: UserProjectionEssentials;
+          user: UserProjectionType["essentials"];
         }>({
           path: "user",
           select: UserProjection.essentials,
@@ -161,7 +163,7 @@ export async function getNotificationContent(notification: INotification) {
     case NotificationTypeEnum.FollowingCheckIn:
       await CheckIn.findById(notification.resources![0]._id)
         .populate<{
-          user: UserProjectionEssentials;
+          user: UserProjectionType["essentials"];
         }>({
           path: "user",
           select: UserProjection.essentials,
@@ -193,7 +195,7 @@ export async function getNotificationContent(notification: INotification) {
     case NotificationTypeEnum.FollowRequest:
       await FollowRequest.findById(notification.resources![0]._id)
         .populate<{
-          user: UserProjectionEssentials;
+          user: UserProjectionType["essentials"];
         }>({
           path: "user",
           select: UserProjection.essentials,
@@ -210,7 +212,7 @@ export async function getNotificationContent(notification: INotification) {
     case NotificationTypeEnum.FollowRequestAccepted:
       await Follow.findById(notification.resources![0]._id)
         .populate<{
-          user: UserProjectionEssentials;
+          user: UserProjectionType["essentials"];
         }>({
           path: "user",
           select: UserProjection.essentials,

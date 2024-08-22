@@ -3,12 +3,12 @@ import { StatusCodes } from "http-status-codes";
 import type { Types } from "mongoose";
 import { z } from "zod";
 
-import UserProjection from "../../../api/dto/user.js";
 import Block from "../../../models/block.js";
 import Comment from "../../../models/comment.js";
 import Reaction from "../../../models/reaction.js";
 import { createResponse } from "../../../utilities/response.js";
 import { validateData, zObjectId } from "../../../utilities/validation.js";
+import { UserProjection } from "../../dto/user.js";
 
 const params = z.object({
   id: zObjectId,

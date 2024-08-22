@@ -2,8 +2,10 @@ import type { NextFunction, Request, Response } from "express";
 import { StatusCodes } from "http-status-codes";
 import { z } from "zod";
 
-import type { UserProjectionEssentials } from "../../../api/dto/user.js";
-import UserProjection from "../../../api/dto/user.js";
+import {
+  type UserProjectionType,
+  UserProjection,
+} from "../../../api/dto/user.js";
 import Follow from "../../../models/follow.js";
 import User from "../../../models/user/user.js";
 import { getPaginationFromQuery } from "../../../utilities/pagination.js";
@@ -42,7 +44,7 @@ export async function getUsers(
       maxLimit: 50,
     });
 
-    let users: UserProjectionEssentials[] = [];
+    let users: UserProjectionType["essentials"][] = [];
 
     if (q) {
       users = await User.aggregate([
@@ -70,7 +72,7 @@ export async function getUsers(
     } else if (authUser) {
       const followings = await Follow.find({ user: authUser._id })
         .populate<{
-          target: UserProjectionEssentials;
+          target: UserProjectionType["essentials"];
         }>({
           path: "target",
           select: UserProjection.essentials,
@@ -85,7 +87,7 @@ export async function getUsers(
     if (users.length === 0 && authUser) {
       const followers = await Follow.find({ target: authUser._id })
         .populate<{
-          user: UserProjectionEssentials;
+          user: UserProjectionType["essentials"];
         }>({
           path: "user",
           select: UserProjection.essentials,

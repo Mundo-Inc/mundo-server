@@ -22,7 +22,7 @@ import { type CheckInProjectionBrief } from "../dto/checkIn.js";
 import MediaProjection, { MediaProjectionBrief } from "../dto/media.js";
 import PlaceProjection, { type PlaceProjectionDetail } from "../dto/place.js";
 import { type ReactionProjection } from "../dto/reaction.js";
-import UserProjection, { type UserProjectionEssentials } from "../dto/user.js";
+import { UserProjection, type UserProjectionType } from "../dto/user.js";
 import logger from "./logger/index.js";
 
 export const getResourceInfo = async (
@@ -33,7 +33,7 @@ export const getResourceInfo = async (
   let placeInfo: any;
 
   const userInfo = await User.findOne({ _id: activity.userId })
-    .select<UserProjectionEssentials>(UserProjection.essentials)
+    .select<UserProjectionType["essentials"]>(UserProjection.essentials)
     .lean();
 
   switch (activity.resourceType) {
@@ -52,10 +52,10 @@ export const getResourceInfo = async (
         content: string;
         recommend: boolean;
         place: PlaceProjectionDetail; // TODO: change location type;
-        writer: UserProjectionEssentials;
+        writer: UserProjectionType["essentials"];
         scores: IReview["scores"];
         media?: Array<MediaProjectionBrief>;
-        tags?: Array<UserProjectionEssentials>;
+        tags?: Array<UserProjectionType["essentials"]>;
         userActivityId?: mongoose.Types.ObjectId;
         reactions: ReactionProjection;
       }>([
@@ -206,9 +206,9 @@ export const getResourceInfo = async (
         createdAt: Date;
         updatedAt: Date;
         content: string;
-        user: UserProjectionEssentials;
+        user: UserProjectionType["essentials"];
         media: Array<MediaProjectionBrief>;
-        tags?: Array<UserProjectionEssentials>;
+        tags?: Array<UserProjectionType["essentials"]>;
         userActivityId?: mongoose.Types.ObjectId;
         reactions: ReactionProjection;
       }>([
@@ -441,7 +441,7 @@ export const getResourceInfo = async (
       break;
     case ResourceTypeEnum.User:
       resourceInfo = await User.findById(activity.resourceId)
-        .select<UserProjectionEssentials>(UserProjection.essentials)
+        .select<UserProjectionType["essentials"]>(UserProjection.essentials)
         .lean();
 
       if (activity.placeId) {

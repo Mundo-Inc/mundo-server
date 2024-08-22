@@ -1,8 +1,6 @@
 import cron from "node-cron";
 
-import UserProjection, {
-  type UserProjectionEssentials,
-} from "../api/dto/user.js";
+import { UserProjection, type UserProjectionType } from "../api/dto/user.js";
 import logger from "../api/services/logger/index.js";
 import NotificationsService, {
   type NotificationItemByToken,
@@ -18,8 +16,7 @@ import Notification, {
 import type { IPlace } from "../models/place.js";
 import Reaction from "../models/reaction.js";
 import Review from "../models/review.js";
-import type { IUser } from "../models/user/user.js";
-import User from "../models/user/user.js";
+import User, { type IUser } from "../models/user/user.js";
 import type { IUserDevice } from "../models/user/userDevice.js";
 
 cron.schedule("*/30 * * * * *", async () => {
@@ -143,7 +140,7 @@ export async function getNotificationContent(notification: INotification) {
         await Review.findById(notification.resources![0]._id)
           .orFail()
           .populate<{
-            writer: UserProjectionEssentials;
+            writer: UserProjectionType["essentials"];
           }>({
             path: "writer",
             select: UserProjection.essentials,
@@ -166,7 +163,7 @@ export async function getNotificationContent(notification: INotification) {
         await Homemade.findById(notification.resources![0]._id)
           .orFail()
           .populate<{
-            userId: UserProjectionEssentials;
+            userId: UserProjectionType["essentials"];
           }>({
             path: "userId",
             select: UserProjection.essentials,
@@ -181,7 +178,7 @@ export async function getNotificationContent(notification: INotification) {
         await CheckIn.findById(notification.resources![0]._id)
           .orFail()
           .populate<{
-            user: UserProjectionEssentials;
+            user: UserProjectionType["essentials"];
           }>({
             path: "user",
             select: UserProjection.essentials,

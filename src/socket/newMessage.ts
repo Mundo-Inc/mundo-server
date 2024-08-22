@@ -1,7 +1,7 @@
+import { StatusCodes } from "http-status-codes";
 import { Socket } from "socket.io";
 
-import { StatusCodes } from "http-status-codes";
-import { UserProjectionPrivate } from "../api/dto/user.js";
+import { UserProjectionSchema, UserProjectionType } from "../api/dto/user.js";
 import ChatMessage from "../models/conversation/chatMessage.js";
 import Conversation from "../models/conversation/conversation.js";
 import { dStrings, dynamicMessage } from "../strings.js";
@@ -10,7 +10,7 @@ import SocketService from "./index.js";
 
 export default function mountNewMessageEvent(
   socket: Socket,
-  user: UserProjectionPrivate,
+  user: UserProjectionType["private"],
 ) {
   socket.on(SocketService.CTSEvents.NewMessage, async (data, ack) => {
     const { conversation: conversationId, content } = data;
@@ -36,12 +36,18 @@ export default function mountNewMessageEvent(
 
     await conversation.save();
 
+    const response = {
+      conversation: conversation._id,
+      conetnt: message,
+      sender: UserProjectionSchema.essentials.parse(user),
+    };
+
     conversation.participants.forEach((p) => {
-      SocketService.emitToUser(p.user, SocketService.STCEvents.NewMessage, {
-        conversation: conversation._id,
-        conetnt: message,
-        sender: user._id, // TODO: change to user
-      });
+      SocketService.emitToUser(
+        p.user,
+        SocketService.STCEvents.NewMessage,
+        response,
+      );
     });
   });
 }
