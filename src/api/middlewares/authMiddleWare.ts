@@ -5,9 +5,8 @@ import jwt from "jsonwebtoken";
 import type { Socket } from "socket.io";
 
 import { MundoApp, PhPhApp } from "../../config/firebase-config.js";
-import User from "../../models/user/user.js";
+import User, { type IUser } from "../../models/user/user.js";
 import { createError } from "../../utilities/errorHandlers.js";
-import { UserProjection, UserProjectionType } from "../dto/user.js";
 
 async function verifyAndFetchUser(req: Request) {
   const token = req.headers.authorization || req.cookies.token;
@@ -29,9 +28,7 @@ async function verifyAndFetchUser(req: Request) {
 
     const user = await User.findOne({
       uid: firebaseUser.uid,
-    })
-      .select<UserProjectionType["private"]>(UserProjection.private)
-      .lean();
+    }).lean();
 
     return user;
   } catch (err) {
@@ -108,7 +105,6 @@ export async function authenticateSocket(socket: Socket) {
       uid: firebaseUser.uid,
     })
       .orFail(createError("User not found", StatusCodes.NOT_FOUND))
-      .select<UserProjectionType["private"]>(UserProjection.private)
       .lean();
 
     return user;
@@ -120,7 +116,7 @@ export async function authenticateSocket(socket: Socket) {
 declare global {
   namespace Express {
     interface Request {
-      user: UserProjectionType["private"] | null;
+      user: IUser | null;
     }
   }
 }

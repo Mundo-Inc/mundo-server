@@ -1,14 +1,11 @@
-import { StatusCodes } from "http-status-codes";
 import mongoose, { PipelineStage } from "mongoose";
 
 import Reaction from "../../../models/reaction.js";
-import User from "../../../models/user/user.js";
-import type { IUserEarnings } from "../../../models/user/userEarnings.js";
+import User, { type IUser } from "../../../models/user/user.js";
 import UserActivity, {
+  type IUserActivity,
   ResourcePrivacyEnum,
 } from "../../../models/userActivity.js";
-import { dStrings as ds, dynamicMessage } from "../../../strings.js";
-import { createError } from "../../../utilities/errorHandlers.js";
 
 export async function getUniqueUserReactions(
   userId: mongoose.Types.ObjectId,
@@ -16,7 +13,7 @@ export async function getUniqueUserReactions(
 ): Promise<number> {
   // Step 1: Fetch all user activities of the authenticated user
   const userActivities = await UserActivity.find({ userId })
-    .select("_id")
+    .select<Pick<IUserActivity, "_id">>("_id")
     .lean();
 
   // Step 2: Aggregate reactions to count unique users for each activity
@@ -44,18 +41,7 @@ export async function getUniqueUserReactions(
   return uniqueReactionsCount;
 }
 
-export async function getUserRanking(
-  userId: mongoose.Types.ObjectId,
-): Promise<number> {
-  // Step 1: Fetch user progress (XP)
-  const user = await User.findById(userId)
-    .orFail(
-      createError(dynamicMessage(ds.notFound, "User"), StatusCodes.NOT_FOUND),
-    )
-    .select("progress.xp")
-    .lean();
-
-  // Step 2: Calculate the user's rank based on XP
+export async function getUserRanking(user: IUser): Promise<number> {
   const rank = await User.countDocuments({
     source: { $exists: false },
     "progress.xp": { $gt: user.progress.xp },
@@ -64,16 +50,7 @@ export async function getUserRanking(
   return rank + 1;
 }
 
-export async function getUserStreak(
-  userId: mongoose.Types.ObjectId,
-): Promise<number> {
-  const user = await User.findById(userId)
-    .orFail(
-      createError(dynamicMessage(ds.notFound, "User"), StatusCodes.NOT_FOUND),
-    )
-    .select("appUsage")
-    .lean();
-
+export async function getUserStreak(user: IUser): Promise<number> {
   const streak = Math.floor(
     (Date.now() - user.appUsage.streakStartDate.getTime()) /
       (1000 * 60 * 60 * 24),
@@ -90,17 +67,4 @@ export async function getUserActivitiesWithMediaCount(
     hasMedia: true,
     resourcePrivacy: ResourcePrivacyEnum.Public,
   });
-}
-
-export async function getUserEarnings(
-  userId: mongoose.Types.ObjectId,
-): Promise<IUserEarnings> {
-  const user = await User.findById(userId)
-    .orFail(
-      createError(dynamicMessage(ds.notFound, "User"), StatusCodes.NOT_FOUND),
-    )
-    .select("earnings")
-    .lean();
-
-  return user.earnings;
 }

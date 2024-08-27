@@ -5,7 +5,6 @@ import { createResponse } from "../../../utilities/response.js";
 import {
   getUniqueUserReactions,
   getUserActivitiesWithMediaCount,
-  getUserEarnings,
   getUserRanking,
   getUserStreak,
 } from "./helper.js";
@@ -23,13 +22,11 @@ export async function getUserStats(
       gainedUniqueReactions,
       rank,
       dailyStreak,
-      earnings,
     ] = await Promise.all([
       getUserActivitiesWithMediaCount(authUser._id),
       getUniqueUserReactions(authUser._id),
-      getUserRanking(authUser._id),
-      getUserStreak(authUser._id),
-      getUserEarnings(authUser._id),
+      getUserRanking(authUser),
+      getUserStreak(authUser),
     ]);
 
     const stats = {
@@ -37,7 +34,7 @@ export async function getUserStats(
       gainedUniqueReactions,
       rank,
       dailyStreak,
-      earnings,
+      earnings: authUser.earnings,
     };
 
     res.status(StatusCodes.OK).json(createResponse(stats));
