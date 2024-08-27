@@ -7,7 +7,7 @@ import {
   getUserActivitiesWithMediaCount,
   getUserRanking,
   getUserStreak,
-} from "./helper.js";
+} from "./helpers.js";
 
 export async function getUserStats(
   req: Request,
@@ -29,15 +29,15 @@ export async function getUserStats(
       getUserStreak(authUser),
     ]);
 
-    const stats = {
-      userActivityWithMediaCount,
-      gainedUniqueReactions,
-      rank,
-      dailyStreak,
-      earnings: authUser.earnings,
-    };
-
-    res.status(StatusCodes.OK).json(createResponse(stats));
+    res.status(StatusCodes.OK).json(
+      createResponse({
+        userActivityWithMediaCount,
+        gainedUniqueReactions,
+        rank,
+        dailyStreak,
+        earnings: authUser.earnings,
+      }),
+    );
   } catch (err) {
     next(err);
   }

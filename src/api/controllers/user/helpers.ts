@@ -1,4 +1,4 @@
-import mongoose, { PipelineStage } from "mongoose";
+import mongoose, { type PipelineStage } from "mongoose";
 
 import Reaction from "../../../models/reaction.js";
 import User, { type IUser } from "../../../models/user/user.js";
