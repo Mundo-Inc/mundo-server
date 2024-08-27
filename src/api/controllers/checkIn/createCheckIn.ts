@@ -1,6 +1,6 @@
 import type { NextFunction, Request, Response } from "express";
 import { StatusCodes } from "http-status-codes";
-import type { AnyKeys, Types } from "mongoose";
+import type { Types } from "mongoose";
 import { z } from "zod";
 
 import MediaProjection from "../../../api/dto/media.js";
@@ -28,7 +28,7 @@ import ScheduledTask, {
   ScheduledTaskType,
 } from "../../../models/scheduledTask.js";
 import Upload from "../../../models/upload.js";
-import User, { UserRoleEnum } from "../../../models/user/user.js";
+import User, { type IUser, UserRoleEnum } from "../../../models/user/user.js";
 import { ResourcePrivacyEnum } from "../../../models/userActivity.js";
 import strings, { dStrings as ds, dynamicMessage } from "../../../strings.js";
 import { getRandomDateInRange } from "../../../utilities/dateTime.js";
@@ -98,7 +98,7 @@ export async function createCheckIn(
       thePlace = place;
     } else if (event) {
       const theEvent = await Event.findById(event)
-        .select<{ place: IEvent["place"] }>("place")
+        .select<Pick<IEvent, "place">>("place")
         .orFail(
           createError(
             dynamicMessage(ds.notFound, "Event"),
@@ -116,18 +116,27 @@ export async function createCheckIn(
 
     await enforceCheckInInterval(authUser._id, authUser.role);
 
-    if (tags) {
+    if (tags && tags.length > 0) {
       logger.verbose("validate tags");
-      await Promise.all(
-        tags.map((userId) =>
-          User.exists({ _id: userId }).orFail(
-            createError(
-              dynamicMessage(ds.notFound, "Tagged user"),
-              StatusCodes.NOT_FOUND,
-            ),
-          ),
-        ),
+
+      const existingUsers = await User.find({
+        _id: { $in: tags },
+      })
+        .select<Pick<IUser, "_id">>("_id")
+        .lean();
+
+      const existingUserIds = new Set(
+        existingUsers.map((user) => user._id.toString()),
       );
+
+      tags.forEach((userId) => {
+        if (!existingUserIds.has(userId.toString())) {
+          throw createError(
+            dynamicMessage(ds.notFound, "Tagged user"),
+            StatusCodes.NOT_FOUND,
+          );
+        }
+      });
     }
 
     let mediaDocs: IMedia[] | null = null;
@@ -164,7 +173,7 @@ export async function createCheckIn(
       }
     }
 
-    const checkinBody: ICheckIn | AnyKeys<ICheckIn> = {
+    const checkIn = await CheckIn.create({
       user: authUser._id,
       place: thePlace,
       caption: caption,
@@ -173,9 +182,7 @@ export async function createCheckIn(
       ...(mediaDocs ? { media: mediaDocs.map((m) => m._id) } : {}),
       ...(event ? { event } : {}),
       ...(scores ? { scores } : {}),
-    };
-
-    const checkIn = await CheckIn.create(checkinBody);
+    });
 
     const activity = await UserActivityManager.createCheckInActivity(
       authUser,

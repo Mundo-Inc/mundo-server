@@ -13,11 +13,12 @@ import { optionalAuthMiddleware } from "../middlewares/authMiddleWare.js";
 
 const router = express.Router();
 router.use(express.json());
+router.use(optionalAuthMiddleware);
 
 router.get("/app-version/:version", getVersionInfoValidation, getVersionInfo);
 
-router.post("/bug", optionalAuthMiddleware, reportBugValidation, reportBug);
+router.post("/bug", reportBugValidation, reportBug);
 
-router.post("/contact", optionalAuthMiddleware, contactValidation, contact);
+router.post("/contact", contactValidation, contact);
 
 export default router;

@@ -3,13 +3,18 @@ import { StatusCodes } from "http-status-codes";
 import semver from "semver";
 import { z } from "zod";
 
-import AppSetting from "../../../models/appSetting.js";
+import AppSetting, { type IAppSetting } from "../../../models/appSetting.js";
+import User from "../../../models/user/user.js";
 import { createError } from "../../../utilities/errorHandlers.js";
-import { ResponseStatusEnum } from "../../../utilities/response.js";
+import { createResponse } from "../../../utilities/response.js";
 import { validateData } from "../../../utilities/validation.js";
 
 const params = z.object({
-  version: z.string().min(1).max(20),
+  version: z
+    .string()
+    .min(1)
+    .max(20)
+    .transform((value) => decodeURIComponent(value)),
 });
 
 type Params = z.infer<typeof params>;
@@ -24,36 +29,63 @@ export async function getVersionInfo(
   next: NextFunction,
 ) {
   try {
+    const authUser = req.user;
+
     const { version } = req.params as unknown as Params;
 
-    const [latestAppVersion, minOperationalVersion] = await Promise.all([
-      AppSetting.findOne({ key: "latestAppVersion" })
-        .orFail(createError("App settings not found", StatusCodes.NOT_FOUND))
-        .lean(),
-      AppSetting.findOne({ key: "minOperationalVersion" })
-        .orFail(createError("App settings not found", StatusCodes.NOT_FOUND))
-        .lean(),
-    ]);
+    const keys = ["latestAppVersion", "minOperationalVersion"];
+    const settings = await AppSetting.find({ key: { $in: keys } })
+      .select<Pick<IAppSetting, "value" | "key">>({ value: 1, key: 1 })
+      .lean();
 
-    const isLatest = semver.eq(version, latestAppVersion.value);
-    const isOperational = semver.gte(version, minOperationalVersion.value);
-
-    res.status(StatusCodes.OK).json({
-      isLatest,
-      latestAppVersion: latestAppVersion.value,
-      isOperational,
-      minOperationalVersion: minOperationalVersion.value,
-      message: isOperational ? "" : "Please update to the latest version",
-
-      status: ResponseStatusEnum.Success,
-      data: {
-        isLatest,
-        latestAppVersion: latestAppVersion.value,
-        isOperational,
-        minOperationalVersion: minOperationalVersion.value,
-        message: isOperational ? "" : "Please update to the latest version",
+    const settingsMap = settings.reduce(
+      (
+        acc: {
+          [key: string]: string;
+        },
+        setting,
+      ) => {
+        acc[setting.key] = setting.value;
+        return acc;
       },
-    });
+      {},
+    );
+
+    const { latestAppVersion, minOperationalVersion } = settingsMap;
+
+    if (!latestAppVersion || !minOperationalVersion) {
+      throw createError("Missing app settings", StatusCodes.NOT_FOUND);
+    }
+
+    if (!latestAppVersion || !minOperationalVersion) {
+      throw createError("App settings not found", StatusCodes.NOT_FOUND);
+    }
+
+    const isLatest = semver.eq(version, latestAppVersion);
+    const isOperational = semver.gte(version, minOperationalVersion);
+
+    res.status(StatusCodes.OK).json(
+      createResponse({
+        isLatest,
+        latestAppVersion: latestAppVersion,
+        isOperational,
+        minOperationalVersion: minOperationalVersion,
+        message: isOperational ? "" : "Please update to the latest version",
+      }),
+    );
+
+    if (authUser) {
+      await User.updateOne(
+        {
+          _id: authUser._id,
+        },
+        {
+          $set: {
+            appVersion: version,
+          },
+        },
+      );
+    }
   } catch (err) {
     next(err);
   }

@@ -66,6 +66,10 @@ export const zUserSchema = z.object({
   mundoInteractionFrequency: z.number().optional(),
   stripe: zUserStripeSchema,
   appUsage: zUserAppUsageSchema,
+  appVersion: z.string().optional(),
+  isActive: z.boolean(),
+  createdAt: z.date(),
+  updatedAt: z.date(),
 
   /**
    * @deprecated use `earnings.balance` instead
@@ -81,10 +85,6 @@ export const zUserSchema = z.object({
    * @deprecated
    */
   password: z.string().optional(),
-
-  isActive: z.boolean(),
-  createdAt: z.date(),
-  updatedAt: z.date(),
 });
 
 export type IUser = z.infer<typeof zUserSchema>;
@@ -102,11 +102,6 @@ const UserSchema = new Schema<IUser>(
       trim: true,
       index: true,
     },
-    name: {
-      type: String,
-      trim: true,
-      default: "",
-    },
     username: {
       type: String,
       required: true,
@@ -115,6 +110,11 @@ const UserSchema = new Schema<IUser>(
       minlength: 3,
       maxlength: 25,
       toLowerCase: true,
+    },
+    name: {
+      type: String,
+      trim: true,
+      default: "",
     },
     email: {
       address: {
@@ -128,15 +128,6 @@ const UserSchema = new Schema<IUser>(
         default: false,
       },
     },
-    role: {
-      type: String,
-      default: UserRoleEnum.User,
-      enum: Object.values(UserRoleEnum),
-    },
-    isActive: {
-      type: Boolean,
-      default: true,
-    },
     phone: {
       number: {
         type: String,
@@ -147,60 +138,80 @@ const UserSchema = new Schema<IUser>(
         default: false,
       },
     },
+    profileImage: {
+      type: String,
+      default: "",
+    },
     bio: {
       type: String,
       trim: true,
       default: "",
     },
-    profileImage: {
+    role: {
       type: String,
-      default: "",
+      default: UserRoleEnum.User,
+      enum: Object.values(UserRoleEnum),
     },
+    isPrivate: { type: Boolean, default: false },
     signupMethod: {
       type: String,
       required: true,
       enum: Object.values(SignupMethodEnum),
     },
-    source: {
-      type: String,
-      enum: ["yelp", "google"],
-    },
-    password: {
-      type: String,
-    },
     devices: {
       type: [userDeviceSchema],
       default: [],
+    },
+    progress: {
+      type: userProgressSchema,
+      default: {},
     },
     verified: {
       type: Boolean,
       default: false,
     },
-    phantomCoins: {
-      type: phantomCoinsSchema,
-      default: {},
-    },
     earnings: {
-      total: { type: Number, default: 0 }, //cents
-      balance: { type: Number, default: 0 }, //cents
+      total: { type: Number, default: 0 },
+      balance: { type: Number, default: 0 },
     },
     latestPlace: {
       type: Schema.Types.ObjectId,
       ref: "Place",
     },
-    progress: userProgressSchema,
-    isPrivate: { type: Boolean, default: false },
     referredBy: {
       type: Schema.Types.ObjectId,
       ref: "User",
     },
-    stripe: userStripeSchema,
     mundoInteractionFrequency: {
       type: Number,
       min: 0,
       max: 100,
     },
+    stripe: userStripeSchema,
     appUsage: userAppUsageSchema,
+    appVersion: {
+      type: String,
+    },
+    isActive: {
+      type: Boolean,
+      default: true,
+    },
+
+    // - @deprecated
+
+    phantomCoins: {
+      type: phantomCoinsSchema,
+      default: {},
+    },
+
+    source: {
+      type: String,
+      enum: ["yelp", "google"],
+    },
+
+    password: {
+      type: String,
+    },
   },
   { timestamps: true },
 );
