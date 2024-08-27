@@ -5,6 +5,7 @@ import { z } from "zod";
 
 import AppSetting, { type IAppSetting } from "../../../models/appSetting.js";
 import User from "../../../models/user/user.js";
+import { dStrings, dynamicMessage } from "../../../strings.js";
 import { createError } from "../../../utilities/errorHandlers.js";
 import { createResponse } from "../../../utilities/response.js";
 import { validateData } from "../../../utilities/validation.js";
@@ -75,16 +76,28 @@ export async function getVersionInfo(
     );
 
     if (authUser) {
-      await User.updateOne(
-        {
-          _id: authUser._id,
-        },
-        {
-          $set: {
-            appVersion: version,
-          },
-        },
+      const user = await User.findById(authUser._id).orFail(
+        createError(
+          dynamicMessage(dStrings.notFound, "User"),
+          StatusCodes.NOT_FOUND,
+        ),
       );
+
+      const now = new Date();
+
+      user.appUsage.version = version;
+
+      // Reset streak start date if the user has been inactive for more than 36 hours
+      if (
+        user.appUsage.lastOpenedAt.getTime() <
+        now.getTime() - 1000 * 60 * 60 * 36
+      ) {
+        user.appUsage.streakStartDate = now;
+      }
+
+      user.appUsage.lastOpenedAt = now;
+
+      await user.save();
     }
   } catch (err) {
     next(err);

@@ -2,28 +2,25 @@ import { Schema } from "mongoose";
 import { z } from "zod";
 
 export const zUserAppUsageSchema = z.object({
-  lastLogin: z.date(),
-  streak: z.object({
-    currentStreak: z.number(),
-    lastLoginDate: z.date(),
-  }),
+  version: z.string().optional(),
+  lastOpenedAt: z.date(),
+  streakStartDate: z.date(),
 });
 
 export type IUserAppUsage = z.infer<typeof zUserAppUsageSchema>;
 
 export const userAppUsageSchema = new Schema<IUserAppUsage>(
   {
-    lastLogin: {
-      type: Date,
+    version: {
+      type: String,
     },
-    streak: {
-      currentStreak: {
-        type: Number,
-        default: 0,
-      },
-      lastLoginDate: {
-        type: Date,
-      },
+    lastOpenedAt: {
+      type: Date,
+      default: Date.now,
+    },
+    streakStartDate: {
+      type: Date,
+      default: Date.now,
     },
   },
   { _id: false },

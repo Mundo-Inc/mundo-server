@@ -66,7 +66,6 @@ export const zUserSchema = z.object({
   mundoInteractionFrequency: z.number().optional(),
   stripe: zUserStripeSchema,
   appUsage: zUserAppUsageSchema,
-  appVersion: z.string().optional(),
   isActive: z.boolean(),
   createdAt: z.date(),
   updatedAt: z.date(),
@@ -187,10 +186,13 @@ const UserSchema = new Schema<IUser>(
       min: 0,
       max: 100,
     },
-    stripe: userStripeSchema,
-    appUsage: userAppUsageSchema,
-    appVersion: {
-      type: String,
+    stripe: {
+      type: userStripeSchema,
+      default: {},
+    },
+    appUsage: {
+      type: userAppUsageSchema,
+      default: {},
     },
     isActive: {
       type: Boolean,

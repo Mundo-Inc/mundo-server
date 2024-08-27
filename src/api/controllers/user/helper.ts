@@ -74,7 +74,12 @@ export async function getUserStreak(
     .select("appUsage")
     .lean();
 
-  return user.appUsage.streak.currentStreak;
+  const streak = Math.floor(
+    (Date.now() - user.appUsage.streakStartDate.getTime()) /
+      (1000 * 60 * 60 * 24),
+  );
+
+  return streak;
 }
 
 export async function getUserActivitiesWithMediaCount(

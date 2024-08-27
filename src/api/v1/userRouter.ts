@@ -88,7 +88,6 @@ import {
   usernameAvailability,
   usernameAvailabilityValidation,
 } from "../controllers/user/usernameAvailability.js";
-import { trackAppUsage } from "../middlewares/appUsageMiddleWare.js";
 import {
   authMiddleware,
   optionalAuthMiddleware,
@@ -104,7 +103,7 @@ router
 
 router.post("/by-ids", getUsersByIdsValidation, getUsersByIds);
 
-router.get("/stats", authMiddleware, trackAppUsage, getUserStats);
+router.get("/stats", authMiddleware, getUserStats);
 
 router.get(
   "/leaderboard",
