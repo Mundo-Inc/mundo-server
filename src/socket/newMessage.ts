@@ -1,17 +1,15 @@
 import { StatusCodes } from "http-status-codes";
 import { Socket } from "socket.io";
 
-import { UserProjectionSchema, UserProjectionType } from "../api/dto/user.js";
+import { UserProjectionSchema } from "../api/dto/user.js";
 import ChatMessage from "../models/conversation/chatMessage.js";
 import Conversation from "../models/conversation/conversation.js";
+import { type IUser } from "../models/user/user.js";
 import { dStrings, dynamicMessage } from "../strings.js";
 import { createError } from "../utilities/errorHandlers.js";
 import SocketService from "./index.js";
 
-export default function mountNewMessageEvent(
-  socket: Socket,
-  user: UserProjectionType["private"],
-) {
+export default function mountNewMessageEvent(socket: Socket, user: IUser) {
   socket.on(SocketService.CTSEvents.NewMessage, async (data, ack) => {
     const { conversation: conversationId, content } = data;
 

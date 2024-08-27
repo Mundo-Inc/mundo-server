@@ -4,6 +4,7 @@ import { z } from "zod";
 
 import ChatMessage from "../../../models/conversation/chatMessage.js";
 import Conversation from "../../../models/conversation/conversation.js";
+import User from "../../../models/user/user.js";
 import { createError } from "../../../utilities/errorHandlers.js";
 import { createResponse } from "../../../utilities/response.js";
 import { validateData, zObjectId } from "../../../utilities/validation.js";
@@ -52,7 +53,18 @@ export async function createConversation(
       sender: authUser._id,
     });
 
-    res.status(StatusCodes.CREATED).json(createResponse(conversation));
+    const users = await User.find({
+      _id: {
+        $in: conversation.participants.map((p) => p.user),
+      },
+    });
+
+    res.status(StatusCodes.CREATED).json(
+      createResponse({
+        conversation: conversation.toObject(),
+        users,
+      }),
+    );
   } catch (err) {
     next(err);
   }
