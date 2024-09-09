@@ -6,14 +6,17 @@ namespace SocketService {
   export enum CTSEvents {
     Request = "request",
     NewMessage = "newMessage",
+    UpdateReadIndex = "updateReadIndex",
   }
 
   export enum STCEvents {
     Earnings = "earnings",
+    UpdateReadIndex = "updateReadIndex",
+    Error = "error",
 
     // Conversation
-    NewConversation = "newConversation",
     NewMessage = "newMessage",
+    DeleteConversation = "deleteConversation",
   }
 
   export enum RequestEvents {

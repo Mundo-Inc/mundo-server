@@ -1,13 +1,12 @@
 import cron, { type ScheduledTask } from "node-cron";
 
+import type { RootFilterQuery } from "mongoose";
 import logger from "../api/services/logger/index.js";
 import Bot, { IBotTargetEnum, IBotTypeEnum, type IBot } from "../models/bot.js";
 import { ResourceTypeEnum } from "../models/enum/resourceTypeEnum.js";
 import Reaction from "../models/reaction.js";
 import User, { type IUser } from "../models/user/user.js";
-import UserActivity, {
-  type UserActivityResourceType,
-} from "../models/userActivity.js";
+import UserActivity, { type IUserActivity } from "../models/userActivity.js";
 
 function getDateHoursAgo(hours: number) {
   const now = new Date();
@@ -20,30 +19,22 @@ function pickRandomReaction(strings: string[]) {
   return strings[randomIndex];
 }
 
-// Define a type for the tasks object
-interface TaskCollection {
-  [key: string]: ScheduledTask;
-}
-
 // Create an object to store the tasks
-const tasks: TaskCollection = {};
+const tasks: Record<string, ScheduledTask> = {};
 
-export function createCron(id: string, duty: IBot, botUser: IUser) {
+export function createCron(
+  id: string,
+  duty: IBot,
+  botUser: Pick<IUser, "_id" | "name">,
+) {
   switch (duty.type) {
     case IBotTypeEnum.React:
-      interface Query {
-        hasMedia?: boolean;
-        resourceType?: UserActivityResourceType;
-        createdAt?: {
-          $gt: Date;
-        };
-      }
       tasks[id] = cron.schedule(duty.interval, async () => {
         try {
-          const query: Query = {};
-          if (duty.target === "CHECKINS")
+          const query: RootFilterQuery<IUserActivity> = {};
+          if (duty.target === IBotTargetEnum.CheckIns)
             query.resourceType = ResourceTypeEnum.CheckIn;
-          if (duty.target === "REVIEWS")
+          if (duty.target === IBotTargetEnum.Reviews)
             query.resourceType = ResourceTypeEnum.Review;
           if (duty.target === IBotTargetEnum.HasMedia) query.hasMedia = true;
           if (duty.targetThresholdHours)
@@ -82,7 +73,7 @@ export function createCron(id: string, duty: IBot, botUser: IUser) {
           logger.error("Error While Adding Reaction With Bot", error);
         }
       });
-      logger.verbose("BOT: " + botUser._id + " is on | " + botUser.name);
+
       return tasks[id];
 
     default:
@@ -90,13 +81,18 @@ export function createCron(id: string, duty: IBot, botUser: IUser) {
   }
 }
 
-User.find({ signupMethod: "bot" }).then(async (botUsers: IUser[]) => {
-  for (const botUser of botUsers) {
-    const duties = await Bot.find({
-      userId: botUser._id,
-    });
-    for (const duty of duties) {
-      createCron(duty._id.toString(), duty, botUser)?.start();
+User.find({ signupMethod: "bot" })
+  .select<Pick<IUser, "_id" | "name">>({ _id: 1, name: 1 })
+  .lean()
+  .then(async (botUsers) => {
+    for (const botUser of botUsers) {
+      const duties = await Bot.find({
+        userId: botUser._id,
+      });
+      for (const duty of duties) {
+        createCron(duty._id.toString(), duty, botUser)?.start();
+      }
     }
-  }
-});
+
+    logger.verbose(`${Object.keys(tasks).length} bot tasks started`);
+  });

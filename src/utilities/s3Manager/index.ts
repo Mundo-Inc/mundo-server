@@ -91,6 +91,7 @@ namespace S3Manager {
 
     if (options?.sizeLimit) {
       validateFileSize(
+        // TODO: Fix this
         options.sizeLimit.fileSize,
         options.sizeLimit.fileSizeLimit,
       );

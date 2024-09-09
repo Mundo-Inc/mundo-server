@@ -8,7 +8,6 @@ import { z } from "zod";
 
 import DeletionService from "../../api/services/deletionService.js";
 import Achievement from "../achievement.js";
-import ActivitySeen from "../activitySeen.js";
 import CheckIn from "../checkIn.js";
 import Comment from "../comment.js";
 import Flag from "../flag.js";
@@ -233,14 +232,6 @@ async function removeDependencies(user: IUser) {
   for (const achievement of achievements) {
     await achievement.deleteOne();
   }
-
-  //remove activitySeen of the user
-  const activitiesSeen = await ActivitySeen.find({
-    $or: [{ observerId: user._id }, { subjectId: user._id }],
-  });
-  await Promise.all(
-    activitiesSeen.map((activitySeen) => activitySeen.deleteOne()),
-  );
 
   // remove all checkins of the user
   const checkins = await CheckIn.find({ user: user._id });

@@ -1,6 +1,5 @@
 export enum ResourceTypeEnum {
   Achievement = "Achievement",
-  ActivitySeen = "ActivitySeen",
   AppSetting = "AppSetting",
   ArchivedNotification = "ArchivedNotification",
   Block = "Block",

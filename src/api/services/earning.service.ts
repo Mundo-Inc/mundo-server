@@ -34,32 +34,20 @@ export const addEarnings = async (
   userId: mongoose.Types.ObjectId,
   earningType: EarningsType,
 ) => {
-  try {
-    const user = await User.findById(userId).orFail(
-      createError(dynamicMessage(ds.notFound, "User"), StatusCodes.NOT_FOUND),
-    );
+  const user = await User.findById(userId).orFail(
+    createError(dynamicMessage(ds.notFound, "User"), StatusCodes.NOT_FOUND),
+  );
 
-    if (!user.earnings) {
-      user.earnings = { total: 0, balance: 0 };
-    }
+  user.earnings.balance = user.earnings.balance + earningValues[earningType];
+  user.earnings.total = user.earnings.total + earningValues[earningType];
 
-    user.earnings.balance = user.earnings.balance + earningValues[earningType];
-    user.earnings.total = user.earnings.total + earningValues[earningType];
+  await user.save();
 
-    await user.save();
-
-    SocketService.emitToUser(userId, SocketService.STCEvents.Earnings, {
-      type: earningType,
-      title: earningTitles[earningType],
-      amount: earningValues[earningType],
-      total: user.earnings.total,
-      balance: user.earnings.balance,
-    });
-  } catch (error) {
-    throw createError("Error adding reward (usd)" + error, 500);
-  }
-};
-
-export const redeemEarnings = async (userId: mongoose.Types.ObjectId) => {
-  //TODO: WiP.
+  SocketService.emitToUser(userId, SocketService.STCEvents.Earnings, {
+    type: earningType,
+    title: earningTitles[earningType],
+    amount: earningValues[earningType],
+    total: user.earnings.total,
+    balance: user.earnings.balance,
+  });
 };

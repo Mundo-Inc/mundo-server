@@ -13,13 +13,14 @@ export const zConversationSchema = z.object({
   title: z.string().optional(),
   isGroup: z.boolean(),
   lastActivity: z.date(),
+  lastMessageIndex: z.number(),
   createdAt: z.date(),
   updatedAt: z.date(),
 });
 
-export type IConversationSchema = z.infer<typeof zConversationSchema>;
+export type IConversation = z.infer<typeof zConversationSchema>;
 
-const ConversationSchema = new Schema<IConversationSchema>(
+const ConversationSchema = new Schema<IConversation>(
   {
     participants: {
       type: [conversationParticipantSchema],
@@ -37,6 +38,10 @@ const ConversationSchema = new Schema<IConversationSchema>(
       type: Date,
       required: true,
     },
+    lastMessageIndex: {
+      type: Number,
+      required: true,
+    },
   },
   { timestamps: true },
 );
@@ -44,7 +49,7 @@ const ConversationSchema = new Schema<IConversationSchema>(
 ConversationSchema.index({ "participants.user": 1 });
 
 const Conversation =
-  (mongoose.models.Conversation as Model<IConversationSchema>) ||
-  mongoose.model<IConversationSchema>("Conversation", ConversationSchema);
+  (mongoose.models.Conversation as Model<IConversation>) ||
+  mongoose.model<IConversation>("Conversation", ConversationSchema);
 
 export default Conversation;

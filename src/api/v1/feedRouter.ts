@@ -21,7 +21,6 @@ router.use(express.json());
 router.get("/", authMiddleware, getFeedValidation, getFeed);
 
 router.route("/:id").get(authMiddleware, getActivityValidation, getActivity);
-// .post(authMiddleware, activitySeenValidation, activitySeen); // TODO: This endpoint needs to be fixed
 
 router.get(
   "/:activityId/comments",

@@ -77,19 +77,10 @@ export async function createReaction(
         StatusCodes.NOT_FOUND,
       ),
     );
-    // Check if the user is already in the uniqueReactions list
-    if (
-      !userActivity.uniqueReactions.some(
-        (id) => id.toString() === authUser._id.toString(),
-      )
-    ) {
-      userActivity.uniqueReactions.push(authUser._id);
-    }
-    // Save the user activity
-    await userActivity.save();
 
-    const uniqueReactionCount = userActivity.uniqueReactions.length;
-    if (uniqueReactionCount % UNIQUE_USERS_REQUIRED_TO_REWARD === 0) {
+    const uniqueReactions = await Reaction.distinct("user", { target }).lean();
+
+    if (uniqueReactions.length % UNIQUE_USERS_REQUIRED_TO_REWARD === 0) {
       // Reward the user who created the post
       await addEarnings(userActivity.userId, EarningsType.GAINED_REACTIONS);
     }

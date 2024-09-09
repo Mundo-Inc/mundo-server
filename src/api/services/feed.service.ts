@@ -547,27 +547,6 @@ export const getUserFeed = async (
 
       if (!resourceInfo) continue;
 
-      // const seen: IActivitySeen | null = await ActivitySeen.findOne(
-      //   {
-      //     subjectId: _act.userId,
-      //     observerId: userId,
-      //     activityId: _act._id,
-      //   },
-      //   {
-      //     weight: 1,
-      //   }
-      // ).lean();
-
-      // const score = await calculateScore(
-      //   userId,
-      //   _act.userId,
-      //   _act as IUserActivity,
-      //   placeInfo,
-      //   location && location
-      // );
-
-      // const weight = seen ? seen.weight + 1 : 1;
-
       const [reactions, comments, commentsCount] = await Promise.all([
         getReactionsOfActivity(activity._id, authUserId),
         getCommentsOfActivity(activity._id, authUserId),
@@ -593,8 +572,6 @@ export const getUserFeed = async (
         commentsCount,
       });
     }
-
-    // TODO: strategy: once all unseen activities are exhausted, retrieve previously seen activities
 
     return activities;
   } catch (e) {
