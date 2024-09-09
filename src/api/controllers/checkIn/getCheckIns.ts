@@ -244,10 +244,8 @@ export async function getCheckIns(
           checkIn.user.username = "Anonymous";
           checkIn.user.profileImage = null;
           checkIn.user.progress = {
-            xp: Math.round(Math.random() * checkIn.user.progress?.xp ?? 100),
-            level: Math.round(
-              Math.random() * checkIn.user.progress?.level ?? 10,
-            ),
+            xp: Math.round(Math.random() * checkIn.user.progress?.xp),
+            level: Math.round(Math.random() * checkIn.user.progress?.level),
           };
         }
       }

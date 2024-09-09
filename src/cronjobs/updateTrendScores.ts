@@ -1,7 +1,8 @@
+import type { RootFilterQuery } from "mongoose";
 import cron from "node-cron";
 
 import logger from "../api/services/logger/index.js";
-import UserActivity from "../models/userActivity.js";
+import UserActivity, { type IUserActivity } from "../models/userActivity.js";
 
 interface Query {
   hasMedia: boolean;
@@ -15,7 +16,7 @@ async function updateHotnessScores(
   before: Date | undefined,
   after: Date | undefined,
 ) {
-  const query: Query = { hasMedia: true };
+  const query: RootFilterQuery<IUserActivity> = { hasMedia: true };
   if (after) {
     query.createdAt = { ...query.createdAt, $gt: after };
   }
