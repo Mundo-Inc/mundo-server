@@ -91,16 +91,23 @@ ReactionSchema.pre("deleteOne", async function (next) {
 ReactionSchema.post("save", async function (doc, next) {
   // create notification
   const activity = await UserActivity.findById(doc.target);
-  if (activity) {
-    await Notification.create({
-      user: activity.userId,
-      type: NotificationTypeEnum.Reaction,
-      resources: [
-        { _id: doc._id, type: ResourceTypeEnum.Reaction, date: doc.createdAt },
-      ],
-      importance: 1,
-    });
+
+  if (!activity) {
+    return next();
   }
+
+  if (doc.user.equals(activity.userId)) {
+    return next();
+  }
+
+  await Notification.create({
+    user: activity.userId,
+    type: NotificationTypeEnum.Reaction,
+    resources: [
+      { _id: doc._id, type: ResourceTypeEnum.Reaction, date: doc.createdAt },
+    ],
+    importance: 1,
+  });
 
   next();
 });
