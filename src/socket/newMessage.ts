@@ -2,6 +2,7 @@ import { StatusCodes } from "http-status-codes";
 import { Socket } from "socket.io";
 
 import { UserProjectionSchema } from "../api/dto/user.js";
+import NotificationsService from "../api/services/notificationsService.js";
 import Conversation from "../models/conversation/conversation.js";
 import ConversationMessage from "../models/conversation/conversationMessage.js";
 import User, { type IUser } from "../models/user/user.js";
@@ -77,6 +78,24 @@ export default function mountNewMessageEvent(socket: Socket, user: IUser) {
           response,
         );
       });
+
+      NotificationsService.getInstance().sendNotificationsByUser(
+        participants
+          .filter((p) => !p._id.equals(user._id))
+          .map((p) => ({
+            user: p._id,
+            message: {
+              notification: {
+                title: `New message from ${user.name}`,
+                body:
+                  content.length > 30 ? content.slice(0, 27) + "..." : content,
+              },
+              data: {
+                link: `conversation/${conversation._id}`,
+              },
+            },
+          })),
+      );
     },
   );
 }

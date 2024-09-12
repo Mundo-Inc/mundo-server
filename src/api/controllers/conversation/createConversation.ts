@@ -14,6 +14,7 @@ import {
   UserProjectionSchema,
   UserProjectionType,
 } from "../../dto/user.js";
+import NotificationsService from "../../services/notificationsService.js";
 
 const body = z.object({
   recipient: zObjectId,
@@ -119,6 +120,24 @@ export async function createConversation(
         response,
       );
     });
+
+    NotificationsService.getInstance().sendNotificationsByUser(
+      Array.from(usersMap.values())
+        .filter((p) => !p._id.equals(authUser._id))
+        .map((p) => ({
+          user: p._id,
+          message: {
+            notification: {
+              title: `${authUser.name} sent you a message`,
+              body:
+                content.length > 30 ? content.slice(0, 27) + "..." : content,
+            },
+            data: {
+              link: `conversation/${conversation._id}`,
+            },
+          },
+        })),
+    );
   } catch (err) {
     next(err);
   }
