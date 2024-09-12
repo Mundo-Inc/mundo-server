@@ -162,7 +162,7 @@ export async function getConversations(
 
     res.status(StatusCodes.OK).json(
       createResponse(result.conversations, {
-        totalCount: result.total,
+        totalCount: result.total ?? 0,
         page,
         limit,
       }),
