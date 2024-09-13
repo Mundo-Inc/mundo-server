@@ -3,7 +3,6 @@ import { StatusCodes } from "http-status-codes";
 import { z } from "zod";
 
 import { UserProjection } from "../../../api/dto/user.js";
-import CoinReward, { CoinRewardTypeEnum } from "../../../models/coinReward.js";
 import User, { UserRoleEnum } from "../../../models/user/user.js";
 import strings, { dStrings as ds, dynamicMessage } from "../../../strings.js";
 import { createError } from "../../../utilities/errorHandlers.js";
@@ -74,20 +73,12 @@ export async function editUser(
         throw createError("EULA must be accepted", StatusCodes.BAD_REQUEST);
       }
 
-      const referredBy = await User.findById(referrer).orFail(
+      await User.exists({ _id: referrer }).orFail(
         createError(
           dynamicMessage(ds.notFound, "Referrer"),
           StatusCodes.NOT_FOUND,
         ),
       );
-
-      referredBy.phantomCoins.balance += 250;
-      await referredBy.save();
-      await CoinReward.create({
-        userId: referredBy._id,
-        amount: 250,
-        coinRewardType: CoinRewardTypeEnum.Referral,
-      });
 
       user.referredBy = referrer;
     }

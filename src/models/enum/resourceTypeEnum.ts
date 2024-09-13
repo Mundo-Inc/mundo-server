@@ -6,7 +6,6 @@ export enum ResourceTypeEnum {
   Bot = "Bot",
   Category = "Category",
   CheckIn = "CheckIn",
-  CoinReward = "CoinReward",
   Comment = "Comment",
   Conversation = "Conversation",
   Earning = "Earning",

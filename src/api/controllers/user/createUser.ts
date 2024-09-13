@@ -8,10 +8,6 @@ import { handleSignUp } from "../../../api/lib/profile-handlers.js";
 import { BrevoService } from "../../../api/services/brevoService.js";
 import logger from "../../../api/services/logger/index.js";
 import { MundoApp } from "../../../config/firebase-config.js";
-import CoinReward, { CoinRewardTypeEnum } from "../../../models/coinReward.js";
-import Notification, {
-  NotificationTypeEnum,
-} from "../../../models/notification.js";
 import type { IUser } from "../../../models/user/user.js";
 import User, { SignupMethodEnum } from "../../../models/user/user.js";
 import { dStrings as ds, dynamicMessage } from "../../../strings.js";
@@ -67,16 +63,7 @@ export async function createUser(
           StatusCodes.NOT_FOUND,
         ),
       );
-      const amount = 250;
-      referredBy.phantomCoins.balance += amount;
-      await referredBy.save();
-      await CoinReward.create({
-        userId: referredBy._id,
-        amount: amount,
-        coinRewardType: CoinRewardTypeEnum.Referral,
-      });
-
-      await notifyReferrer(referredBy, name, amount);
+      await notifyReferrer(referredBy, name);
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -120,23 +107,8 @@ export async function createUser(
   }
 }
 
-async function notifyReferrer(
-  referredBy: IUser,
-  newUserName: string,
-  amount: number,
-) {
+async function notifyReferrer(referredBy: IUser, newUserName: string) {
   try {
-    // Sending app notification
-    await Notification.create({
-      user: referredBy._id,
-      type: NotificationTypeEnum.ReferralReward,
-      additionalData: {
-        amount,
-        newUserName,
-      },
-      importance: 2,
-    });
-
     // Sending email notification
     const receivers = [{ email: referredBy.email.address }];
     const sender = { email: "admin@phantomphood.com", name: "Phantom Phood" };
@@ -152,17 +124,10 @@ async function notifyReferrer(
       {
         referredByName,
         newUserName,
-        amount,
       },
     );
   } catch (error) {
     logger.error(error);
-
-    logger.error(
-      referredBy.email.address,
-      referredBy.name,
-      amount,
-      newUserName,
-    );
+    logger.error(referredBy.email.address, referredBy.name, newUserName);
   }
 }
