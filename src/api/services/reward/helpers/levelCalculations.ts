@@ -3,7 +3,7 @@ import { StatusCodes } from "http-status-codes";
 import { MediaTypeEnum } from "../../../../models/media.js";
 import type { IReview } from "../../../../models/review.js";
 import { createError } from "../../../../utilities/errorHandlers.js";
-import { type MediaProjectionBrief } from "../../../dto/media.js";
+import type { MediaProjectionBrief } from "../../../dto/media.js";
 import { getLevelThresholds } from "../utils/levelupThresholds.js";
 import { rewards_amounts } from "../utils/rewardsAmounts.js";
 

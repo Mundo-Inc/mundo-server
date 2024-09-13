@@ -16,7 +16,6 @@ import List from "../list.js";
 import Media from "../media.js";
 import Reaction from "../reaction.js";
 import Review from "../review.js";
-import { phantomCoinsSchema, zPhantomCoinsSchema } from "./phantomCoins.js";
 import { userAppUsageSchema, zUserAppUsageSchema } from "./userAppUsage.js";
 import { userDeviceSchema, zUserDeviceSchema } from "./userDevice.js";
 import { zUserEarningsSchema } from "./userEarnings.js";
@@ -68,11 +67,6 @@ export const zUserSchema = z.object({
   isActive: z.boolean(),
   createdAt: z.date(),
   updatedAt: z.date(),
-
-  /**
-   * @deprecated use `earnings.balance` instead
-   */
-  phantomCoins: zPhantomCoinsSchema,
 
   /**
    * @deprecated
@@ -196,13 +190,6 @@ const UserSchema = new Schema<IUser>(
     isActive: {
       type: Boolean,
       default: true,
-    },
-
-    // - @deprecated
-
-    phantomCoins: {
-      type: phantomCoinsSchema,
-      default: {},
     },
 
     source: {

@@ -150,9 +150,6 @@ export async function createHomemadePost(
     }
 
     try {
-      //TODO: ADD COIN REWARDS TO THE USERS IF APPROVED BY NABZ
-      // await reviewEarning(authId, review);
-      // const _act = await addHomemadeActivity(authUser._id, homemade._id);
       const activity = await UserActivityManager.createHomemadeActivity(
         authUser,
         homemade._id,

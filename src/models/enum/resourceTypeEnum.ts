@@ -8,7 +8,6 @@ export enum ResourceTypeEnum {
   CheckIn = "CheckIn",
   Comment = "Comment",
   Conversation = "Conversation",
-  Earning = "Earning",
   Event = "Event",
   Flag = "Flag",
   Follow = "Follow",
