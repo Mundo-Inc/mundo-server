@@ -6,12 +6,6 @@ import SocketService from "../../socket/index.js";
 import { dStrings as ds, dynamicMessage } from "../../strings.js";
 import { createError } from "../../utilities/errorHandlers.js";
 
-export const reviewCoins = { normalValue: 1, expLimit: 5, expMul: 10 };
-export const imageCoins = 2;
-export const videoCoins = 2;
-export const checkinCoins = { normalValue: 1, expLimit: 5, expMul: 10 };
-export const placeCoins = { normalValue: 1, expLimit: 5, expMul: 10 };
-
 export enum EarningsType {
   MEDIA_INCLUDED_USER_ACTIVITY = "MEDIA_INCLUDED_USER_ACTIVITY",
   GAINED_REACTIONS = "GAINED_REACTIONS",
