@@ -221,7 +221,7 @@ export async function getNotificationContent(notification: INotification) {
           if (!follow) {
             handleResourceNotFound(notification);
           } else {
-            user = follow.target;
+            user = follow.user;
             title = "Accepted your follow request";
           }
         });
